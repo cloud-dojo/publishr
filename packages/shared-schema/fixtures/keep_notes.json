@@ -1,0 +1,75 @@
+[
+  {
+    "id": "k_kansho",
+    "userId": "u_tadokoro",
+    "title": "最近の所感",
+    "text": "管掌範囲が広がってきた。気づけば30人分の判断を自分が抱えている。全部に目を通すのが限界に近い。",
+    "labels": ["所感", "マネジメント"],
+    "checklist": [],
+    "pinned": true,
+    "updatedAt": "2026-05-30"
+  },
+  {
+    "id": "k_1on1",
+    "userId": "u_tadokoro",
+    "title": "1on1メモ：田中さん",
+    "text": "今週も1on1が10件。準備と振り返りで毎週半日が消える。任せたいが、任せ方がわからない。",
+    "labels": ["1on1", "マネジメント"],
+    "checklist": [],
+    "pinned": false,
+    "updatedAt": "2026-05-29"
+  },
+  {
+    "id": "k_soshikizu",
+    "userId": "u_tadokoro",
+    "title": "組織図（30名）",
+    "text": "3チーム体制。班長3名＋現場27名。班長への権限移譲ラインが曖昧なまま。",
+    "labels": ["組織", "体制"],
+    "checklist": [],
+    "pinned": false,
+    "updatedAt": "2026-05-27"
+  },
+  {
+    "id": "k_zoin",
+    "userId": "u_tadokoro",
+    "title": "増員計画 来月+5名",
+    "text": "来月さらに5名増員。今のやり方のままでは確実に回らなくなる。属人化の解消が急務。",
+    "labels": ["採用", "計画"],
+    "checklist": [
+      { "text": "受け入れ体制の整備", "checked": false },
+      { "text": "業務の標準化", "checked": false }
+    ],
+    "pinned": false,
+    "updatedAt": "2026-05-26"
+  },
+  {
+    "id": "k_kaizen",
+    "userId": "u_tadokoro",
+    "title": "改善提案メモ",
+    "text": "現場からの改善提案が最近止まっている。指示待ちが増えた気がする。",
+    "labels": ["現場", "改善"],
+    "checklist": [],
+    "pinned": false,
+    "updatedAt": "2026-05-24"
+  },
+  {
+    "id": "k_keiei",
+    "userId": "u_tadokoro",
+    "title": "経営会議 報告フォーマット",
+    "text": "来期から定量報告が必須に。感覚ではなく数字で語る準備が要る。",
+    "labels": ["報告", "経営会議"],
+    "checklist": [],
+    "pinned": false,
+    "updatedAt": "2026-05-22"
+  },
+  {
+    "id": "k_shogi",
+    "userId": "u_tadokoro",
+    "title": "週末に将棋",
+    "text": "久しぶりに将棋。大局観って仕事の意思決定に似てるな、と思った。",
+    "labels": ["趣味"],
+    "checklist": [],
+    "pinned": false,
+    "updatedAt": "2026-05-18"
+  }
+]

@@ -1,0 +1,29 @@
+"""リポジトリ抽象。Mock（MVP）↔ Firestore（将来）の差し替えの継ぎ目。"""
+
+from __future__ import annotations
+
+from typing import Optional, Protocol
+
+from publishr_schema import Book, Persona, Plan, User
+
+
+class RepositoryProtocol(Protocol):
+    def list_books(
+        self, status: Optional[str] = None, shelf: Optional[str] = None
+    ) -> list[Book]: ...
+
+    def get_book(self, book_id: str) -> Optional[Book]: ...
+
+    def upsert_book(self, book: Book) -> Book: ...
+
+    def list_plans(self) -> list[Plan]: ...
+
+    def get_plan(self, plan_id: str) -> Optional[Plan]: ...
+
+    def list_personas(self) -> list[Persona]: ...
+
+    def get_persona(self, persona_id: str) -> Optional[Persona]: ...
+
+    def list_users(self) -> list[User]: ...
+
+    def get_user(self, user_id: str) -> Optional[User]: ...
