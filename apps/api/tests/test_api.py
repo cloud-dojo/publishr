@@ -84,6 +84,31 @@ def test_feedback_updates():
     assert fb["rating"] == 5 and fb["wantsSequel"] is True
 
 
+def test_reading_state_updates_granularity_and_annotations():
+    published = client.get("/books", params={"status": "published"}).json()[0]
+    bid = published["id"]
+    res = client.post(
+        f"/books/{bid}/reading-state",
+        json={
+            "granularity": "summary",
+            "annotations": [
+                {
+                    "id": "ann_test",
+                    "kind": "note",
+                    "paragraphIndex": 0,
+                    "text": "着任直後の100日",
+                    "note": "ここを次の1on1で使う",
+                }
+            ],
+        },
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["granularity"] == "summary"
+    assert body["annotations"][0]["kind"] == "note"
+    assert body["annotations"][0]["paragraphIndex"] == 0
+
+
 def test_pipeline_run_returns_reject_log():
     res = client.post("/pipeline/run", json={"userId": "u_tadokoro"})
     assert res.status_code == 200

@@ -8,8 +8,8 @@ from publishr_schema import Book
 from ..deps import get_repository
 from ..errors import NotFoundError
 from ..repositories.protocol import RepositoryProtocol
-from ..schemas import FeedbackInput
-from ..services import feedback_service, reservation_service
+from ..schemas import FeedbackInput, ReadingStateInput
+from ..services import feedback_service, reading_service, reservation_service
 
 router = APIRouter(prefix="/books", tags=["books"])
 
@@ -47,3 +47,12 @@ def post_feedback(
     repo: RepositoryProtocol = Depends(get_repository),
 ) -> Book:
     return feedback_service.apply_feedback(repo, book_id, payload)
+
+
+@router.post("/{book_id}/reading-state", response_model=Book)
+def post_reading_state(
+    book_id: str,
+    payload: ReadingStateInput,
+    repo: RepositoryProtocol = Depends(get_repository),
+) -> Book:
+    return reading_service.apply_reading_state(repo, book_id, payload)

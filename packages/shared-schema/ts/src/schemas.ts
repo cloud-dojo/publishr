@@ -6,6 +6,7 @@ import { z } from "zod";
 export const bookStatusSchema = z.enum(["draft", "reserved", "writing", "published"]);
 export const shelfSchema = z.enum(["arrivals", "press", "odd", "library"]);
 export const granularitySchema = z.enum(["full", "summary", "excerpt"]);
+export const annotationKindSchema = z.enum(["highlight", "note", "bookmark"]);
 export const verdictSchema = z.enum(["採用", "却下", "保留"]);
 
 export const checklistItemSchema = z.object({
@@ -108,6 +109,14 @@ export const feedbackSchema = z.object({
   wantsSequel: z.boolean(),
 });
 
+export const readingAnnotationSchema = z.object({
+  id: z.string(),
+  kind: annotationKindSchema,
+  paragraphIndex: z.number(),
+  text: z.string(),
+  note: z.string().nullish(),
+});
+
 export const bookSchema = z.object({
   id: z.string(),
   planId: z.string(),
@@ -124,6 +133,7 @@ export const bookSchema = z.object({
   prefaceSample: z.string(),
   agenda: z.array(agendaItemSchema),
   body: z.string().nullable(),
+  annotations: z.array(readingAnnotationSchema).default([]),
   feedback: feedbackSchema,
 });
 

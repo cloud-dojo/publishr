@@ -4,10 +4,17 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
+import type { Granularity, ReadingAnnotation } from "@publishr/shared-schema";
+
 import { Topbar } from "@/components/shell/Topbar";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
 
 const FB_OPTIONS = ["▲ まさに今ほしかった", "○ 参考になった", "△ 少し一般的すぎる", "▽ 自分には早い"];
+const GRANULARITY_LABELS: Record<Granularity, string> = {
+  full: "フル",
+  summary: "要約",
+  excerpt: "ここだけ",
+};
 
 function parseBody(body: string): { chapter: string; paras: string[] } {
   const paras: string[] = [];
@@ -38,7 +45,9 @@ function parseBody(body: string): { chapter: string; paras: string[] } {
 export default function ReaderPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
+  const { updateReadingState } = useActions();
   const [fb, setFb] = useState<number | null>(null);
+  const [draftAnnotations, setDraftAnnotations] = useState<ReadingAnnotation[] | null>(null);
   const book = provider.getBook(params.bookId);
 
   if (!book) {
@@ -54,6 +63,38 @@ export default function ReaderPage() {
   const content = book.body
     ? parseBody(book.body)
     : { chapter: book.subtitle || book.title, paras: book.prefaceSample.split("\n\n").filter(Boolean) };
+  const annotations = draftAnnotations ?? book.annotations ?? [];
+  const visibleParas =
+    book.granularity === "excerpt"
+      ? content.paras.slice(0, 1).map((p) => (p.includes("。") ? `${p.split("。")[0]}。` : p))
+      : book.granularity === "summary"
+        ? content.paras.slice(0, 1)
+        : content.paras;
+  const saveReadingState = (next: { granularity?: Granularity; annotations?: ReadingAnnotation[] }) => {
+    void updateReadingState(book.id, {
+      granularity: next.granularity ?? book.granularity,
+      annotations: next.annotations ?? annotations,
+    });
+  };
+  const addAnnotation = (kind: ReadingAnnotation["kind"]) => {
+    const text = visibleParas[0] ?? content.chapter;
+    const nextAnnotations = annotations.filter((a) => !(a.kind === kind && a.paragraphIndex === 0));
+    const next: ReadingAnnotation = {
+      id: `ann_${book.id}_${nextAnnotations.length + 1}_${kind}`,
+      kind,
+      paragraphIndex: 0,
+      text: text.slice(0, 40),
+      note:
+        kind === "note"
+          ? "ここ、次の1on1で使う。"
+          : kind === "bookmark"
+            ? "あとで読み返す"
+            : null,
+    };
+    const merged = [...nextAnnotations, next];
+    setDraftAnnotations(merged);
+    saveReadingState({ annotations: merged });
+  };
 
   return (
     <>
@@ -68,10 +109,15 @@ export default function ReaderPage() {
         </div>
         <div style={{ marginLeft: "auto" }} className="row gap12">
           <div className="segment">
-            <button>フル</button>
-            <button className="on">標準</button>
-            <button>要約</button>
-            <button>ここだけ</button>
+            {(Object.keys(GRANULARITY_LABELS) as Granularity[]).map((g) => (
+              <button
+                key={g}
+                className={book.granularity === g ? "on" : ""}
+                onClick={() => saveReadingState({ granularity: g })}
+              >
+                {GRANULARITY_LABELS[g]}
+              </button>
+            ))}
           </div>
           <div className="icon-btn">Aa</div>
         </div>
@@ -81,16 +127,25 @@ export default function ReaderPage() {
         <article className="paper-page reveal">
           <div className="chap-no">{book.subtitle || "本文"}</div>
           <div className="chap-title">{content.chapter}</div>
-          {content.paras.map((p, i) => (
+          {visibleParas.map((p, i) => {
+            const paragraphAnnotations = annotations.filter((a) => a.paragraphIndex === i);
+            const highlighted = paragraphAnnotations.some((a) => a.kind === "highlight");
+            return (
             <div key={i}>
-              <p className={i === 0 ? "lead" : ""}>{p}</p>
-              {book.id === "b_makasekata" && i === 0 && (
-                <div className="sticky">
-                  ここ、先週の自分そのもの。来週の1on1で田中さんに権限の線を見せて確認する。
-                </div>
+              <p className={i === 0 ? "lead" : ""}>{highlighted ? <mark className="hl">{p}</mark> : p}</p>
+              {paragraphAnnotations
+                .filter((a) => a.kind === "note")
+                .map((a) => (
+                  <div key={a.id} className="sticky">
+                    {a.note ?? a.text}
+                  </div>
+                ))}
+              {paragraphAnnotations.some((a) => a.kind === "bookmark") && (
+                <div className="sticky">🔖 あとで読み返す</div>
               )}
             </div>
-          ))}
+            );
+          })}
         </article>
 
         <aside className="rail-tools">
@@ -99,12 +154,12 @@ export default function ReaderPage() {
               <span className="k">✎</span> このページの操作
             </div>
             <div className="tool-actions">
-              <div className="icon-btn">🖊</div>
-              <div className="icon-btn">🏷</div>
-              <div className="icon-btn">🔖</div>
+              <button className="icon-btn" type="button" onClick={() => addAnnotation("highlight")}>🖊</button>
+              <button className="icon-btn" type="button" onClick={() => addAnnotation("note")}>🏷</button>
+              <button className="icon-btn" type="button" onClick={() => addAnnotation("bookmark")}>🔖</button>
             </div>
             <div className="muted" style={{ fontSize: 11.5, marginTop: 10, lineHeight: 1.5 }}>
-              文章を選択するとハイライト・付箋を付けられます。
+              デモでは先頭段落にハイライト・付箋・栞を付けられます。
             </div>
           </div>
 

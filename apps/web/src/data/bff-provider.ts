@@ -5,6 +5,7 @@ import type {
   Persona,
   PipelineResult,
   Plan,
+  ReadingStateInput,
   User,
 } from "@publishr/shared-schema";
 
@@ -93,6 +94,12 @@ export class BffProvider extends BaseProvider {
 
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
     const book = await jpost<Book>(`/books/${id}/feedback`, feedback);
+    this.books.set(id, book);
+    this.notify();
+  }
+
+  async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
+    const book = await jpost<Book>(`/books/${id}/reading-state`, state);
     this.books.set(id, book);
     this.notify();
   }

@@ -14,6 +14,7 @@ from pydantic.alias_generators import to_camel
 BookStatus = Literal["draft", "reserved", "writing", "published"]
 Shelf = Literal["arrivals", "press", "odd", "library"]
 Granularity = Literal["full", "summary", "excerpt"]
+AnnotationKind = Literal["highlight", "note", "bookmark"]
 
 
 class _Base(BaseModel):
@@ -124,6 +125,14 @@ class Feedback(_Base):
     wants_sequel: bool = False
 
 
+class ReadingAnnotation(_Base):
+    id: str
+    kind: AnnotationKind
+    paragraph_index: int
+    text: str
+    note: Optional[str] = None
+
+
 class Book(_Base):
     id: str
     plan_id: str
@@ -140,4 +149,5 @@ class Book(_Base):
     preface_sample: str = ""
     agenda: list[AgendaItem] = Field(default_factory=list)
     body: Optional[str] = None
+    annotations: list[ReadingAnnotation] = Field(default_factory=list)
     feedback: Feedback = Field(default_factory=Feedback)

@@ -4,6 +4,7 @@
 export type BookStatus = "draft" | "reserved" | "writing" | "published";
 export type Shelf = "arrivals" | "press" | "odd" | "library";
 export type Granularity = "full" | "summary" | "excerpt";
+export type AnnotationKind = "highlight" | "note" | "bookmark";
 export type Verdict = "採用" | "却下" | "保留";
 
 export interface ChecklistItem {
@@ -108,6 +109,14 @@ export interface Feedback {
   wantsSequel: boolean;
 }
 
+export interface ReadingAnnotation {
+  id: string;
+  kind: AnnotationKind;
+  paragraphIndex: number;
+  text: string;
+  note?: string | null;
+}
+
 export interface Book {
   id: string;
   planId: string;
@@ -124,6 +133,7 @@ export interface Book {
   prefaceSample: string;
   agenda: AgendaItem[];
   body: string | null;
+  annotations: ReadingAnnotation[];
   feedback: Feedback;
 }
 
@@ -153,4 +163,9 @@ export interface FeedbackInput {
   dropped?: boolean;
   rating?: number | null;
   wantsSequel?: boolean;
+}
+
+export interface ReadingStateInput {
+  granularity?: Granularity;
+  annotations?: ReadingAnnotation[];
 }

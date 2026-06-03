@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
@@ -17,6 +17,19 @@ class FeedbackInput(_Camel):
     dropped: Optional[bool] = None
     rating: Optional[int] = None
     wants_sequel: Optional[bool] = None
+
+
+class ReadingAnnotationInput(_Camel):
+    id: str
+    kind: Literal["highlight", "note", "bookmark"]
+    paragraph_index: int
+    text: str
+    note: Optional[str] = None
+
+
+class ReadingStateInput(_Camel):
+    granularity: Optional[Literal["full", "summary", "excerpt"]] = None
+    annotations: Optional[list[ReadingAnnotationInput]] = None
 
 
 class PipelineRunInput(_Camel):

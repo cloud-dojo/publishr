@@ -10,6 +10,7 @@ from .loader import (
 )
 from .models import (
     AgendaItem,
+    AnnotationKind,
     Book,
     BookStatus,
     ChecklistItem,
@@ -23,6 +24,7 @@ from .models import (
     Plan,
     PlanningCandidate,
     ReaderProfile,
+    ReadingAnnotation,
     Shelf,
     User,
     UserProfile,
@@ -30,6 +32,7 @@ from .models import (
 
 __all__ = [
     "AgendaItem",
+    "AnnotationKind",
     "Book",
     "BookStatus",
     "ChecklistItem",
@@ -43,6 +46,7 @@ __all__ = [
     "Plan",
     "PlanningCandidate",
     "ReaderProfile",
+    "ReadingAnnotation",
     "Shelf",
     "User",
     "UserProfile",

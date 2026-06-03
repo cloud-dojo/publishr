@@ -1,6 +1,6 @@
 // mockプロバイダ: フィクスチャ種・タイマー状態機械（API不要・デモ安全網）。
 import { fixtures } from "@publishr/shared-schema";
-import type { FeedbackInput } from "@publishr/shared-schema";
+import type { FeedbackInput, ReadingStateInput } from "@publishr/shared-schema";
 
 import {
   CANNED_APPROVED_PLAN_IDS,
@@ -55,6 +55,17 @@ export class MockProvider extends BaseProvider {
     const book = this.books.get(id);
     if (!book) return;
     this.books.set(id, { ...book, feedback: { ...book.feedback, ...feedback } });
+    this.notify();
+  }
+
+  async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, {
+      ...book,
+      granularity: state.granularity ?? book.granularity,
+      annotations: state.annotations ?? book.annotations ?? [],
+    });
     this.notify();
   }
 

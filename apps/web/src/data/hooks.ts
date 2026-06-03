@@ -85,6 +85,7 @@ export function useActions() {
   return {
     reserve: (id: string) => provider.reserve(id),
     sendFeedback: provider.sendFeedback.bind(provider),
+    updateReadingState: provider.updateReadingState.bind(provider),
     runPipeline: (userId: string) => provider.runPipeline(userId),
   };
 }
