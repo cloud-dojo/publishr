@@ -24,6 +24,10 @@ venv/
 *.key.json
 service-account*.json
 
+# Local/private planning docs
+.github/CODEOWNERS
+docs/
+
 # OS / editor
 .DS_Store
 *:Zone.Identifier
