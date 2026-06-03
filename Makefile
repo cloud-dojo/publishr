@@ -1,7 +1,7 @@
 # Publishr — ローカルMVP用タスク
 # 前提: node>=22, uv>=0.10 （Python 3.12 は uv が用意）
 
-.PHONY: help setup setup-py setup-web web api pipeline dev smoke verify test-py lint-web typecheck-web fmt
+.PHONY: help setup setup-py setup-web web api pipeline dev smoke eval verify test-py lint-web typecheck-web fmt
 
 help:
 	@echo "make setup     - Python(uv) と Web(npm) の依存をインストール"
@@ -10,6 +10,7 @@ help:
 	@echo "make dev       - API と Web を1コマンドで起動（既存起動中なら再利用）"
 	@echo "make smoke     - ローカルE2Eを1コマンドでスモーク確認"
 	@echo "make pipeline  - ADK企画パイプラインをオフライン実行"
+	@echo "make eval      - Eval観点をオフライン判定"
 	@echo "make verify    - pytest + web lint/typecheck"
 
 setup: setup-py setup-web
@@ -34,6 +35,9 @@ dev:
 
 smoke:
 	uv run python scripts/local_smoke.py
+
+eval:
+	uv run python -m scripts.eval_harness
 
 verify: test-py lint-web typecheck-web
 

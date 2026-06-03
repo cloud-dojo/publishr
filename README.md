@@ -42,6 +42,7 @@ make web              # ターミナル2: 書店UI → http://localhost:3000
 
 ```bash
 make pipeline         # 企画パイプライン単体をオフライン実行（reject_log を確認）
+make eval             # eval/eval_set.yaml の観点を決定的パイプラインで判定
 make verify           # pytest + web lint/typecheck
 ```
 
