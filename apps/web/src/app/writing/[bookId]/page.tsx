@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -28,6 +29,11 @@ export default function WritingPage() {
   const debate = useDebate();
   const book = provider.getBook(params.bookId);
 
+  useEffect(() => {
+    if (!book || (book.status !== "reserved" && book.status !== "writing")) return;
+    provider.watchBook(book.id);
+  }, [book, provider]);
+
   if (!book) {
     return (
       <>
@@ -55,9 +61,9 @@ export default function WritingPage() {
       </div>
 
       <div className="stage">
-        <div className="writing-book">
+        <div className={`writing-book ${isPublished ? "done" : "active"}`}>
           <BookCover variant={book.coverVariant} title={book.title} author={persona?.name} titleSize={22} />
-          <div className="pen-line">
+          <div className={`pen-line ${isPublished ? "done" : "active"}`}>
             <i />
           </div>
           <div className="writing-status">

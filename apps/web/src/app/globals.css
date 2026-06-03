@@ -330,9 +330,12 @@ mark.hl.note { background: linear-gradient(180deg,transparent 55%,rgba(140,59,77
 .stage { display: grid; grid-template-columns: 300px 1fr; gap: 54px; padding: 8px 44px 0; align-items: start; }
 .writing-book { position: sticky; top: 92px; text-align: center; }
 .writing-book .cover { animation: bookGlow 3s ease-in-out infinite; }
+.writing-book.done .cover { animation: none; }
 @keyframes bookGlow { 0%,100%{box-shadow:var(--shadow-book)} 50%{box-shadow:0 18px 40px -10px var(--gold-glow)} }
 .pen-line { height: 3px; background: var(--ink-700); border-radius: 3px; overflow: hidden; margin: 16px 0 8px; }
-.pen-line i { display: block; height: 100%; width: 40%; background: linear-gradient(90deg,transparent,var(--gold-bright),transparent); animation: pen 1.8s linear infinite; }
+.pen-line i { display: block; width: 0; height: 100%; background: linear-gradient(90deg,transparent,var(--gold-bright),transparent); }
+.pen-line.active i { width: 40%; animation: pen 1.8s linear infinite; }
+.pen-line.done i { width: 100%; background: var(--gold-bright); }
 @keyframes pen { from{transform:translateX(-110%)} to{transform:translateX(360%)} }
 .writing-status { font-family: var(--font-display); font-size: 14px; color: var(--gold-bright); }
 .writing-pct { font-family: var(--font-en); font-size: 38px; color: var(--text-100); margin-top: 6px; }

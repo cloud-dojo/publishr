@@ -28,6 +28,19 @@ def test_healthz():
     assert res.json()["status"] == "ok"
 
 
+def test_cors_allows_next_dev_fallback_port():
+    res = client.options(
+        "/pipeline/run",
+        headers={
+            "Origin": "http://localhost:3001",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert res.status_code == 200
+    assert res.headers["access-control-allow-origin"] == "http://localhost:3001"
+
+
 def test_list_books_full_shelf():
     res = client.get("/books")
     assert res.status_code == 200

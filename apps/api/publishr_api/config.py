@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     reserve_to_writing_sec: float = 2.0
     writing_to_published_sec: float = 5.0
 
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
 
 settings = Settings()

@@ -82,4 +82,7 @@ export abstract class BaseProvider {
   abstract reserve(id: string): Promise<void>;
   abstract sendFeedback(id: string, feedback: FeedbackInput): Promise<void>;
   abstract runPipeline(userId: string): Promise<void>;
+  watchBook(id: string): void {
+    void id;
+  }
 }

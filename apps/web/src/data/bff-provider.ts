@@ -29,6 +29,7 @@ async function jpost<T>(path: string, body?: unknown): Promise<T> {
 
 export class BffProvider extends BaseProvider {
   private polling = false;
+  private trackedBookIds = new Set<string>();
 
   protected async load(): Promise<void> {
     const [books, plans, personas, user] = await Promise.all([
@@ -59,9 +60,13 @@ export class BffProvider extends BaseProvider {
       } catch (err) {
         console.error(err);
       }
-      const active = [...this.books.values()].some(
-        (b) => b.status === "reserved" || b.status === "writing",
-      );
+      for (const id of [...this.trackedBookIds]) {
+        const book = this.books.get(id);
+        if (!book || book.status === "published") {
+          this.trackedBookIds.delete(id);
+        }
+      }
+      const active = this.trackedBookIds.size > 0;
       if (active) {
         setTimeout(tick, timing.pollInterval);
       } else {
@@ -74,7 +79,15 @@ export class BffProvider extends BaseProvider {
   async reserve(id: string): Promise<void> {
     const book = await jpost<Book>(`/books/${id}/reserve`);
     this.books.set(id, book);
+    this.trackedBookIds.add(id);
     this.notify();
+    this.startPolling();
+  }
+
+  watchBook(id: string): void {
+    const book = this.books.get(id);
+    if (!book || (book.status !== "reserved" && book.status !== "writing")) return;
+    this.trackedBookIds.add(id);
     this.startPolling();
   }
 
@@ -86,6 +99,7 @@ export class BffProvider extends BaseProvider {
 
   async runPipeline(userId: string): Promise<void> {
     const result = await jpost<PipelineResult>("/pipeline/run", { userId });
+    result.plans.forEach((p) => this.plans.set(p.id, p));
     result.books.forEach((b) => this.books.set(b.id, b));
     this.debate = result.rejectLog;
     this.notify();

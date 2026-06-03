@@ -1,14 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import type { Book } from "@publishr/shared-schema";
 
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
+
+type ArrivalStatus = "idle" | "running" | "success" | "error";
 
 export default function HomePage() {
   const provider = useProvider();
+  const { runPipeline } = useActions();
+  const [arrivalStatus, setArrivalStatus] = useState<ArrivalStatus>("idle");
+  const [arrivalMessage, setArrivalMessage] = useState("企画：編集会議 AI ／ 装丁：Imagen");
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason;
 
@@ -16,6 +22,20 @@ export default function HomePage() {
   const press = provider.booksByShelf("press");
   const odd = provider.booksByShelf("odd");
   const user = provider.getUser(DEMO_USER_ID);
+
+  const onRunArrivals = async () => {
+    setArrivalStatus("running");
+    setArrivalMessage("Keepメモを読み、企画会議を実行しています…");
+    try {
+      await runPipeline(DEMO_USER_ID);
+      setArrivalStatus("success");
+      setArrivalMessage("企画会議が完了しました。入荷理由と選抜ログを更新しました。");
+    } catch (error) {
+      console.error(error);
+      setArrivalStatus("error");
+      setArrivalMessage("入荷生成に失敗しました。BFF が起動しているか確認してください。");
+    }
+  };
 
   return (
     <>
@@ -50,7 +70,17 @@ export default function HomePage() {
               あなたの関心と仕事の局面を読み、編集部が自律的に企画しました。
             </div>
           </div>
-          <div className="right">企画：編集会議 AI ／ 装丁：Imagen</div>
+          <div className="right vstack" style={{ alignItems: "flex-end", gap: 8 }}>
+            <button
+              type="button"
+              className={arrivalStatus === "success" ? "btn btn--gold" : "btn btn--ghost"}
+              onClick={onRunArrivals}
+              disabled={!provider.ready || arrivalStatus === "running"}
+            >
+              {arrivalStatus === "running" ? "企画会議中…" : "今朝の入荷を実行"}
+            </button>
+            <span>{arrivalMessage}</span>
+          </div>
         </div>
         <div className="book-grid">
           {arrivals.map((b) => (
