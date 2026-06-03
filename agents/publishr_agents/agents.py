@@ -95,7 +95,7 @@ class AuthorAgendaAgent(BaseAgent):
 
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         approved = ctx.session.state.get(K.APPROVED_PLAN_IDS, [])
-        books = [b.model_dump(by_alias=True) for b in canned.arrival_books(approved)]
+        books = [b.model_dump(by_alias=True) for b in canned.compose_arrival_books(approved)]
         ctx.session.state[K.BOOKS] = books
         yield _emit(self.name, {K.BOOKS: books})
 

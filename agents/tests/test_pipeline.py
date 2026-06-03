@@ -64,3 +64,15 @@ def test_authoring_body_for_hero():
     body = write_body(hero)
     assert "権限の設計図" in body
     assert len(body) > 100
+
+
+def test_author_agenda_uses_plan_and_persona_voice():
+    result = run_pipeline("u_tadokoro")
+    toi = next(b for b in result.books if b.plan_id == "plan_toi")
+    assert "現場に答えがある" in toi.preface_sample
+    assert [item.title for item in toi.agenda] == [
+        "指示は、現場を止める",
+        "「問い」の三つの型",
+        "朝会を、問いの場に変える",
+        "問いが文化になるとき",
+    ]

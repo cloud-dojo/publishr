@@ -8,12 +8,15 @@ from __future__ import annotations
 from collections import Counter
 
 from publishr_schema import (
+    AgendaItem,
     Book,
+    Persona,
     PlanningCandidate,
     Plan,
     User,
     load_books,
     load_keep_notes,
+    load_personas,
     load_plans,
     load_users,
 )
@@ -129,3 +132,79 @@ def arrival_plans(plan_ids: list[str] | None = None) -> list[Plan]:
 def arrival_books(plan_ids: list[str] | None = None) -> list[Book]:
     allowed = None if plan_ids is None else set(plan_ids)
     return [b for b in load_books() if b.shelf == "arrivals" and (allowed is None or b.plan_id in allowed)]
+
+
+def _personas_by_style() -> dict[str, Persona]:
+    return {p.style: p for p in load_personas()}
+
+
+def _persona_for_plan(plan: Plan, base: Book) -> Persona:
+    by_style = _personas_by_style()
+    for style in plan.recommended_author_types:
+        if style in by_style:
+            return by_style[style]
+    personas = {p.id: p for p in load_personas()}
+    return personas[base.author_persona_id]
+
+
+def _agenda_from_outline(plan: Plan, base: Book) -> list[AgendaItem]:
+    desc_by_title = {item.title: item.desc for item in base.agenda}
+    items: list[AgendaItem] = []
+    last_index = len(plan.agenda_outline) - 1
+    for i, outline in enumerate(plan.agenda_outline):
+        no, _, title = outline.partition(":")
+        title = title.strip() or outline
+        locked = i >= max(2, last_index - 1)
+        items.append(
+            AgendaItem(
+                no=no.strip() or f"{i + 1:02d}",
+                title=title,
+                desc=desc_by_title.get(title, plan.core_message if i == 0 else plan.differentiator),
+                # MVPでは未執筆の後半章をロックして、予約後に開く体験を残す。
+                locked=locked,
+                note="★ いちおし" if "権限の設計図" in outline else ("🔒 執筆後" if locked else None),
+            )
+        )
+    return items
+
+
+def _join_signature(parts: list[str]) -> str:
+    joined = ""
+    for part in parts:
+        joined += part
+        if not part.endswith(("。", "！", "？")):
+            joined += "。"
+    return joined.rstrip("。")
+
+
+def _preface(plan: Plan, persona: Persona) -> str:
+    signature = _join_signature(persona.persona.signature) if persona.persona.signature else persona.persona.thought
+    differentiator = plan.differentiator.rstrip("。")
+    return (
+        f"{signature}。{plan.reader_situation}\n\n"
+        f"{plan.core_message}\n\n"
+        f"この本では、{persona.name}の{persona.style}としての視点で、"
+        f"{differentiator}という固有の切り口から章を進める。"
+    )
+
+
+def compose_arrival_books(plan_ids: list[str] | None = None) -> list[Book]:
+    """採用企画と作家ペルソナから、序文とアジェンダを決定的に組み立てる。"""
+    plans = {p.id: p for p in arrival_plans(plan_ids)}
+    books: list[Book] = []
+    for base in arrival_books(plan_ids):
+        plan = plans.get(base.plan_id)
+        if plan is None:
+            books.append(base)
+            continue
+        persona = _persona_for_plan(plan, base)
+        books.append(
+            base.model_copy(
+                update={
+                    "author_persona_id": persona.id,
+                    "preface_sample": _preface(plan, persona),
+                    "agenda": _agenda_from_outline(plan, base),
+                }
+            )
+        )
+    return books
