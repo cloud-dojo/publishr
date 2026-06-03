@@ -86,6 +86,13 @@ export const readerProfileSchema = z.object({
   serendipityTolerance: z.string(),
 });
 
+export const planningCandidateSchema = z.object({
+  key: z.string(),
+  persona: z.string(),
+  candidate: z.string(),
+  planId: z.string().nullable(),
+});
+
 export const agendaItemSchema = z.object({
   no: z.string(),
   title: z.string(),
@@ -133,5 +140,7 @@ export const pipelineResultSchema = z.object({
   books: z.array(bookSchema),
   observation: observationSchema,
   readerProfile: readerProfileSchema,
+  candidates: z.array(planningCandidateSchema),
+  approvedPlanIds: z.array(z.string()),
   rejectLog: z.array(rejectLogEntrySchema),
 });

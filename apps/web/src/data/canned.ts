@@ -1,5 +1,10 @@
 // mockモード（API不要）用のキャンドデータ。Python側 publishr_agents/canned.py と一致。
-import type { Observation, ReaderProfile, RejectLogEntry } from "@publishr/shared-schema";
+import type {
+  Observation,
+  PlanningCandidate,
+  ReaderProfile,
+  RejectLogEntry,
+} from "@publishr/shared-schema";
 
 export const CANNED_OBSERVATION: Observation = {
   noteCount: 7,
@@ -15,12 +20,20 @@ export const CANNED_READER_PROFILE: ReaderProfile = {
   serendipityTolerance: "中",
 };
 
+export const CANNED_CANDIDATES: PlanningCandidate[] = [
+  { key: "practical", persona: "実務直撃型", candidate: "任せ方の設計図", planId: "plan_makase" },
+  { key: "framework", persona: "フレームワーク型", candidate: "問いで動かす現場", planId: "plan_toi" },
+  { key: "contrarian", persona: "逆張り型", candidate: "あえて抱え込め", planId: "plan_shijizero" },
+];
+
+export const CANNED_APPROVED_PLAN_IDS = ["plan_makase", "plan_toi"];
+
 export const CANNED_DEBATE: RejectLogEntry[] = [
   { round: 1, candidate: "任せ方の設計図", persona: "実務直撃型", verdict: "却下", reason: "方向性は良いが具体性が不足。30名の局面に寄せて再提出せよ。" },
-  { round: 1, candidate: "権限委譲5原則", persona: "フレームワーク型", verdict: "却下", reason: "一般論に寄りすぎ。既製書との差別化を出して再提出。" },
+  { round: 1, candidate: "問いで動かす現場", persona: "フレームワーク型", verdict: "却下", reason: "一般論に寄りすぎ。既製書との差別化を出して再提出。" },
   { round: 1, candidate: "あえて抱え込め", persona: "逆張り型", verdict: "却下", reason: "逆張りの意図は買うが論拠が粗い。根拠を添えて再提出。" },
   { round: 2, candidate: "任せ方の設計図", persona: "実務直撃型", verdict: "採用", reason: "局面に最も的中。30名移行期の『任せ方』に直結。" },
-  { round: 2, candidate: "権限委譲5原則", persona: "フレームワーク型", verdict: "却下", reason: "依然として一般論。あなたの現場への接続が弱い。" },
+  { round: 2, candidate: "問いで動かす現場", persona: "フレームワーク型", verdict: "採用", reason: "指示を減らす問いの設計が、現場の自走課題に接続している。" },
   { round: 2, candidate: "あえて抱え込め", persona: "逆張り型", verdict: "保留", reason: "視点は鋭いが時期尚早。次回の候補として保留。" },
 ];
 

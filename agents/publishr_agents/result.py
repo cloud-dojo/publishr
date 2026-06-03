@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from publishr_schema import Book, Observation, Plan, ReaderProfile
+from publishr_schema import Book, Observation, Plan, PlanningCandidate, ReaderProfile
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -30,4 +30,6 @@ class PipelineResult(_Base):
     books: list[Book] = Field(default_factory=list)
     observation: Observation = Field(default_factory=Observation)
     reader_profile: ReaderProfile = Field(default_factory=ReaderProfile)
+    candidates: list[PlanningCandidate] = Field(default_factory=list)
+    approved_plan_ids: list[str] = Field(default_factory=list)
     reject_log: list[RejectLogEntry] = Field(default_factory=list)

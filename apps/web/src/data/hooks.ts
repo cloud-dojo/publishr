@@ -7,6 +7,7 @@ import type {
   Observation,
   Persona,
   Plan,
+  PlanningCandidate,
   ReaderProfile,
   RejectLogEntry,
   User,
@@ -55,6 +56,17 @@ export function useUser(id: string): User | undefined {
 export function useDebate(): RejectLogEntry[] {
   const provider = useProvider();
   return provider.getDebate();
+}
+
+export function usePlanningCandidates(): {
+  candidates: PlanningCandidate[];
+  approvedPlanIds: string[];
+} {
+  const provider = useProvider();
+  return {
+    candidates: provider.getCandidates(),
+    approvedPlanIds: provider.getApprovedPlanIds(),
+  };
 }
 
 export function useReaderAnalysis(): {

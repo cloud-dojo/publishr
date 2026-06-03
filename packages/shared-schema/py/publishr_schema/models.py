@@ -102,6 +102,13 @@ class ReaderProfile(_Base):
     serendipity_tolerance: str = ""
 
 
+class PlanningCandidate(_Base):
+    key: str
+    persona: str
+    candidate: str
+    plan_id: Optional[str] = None
+
+
 class AgendaItem(_Base):
     no: str
     title: str

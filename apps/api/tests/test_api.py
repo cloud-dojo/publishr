@@ -88,7 +88,10 @@ def test_pipeline_run_returns_reject_log():
     res = client.post("/pipeline/run", json={"userId": "u_tadokoro"})
     assert res.status_code == 200
     data = res.json()
-    assert len(data["books"]) >= 4
+    assert len(data["books"]) >= 2
+    assert len(data["candidates"]) == 3
+    assert set(data["approvedPlanIds"]) == {p["id"] for p in data["plans"]}
+    assert {b["planId"] for b in data["books"]} == set(data["approvedPlanIds"])
     assert data["observation"]["noteCount"] > 0
     assert "管掌範囲の拡大" in data["observation"]["signals"]
     assert "製造課長" in data["readerProfile"]["role"]

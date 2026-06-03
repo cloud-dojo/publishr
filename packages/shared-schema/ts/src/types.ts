@@ -86,6 +86,13 @@ export interface ReaderProfile {
   serendipityTolerance: string;
 }
 
+export interface PlanningCandidate {
+  key: string;
+  persona: string;
+  candidate: string;
+  planId: string | null;
+}
+
 export interface AgendaItem {
   no: string;
   title: string;
@@ -135,6 +142,8 @@ export interface PipelineResult {
   books: Book[];
   observation: Observation;
   readerProfile: ReaderProfile;
+  candidates: PlanningCandidate[];
+  approvedPlanIds: string[];
   rejectLog: RejectLogEntry[];
 }
 

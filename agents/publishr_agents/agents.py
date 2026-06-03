@@ -52,7 +52,12 @@ class PlanningAgent(BaseAgent):
 
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         key = K.CAND_PREFIX + self.persona_key
-        value = {"persona": self.persona_label, "candidate": self.candidate, "planId": self.plan_id}
+        value = {
+            "key": self.persona_key,
+            "persona": self.persona_label,
+            "candidate": self.candidate,
+            "planId": self.plan_id,
+        }
         ctx.session.state[key] = value
         yield _emit(self.name, {key: value})
 
@@ -62,18 +67,26 @@ class SelectionGateAgent(BaseAgent):
 
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         # 並列で出そろった候補を確認（再現可能な視点が3つ揃っているか）
-        proposed = [
+        proposed = canned.normalize_candidates([
             ctx.session.state[k]
             for k in ctx.session.state.keys()
             if k.startswith(K.CAND_PREFIX)
-        ]
-        reject_log = [e.model_dump(by_alias=True) for e in canned.selection_reject_log()]
-        approved = list(canned.ARRIVAL_PLAN_IDS)
+        ])
+        reject_log_entries = canned.selection_reject_log(proposed)
+        approved = canned.approved_plan_ids(proposed, reject_log_entries)
+        candidates = [c.model_dump(by_alias=True) for c in proposed]
+        reject_log = [e.model_dump(by_alias=True) for e in reject_log_entries]
+        ctx.session.state[K.CANDIDATES] = candidates
         ctx.session.state[K.REJECT_LOG] = reject_log
         ctx.session.state[K.APPROVED_PLAN_IDS] = approved
         yield _emit(
             self.name,
-            {K.REJECT_LOG: reject_log, K.APPROVED_PLAN_IDS: approved, "candidate_count": len(proposed)},
+            {
+                K.CANDIDATES: candidates,
+                K.REJECT_LOG: reject_log,
+                K.APPROVED_PLAN_IDS: approved,
+                "candidate_count": len(proposed),
+            },
         )
 
 
@@ -81,7 +94,8 @@ class AuthorAgendaAgent(BaseAgent):
     """STEP3: 採用企画に対し、作家ペルソナの文体で序文＋アジェンダを生成（=入荷書籍）。"""
 
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        books = [b.model_dump(by_alias=True) for b in canned.arrival_books()]
+        approved = ctx.session.state.get(K.APPROVED_PLAN_IDS, [])
+        books = [b.model_dump(by_alias=True) for b in canned.arrival_books(approved)]
         ctx.session.state[K.BOOKS] = books
         yield _emit(self.name, {K.BOOKS: books})
 

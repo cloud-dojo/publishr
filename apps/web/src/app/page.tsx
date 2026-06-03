@@ -6,19 +6,23 @@ import type { Book } from "@publishr/shared-schema";
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
-import { useActions, useProvider } from "@/data/hooks";
+import { useActions, usePlanningCandidates, useProvider } from "@/data/hooks";
 
 type ArrivalStatus = "idle" | "running" | "success" | "error";
 
 export default function HomePage() {
   const provider = useProvider();
   const { runPipeline } = useActions();
+  const { approvedPlanIds } = usePlanningCandidates();
   const [arrivalStatus, setArrivalStatus] = useState<ArrivalStatus>("idle");
   const [arrivalMessage, setArrivalMessage] = useState("企画：編集会議 AI ／ 装丁：Imagen");
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason;
 
-  const arrivals = provider.booksByShelf("arrivals");
+  const approvedPlanSet = new Set(approvedPlanIds);
+  const arrivals = provider
+    .booksByShelf("arrivals")
+    .filter((b) => approvedPlanSet.size === 0 || approvedPlanSet.has(b.planId));
   const press = provider.booksByShelf("press");
   const odd = provider.booksByShelf("odd");
   const user = provider.getUser(DEMO_USER_ID);

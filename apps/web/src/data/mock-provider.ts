@@ -2,7 +2,14 @@
 import { fixtures } from "@publishr/shared-schema";
 import type { FeedbackInput } from "@publishr/shared-schema";
 
-import { CANNED_DEBATE, CANNED_OBSERVATION, CANNED_READER_PROFILE, cannedBody } from "./canned";
+import {
+  CANNED_APPROVED_PLAN_IDS,
+  CANNED_CANDIDATES,
+  CANNED_DEBATE,
+  CANNED_OBSERVATION,
+  CANNED_READER_PROFILE,
+  cannedBody,
+} from "./canned";
 import { timing } from "./config";
 import { BaseProvider } from "./provider";
 
@@ -14,6 +21,8 @@ export class MockProvider extends BaseProvider {
     fixtures.users.forEach((u) => this.users.set(u.id, u));
     this.observation = CANNED_OBSERVATION;
     this.readerProfile = CANNED_READER_PROFILE;
+    this.candidates = CANNED_CANDIDATES;
+    this.approvedPlanIds = CANNED_APPROVED_PLAN_IDS;
     this.debate = CANNED_DEBATE;
   }
 
@@ -52,6 +61,8 @@ export class MockProvider extends BaseProvider {
   async runPipeline(): Promise<void> {
     this.observation = CANNED_OBSERVATION;
     this.readerProfile = CANNED_READER_PROFILE;
+    this.candidates = CANNED_CANDIDATES;
+    this.approvedPlanIds = CANNED_APPROVED_PLAN_IDS;
     this.debate = CANNED_DEBATE;
     this.notify();
   }

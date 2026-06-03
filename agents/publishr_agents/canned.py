@@ -9,6 +9,7 @@ from collections import Counter
 
 from publishr_schema import (
     Book,
+    PlanningCandidate,
     Plan,
     User,
     load_books,
@@ -19,8 +20,7 @@ from publishr_schema import (
 
 from .result import RejectLogEntry
 
-# 今朝の入荷として produce する企画（フィクスチャの arrivals 棚に対応）
-ARRIVAL_PLAN_IDS = ["plan_makase", "plan_toi", "plan_shijizero", "plan_suuji"]
+_CANDIDATE_ORDER = {"practical": 0, "framework": 1, "contrarian": 2}
 
 
 def get_user(user_id: str | None) -> User | None:
@@ -67,33 +67,65 @@ def planning_candidates() -> list[dict]:
     """STEP2: 主題（任せ方）に対する3つの永続ペルソナの企画候補。"""
     return [
         {"key": "practical", "persona": "実務直撃型", "candidate": "任せ方の設計図", "planId": "plan_makase"},
-        {"key": "framework", "persona": "フレームワーク型", "candidate": "権限委譲5原則", "planId": None},
-        {"key": "contrarian", "persona": "逆張り型", "candidate": "あえて抱え込め", "planId": None},
+        {"key": "framework", "persona": "フレームワーク型", "candidate": "問いで動かす現場", "planId": "plan_toi"},
+        {"key": "contrarian", "persona": "逆張り型", "candidate": "あえて抱え込め", "planId": "plan_shijizero"},
     ]
 
 
-def selection_reject_log() -> list[RejectLogEntry]:
+def normalize_candidates(candidates: list[dict]) -> list[PlanningCandidate]:
+    """並列実行で順序が揺れても、企画者の既定順へ揃える。"""
+    parsed = [PlanningCandidate.model_validate(c) for c in candidates]
+    return sorted(parsed, key=lambda c: _CANDIDATE_ORDER.get(c.key, 99))
+
+
+def selection_reject_log(candidates: list[PlanningCandidate]) -> list[RejectLogEntry]:
     """STEP2選抜ゲート（対立①）: R1で全却下→再提出、R2で採否確定。"""
-    return [
-        RejectLogEntry(round=1, candidate="任せ方の設計図", persona="実務直撃型", verdict="却下",
-                       reason="方向性は良いが具体性が不足。30名の局面に寄せて再提出せよ。"),
-        RejectLogEntry(round=1, candidate="権限委譲5原則", persona="フレームワーク型", verdict="却下",
-                       reason="一般論に寄りすぎ。既製書との差別化を出して再提出。"),
-        RejectLogEntry(round=1, candidate="あえて抱え込め", persona="逆張り型", verdict="却下",
-                       reason="逆張りの意図は買うが論拠が粗い。根拠を添えて再提出。"),
-        RejectLogEntry(round=2, candidate="任せ方の設計図", persona="実務直撃型", verdict="採用",
-                       reason="局面に最も的中。30名移行期の『任せ方』に直結。"),
-        RejectLogEntry(round=2, candidate="権限委譲5原則", persona="フレームワーク型", verdict="却下",
-                       reason="依然として一般論。あなたの現場への接続が弱い。"),
-        RejectLogEntry(round=2, candidate="あえて抱え込め", persona="逆張り型", verdict="保留",
-                       reason="視点は鋭いが時期尚早。次回の候補として保留。"),
-    ]
+    round1_reasons = {
+        "practical": "方向性は良いが具体性が不足。30名の局面に寄せて再提出せよ。",
+        "framework": "一般論に寄りすぎ。既製書との差別化を出して再提出。",
+        "contrarian": "逆張りの意図は買うが論拠が粗い。根拠を添えて再提出。",
+    }
+    round2 = {
+        "practical": ("採用", "局面に最も的中。30名移行期の『任せ方』に直結。"),
+        "framework": ("採用", "指示を減らす問いの設計が、現場の自走課題に接続している。"),
+        "contrarian": ("保留", "視点は鋭いが時期尚早。次回の候補として保留。"),
+    }
+    entries: list[RejectLogEntry] = []
+    for c in candidates:
+        entries.append(
+            RejectLogEntry(
+                round=1,
+                candidate=c.candidate,
+                persona=c.persona,
+                verdict="却下",
+                reason=round1_reasons.get(c.key, "根拠を補強して再提出。"),
+            )
+        )
+    for c in candidates:
+        verdict, reason = round2.get(c.key, ("却下", "あなたの現場への接続が弱い。"))
+        entries.append(
+            RejectLogEntry(
+                round=2,
+                candidate=c.candidate,
+                persona=c.persona,
+                verdict=verdict,
+                reason=reason,
+            )
+        )
+    return entries
 
 
-def arrival_plans() -> list[Plan]:
+def approved_plan_ids(candidates: list[PlanningCandidate], reject_log: list[RejectLogEntry]) -> list[str]:
+    adopted = {e.candidate for e in reject_log if e.round == 2 and e.verdict == "採用"}
+    return [c.plan_id for c in candidates if c.plan_id and c.candidate in adopted]
+
+
+def arrival_plans(plan_ids: list[str] | None = None) -> list[Plan]:
     plans = {p.id: p for p in load_plans()}
-    return [plans[pid] for pid in ARRIVAL_PLAN_IDS if pid in plans]
+    ids = ["plan_makase", "plan_toi", "plan_shijizero", "plan_suuji"] if plan_ids is None else plan_ids
+    return [plans[pid] for pid in ids if pid in plans]
 
 
-def arrival_books() -> list[Book]:
-    return [b for b in load_books() if b.shelf == "arrivals"]
+def arrival_books(plan_ids: list[str] | None = None) -> list[Book]:
+    allowed = None if plan_ids is None else set(plan_ids)
+    return [b for b in load_books() if b.shelf == "arrivals" and (allowed is None or b.plan_id in allowed)]

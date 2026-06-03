@@ -103,6 +103,8 @@ export class BffProvider extends BaseProvider {
     result.books.forEach((b) => this.books.set(b.id, b));
     this.observation = result.observation;
     this.readerProfile = result.readerProfile;
+    this.candidates = result.candidates;
+    this.approvedPlanIds = result.approvedPlanIds;
     this.debate = result.rejectLog;
     this.notify();
   }

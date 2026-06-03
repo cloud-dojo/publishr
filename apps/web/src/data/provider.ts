@@ -6,6 +6,7 @@ import type {
   Observation,
   Persona,
   Plan,
+  PlanningCandidate,
   ReaderProfile,
   RejectLogEntry,
   User,
@@ -21,6 +22,8 @@ export abstract class BaseProvider {
   protected debate: RejectLogEntry[] = [];
   protected observation: Observation | null = null;
   protected readerProfile: ReaderProfile | null = null;
+  protected candidates: PlanningCandidate[] = [];
+  protected approvedPlanIds: string[] = [];
   ready = false;
 
   private listeners = new Set<Listener>();
@@ -81,6 +84,12 @@ export abstract class BaseProvider {
   }
   getDebate(): RejectLogEntry[] {
     return this.debate;
+  }
+  getCandidates(): PlanningCandidate[] {
+    return this.candidates;
+  }
+  getApprovedPlanIds(): string[] {
+    return this.approvedPlanIds;
   }
   getObservation(): Observation | null {
     return this.observation;

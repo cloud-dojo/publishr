@@ -10,7 +10,7 @@ import { BookCover } from "@/components/book/BookCover";
 import { DebateCandidates } from "@/components/writing/DebateCandidates";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
-import { useDebate, useProvider, useReaderAnalysis } from "@/data/hooks";
+import { useDebate, usePlanningCandidates, useProvider, useReaderAnalysis } from "@/data/hooks";
 
 type StepState = "done" | "active" | "pending";
 
@@ -28,6 +28,7 @@ export default function WritingPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
   const debate = useDebate();
+  const { candidates, approvedPlanIds } = usePlanningCandidates();
   const { observation, readerProfile } = useReaderAnalysis();
   const book = provider.getBook(params.bookId);
 
@@ -116,7 +117,7 @@ export default function WritingPage() {
             <div className="st-desc">
               3名の企画 AI が異なる切り口で競合 → 企画リーダーが根拠つきで選抜（対立①・却下→再提出）。
             </div>
-            <DebateCandidates entries={debate} />
+            <DebateCandidates entries={debate} candidates={candidates} approvedPlanIds={approvedPlanIds} />
           </div>
 
           <div className="step done">

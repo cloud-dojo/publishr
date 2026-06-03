@@ -8,10 +8,11 @@ from publishr_agents.pipeline import run_pipeline
 
 def test_pipeline_produces_arrivals():
     result = run_pipeline("u_tadokoro")
-    assert len(result.books) >= 4
+    assert len(result.books) >= 2
     assert all(b.status == "draft" for b in result.books)
     assert all(b.shelf == "arrivals" for b in result.books)
-    assert len(result.plans) >= 4
+    assert {p.id for p in result.plans} == set(result.approved_plan_ids)
+    assert {b.plan_id for b in result.books} == set(result.approved_plan_ids)
 
 
 def test_pipeline_exposes_reader_analysis():
@@ -30,6 +31,18 @@ def test_reject_then_resubmit_logged():
     assert round1, "R1のログがある"
     assert all(e.verdict == "却下" for e in round1), "R1は全却下"
     assert any(e.verdict == "採用" for e in round2), "R2で採用が出る"
+
+
+def test_selection_uses_planning_candidates():
+    result = run_pipeline("u_tadokoro")
+    candidate_names = {c.candidate for c in result.candidates}
+    assert len(candidate_names) == 3
+    assert {e.candidate for e in result.reject_log} == candidate_names
+    assert set(result.approved_plan_ids) == {
+        c.plan_id for c in result.candidates if c.plan_id and c.candidate in {
+            e.candidate for e in result.reject_log if e.round == 2 and e.verdict == "採用"
+        }
+    }
 
 
 def test_hero_plan_approved():
