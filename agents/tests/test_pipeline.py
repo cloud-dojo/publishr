@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from publishr_agents import canned
 from publishr_agents.authoring import write_body
 from publishr_agents.pipeline import run_pipeline
 
@@ -76,3 +77,13 @@ def test_author_agenda_uses_plan_and_persona_voice():
         "朝会を、問いの場に変える",
         "問いが文化になるとき",
     ]
+
+
+def test_cover_variant_assigned_from_plan_and_persona():
+    assert canned.cover_variant_for("plan_makase", "p_kirishima", "30人を、ひとりで背負わない。") == "b1"
+    assert canned.cover_variant_for("plan_toi", "p_azumi", '"問い"で動かす現場') == "b2"
+    fallback = canned.cover_variant_for("plan_unknown", "p_unknown", "未知の本")
+    assert fallback.startswith("b") and 1 <= int(fallback[1:]) <= 10
+    result = run_pipeline("u_tadokoro")
+    variants = {b.plan_id: b.cover_variant for b in result.books}
+    assert variants == {"plan_makase": "b1", "plan_toi": "b2"}

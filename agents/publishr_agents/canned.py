@@ -208,3 +208,44 @@ def compose_arrival_books(plan_ids: list[str] | None = None) -> list[Book]:
             )
         )
     return books
+
+
+def cover_variant_for(plan_id: str, author_persona_id: str, title: str) -> str:
+    """Imagen代替の決定的な装丁variant割当。globals.css の cover--b1..b10 に対応。"""
+    plan_variants = {
+        "plan_makase": "b1",
+        "plan_toi": "b2",
+        "plan_shijizero": "b3",
+        "plan_suuji": "b4",
+    }
+    persona_variants = {
+        "p_kirishima": "b1",
+        "p_azumi": "b2",
+        "p_yuki": "b3",
+        "p_shiraishi": "b4",
+    }
+    if plan_id in plan_variants:
+        return plan_variants[plan_id]
+    if author_persona_id in persona_variants:
+        return persona_variants[author_persona_id]
+    return f"b{(sum(ord(ch) for ch in title) % 10) + 1}"
+
+
+def assign_cover_variants(books: list[Book]) -> list[Book]:
+    assigned: list[Book] = []
+    for book in books:
+        if book.shelf != "arrivals":
+            assigned.append(book)
+            continue
+        assigned.append(
+            book.model_copy(
+                update={
+                    "cover_variant": cover_variant_for(
+                        book.plan_id,
+                        book.author_persona_id,
+                        book.title,
+                    )
+                }
+            )
+        )
+    return assigned

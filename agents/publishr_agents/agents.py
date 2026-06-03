@@ -10,6 +10,7 @@ from typing import AsyncGenerator, Optional
 from google.adk.agents import BaseAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
+from publishr_schema import Book
 
 from . import canned
 from . import state_keys as K
@@ -101,8 +102,10 @@ class AuthorAgendaAgent(BaseAgent):
 
 
 class CoverAgent(BaseAgent):
-    """STEP4: 装丁（Imagen代替）。coverVariant は各書籍に付与済みのため確認のみ。"""
+    """STEP4: 装丁（Imagen代替）。plan/persona/title から CSS variant を決定する。"""
 
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        books = ctx.session.state.get(K.BOOKS, [])
-        yield _emit(self.name, {"covers_assigned": len(books)})
+        books = [Book.model_validate(b) for b in ctx.session.state.get(K.BOOKS, [])]
+        assigned = [b.model_dump(by_alias=True) for b in canned.assign_cover_variants(books)]
+        ctx.session.state[K.BOOKS] = assigned
+        yield _emit(self.name, {K.BOOKS: assigned, "covers_assigned": len(assigned)})
