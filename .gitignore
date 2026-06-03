@@ -27,6 +27,7 @@ service-account*.json
 # Local/private planning docs
 .github/CODEOWNERS
 docs/
+.cursor/
 
 # OS / editor
 .DS_Store
