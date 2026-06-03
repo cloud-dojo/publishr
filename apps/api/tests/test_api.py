@@ -89,6 +89,10 @@ def test_pipeline_run_returns_reject_log():
     assert res.status_code == 200
     data = res.json()
     assert len(data["books"]) >= 4
+    assert data["observation"]["noteCount"] > 0
+    assert "管掌範囲の拡大" in data["observation"]["signals"]
+    assert "製造課長" in data["readerProfile"]["role"]
+    assert "30名規模" in data["readerProfile"]["situation"]
     assert len(data["rejectLog"]) >= 6
     assert any(e["round"] == 1 and e["verdict"] == "却下" for e in data["rejectLog"])
     assert any(e["round"] == 2 and e["verdict"] == "採用" for e in data["rejectLog"])

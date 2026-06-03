@@ -14,6 +14,14 @@ def test_pipeline_produces_arrivals():
     assert len(result.plans) >= 4
 
 
+def test_pipeline_exposes_reader_analysis():
+    result = run_pipeline("u_tadokoro")
+    assert result.observation.note_count > 0
+    assert "管掌範囲の拡大" in result.observation.signals
+    assert "製造課長" in result.reader_profile.role
+    assert "30名規模" in result.reader_profile.situation
+
+
 def test_reject_then_resubmit_logged():
     """基準1: 全却下→再提出が1回起き、再提出後に採用が出るログが残る。"""
     result = run_pipeline("u_tadokoro")

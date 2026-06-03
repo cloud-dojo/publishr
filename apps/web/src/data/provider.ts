@@ -3,8 +3,10 @@
 import type {
   Book,
   FeedbackInput,
+  Observation,
   Persona,
   Plan,
+  ReaderProfile,
   RejectLogEntry,
   User,
 } from "@publishr/shared-schema";
@@ -17,6 +19,8 @@ export abstract class BaseProvider {
   protected personas = new Map<string, Persona>();
   protected users = new Map<string, User>();
   protected debate: RejectLogEntry[] = [];
+  protected observation: Observation | null = null;
+  protected readerProfile: ReaderProfile | null = null;
   ready = false;
 
   private listeners = new Set<Listener>();
@@ -77,6 +81,12 @@ export abstract class BaseProvider {
   }
   getDebate(): RejectLogEntry[] {
     return this.debate;
+  }
+  getObservation(): Observation | null {
+    return this.observation;
+  }
+  getReaderProfile(): ReaderProfile | null {
+    return this.readerProfile;
   }
 
   abstract reserve(id: string): Promise<void>;

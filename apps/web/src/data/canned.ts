@@ -1,5 +1,19 @@
 // mockモード（API不要）用のキャンドデータ。Python側 publishr_agents/canned.py と一致。
-import type { RejectLogEntry } from "@publishr/shared-schema";
+import type { Observation, ReaderProfile, RejectLogEntry } from "@publishr/shared-schema";
+
+export const CANNED_OBSERVATION: Observation = {
+  noteCount: 7,
+  topLabels: ["マネジメント", "所感", "1on1", "組織", "体制"],
+  signals: ["管掌範囲の拡大", "1on1の負荷増", "属人化の懸念", "定量報告の要請"],
+};
+
+export const CANNED_READER_PROFILE: ReaderProfile = {
+  role: "製造業・製造課長／30名を統括",
+  situation: "10名から30名規模への移行期。情報と意思決定が本人に集中し、現場が止まりはじめている局面。",
+  interests: ["権限委譲", "属人化の解消", "意思決定", "1on1の負荷"],
+  signals: CANNED_OBSERVATION.signals,
+  serendipityTolerance: "中",
+};
 
 export const CANNED_DEBATE: RejectLogEntry[] = [
   { round: 1, candidate: "任せ方の設計図", persona: "実務直撃型", verdict: "却下", reason: "方向性は良いが具体性が不足。30名の局面に寄せて再提出せよ。" },

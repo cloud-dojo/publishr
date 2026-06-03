@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="google.ad
 from google.adk.agents import ParallelAgent, SequentialAgent  # noqa: E402
 from google.adk.runners import InMemoryRunner  # noqa: E402
 from google.genai import types  # noqa: E402
-from publishr_schema import Book  # noqa: E402
+from publishr_schema import Book, Observation, ReaderProfile  # noqa: E402
 
 from . import canned  # noqa: E402
 from . import state_keys as K  # noqa: E402
@@ -76,8 +76,16 @@ async def run_pipeline_async(user_id: str) -> PipelineResult:
 
     books = [Book.model_validate(b) for b in state.get(K.BOOKS, [])]
     reject_log = [RejectLogEntry.model_validate(e) for e in state.get(K.REJECT_LOG, [])]
+    observation = Observation.model_validate(state.get(K.OBSERVATION, {}))
+    reader_profile = ReaderProfile.model_validate(state.get(K.READER_PROFILE, {}))
     plans = canned.arrival_plans()
-    return PipelineResult(plans=plans, books=books, reject_log=reject_log)
+    return PipelineResult(
+        plans=plans,
+        books=books,
+        observation=observation,
+        reader_profile=reader_profile,
+        reject_log=reject_log,
+    )
 
 
 def run_pipeline(user_id: str) -> PipelineResult:

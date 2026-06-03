@@ -72,6 +72,20 @@ export interface Plan {
   recommendedAuthorTypes: string[];
 }
 
+export interface Observation {
+  noteCount: number;
+  topLabels: string[];
+  signals: string[];
+}
+
+export interface ReaderProfile {
+  role: string;
+  situation: string;
+  interests: string[];
+  signals: string[];
+  serendipityTolerance: string;
+}
+
 export interface AgendaItem {
   no: string;
   title: string;
@@ -119,6 +133,8 @@ export interface RejectLogEntry {
 export interface PipelineResult {
   plans: Plan[];
   books: Book[];
+  observation: Observation;
+  readerProfile: ReaderProfile;
   rejectLog: RejectLogEntry[];
 }
 

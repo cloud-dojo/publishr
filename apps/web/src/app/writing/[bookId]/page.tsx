@@ -9,7 +9,8 @@ import type { Book } from "@publishr/shared-schema";
 import { BookCover } from "@/components/book/BookCover";
 import { DebateCandidates } from "@/components/writing/DebateCandidates";
 import { Topbar } from "@/components/shell/Topbar";
-import { useDebate, useProvider } from "@/data/hooks";
+import { DEMO_USER_ID } from "@/data/config";
+import { useDebate, useProvider, useReaderAnalysis } from "@/data/hooks";
 
 type StepState = "done" | "active" | "pending";
 
@@ -27,6 +28,7 @@ export default function WritingPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
   const debate = useDebate();
+  const { observation, readerProfile } = useReaderAnalysis();
   const book = provider.getBook(params.bookId);
 
   useEffect(() => {
@@ -44,10 +46,20 @@ export default function WritingPage() {
   }
 
   const persona = provider.getPersona(book.authorPersonaId);
+  const plan = provider.getPlan(book.planId);
+  const user = provider.getUser(DEMO_USER_ID);
   const s = stepStates(book.status);
   const isPublished = book.status === "published";
   const pct =
     book.feedback.readPercent > 0 ? `${book.feedback.readPercent}%` : isPublished ? "100%" : "執筆中";
+  const readerRole = readerProfile?.role || user?.profile.role || "読者";
+  const readerSituation = readerProfile?.situation || plan?.readerSituation || "企画に紐づく局面を分析中。";
+  const readerInterests = readerProfile?.interests.length
+    ? readerProfile.interests
+    : user?.profile.estimatedInterests ?? [];
+  const readerSignals = readerProfile?.signals.length
+    ? readerProfile.signals
+    : observation?.signals ?? [];
 
   return (
     <>
@@ -89,7 +101,9 @@ export default function WritingPage() {
             <div className="st-desc">
               いまの局面を推定。
               <span className="quote">
-                役職：製造課長／局面：30名規模への移行期／関心：権限委譲・属人化
+                役職：{readerRole}／局面：{readerSituation}
+                {readerInterests.length > 0 ? `／関心：${readerInterests.join("・")}` : ""}
+                {readerSignals.length > 0 ? `／観測シグナル：${readerSignals.join("・")}` : ""}
               </span>
             </div>
           </div>

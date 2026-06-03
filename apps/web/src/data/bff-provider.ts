@@ -101,6 +101,8 @@ export class BffProvider extends BaseProvider {
     const result = await jpost<PipelineResult>("/pipeline/run", { userId });
     result.plans.forEach((p) => this.plans.set(p.id, p));
     result.books.forEach((b) => this.books.set(b.id, b));
+    this.observation = result.observation;
+    this.readerProfile = result.readerProfile;
     this.debate = result.rejectLog;
     this.notify();
   }

@@ -72,6 +72,20 @@ export const planSchema = z.object({
   recommendedAuthorTypes: z.array(z.string()),
 });
 
+export const observationSchema = z.object({
+  noteCount: z.number(),
+  topLabels: z.array(z.string()),
+  signals: z.array(z.string()),
+});
+
+export const readerProfileSchema = z.object({
+  role: z.string(),
+  situation: z.string(),
+  interests: z.array(z.string()),
+  signals: z.array(z.string()),
+  serendipityTolerance: z.string(),
+});
+
 export const agendaItemSchema = z.object({
   no: z.string(),
   title: z.string(),
@@ -117,5 +131,7 @@ export const rejectLogEntrySchema = z.object({
 export const pipelineResultSchema = z.object({
   plans: z.array(planSchema),
   books: z.array(bookSchema),
+  observation: observationSchema,
+  readerProfile: readerProfileSchema,
   rejectLog: z.array(rejectLogEntrySchema),
 });

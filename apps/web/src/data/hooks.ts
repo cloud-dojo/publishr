@@ -2,7 +2,15 @@
 
 import { useEffect, useReducer } from "react";
 
-import type { Book, Persona, Plan, RejectLogEntry, User } from "@publishr/shared-schema";
+import type {
+  Book,
+  Observation,
+  Persona,
+  Plan,
+  ReaderProfile,
+  RejectLogEntry,
+  User,
+} from "@publishr/shared-schema";
 
 import { getProvider } from "./index";
 import type { BaseProvider } from "./provider";
@@ -47,6 +55,17 @@ export function useUser(id: string): User | undefined {
 export function useDebate(): RejectLogEntry[] {
   const provider = useProvider();
   return provider.getDebate();
+}
+
+export function useReaderAnalysis(): {
+  observation: Observation | null;
+  readerProfile: ReaderProfile | null;
+} {
+  const provider = useProvider();
+  return {
+    observation: provider.getObservation(),
+    readerProfile: provider.getReaderProfile(),
+  };
 }
 
 export function useActions() {

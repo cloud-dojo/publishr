@@ -88,6 +88,20 @@ class Plan(_Base):
     recommended_author_types: list[str] = Field(default_factory=list)
 
 
+class Observation(_Base):
+    note_count: int = 0
+    top_labels: list[str] = Field(default_factory=list)
+    signals: list[str] = Field(default_factory=list)
+
+
+class ReaderProfile(_Base):
+    role: str = ""
+    situation: str = ""
+    interests: list[str] = Field(default_factory=list)
+    signals: list[str] = Field(default_factory=list)
+    serendipity_tolerance: str = ""
+
+
 class AgendaItem(_Base):
     no: str
     title: str
