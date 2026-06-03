@@ -78,10 +78,15 @@ def test_reserve_then_conflict():
 def test_feedback_updates():
     published = client.get("/books", params={"status": "published"}).json()[0]
     bid = published["id"]
-    res = client.post(f"/books/{bid}/feedback", json={"rating": 5, "wantsSequel": True})
+    res = client.post(
+        f"/books/{bid}/feedback",
+        json={"rating": 5, "wantsSequel": True, "readPercent": 25, "readingReaction": "helpful"},
+    )
     assert res.status_code == 200
     fb = res.json()["feedback"]
     assert fb["rating"] == 5 and fb["wantsSequel"] is True
+    assert fb["readPercent"] == 25
+    assert fb["readingReaction"] == "helpful"
 
 
 def test_reading_state_updates_granularity_and_annotations():

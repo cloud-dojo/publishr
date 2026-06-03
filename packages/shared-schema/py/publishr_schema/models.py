@@ -123,6 +123,7 @@ class Feedback(_Base):
     dropped: bool = False
     rating: Optional[int] = None
     wants_sequel: bool = False
+    reading_reaction: Optional[str] = None
 
 
 class ReadingAnnotation(_Base):

@@ -107,6 +107,7 @@ export interface Feedback {
   dropped: boolean;
   rating: number | null;
   wantsSequel: boolean;
+  readingReaction?: string | null;
 }
 
 export interface ReadingAnnotation {
@@ -163,6 +164,7 @@ export interface FeedbackInput {
   dropped?: boolean;
   rating?: number | null;
   wantsSequel?: boolean;
+  readingReaction?: string | null;
 }
 
 export interface ReadingStateInput {

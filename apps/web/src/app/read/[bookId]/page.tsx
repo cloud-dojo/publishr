@@ -9,7 +9,12 @@ import type { Granularity, ReadingAnnotation } from "@publishr/shared-schema";
 import { Topbar } from "@/components/shell/Topbar";
 import { useActions, useProvider } from "@/data/hooks";
 
-const FB_OPTIONS = ["▲ まさに今ほしかった", "○ 参考になった", "△ 少し一般的すぎる", "▽ 自分には早い"];
+const FB_OPTIONS = [
+  { key: "timely", mark: "▲", label: "まさに今ほしかった" },
+  { key: "helpful", mark: "○", label: "参考になった" },
+  { key: "generic", mark: "△", label: "少し一般的すぎる" },
+  { key: "early", mark: "▽", label: "自分には早い" },
+];
 const GRANULARITY_LABELS: Record<Granularity, string> = {
   full: "フル",
   summary: "要約",
@@ -45,7 +50,7 @@ function parseBody(body: string): { chapter: string; paras: string[] } {
 export default function ReaderPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { updateReadingState } = useActions();
+  const { sendFeedback, updateReadingState } = useActions();
   const [fb, setFb] = useState<number | null>(null);
   const [draftAnnotations, setDraftAnnotations] = useState<ReadingAnnotation[] | null>(null);
   const book = provider.getBook(params.bookId);
@@ -64,6 +69,8 @@ export default function ReaderPage() {
     ? parseBody(book.body)
     : { chapter: book.subtitle || book.title, paras: book.prefaceSample.split("\n\n").filter(Boolean) };
   const annotations = draftAnnotations ?? book.annotations ?? [];
+  const savedProgress = book.feedback.readPercent;
+  const nextProgress = savedProgress >= 100 ? 100 : Math.min(95, Math.max(25, savedProgress + 25));
   const visibleParas =
     book.granularity === "excerpt"
       ? content.paras.slice(0, 1).map((p) => (p.includes("。") ? `${p.split("。")[0]}。` : p))
@@ -94,6 +101,13 @@ export default function ReaderPage() {
     const merged = [...nextAnnotations, next];
     setDraftAnnotations(merged);
     saveReadingState({ annotations: merged });
+  };
+  const saveProgress = (readPercent = nextProgress) => {
+    void sendFeedback(book.id, { readPercent });
+  };
+  const saveReaction = (reactionKey: string, index: number) => {
+    setFb(index);
+    void sendFeedback(book.id, { readingReaction: reactionKey });
   };
 
   return (
@@ -169,13 +183,13 @@ export default function ReaderPage() {
             </div>
             <div className="fb-q">この章は、いまのあなたに役立ちそうですか？</div>
             <div className="fb-opts">
-              {FB_OPTIONS.map((label, i) => (
+              {FB_OPTIONS.map((option, i) => (
                 <div
-                  key={i}
-                  className={`chip ${fb === i ? "on" : ""}`}
-                  onClick={() => setFb(i)}
+                  key={option.key}
+                  className={`chip ${fb === i || book.feedback.readingReaction === option.key ? "on" : ""}`}
+                  onClick={() => saveReaction(option.key, i)}
                 >
-                  {label}
+                  {option.mark} {option.label}
                 </div>
               ))}
             </div>
@@ -187,15 +201,20 @@ export default function ReaderPage() {
           <Link href={`/read/${book.id}/finish`} className="btn btn--gold btn--block">
             読み終えた → 感想を書く
           </Link>
+          <button type="button" className="btn btn--ghost btn--block" onClick={() => saveProgress()}>
+            ここまで読んだ（{nextProgress}%に更新）
+          </button>
         </aside>
       </div>
 
       <div className="progress-foot">
         <span className="ptext">本文 / 全{book.estimatedChapters}章</span>
         <div className="pbar">
-          <i style={{ width: "62%" }} />
+          <i style={{ width: `${savedProgress}%` }} />
         </div>
-        <span className="ptext">62% ・ 残り約{Math.round(book.estimatedMinutes * 0.38)}分</span>
+        <span className="ptext">
+          {savedProgress}% ・ 残り約{Math.round(book.estimatedMinutes * (1 - savedProgress / 100))}分
+        </span>
       </div>
     </>
   );

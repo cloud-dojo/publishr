@@ -17,6 +17,7 @@ class FeedbackInput(_Camel):
     dropped: Optional[bool] = None
     rating: Optional[int] = None
     wants_sequel: Optional[bool] = None
+    reading_reaction: Optional[str] = None
 
 
 class ReadingAnnotationInput(_Camel):

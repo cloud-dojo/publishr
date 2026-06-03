@@ -107,6 +107,7 @@ export const feedbackSchema = z.object({
   dropped: z.boolean(),
   rating: z.number().nullable(),
   wantsSequel: z.boolean(),
+  readingReaction: z.string().nullish(),
 });
 
 export const readingAnnotationSchema = z.object({
