@@ -24,9 +24,10 @@ venv/
 *.key.json
 service-account*.json
 
-# Local/private planning docs
+# Local/private planning docs（docs/設計 のみ共有=新構想の仕様。計画/UI仕様/インフラ/ピッチ/索引は private）
 .github/CODEOWNERS
-docs/
+docs/*
+!docs/設計/
 .cursor/
 
 # OS / editor
