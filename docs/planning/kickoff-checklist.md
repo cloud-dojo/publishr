@@ -9,10 +9,10 @@
 
 ## 🧭 現在地（2026-06-04）
 
-> **着手前ゲートの通過状況**：環境構築（層2）の **GCP/OAuth/Secrets/リポ/scaffold は✅完了**。残るゲートは **①友人MTGの握り（層1・明日夕方予定）②鉄田の残素材（initialProfile・デモ台本）③gcloud×Norton（WSL2）**。これらが片付けば W1「ADK疎通」に進める。
+> **着手前ゲートの通過状況**：環境構築（層2）＋鉄田単独タスク（層3）は**✅完了**。**残るゲートは ①友人MTGの握り（層1・明日夕方予定）のみ**。これを通過すれば W1「ADK疎通」に進める。
 > - ✅ 済：GCP基盤・IAM2人・OAuth一式(Production)・Secrets6本・リポ/collaborator・モノレポscaffold・prompts11本・Eval Set・サンプル3ソース
-> - ⏸ MTG待ち：役割分担最終合意・ADK実現性・Drive Picker(G1-13)・Cloud Build方式(G1-18)・OAuth公開(G1-19)・通知方式(G1-15)
-> - 🔜 今すぐ着手可（鉄田）：initialProfile選択肢／デモ台本カット割り／gcloud×Norton恒久対処
+> - ✅ 済（鉄田単独・6/4）：initialProfile選択肢確定／gcloud×Norton恒久対処／デモ＝カット割り廃止→動画台本2本立てへ置換
+> - ⏸ MTG待ち：役割分担最終合意・ADK実現性・Drive Picker(G1-13)・Cloud Build方式(G1-18)・OAuth公開(G1-19)・通知方式(G1-15)・**Firebase App Hosting の GitHub連携(G1-7・🔧一瀬／鉄田準備✅・PR #2)**
 > ※詳細な作業分解は [wbs.md](wbs.md)、論点の中身は [open-issues.md](open-issues.md)。
 
 ---
@@ -60,6 +60,7 @@
 | ☐ | **観測ログ保存先・エラー方針** | I-19/I-20 | ObservationBundleの保存先コレクション／Pub/Sub冪等キー・reserveトランザクション・Jobタイムアウトの最小方針 |
 | ☐ | **Cloud Build↔GitHub接続方式 A/B** | G1-18 | 論点＝自動デプロイの繋ぎ方。**A=GitHub App接続（個人リポなので所有者=一瀬のみ可）／B=Actionsから`gcloud builds submit`（鉄田側で完結・推奨）**。現状トリガー未接続を確認済。**AかBを握るだけ**（実装はW4） |
 | ☐ | **OAuth公開ステータスの最終確認** | G1-19 | 論点＝Testingだとrefreshトークン7日失効で週次自律バッチが停止。**現状Production設定済→「Production維持」で握る**。OAuth実装担当=一瀬につき確認 |
+| ☐ | **Firebase App Hosting の GitHub連携**（フロント本番ホスティング・🔧一瀬） | G1-7 | フロント＝`apps/web` を App Hosting で公開（決定済）。**GitHub App 連携はリポ所有者=一瀬のみ可**（鉄田collaborator不可で着手ブロック）→ **一瀬が backend 作成 or GitHub App 許可**。設定値: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数は `apps/web/apphosting.yaml` 済。鉄田準備(apphosting.yaml・mockビルド・PR #2)は✅。解除後は PR #2 マージ→自動デプロイ→URL確認 |
 
 ---
 
@@ -87,7 +88,7 @@
 | | タスク | 担当 | 完了条件 |
 |---|---|---|---|
 | ☐ | ローカル環境統一（Python 3.11 / ADK SDK / Node） | 👥 | バージョン固定 |
-| ☐ | **gcloud CLI×Norton の恒久対処（WSL2導入）** | 📘 | 6/4はブラウザ操作で暫定回避したが**CLI自体は未通**。NortonのHTTPS検査でgcloudが通らない→W1のADK/デプロイで必須。**WSL2導入推奨（要検証：回避できるかは環境依存）** |
+| ☑ | **gcloud CLI×Norton の恒久対処** | 📘 | ✅**2026-06-04完了**。W1のADK/デプロイでgcloud CLI利用可能（対処方式の詳細は `../infra/gcp-setup-log.md` に追記）。 |
 | ☐ | **CI/CD空パイプライン疎通**（push→Actions→Cloud Run "Hello"） | 🔧 | W1 Hello Worldと兼用 |
 
 ---
@@ -98,8 +99,8 @@
 |---|---|---|---|
 | ☑ | サンプル3ソース・Eval Set 8件（佐倉美咲） | 📘 | ✅完了（fixtures済・v2再構築済） |
 | ☑ | 全エージェントの完成プロンプト＋良い/悪い出力例 | 📘 | ✅完了（`packages/prompts/`） |
-| ☐ | **initialProfile 選択肢リストの確定**（業界/職種/役職/関心10〜20） | 📘 | W1。叩き台は`API契約 §2-a` |
-| ☐ | **デモ台本のカット割り（秒単位）** | 📘 | 「黄金の1カット」を秒分解。特に①企画スコア差し戻し②編集ループ③調査groundingを画に（基準1の証拠） |
+| ☑ | **initialProfile 選択肢リストの確定**（業界/職種/役職/関心10〜20） | 📘 | ✅**2026-06-04完了**。5ステップ（業界13/職種11/役職7/関心19/読み口7）を `apps/mockup/src/data/profileOptions.ts` に実装。叩き台`API契約 §2-a`準拠 |
+| ☑ | **デモ動画台本**（旧：カット割り秒単位） | 📘 | ✅**2026-06-04**＝カット割り廃止→**動画2本立て**に置換（①プロダクト紹介2.5分=審査提出用／②ピッチ内デモ60秒=体験のみ）。台本アウトライン作成済（`publishr_other/demo/動画台本/`）。残＝録画(W5) |
 | ☐(任意) | personas.json（新フレーム voiceStyle/format）の数件サンプル | 📘 | 都度生成へ移行済のため任意。`著者ペルソナ集.md`は参照素材で足りる |
 | ☐ | W1で各プロンプトを1回叩いてテスト→良い/悪い例を `eval/` fixtureへ兼用反映 | 📘+🔧 | スキーマ準拠・悪い例をreject確認（Langfuse実測） |
 
@@ -111,7 +112,7 @@
 
 | 週 | 期間 | 友人の★関門 | 鉄田の★関門 |
 |---|---|---|---|
-| **W1** | 6/1-6/7 | ADKで「担当者立案→リーダーがスコア差し戻し（調査サブ=Google検索grounding）」が動く＋コスト/タイムアウト実測 | UIテンプレ選定・initialProfile確定・デモ台本カット割り着手・プロンプト実テスト |
+| **W1** | 6/1-6/7 | ADKで「担当者立案→リーダーがスコア差し戻し（調査サブ=Google検索grounding）」が動く＋コスト/タイムアウト実測 | UIテンプレ選定・プロンプト実テスト（initialProfile確定✅／デモ動画台本✅は6/4完了） |
 | **W2** ⚡ | 6/8-6/14 | STEP0(Drive＋Calendar＋Tasks)→STEP1(3層Profile)→STEP2(3階層)→Firestore保存（モードA骨格） | 書店トップ＋本詳細(BookDraft 7項目)をFirestore購読で表示・登録UI |
 | **W3** | 6/15-6/21 | Scheduler曜日別起動＋STEP3キャスティング＋STEP4編集ループ(1R)＋予約→Pub/Sub→モードB本文編集ループ(最高3R) | 入荷理由F3・予約UI(同時5冊ガード)・読書/ハイライト・お気に入り著者UI・通知バナー |
 | **W4** | 6/22-6/28 | GitHub Actions自動デプロイ・Langfuse計装(2ループ＋grounding)・Eval 8件ゲート・Terraform・firestore.indexes | FB UI・棚の充実・世界観・Eval観点最終調整 |
@@ -120,6 +121,6 @@
 ---
 
 ## §5. 今すぐ動く「最初の3手」
-1. 📘 **友人MTGの日程を確定**（§1の全議題＝特にG1-13 Picker・G1-17 Langfuse方式・役割分担を握る）。
-2. 📘 **initialProfile選択肢の確定 ＋ デモ台本カット割り**に着手（素材・プロンプト・Evalは✅済）。
-3. 🔧 **MTG翌日：GitHubリポ＋モノレポscaffold＋CI空疎通**（GCPは構築済）→ W1 ADK疎通へ。
+1. ✅ 📘 ~~initialProfile選択肢の確定 ＋ デモ台本~~・gcloud×Norton恒久対処（**2026-06-04 すべて完了**／デモはカット割り廃止→動画台本2本立てへ置換）。
+2. 📘 **友人MTG（明日夕方）で§1の全議題を握る**＝特にG1-13 Picker・G1-17 Langfuse方式・役割分担。**鉄田単独タスクは完了済→残ゲートはこのMTGのみ**。
+3. 🔧 **MTG後：CI空パイプ疎通**（リポ/scaffold/GCPは構築済）→ W1 ADK疎通へ。

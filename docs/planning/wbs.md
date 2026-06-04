@@ -19,10 +19,12 @@
 > - **【6/4完了】GCP IAM 2人招待・OAuth同意画面(Production)・テストユーザー・OAuthクライアント`Publishr Web`発行・GitHub Secrets 計6本**（GCP_PROJECT_ID／GCP_SA_KEY／GOOGLE_OAUTH_CLIENT_ID／SECRET／LANGFUSE×2）
 > - GitHubリポ（一瀬所有・鉄田=collaborator）／モノレポscaffold（agents・apps・packages・eval・docs）／計画docsをrepoへ統合
 >
+> **【6/4完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・WP5.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・WP8.1)へ置換✅
+>
 > **⏳ 着手前に残っているゲート**（＝これを潰さないとW1に進めない／手戻りする）
-> - **友人MTG（最重要）**: ADK実現性(G1-1)・役割分担(G1-2)・**Drive Picker(G1-13)**・Cloud Build接続方式A/B(G1-18)・OAuth公開ステータス(G1-19)・通知方式(G1-15) を握る
-> - **鉄田の残素材**: initialProfile選択肢リスト(G1-9・WP5.2)／デモ台本カット割り(WP8.1)
-> - **環境の積み残し**: gcloud CLI×Norton の恒久対処（WSL2導入・**要検証**）／OAuth本番リダイレクトURI追記（backendデプロイ後・WP0.7／現状は仮の`localhost`のみ）
+> - **友人MTG（最重要・唯一の残ゲート）**: ADK実現性(G1-1)・役割分担(G1-2)・**Drive Picker(G1-13)**・Cloud Build接続方式A/B(G1-18)・OAuth公開ステータス(G1-19)・通知方式(G1-15) を握る
+> - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・WP0.7／現状は仮の`localhost`のみ）
+> - **フロント本番ホスティング（WP0.8・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(apphosting.yaml・mockビルド・**PR #2**)✅。**🔴ブロック=App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**→明日MTGで一瀬が backend 作成 or GitHub App 許可で解除
 >
 > ※状態マーク: **✅完了 ／ 🔜着手前（準備OK）／ ⏸MTG待ち**。各WP表のDoD列末尾に状態を付す。W1以降の実装WPは原則すべて 🔜/⏸（コード未着手）。
 
@@ -55,6 +57,7 @@ Publishr MVP
 | 0.5 | CI/CD空パイプライン疎通（push→Actions→Cloud Run "Hello"） | 🔧 | 0.3 | W1 | 自動デプロイの土台（W1 Hello Worldと兼用） 🔜着手前 |
 | 0.6 | ローカル環境統一（Python3.11/ADK SDK/Node） | 👥 | 0.3 | W1 | バージョン固定 |
 | 0.7 | **OAuth本番リダイレクトURI追記**（クライアント`Publishr Web`に `https://<backendのCloud Run URL>/api/auth/google/callback` を追加） | 🔧/📘 | backendデプロイ | W2-4 | 現状は仮 `http://localhost:8080/...` のみ。**バックエンドURL確定後**に本番URLを追記（CLIENT_ID/SECRETは不変）。OAuth一式・同意画面・スコープ・Secrets 2本は2026-06-04に✅済（GCP環境構築ログ参照） |
+| 0.8 | **Firebase App Hosting backend 作成（フロント本番ホスティング・GitHub App連携）** | 🔧一瀬 | 0.1 | W1 | `apps/web` を App Hosting で mock 公開（Netlifyから移行・G1-7）。設定: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数=`apps/web/apphosting.yaml`。**GitHub App連携はリポ所有者=一瀬のみ可**（鉄田collaborator不可）。鉄田準備(apphosting.yaml・mockビルド・**PR #2**)は✅。⏸**一瀬対応待ち**→解除後 PR #2 マージで自動デプロイ・URL確認・Netlify退役 |
 
 ## WP1. 自律企画エージェント（モードA・ADK）（W1-W3）
 | ID | タスク | 担当 | 依存 | 週 | DoD（IO契約参照） |
@@ -98,7 +101,7 @@ Publishr MVP
 | ID | タスク | 担当 | 依存 | 週 | DoD |
 |---|---|---|---|---|---|
 | 5.1 | 完成プロンプト＋良い/悪い例（11本） | 📘 | — | — | ✅完了（packages/prompts） |
-| 5.2 | initialProfile 選択肢リスト確定 | 📘 | — | W1 | 業界/職種/役職/関心10〜20（G1-9） |
+| 5.2 | initialProfile 選択肢リスト確定 | 📘 | — | W1 | 業界/職種/役職/関心10〜20（G1-9） ✅**2026-06-04完了**（5ステップ：業界13/職種11/役職7/関心19/読み口7。`apps/mockup/src/data/profileOptions.ts`） |
 | 5.3 | W1 各プロンプト実テスト→調整（スキーマ準拠・悪い例reject） | 📘+🔧 | 1.1 | W1-2 | Langfuseで出力確認 |
 | 5.4 | 良い/悪い例を eval fixture に兼用反映 | 📘 | 5.3,7.1 | W2 | few-shot＋Eval両用 |
 
@@ -120,7 +123,7 @@ Publishr MVP
 ## WP8. デモ・提出物（W4-W6・📘）
 | ID | タスク | 担当 | 依存 | 週 | DoD |
 |---|---|---|---|---|---|
-| 8.1 | デモ台本カット割り（秒単位・必然性3証跡を画に） | 📘 | — | W1-4 | 黄金の1カットを秒分解 |
+| 8.1 | デモ動画台本（必然性3証跡を画に） | 📘 | — | W1-4 | ~~カット割り（秒単位）~~→**動画2本立てに置換**：①プロダクト紹介2.5分(審査提出用・必然性を動画内で見せる)／②ピッチ内デモ60秒(体験オンリー)。台本アウトライン✅**2026-06-04**（`publishr_other/demo/動画台本/`）。残＝録画 |
 | 8.2 | デモのデータ戦略（seed投入 or ライブ／dev-prod切替） | 👥 | 全機能 | W5 | 録画再現性確保（I-14） |
 | 8.3 | デモ録画（カット編集で予約→入荷） | 📘 | 8.1,8.2 | W5 | 提出動画 |
 | 8.4 | ピッチ図解（自律アーキ・必然性・ループB将来） | 📘 | — | W4-5 | スライド |
