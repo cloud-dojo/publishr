@@ -8,6 +8,9 @@ import { fixtures } from "@publishr/shared-schema";
 const NAV = [
   { href: "/", ico: "❖", label: "あなたの書店" },
   { href: "/library", ico: "▤", label: "わたしの書庫" },
+  { href: "/highlights", ico: "❏", label: "ハイライト・付箋" },
+  { href: "/authors", ico: "✒", label: "著者の作家たち" },
+  { href: "/map", ico: "✦", label: "サイトマップ" },
 ];
 
 const SPINE: Record<string, string> = {
@@ -60,13 +63,13 @@ export function Sidebar() {
       </div>
 
       <div className="sidebar-foot">
-        <div className="reader-chip">
+        <Link href="/account" className="reader-chip">
           <span className="reader-avatar">{reader?.initial ?? "読"}</span>
           <span className="mini-meta">
             <span className="reader-name">{reader?.name ?? "ゲスト"}</span>
             <span className="reader-role">{reader?.profile.role ?? ""}</span>
           </span>
-        </div>
+        </Link>
       </div>
     </aside>
   );

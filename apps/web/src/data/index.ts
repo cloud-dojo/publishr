@@ -1,13 +1,26 @@
 import { BffProvider } from "./bff-provider";
 import { dataSource } from "./config";
+import { FirestoreProvider } from "./firestore-provider";
 import { MockProvider } from "./mock-provider";
 import { BaseProvider } from "./provider";
 
 let _provider: BaseProvider | null = null;
 
+function createProvider(): BaseProvider {
+  switch (dataSource) {
+    case "mock":
+      return new MockProvider();
+    // firestore 選択時のみ実体化（設定が無ければ FirestoreProvider が投げる）。
+    case "firestore":
+      return new FirestoreProvider();
+    default:
+      return new BffProvider();
+  }
+}
+
 export function getProvider(): BaseProvider {
   if (!_provider) {
-    _provider = dataSource === "mock" ? new MockProvider() : new BffProvider();
+    _provider = createProvider();
   }
   return _provider;
 }
