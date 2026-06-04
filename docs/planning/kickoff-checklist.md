@@ -7,18 +7,28 @@
 
 ---
 
+## 🧭 現在地（2026-06-04）
+
+> **着手前ゲートの通過状況**：環境構築（層2）の **GCP/OAuth/Secrets/リポ/scaffold は✅完了**。残るゲートは **①友人MTGの握り（層1・明日夕方予定）②鉄田の残素材（initialProfile・デモ台本）③gcloud×Norton（WSL2）**。これらが片付けば W1「ADK疎通」に進める。
+> - ✅ 済：GCP基盤・IAM2人・OAuth一式(Production)・Secrets6本・リポ/collaborator・モノレポscaffold・prompts11本・Eval Set・サンプル3ソース
+> - ⏸ MTG待ち：役割分担最終合意・ADK実現性・Drive Picker(G1-13)・Cloud Build方式(G1-18)・OAuth公開(G1-19)・通知方式(G1-15)
+> - 🔜 今すぐ着手可（鉄田）：initialProfile選択肢／デモ台本カット割り／gcloud×Norton恒久対処
+> ※詳細な作業分解は [wbs.md](wbs.md)、論点の中身は [open-issues.md](open-issues.md)。
+
+---
+
 ## §0. もう揃っているもの（作り直さない・着手の土台）
 
 | 区分 | 状態 | 所在 |
 |---|---|---|
-| 要件・スコープ・DoD | ☑ | 構想サマリーv0.2／`../設計/MVPスコープ.md` |
-| 技術アーキ・データモデル・週次ロードマップ | ☑ | `../設計/技術アーキテクチャ.md` |
-| エージェントIPO（全7ステップ）・I/O契約・制御フロー | ☑ | `../設計/エージェントIO契約.md`／`ADK制御フロー設計.md`／`エージェント責務サマリー.md` |
-| **完成プロンプト＋良い/悪い出力例（全エージェント11本）** | ☑ | `packages/prompts/` |
-| API契約・Firestoreルール・コスト概算・Langfuseトレース仕様 | ☑ | `../設計/` 各MD |
-| サンプル3ソース（Drive10/Calendar28/Tasks15・佐倉美咲） | ☑ | `../../デモ素材/fixtures/{drive,calendar,tasks}.json` |
-| Eval Set 8件（v2再構築・3層Profile/8項目plan/0-100/4観点） | ☑ | `../../デモ素材/fixtures/eval_set.json` |
-| **GCP環境**（Project `publishr-498123`／Firestore/Storage/SA/Secret Manager/Firebase/予算アラート） | ☑ | `../インフラ/GCP環境構築ログ.md` |
+| 要件・スコープ・DoD | ☑ | `../design/concept-summary.md`／`../design/mvp-scope.md` |
+| 技術アーキ・データモデル・週次ロードマップ | ☑ | `../design/tech-architecture.md` |
+| エージェントIPO（全7ステップ）・I/O契約・制御フロー | ☑ | `../design/agent-io-contract.md`／`adk-control-flow.md`／`agent-responsibilities.md` |
+| **完成プロンプト＋良い/悪い出力例（全エージェント11本）** | ☑ | `../../packages/prompts/` |
+| API契約・Firestoreルール・コスト概算・Langfuseトレース仕様 | ☑ | `../design/` 各MD |
+| サンプル3ソース（Drive10/Calendar28/Tasks15・佐倉美咲） | ☑ | `../../packages/shared-schema/fixtures/{drive,calendar,tasks}.json` |
+| Eval Set 8件（v2再構築・3層Profile/8項目plan/0-100/4観点） | ☑ | `../../eval/eval_set.yaml` |
+| **GCP環境**（Project `publishr-498123`／Firestore/Storage/SA/Secret Manager/Firebase/予算アラート） | ☑ | `../infra/gcp-setup-log.md` |
 
 ---
 
@@ -45,9 +55,11 @@
 | ☐ | **Drive Picker連携** ★最重要 | G1-13 | drive.fileはDrive走査不可→Google Picker前提を確定。選択粒度（ファイル/フォルダ）・folderIds/fileIdsの取得とサーバ保存・鉄田/友人の責務線 |
 | ☐ | **grounding課金** | G1-14 | 調査サブB/CのGoogle検索groundingの課金有無・単価。Eval多回実行時のガード（Eval時はgrounding無効化等） |
 | ☐ | **通知方式** | G1-15 | MVP=アプリ内Firestore購読＋バナーで確定（FCM不要）の合意 |
-| ☐ | **Langfuseトレース実装方式** | G1-17 | OTel経由 or Langfuse SDK直／grounding取得URLの取得元。仕様は`../設計/Langfuseトレース仕様.md`済 |
+| ☐ | **Langfuseトレース実装方式** | G1-17 | OTel経由 or Langfuse SDK直／grounding取得URLの取得元。仕様は`../design/langfuse-tracing.md`済 |
 | ☐ | **連携方式・予約・トークン保存の確認** | G1-3/5/6/7 | Firestore直＋API3本／予約=POST /reserve（同時5冊チェック）／OAuth refresh=Secret Manager／CORS・ベースパス |
 | ☐ | **観測ログ保存先・エラー方針** | I-19/I-20 | ObservationBundleの保存先コレクション／Pub/Sub冪等キー・reserveトランザクション・Jobタイムアウトの最小方針 |
+| ☐ | **Cloud Build↔GitHub接続方式 A/B** | G1-18 | 論点＝自動デプロイの繋ぎ方。**A=GitHub App接続（個人リポなので所有者=一瀬のみ可）／B=Actionsから`gcloud builds submit`（鉄田側で完結・推奨）**。現状トリガー未接続を確認済。**AかBを握るだけ**（実装はW4） |
+| ☐ | **OAuth公開ステータスの最終確認** | G1-19 | 論点＝Testingだとrefreshトークン7日失効で週次自律バッチが停止。**現状Production設定済→「Production維持」で握る**。OAuth実装担当=一瀬につき確認 |
 
 ---
 
@@ -57,16 +69,17 @@
 | | タスク | 担当 | 状態 |
 |---|---|---|---|
 | ☑ | GCPプロジェクト・Firestore・Storage・SA・Secret Manager・Firebase・予算アラート | 🔧 | ✅ `publishr-498123` 構築済 |
-| ☐ | **IAMで2人を招待**（鉄田のメール確定後） | 🔧 | コンソール閲覧・デプロイ権限 |
-| ☐ | **OAuth同意画面**（drive.file/calendar.readonly/tasks.readonly・テストモード＋テストユーザー登録） | 🔧 | デモ用Googleアカウントを承認 |
+| ☑ | **IAMで2人を招待**（鉄田のメール確定後） | 🔧 | ✅**2026-06-04完了**（ichisehiroshi@gmail.com 招待・権限付与済） |
+| ☑ | **OAuth同意画面**（drive.file/calendar.readonly/tasks.readonly） | 🔧 | ✅**2026-06-04完了**。**Productionステータス**で設定（Testingだとrefreshトークン7日失効→自律バッチ停止を回避・G1-19）。テストユーザー登録済 |
+| ☑ | **OAuthクライアント発行＋GitHub Secrets 6本**（CLIENT_ID/SECRET追加で4本→6本） | 🔧/📘 | ✅**2026-06-04完了**。クライアント`Publishr Web`発行・`GOOGLE_OAUTH_CLIENT_ID`/`_SECRET`登録済。⚠️リダイレクトURIは仮`localhost:8080`のみ→**本番URLはbackendデプロイ後に追記**（WBS 0.7） |
 
 ### 2-2. GitHub / モノレポ
 | | タスク | 担当 | 完了条件 |
 |---|---|---|---|
-| ☐ | リポジトリ作成（private）・2人をcollaborator | 🔧 | 提出時public化 |
-| ☐ | **モノレポscaffold**：`apps/web` `apps/api` `agents` `packages/prompts` `packages/shared-schema` `eval` `infra` `docs` | 🔧 | 一瀬の役割分担構成に合わせる |
-| ☐ | **共有スキーマの正本の置き場所**（Pydantic/TS/JSON Schemaのどれか）を `packages/shared-schema` で確定 | 👥 | 型ドリフト防止（G1-11/B7） |
-| ☐ | `packages/prompts` を投入（作成済11本を移植） | 📘 | プロンプト＋良い/悪い例 |
+| ☑ | リポジトリ作成（private）・2人をcollaborator | 🔧 | ✅完了（`hiroshiichise/publishr`・鉄田collaborator・招待受領済）。提出時public化は将来 |
+| ☑ | **モノレポscaffold**：`apps/web` `apps/api` `agents` `packages/prompts` `packages/shared-schema` `eval` `infra` `docs` | 🔧 | ✅scaffold済（`agents/``apps/``packages/``eval/``docs/`存在。`infra/`はTerraform未投入＝W4） |
+| ☐ | **共有スキーマの正本の置き場所**（Pydantic/TS/JSON Schemaのどれか）を `packages/shared-schema` で確定 | 👥 | 型ドリフト防止（G1-11/B7）。**MTGで握る** |
+| ☑ | `packages/prompts` を投入（作成済11本を移植） | 📘 | ✅完了（`packages/prompts/`にMD投入済。旧`planning.json`はローダMD切替後に削除予定） |
 | ☐ | ブランチ運用ルール（main保護＋feature＋軽量PR） | 👥 | 過剰にしない |
 | ☐ | シークレット管理方針（`.env.example`はコミット／実値はSecret Manager／鍵はGit禁止） | 👥 | `.env.example`は更新済（予約上限・編集R・dev/prodガード） |
 
@@ -74,6 +87,7 @@
 | | タスク | 担当 | 完了条件 |
 |---|---|---|---|
 | ☐ | ローカル環境統一（Python 3.11 / ADK SDK / Node） | 👥 | バージョン固定 |
+| ☐ | **gcloud CLI×Norton の恒久対処（WSL2導入）** | 📘 | 6/4はブラウザ操作で暫定回避したが**CLI自体は未通**。NortonのHTTPS検査でgcloudが通らない→W1のADK/デプロイで必須。**WSL2導入推奨（要検証：回避できるかは環境依存）** |
 | ☐ | **CI/CD空パイプライン疎通**（push→Actions→Cloud Run "Hello"） | 🔧 | W1 Hello Worldと兼用 |
 
 ---

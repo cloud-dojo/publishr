@@ -9,6 +9,25 @@
 
 ---
 
+## 🧭 現在地サマリ（2026-06-04時点）
+
+> **いまどこ**: **着手前の準備フェーズ（実装は未開始）**。設計・プロンプト・Eval・GCP基盤・OAuth認証まで整い、**コードを書き始める一歩手前**（友人MTGの握り待ち）。次の山場は W1「ADK疎通」→ W2「E2E縦通し」。
+>
+> **✅ できている（土台）**
+> - 設計docs一式／完成プロンプト11本（`packages/prompts/`）／Eval Set 8件（`eval/eval_set.yaml`）
+> - GCP基盤（`publishr-498123`：Firestore/Storage/SA/Secret Manager/Firebase/予算アラート）
+> - **【6/4完了】GCP IAM 2人招待・OAuth同意画面(Production)・テストユーザー・OAuthクライアント`Publishr Web`発行・GitHub Secrets 計6本**（GCP_PROJECT_ID／GCP_SA_KEY／GOOGLE_OAUTH_CLIENT_ID／SECRET／LANGFUSE×2）
+> - GitHubリポ（一瀬所有・鉄田=collaborator）／モノレポscaffold（agents・apps・packages・eval・docs）／計画docsをrepoへ統合
+>
+> **⏳ 着手前に残っているゲート**（＝これを潰さないとW1に進めない／手戻りする）
+> - **友人MTG（最重要）**: ADK実現性(G1-1)・役割分担(G1-2)・**Drive Picker(G1-13)**・Cloud Build接続方式A/B(G1-18)・OAuth公開ステータス(G1-19)・通知方式(G1-15) を握る
+> - **鉄田の残素材**: initialProfile選択肢リスト(G1-9・WP5.2)／デモ台本カット割り(WP8.1)
+> - **環境の積み残し**: gcloud CLI×Norton の恒久対処（WSL2導入・**要検証**）／OAuth本番リダイレクトURI追記（backendデプロイ後・WP0.7／現状は仮の`localhost`のみ）
+>
+> ※状態マーク: **✅完了 ／ 🔜着手前（準備OK）／ ⏸MTG待ち**。各WP表のDoD列末尾に状態を付す。W1以降の実装WPは原則すべて 🔜/⏸（コード未着手）。
+
+---
+
 ## WBS 全体ツリー
 ```
 Publishr MVP
@@ -29,11 +48,11 @@ Publishr MVP
 ## WP0. 準備・基盤（W0-W1）
 | ID | タスク | 担当 | 依存 | 週 | DoD |
 |---|---|---|---|---|---|
-| 0.1 | 友人MTG（チェックリスト§1の全議題を握る） | 👥 | — | W0 | マイルストーン・役割・G系(Picker/grounding/通知/Langfuse方式)合意 |
-| 0.2 | GCP IAM 2人招待・OAuth同意画面（3スコープ・テストユーザー） | 🔧 | 0.1 | W0 | デモ垢で3ソース承認可（GCP本体は✅済） |
-| 0.3 | GitHubリポ作成・モノレポscaffold（apps/web・apps/api・agents・packages/{prompts,shared-schema}・eval・infra・docs） | 🔧 | 0.1 | W0-1 | 2人がpush可・ディレクトリ確定 |
-| 0.4 | 共有スキーマの正本確定（Pydantic/TS/JSON Schema）＋packages/promptsを投入 | 👥/📘 | 0.3 | W1 | 型ドリフト防止の単一ソース（G1-11） |
-| 0.5 | CI/CD空パイプライン疎通（push→Actions→Cloud Run "Hello"） | 🔧 | 0.3 | W1 | 自動デプロイの土台（W1 Hello Worldと兼用） |
+| 0.1 | 友人MTG（チェックリスト§1の全議題を握る） | 👥 | — | W0 | マイルストーン・役割・G系(Picker/grounding/通知/Langfuse方式)合意 ⏸**未開催（明日夕方予定）＝最優先** |
+| 0.2 | GCP IAM 2人招待・OAuth同意画面（3スコープ・テストユーザー） | 🔧 | 0.1 | W0 | デモ垢で3ソース承認可（GCP本体は✅済） ✅**2026-06-04完了**（IAM 2人・同意画面Production・テストユーザー・クライアント`Publishr Web`発行・Secrets計6本） |
+| 0.3 | GitHubリポ作成・モノレポscaffold（apps/web・apps/api・agents・packages/{prompts,shared-schema}・eval・infra・docs） | 🔧 | 0.1 | W0-1 | 2人がpush可・ディレクトリ確定 ✅**リポ作成・collaborator・scaffold済**（infra/Terraformは空＝W4で投入） |
+| 0.4 | 共有スキーマの正本確定（Pydantic/TS/JSON Schema）＋packages/promptsを投入 | 👥/📘 | 0.3 | W1 | 型ドリフト防止の単一ソース（G1-11） 🔜prompts投入✅／スキーマ正本の置き場所はMTGで確定 |
+| 0.5 | CI/CD空パイプライン疎通（push→Actions→Cloud Run "Hello"） | 🔧 | 0.3 | W1 | 自動デプロイの土台（W1 Hello Worldと兼用） 🔜着手前 |
 | 0.6 | ローカル環境統一（Python3.11/ADK SDK/Node） | 👥 | 0.3 | W1 | バージョン固定 |
 | 0.7 | **OAuth本番リダイレクトURI追記**（クライアント`Publishr Web`に `https://<backendのCloud Run URL>/api/auth/google/callback` を追加） | 🔧/📘 | backendデプロイ | W2-4 | 現状は仮 `http://localhost:8080/...` のみ。**バックエンドURL確定後**に本番URLを追記（CLIENT_ID/SECRETは不変）。OAuth一式・同意画面・スコープ・Secrets 2本は2026-06-04に✅済（GCP環境構築ログ参照） |
 

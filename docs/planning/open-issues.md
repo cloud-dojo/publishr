@@ -4,6 +4,7 @@
 > **凡例**: 🔴未決 ／ 🟡方針あり・要確認 ／ ✅決着（下部のログ参照）。各論点に【出典】を付す。
 > **前提**: PatentSentinel（代替案）は不採用。**撤退はしない＝Publishrをやりきる**前提のため、撤退基準・採用GO判断の論点は持たない。
 > **全体の目次は [正本マップ](../README.md)。**
+> **🧭 現在地（2026-06-04）**: 環境系の論点（OAuth保存先G1-5・GCP構築・Secrets）は決着。**次の決定ゲートは友人MTG（明日夕方予定）**＝ここで G1-1(ADK実現性)／G1-2(役割)／**G1-13(Drive Picker・最重要)**／G1-15(通知)／G1-18(Cloud Build方式)／G1-19(OAuth公開) を握る。鉄田側で先行できるのは G1-9(initialProfile)・G1-10(Eval実データ※方針確定)・新G1-20(gcloud×Norton)。
 
 ---
 
@@ -26,8 +27,9 @@
 | G1-13 | **drive.file のファイル選択方式（Google Picker 連携）** | 🔴未 | `drive.file` はアプリがDrive内を走査・一覧**できない**（ユーザーが選んだファイルのみ）。`connectedSources.drive.folderIds[]` の取得は **Google Picker API** 前提で確定する必要。選択粒度（ファイル/フォルダ）と保持方法も。後出しは登録フロー作り直し＝最重要。友人MTG【ARCH §3/§6-5・API §2-a/§4】 |
 | G1-14 | STEP0でCalendar/Tasksを消費する仕様 | ✅確定（取得範囲）／🟡grounding課金残 | **取得範囲＝±14日（過去2週＋先2週）・生データのみ（要約しない）で確定（2026-06-03）**。Calendar/Tasksは確定インプットへ格上げ済（AGENT §2／ARCH §1・§3整合済）。STEP1 currentWork（局面・課題・upcomingKeyEvents）へ反映。**残＝調査サブB/CのGoogle検索grounding課金影響は友人MTGで確認**【AGENT §2・MVP §3 #1】 |
 | G1-15 | **入荷/執筆完了の通知方式** | 🟡推奨デフォルトあり | デモ カット3「入荷通知」・カット5「予告通知」が依存。**MVP=アプリ内 Firestore購読＋トースト/バナーで十分（FCMプッシュ不要）**。これを明記しFCM工数化を防ぐ。友人MTGで最終確認【デモシナリオ カット3/5・UI 3-8】 |
-| G1-16 | **LLMコスト概算と上限ガード方針** | 🟡ドラフト済 | `../設計/コスト概算.md` 作成済（ハイブリッド＋予約上限5冊＋編集ループ）。dev/prodガードは `.env.example` に追加済（BODY_PAGE_COUNT/ENABLE_IMAGEN/BATCH_BOOKS_OVERRIDE）。残＝W1実測で実値上書き【コスト概算.md】 |
-| G1-17 | **Langfuseトレース仕様（必然性の証跡）** | 🟡ドラフト済 | `../設計/Langfuseトレース仕様.md` 作成済（企画スコアループ・編集ループ2系統・調査groundingの取得URLをspan属性で残す）。**実装方式（OTel経由 or Langfuse SDK直）・grounding取得元フィールドを友人MTG／W1疎通で確定**。実装は友人・W4【CICD §5・Langfuseトレース仕様.md】 |
+| G1-16 | **LLMコスト概算と上限ガード方針** | 🟡ドラフト済 | `../design/cost-estimate.md` 作成済（ハイブリッド＋予約上限5冊＋編集ループ）。dev/prodガードは `.env.example` に追加済（BODY_PAGE_COUNT/ENABLE_IMAGEN/BATCH_BOOKS_OVERRIDE）。残＝W1実測で実値上書き |
+| G1-17 | **Langfuseトレース仕様（必然性の証跡）** | 🟡ドラフト済 | `../design/langfuse-tracing.md` 作成済（企画スコアループ・編集ループ2系統・調査groundingの取得URLをspan属性で残す）。**実装方式（OTel経由 or Langfuse SDK直）・grounding取得元フィールドを友人MTG／W1疎通で確定**。実装は友人・W4【CICD §5】 |
+| G1-20 | **gcloud CLI×Norton のHTTPS検査でCLIが通らない** | 🔴未（環境） | 論点＝W1のADK/デプロイでgcloud CLIは必須だが、NortonのMITMでブロック。6/4はブラウザ操作で暫定回避したのみ。**推奨＝WSL2導入（本番Linuxと環境一致・要検証）**。担当=鉄田・W1着手前【GCP環境構築ログ.md 2026-06-04】 |
 | G1-18 | **Cloud Build↔GitHub接続方式（A:所有者がGitHub App接続 ／ B:Actionsから `gcloud builds submit` で常時接続を省略）** | 🟡推奨B | リポ `hiroshiichise/publishr` は**個人アカウント所有**で、GitHub App認可は**所有者(一瀬)のみ**可。鉄田のGitHub Secrets登録はコラボレーター権限で可能と実機確認済（2026-06-04・4本登録済）。Cloud Buildトリガーは現状**未接続**を確認済（タスク4=完了）。**推奨＝B（所有者依存を避け最小構成・Actions主導フローと整合）**。AかBを**友人MTGで確定**。実装はW4【CICD §3・GCP環境構築ログ.md 2026-06-04】 |
 | G1-19 | **OAuth同意画面の公開ステータス（Testing vs Production未審査）** | 🟡推奨Production | **Testingモードはリフレッシュトークンが7日で失効**→週次自律バッチ（Cloud Scheduler×Secret Manager保存トークン）が1週間後に停止しPublishrの自律性が壊れる。**Production(未審査)ならトークン長期有効**（未審査警告はバイパス可・100ユーザー上限）。現状はProductionに設定済（2026-06-04）。**推奨＝Production維持**。OAuth実装担当=友人につき**MTGで握る**【G1-5・API §6-1・GCP環境構築ログ.md 2026-06-04】 |
 
@@ -113,6 +115,9 @@
 
 ## 決着済みログ（参考・蒸し返さない）
 
+- ✅ **【環境・2026-06-04】OAuth認証一式 完了**：同意画面を**Productionステータス**で設定（G1-19・refreshトークン長期有効化）・3スコープ・テストユーザー登録・OAuthクライアント`Publishr Web`発行・GitHub Secrets を **4本→6本**（GOOGLE_OAUTH_CLIENT_ID/_SECRET追加）。⚠️リダイレクトURIは仮`localhost:8080`のみ＝backendデプロイ後に本番URL追記（WBS 0.7）【GCP環境構築ログ.md】
+- ✅ **【環境・2026-06-04】GCP IAM 2人招待・権限付与 完了**（ichisehiroshi@gmail.com）。Cloud Buildトリガーは**未接続**を実機確認（G1-18の前提＝旧タスク4完了）【GCP環境構築ログ.md】
+- ✅ **【運用・2026-06-04】計画系docsをGitHub一本化**（wbs/open-issues/kickoff/roles＋master-schedule を `docs/planning/` に集約）。Drive＝デモ/ピッチのみ。公開時は計画系を外す前提（.gitignoreでは消えない＝新規公開リポにコピーが安全）【リポジトリ統合方針】
 - ✅ **【v2再設計・2026-06-03】企画STEP2c＝調査3観点（A読者局面/B市場競合/Cテーマ知見）に再構成。コンセプト案・タスク分解サブは廃止。企画書フレーム8項目を先に固定し調査を逆算**【ARCH §7・AGENT §4】
 - ✅ **【v2再設計】STEP3=著者キャスティング（編集者役・5人生成）／STEP4=新設 編集ループ（編集長⇄著者5人・プレビュー編集・1R・3観点採点）に分離。装丁はSTEP5へ**【AGENT §5・5-2】
 - ✅ **【v2再設計】モードB＝本文編集ループ（編集長⇄著者・最高3R・弱い章のみ改稿）。改稿ループをStretchからINへ格上げ**【AGENT §7・MVP §4】
@@ -121,7 +126,7 @@
 - ✅ **【IPO定義】persona フレーム＝style を voiceStyle（文体軸）＋format（文章形式）に分割、persona本体はリッチに、5人を2軸で分散**【AGENT §5-3a】
 - ✅ **【IPO定義】著者プレビュー BookDraft＝7フィールド（title/subtitle/今あなたは(deliveryReason)/解決する課題(problemToSolve)/核心メッセージ/アジェンダ/序文サンプル）＝書籍詳細モックアップ準拠**【AGENT §5-2a】
 - ✅ **【IPO定義】本文ルーブリック5観点（I-12）・STEP2調査は3観点維持（A読者局面=STEP1起点のテーマ特化深掘り）**【AGENT §4-2c・§7】
-- ✅ **【整合点検・2026-06-03】v2/IPO反映漏れを修正**：Firestoreルール favoriteAuthors を voiceStyle/format へ／`eval_set.json` を3層Profile＋8項目plan＋0-100・4観点で再構築／`.env.example` に予約上限・編集ラウンド・dev/prodガード追加／`calendar.json` に attendeesCount/recurring 補強／UI仕様書 本詳細をBookDraft 7フィールド・予約上限5冊に整合。**新規 `../設計/Langfuseトレース仕様.md` 作成**（G1-17）【点検：A群5件＋B群起票】
+- ✅ **【整合点検・2026-06-03】v2/IPO反映漏れを修正**：Firestoreルール favoriteAuthors を voiceStyle/format へ／`eval_set.json` を3層Profile＋8項目plan＋0-100・4観点で再構築／`.env.example` に予約上限・編集ラウンド・dev/prodガード追加／`calendar.json` に attendeesCount/recurring 補強／UI仕様書 本詳細をBookDraft 7フィールド・予約上限5冊に整合。**新規 `../design/langfuse-tracing.md` 作成**（G1-17）【点検：A群5件＋B群起票】
 - ✅ **【v2再設計】予約上限（旧：最大3冊）→ IPO定義で同時5冊に改定**【MVP §5-2・API §3】
 - ✅ **【v2再設計】モデル＝ハイブリッド（担当者/リーダー/キャスティング/編集長/本文=Pro、STEP1/調査サブ/装丁=Flash、judge=Pro）**【AGENT §9】
 - ✅ **【v2再設計】編集長を新設（執筆段階）。旧「編集長を独立させない」は“企画段階の選抜ゲートを1段にする”趣旨で、執筆段階の編集長とは両立**【AGENT §5-2・§7】
