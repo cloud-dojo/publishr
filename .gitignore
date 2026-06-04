@@ -24,10 +24,14 @@ venv/
 *.key.json
 service-account*.json
 
-# Local/private planning docs（docs/設計 のみ共有=新構想の仕様。計画/UI仕様/インフラ/ピッチ/索引は private）
+# Docs 共有方針: design/ui/infra/planning + README を共有。ピッチ/demo台本/WBS は Drive 管理（repo外）
 .github/CODEOWNERS
 docs/*
-!docs/設計/
+!docs/README.md
+!docs/design/
+!docs/ui/
+!docs/infra/
+!docs/planning/
 .cursor/
 
 # OS / editor
