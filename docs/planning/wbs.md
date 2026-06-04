@@ -21,10 +21,13 @@
 >
 > **【6/4完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・WP5.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・WP8.1)へ置換✅
 >
+> **【フロント先行・複数セッションで実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・WP4.1–4.7 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠・WP4.9）。**※WBS上「実装未開始」は backend(エージェント/API)の話で、フロントは先行している**。残＝**①ローカルUI仕上げ(WP4.8・行ずれ等の修正が大きめ／鉄田が先行着手) ②Firestore本接続(WP4.9・一瀬待ち) ③App Hosting連携(WP0.8・一瀬待ち)**。
+>
 > **⏳ 着手前に残っているゲート**（＝これを潰さないとW1に進めない／手戻りする）
 > - **友人MTG（最重要・唯一の残ゲート）**: ADK実現性(G1-1)・役割分担(G1-2)・**Drive Picker(G1-13)**・Cloud Build接続方式A/B(G1-18)・OAuth公開ステータス(G1-19)・通知方式(G1-15) を握る
 > - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・WP0.7／現状は仮の`localhost`のみ）
 > - **フロント本番ホスティング（WP0.8・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(apphosting.yaml・mockビルド・**PR #2**)✅。**🔴ブロック=App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**→明日MTGで一瀬が backend 作成 or GitHub App 許可で解除
+> - **フロント本接続の前提（WP4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
 >
 > ※状態マーク: **✅完了 ／ 🔜着手前（準備OK）／ ⏸MTG待ち**。各WP表のDoD列末尾に状態を付す。W1以降の実装WPは原則すべて 🔜/⏸（コード未着手）。
 
@@ -87,15 +90,22 @@ Publishr MVP
 | 3.4 | 観測ログ保存先コレクション（observationLogs等） | 🔧 | 1.2 | W2 | STEP0直書き可（I-19） |
 
 ## WP4. フロント（書店UI）（W2-W4・📘）
+
+> **🧭 実態（2026-06-04・複数セッションで先行実装）**: `apps/mockup`(Vite・参照専用) を正に **`apps/web`(Next.js) へ移植が進み、下記 4.1–4.7 は mock データで code-complete（14ルートがビルド緑）**。Firebase Auth＋Firestoreプロバイダも実装済（mock時は休眠＝未起動）。
+> **残作業は2本**：①**ローカルUI仕上げ（4.8）＝レイアウト崩れ・行ずれの修正が想定より大きい見込み＝デプロイ前の主作業**／②**Firestore本接続（4.9）＝一瀬の基盤待ち**。
+> 各行 DoD の「Firestore直書き/購読」の**✅完了判定は本接続(4.9)後**。それまでは「mock実装済」。
+
 | ID | タスク | 担当 | 依存 | 週 | DoD（UI仕様書参照） |
 |---|---|---|---|---|---|
-| 4.1 | 登録フォーム＋OAuth接続＋**Drive Pickerファイル選択UI** | 📘 | 0.4,1.2 | W2 | initialProfile直書き・3ソース接続（3-2/3-3・G1-13） |
-| 4.2 | 書店トップ（入荷一覧・F3入荷理由） | 📘 | 3.1 | W2 | draft本＋入荷理由表示（3-4） |
-| 4.3 | 本詳細（**BookDraft 7項目**・books由来） | 📘 | 3.1,1.6 | W2-3 | title/subtitle/今あなたは/解決する課題/核心/アジェンダ/序文（3-6） |
-| 4.4 | 著者選択・予約UI（**同時5冊ガード**） | 📘 | 2.1 | W3 | reserve呼び出し・上限表示（3-7） |
-| 4.5 | 読書画面・ハイライト・簡易FB（Firestore直書き） | 📘 | 3.1 | W3 | ハイライト保存・FB記録（3-9/3-10） |
-| 4.6 | お気に入り著者保存（favoriteAuthors・name/voiceStyle/format） | 📘 | 3.1 | W3 | arrayUnion保存（3-11） |
-| 4.7 | わたしの書庫・通知バナー（Firestore購読） | 📘 | 4.2 | W4 | 入荷/執筆完了の購読バナー（3-5・G1-15） |
+| 4.1 | 登録フォーム＋OAuth接続＋**Drive Pickerファイル選択UI** | 📘 | 0.4,1.2 | W2 | initialProfile直書き・3ソース接続（3-2/3-3・G1-13） 🟡mock実装済／Picker・本接続は4.9 |
+| 4.2 | 書店トップ（入荷一覧・F3入荷理由） | 📘 | 3.1 | W2 | draft本＋入荷理由表示（3-4） 🟡mock実装済 |
+| 4.3 | 本詳細（**BookDraft 7項目**・books由来） | 📘 | 3.1,1.6 | W2-3 | title/subtitle/今あなたは/解決する課題/核心/アジェンダ/序文（3-6） 🟡mock実装済 |
+| 4.4 | 著者選択・予約UI（**同時5冊ガード**） | 📘 | 2.1 | W3 | reserve呼び出し・上限表示（3-7） 🟡mock実装済 |
+| 4.5 | 読書画面・ハイライト・簡易FB（Firestore直書き） | 📘 | 3.1 | W3 | ハイライト保存・FB記録（3-9/3-10） 🟡mock実装済 |
+| 4.6 | お気に入り著者保存（favoriteAuthors・name/voiceStyle/format） | 📘 | 3.1 | W3 | arrayUnion保存（3-11） 🟡mock実装済 |
+| 4.7 | わたしの書庫・通知バナー（Firestore購読） | 📘 | 4.2 | W4 | 入荷/執筆完了の購読バナー（3-5・G1-15） 🟡mock実装済 |
+| 4.8 | **ローカルUI仕上げ（レイアウト/行ずれ修正・mockup差分潰し・全画面QA）** | 📘 | 4.1-4.7 | W2-4 | `npm run dev:web` で mock 全画面を実機確認し、レイアウト崩れ・**行ずれ**・モックアップとの差分を修正。**想定より修正量が大きい見込み＝デプロイ前の主作業**。🔜**鉄田が先行着手（デプロイ待ちの間に進める）** |
+| 4.9 | **Firestore本接続・Firebase Auth起動（mock→firestore切替）** | 📘+🔧 | 3.1,0.8,2.1 | W2-3 | `lib/firebase.ts`/`firestore-provider.ts`/`user-writes.ts` 実装済（mock時休眠）。**一瀬から①Firebase Web設定値(`NEXT_PUBLIC_FIREBASE_*`) ②Firestoreルールのデプロイ ③API3本(reserve/OAuth/trigger)のURL・CORS ④doc=shared-schema形・`ownerUid`規約 を受領後**、`NEXT_PUBLIC_DATA_SOURCE=firestore` へ切替＝本接続。⏸**一瀬待ち** |
 
 ## WP5. プロンプト/中身の質（W1-W4・📘）
 | ID | タスク | 担当 | 依存 | 週 | DoD |
