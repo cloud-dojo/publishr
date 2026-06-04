@@ -1,0 +1,73 @@
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  display: flex;
+  gap: var(--space-4);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--gold-dim);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kind {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+}
+.serendipity {
+  color: var(--status-reserved);
+  border-color: var(--status-reserved);
+}
+
+.title {
+  font-size: 16px;
+  line-height: 1.45;
+}
+.author {
+  font-size: 12px;
+  color: var(--gold);
+  font-family: var(--font-serif);
+}
+
+.reason {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.reasonLabel {
+  display: inline-block;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  border-left: 2px solid var(--gold-dim);
+  padding-left: 6px;
+  margin-right: 8px;
+  vertical-align: 1px;
+}

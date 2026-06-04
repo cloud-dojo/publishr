@@ -1,0 +1,33 @@
+.wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.texts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-size: 28px;
+  letter-spacing: 0.02em;
+}
+
+.caption {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.action {
+  flex-shrink: 0;
+  color: var(--gold);
+  font-size: 13px;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  padding-bottom: 6px;
+}

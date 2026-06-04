@@ -1,0 +1,96 @@
+.screen {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-7) var(--space-5);
+  overflow: hidden;
+}
+
+/* 背景の淡い書棚モチーフ */
+.bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(
+      1200px 600px at 50% -10%,
+      rgba(201, 169, 106, 0.07),
+      transparent 60%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.012) 0 2px,
+      transparent 2px 26px
+    ),
+    var(--bg-base);
+  z-index: 0;
+}
+
+.brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-6);
+}
+.logo {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+.tagline {
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  font-family: var(--font-serif);
+}
+
+.stepper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: var(--space-5);
+}
+.stepBar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-hairline);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.stepFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
+  border-radius: var(--radius-pill);
+  transition: width 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.stepText {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-hairline);
+  border-radius: var(--radius-panel);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-card);
+}
+.wide {
+  max-width: 640px;
+}

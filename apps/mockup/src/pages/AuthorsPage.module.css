@@ -1,0 +1,23 @@
+.crumb {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+.favSection {
+  margin-top: var(--space-7);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--bg-hairline);
+}
+.empty {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
