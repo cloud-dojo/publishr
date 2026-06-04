@@ -10,7 +10,7 @@
 | 正本 | 役割 | 中身 |
 |---|---|---|
 | **GitHub**（`hiroshiichise/publishr`・private） | プロダクト一式の正本 | コード全部 ＋ Markdownの設計/要件/UI/インフラログ。機械fixtureは `packages/shared-schema/fixtures/*.json` |
-| **Google Drive** | 対外・リッチ/バイナリ資料 | ピッチ資料、demo台本（デモシナリオ/ペルソナ/著者ペルソナ集/サンプル文書）、会議記録 ※マスタースケジュール・ToDoの所在は要決定 |
+| **Google Drive** | 対外・リッチ/バイナリ資料 | ピッチ資料、demo台本（デモシナリオ/ペルソナ/著者ペルソナ集/サンプル文書）、会議記録 |
 
 **境界ルール（1問で裁く）**: 「**コード/Eval/CIが（自動で）読むか？** → Yes=GitHub / No=Drive」
 ローカル `publishr` は GitHub の作業コピー。`git push` で同期する。
@@ -37,7 +37,7 @@ publishr/
 └─ docs/
    ├─ README.md            ← 本書（正本マップ）
    ├─ design/              ← 設計仕様（10MD）
-   ├─ planning/            ← 役割分担/運用・着手チェックリスト・未決論点台帳・WBS
+   ├─ planning/            ← 役割分担/運用・着手チェックリスト・未決論点台帳・WBS・マスタースケジュール
    ├─ infra/               ← CICD設計・GCP環境構築ログ
    └─ ui/                  ← UI仕様書＋mockups/
 ```
@@ -67,6 +67,7 @@ publishr/
 | `planning/kickoff-checklist.md` | 着手ゲート（MTG・環境・残素材・未決決着） | 着手準備 |
 | `planning/open-issues.md` | 未確定/未決論点・MTG議題・決着ログ | MTG前・意思決定時 |
 | `planning/wbs.md` | 成果物分解（WP・担当・依存・週・DoD・マイルストーン） | 作業の全体把握・進捗管理 |
+| `planning/master-schedule.md` | カレンダー（W→実日付・ハード期日6/30凍結/7/10提出） | 日程・締切管理 |
 
 ### infra/・ui/
 | ファイル | 役割 |
@@ -82,4 +83,4 @@ publishr/
 | 機械fixture（STEP0観測・Eval Setの実データ） | `packages/shared-schema/fixtures/*.json`（repo内） |
 | demo台本（デモシナリオ・ペルソナ・著者ペルソナ集・サンプル文書） | **Drive** |
 | ピッチ（原稿・スライド・PDF） | **Drive** |
-| マスタースケジュール・ToDo・会議記録 | **Drive** ※スケジュール/ToDoの所在は要決定 |
+| 会議記録 | **Drive** |
