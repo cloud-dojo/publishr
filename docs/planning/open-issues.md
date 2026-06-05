@@ -4,7 +4,7 @@
 > **凡例**: 🔴未決 ／ 🟡方針あり・要確認 ／ ✅決着（下部のログ参照）。各論点に【出典】を付す。
 > **前提**: PatentSentinel（代替案）は不採用。**撤退はしない＝Publishrをやりきる**前提のため、撤退基準・採用GO判断の論点は持たない。
 > **全体の目次は [正本マップ](../README.md)。**
-> **🧭 現在地（2026-06-04）**: 環境系の論点（OAuth保存先G1-5・GCP構築・Secrets）は決着。**鉄田単独の先行タスクも完了**＝G1-9(initialProfile)✅・G1-20(gcloud×Norton)✅・G1-10(Eval実データ)方針確定済。デモはカット割り廃止→動画台本2本立てへ置換✅。**残る決定ゲートは友人MTG（明日夕方予定）のみ**＝ここで G1-1(ADK実現性)／G1-2(役割)／**G1-13(Drive Picker・最重要)**／G1-15(通知)／G1-18(Cloud Build方式)／G1-19(OAuth公開) を握ればW1着手可。
+> **🧭 現在地（2026-06-04）**: 環境系の論点（OAuth保存先G1-5・GCP構築・Secrets）は決着。**鉄田単独の先行タスクも完了**＝G1-9(initialProfile)✅・G1-20(gcloud×Norton)✅・G1-10(Eval実データ)方針確定済。デモはカット割り廃止→動画台本2本立てへ置換✅。**残る決定ゲートは友人MTG（本日6/5夕方予定）のみ**＝ここで G1-1(ADK実現性)／G1-2(役割)／**G1-13(Drive Picker・最重要)**／G1-15(通知)／G1-18(Cloud Build方式)／G1-19(OAuth公開) を握ればW1着手可。
 
 ---
 
@@ -18,7 +18,7 @@
 | G1-4 | `ownerUid` フィールド方式 vs サブコレクションネスト | 🟡ownerUid方式で原典反映済 | ネストに覆す場合は要再変更【FIRESTORE §2/§5-1・API §6-5】 |
 | G1-5 | OAuthトークンの保存先（Secret Manager か Firestore暗号化） | ✅決着 | **Secret Manager で確定**（infra/GCP環境構築ログ.md・Langfuseキー登録済み・2026-06-03）【API §6-1】 |
 | G1-6 | 手動トリガーの認可範囲（デモ垢限定か全ユーザー可か） | 🔴未 | コスト暴走防止【API §6-3】 |
-| G1-7 | フロント本番ホスティング／APIベースパス／CORS | 🟡ホスティング決着・連携ブロック中 | **ホスティング＝Firebase App Hosting で確定（フロント＝`apps/web`/Next.js＝G1-11も解消・2026-06-04）**。`apps/web/apphosting.yaml`(root=apps/web・`NEXT_PUBLIC_DATA_SOURCE=mock`)・mock本番ビルド緑・**PR #2** 準備済。リージョン=`asia-east1`(Tokyo無のため)。**🔴ブロック＝App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**（鉄田はcollaboratorで不可・G1-18と同種の所有者依存）。→ **一瀬が backend 作成 or GitHub App 許可で解除**（明日MTG／WBS 0.8）。CORS・ベースパスは引き続き友人MTG【API §6-4・CICD §3】 |
+| G1-7 | フロント本番ホスティング／APIベースパス／CORS | 🟡ホスティング決着・連携ブロック中 | **ホスティング＝Firebase App Hosting で確定（フロント＝`apps/web`/Next.js＝G1-11も解消・2026-06-04）**。`apps/web/apphosting.yaml`(root=apps/web・`NEXT_PUBLIC_DATA_SOURCE=mock`)・mock本番ビルド緑・**PR #2** 準備済。リージョン=`asia-east1`(Tokyo無のため)。**🔴ブロック＝App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**（鉄田はcollaboratorで不可・G1-18と同種の所有者依存）。→ **一瀬が backend 作成 or GitHub App 許可で解除**（本日MTG／WBS B3.3）。CORS・ベースパスは引き続き友人MTG【API §6-4・CICD §3】 |
 | G1-8 | 企画リーダーのスコア閾値・満点定義 | 🟡仮置き70/100 | MVPは4観点×各25点・閾値70。運用調整【AGENT §10-7・ADK §9-10・MVP §8】 |
 | G1-9 | initialProfile 選択肢リスト（業界/職種/役職/関心/読書傾向） | ✅決着 | **2026-06-04確定**＝5ステップ（業界13/職種11/役職7/関心19/読み口7）を `apps/mockup/src/data/profileOptions.ts` に実装。叩き台 `API契約仕様.md` §2-a 準拠【MVP §8】 |
 | G1-10 | Eval Set 8件の実データ作成 | 🔴未（鉄田） | 方針確定・素材作成のみ残【MVP §8】 |
@@ -95,7 +95,7 @@
 | # | 論点 | メモ／出典 |
 |---|---|---|
 | F-1 | お気に入り著者の混入比率・ランダム性のA/B再調整 | MVP=15%固定。サイクル2以降【AGENT §10-8・MVP §8】 |
-| F-2 | Elasticsearch採否 | W6余力次第。外す前提でも可【ARCH §9/§12・MVP §8】 |
+| F-2 | Elasticsearch採否 | W5余力次第。外す前提でも可【ARCH §9/§12・MVP §8】 |
 | F-3 | 攻めのスコープ候補（MVPスコープ §4-b の4件） | W2縦通し成功後に余力で判断【MVP §8】 |
 | F-4 | 学習ループの実データ多サイクル | 「1サイクル回る」をデモで見せれば十分【ARCH §12】 |
 | F-5 | AIだけの本に人が価値を感じ続けるか（事業の根本） | ハッカソンでは答えが出ず将来検証【ARCH §12】 |
@@ -115,12 +115,12 @@
 
 ## 決着済みログ（参考・蒸し返さない）
 
-- 🟡 **【フロント・2026-06-04】ホスティング＝Firebase App Hosting／フロント＝Next.js(`apps/web`)で確定（G1-7・G1-11）**：`apphosting.yaml`(root=apps/web・mock公開)・mock本番ビルド緑・**PR #2** 準備済。リージョン=`asia-east1`。**残ブロック＝App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**（鉄田collaborator不可）→ 一瀬が backend 作成 or GitHub App 許可で解除（明日MTG／WBS 0.8）。Netlify は App Hosting 安定後に退役。
+- 🟡 **【フロント・2026-06-04】ホスティング＝Firebase App Hosting／フロント＝Next.js(`apps/web`)で確定（G1-7・G1-11）**：`apphosting.yaml`(root=apps/web・mock公開)・mock本番ビルド緑・**PR #2** 準備済。リージョン=`asia-east1`。**残ブロック＝App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**（鉄田collaborator不可）→ 一瀬が backend 作成 or GitHub App 許可で解除（本日MTG／WBS B3.3）。Netlify は App Hosting 安定後に退役。
 - ✅ **【デモ環境・2026-06-04】デモ用Googleアカウント準備完了**：`publishr.demo.misa@gmail.com` 作成済。OAuth同意画面がProductionステータスのためテストユーザー登録不要（Productionでは100ユーザーまで誰でも認証可）。残＝録画直前のDriveデータ投入・calendar.icsインポート・Tasks手入力（W5）。
-- ✅ **【鉄田単独タスク・2026-06-04】initialProfile選択肢確定(G1-9)**：5ステップ（業界13/職種11/役職7/関心19/読み口7）を `apps/mockup/src/data/profileOptions.ts` に実装。WP4.1登録フォームの前提クリア。
+- ✅ **【鉄田単独タスク・2026-06-04】initialProfile選択肢確定(G1-9)**：5ステップ（業界13/職種11/役職7/関心19/読み口7）を `apps/mockup/src/data/profileOptions.ts` に実装。C4.1登録フォームの前提クリア。
 - ✅ **【環境・2026-06-04】gcloud CLI×Norton 恒久対処完了(G1-20)**：W1のADK/デプロイでgcloud CLI利用可能（対処方式は `GCP環境構築ログ.md` 参照）。
-- ✅ **【デモ・2026-06-04】カット割り（秒単位・WP8.1旧案）を廃止→動画台本2本立てへ置換**：①プロダクト紹介2.5分(審査提出用)／②ピッチ内デモ60秒(体験オンリー)。台本アウトライン作成済（`publishr_other/demo/動画台本/`）。残＝録画(W5)。
-- ✅ **【環境・2026-06-04】OAuth認証一式 完了**：同意画面を**Productionステータス**で設定（G1-19・refreshトークン長期有効化）・3スコープ・テストユーザー登録・OAuthクライアント`Publishr Web`発行・GitHub Secrets を **4本→6本**（GOOGLE_OAUTH_CLIENT_ID/_SECRET追加）。⚠️リダイレクトURIは仮`localhost:8080`のみ＝backendデプロイ後に本番URL追記（WBS 0.7）【GCP環境構築ログ.md】
+- ✅ **【デモ・2026-06-04】カット割り（秒単位・C6.1旧案）を廃止→動画台本2本立てへ置換**：①プロダクト紹介2.5分(審査提出用)／②ピッチ内デモ60秒(体験オンリー)。台本アウトライン作成済（`publishr_other/demo/動画台本/`）。残＝録画(W5)。
+- ✅ **【環境・2026-06-04】OAuth認証一式 完了**：同意画面を**Productionステータス**で設定（G1-19・refreshトークン長期有効化）・3スコープ・テストユーザー登録・OAuthクライアント`Publishr Web`発行・GitHub Secrets を **4本→6本**（GOOGLE_OAUTH_CLIENT_ID/_SECRET追加）。⚠️リダイレクトURIは仮`localhost:8080`のみ＝backendデプロイ後に本番URL追記（WBS B1.2）【GCP環境構築ログ.md】
 - ✅ **【環境・2026-06-04】GCP IAM 2人招待・権限付与 完了**（ichisehiroshi@gmail.com）。Cloud Buildトリガーは**未接続**を実機確認（G1-18の前提＝旧タスク4完了）【GCP環境構築ログ.md】
 - ✅ **【運用・2026-06-04】計画系docsをGitHub一本化**（wbs/open-issues/kickoff/roles＋master-schedule を `docs/planning/` に集約）。Drive＝デモ/ピッチのみ。公開時は計画系を外す前提（.gitignoreでは消えない＝新規公開リポにコピーが安全）【リポジトリ統合方針】
 - ✅ **【v2再設計・2026-06-03】企画STEP2c＝調査3観点（A読者局面/B市場競合/Cテーマ知見）に再構成。コンセプト案・タスク分解サブは廃止。企画書フレーム8項目を先に固定し調査を逆算**【ARCH §7・AGENT §4】

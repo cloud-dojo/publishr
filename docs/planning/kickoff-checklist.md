@@ -1,4 +1,4 @@
-# Publishr 着手チェックリスト（v3・2026-06-03）
+# Publishr 着手チェックリスト（v3・2026-06-05）
 
 > 📑 全体の目次は [正本マップ](../README.md)／未決論点は [open-issues.md](open-issues.md)／ToDo・役割・スケジュールは [roles-and-ops.md](roles-and-ops.md)。
 > **目的**: 「コードを書き始める前に潰すべきゲート」を1枚に固定する。設計・素材は揃った（§0）ので、本書は**握り・環境・残素材・着手前に決着すべき未決**に絞る。
@@ -9,7 +9,7 @@
 
 ## 🧭 現在地（2026-06-04）
 
-> **着手前ゲートの通過状況**：環境構築（層2）＋鉄田単独タスク（層3）は**✅完了**。**残るゲートは ①友人MTGの握り（層1・明日夕方予定）のみ**。これを通過すれば W1「ADK疎通」に進める。
+> **着手前ゲートの通過状況**：環境構築（層2）＋鉄田単独タスク（層3）は**✅完了**。**残るゲートは ①友人MTGの握り（層1・本日6/5夕方予定）のみ**。これを通過すれば W1（6/8〜）「ADK疎通」に進める。
 > - ✅ 済：GCP基盤・IAM2人・OAuth一式(Production)・Secrets6本・リポ/collaborator・モノレポscaffold・prompts11本・Eval Set・サンプル3ソース
 > - ✅ 済（鉄田単独・6/4）：initialProfile選択肢確定／gcloud×Norton恒久対処／デモ＝カット割り廃止→動画台本2本立てへ置換
 > - ⏸ MTG待ち：役割分担最終合意・ADK実現性・Drive Picker(G1-13)・Cloud Build方式(G1-18)・OAuth公開(G1-19)・通知方式(G1-15)・**Firebase App Hosting の GitHub連携(G1-7・🔧一瀬／鉄田準備✅・PR #2)**
@@ -39,7 +39,7 @@
 |---|---|---|
 | ☐ | **①主要マイルストーン** | W1=ADK疎通／W2=E2E縦通し を最重要として共有（撤退せず＝対策で乗り切る） |
 | ☐ | **②役割分担の最終合意** | 友人＝エージェント実装＋基盤／鉄田＝フロント＋プロンプト設計＋Eval。境界＝`実行計画 §2`（設計=鉄田／実装=友人） |
-| ☐ | **⑥タスク管理の置き場所** | GitHub Projects / Notion / Todoist のいずれか1つに決め、W0〜W6を起票 |
+| ☐ | **⑥タスク管理の置き場所** | GitHub Projects / Notion / Todoist のいずれか1つに決め、W0〜W5（カテゴリA/B/C）を起票 |
 
 ### 1-B. 技術フィージビリティの握り（🔧）
 | | 議題 | 出典 | 完了条件 |
@@ -61,7 +61,7 @@
 | ☐ | **Cloud Build↔GitHub接続方式 A/B** | G1-18 | 論点＝自動デプロイの繋ぎ方。**A=GitHub App接続（個人リポなので所有者=一瀬のみ可）／B=Actionsから`gcloud builds submit`（鉄田側で完結・推奨）**。現状トリガー未接続を確認済。**AかBを握るだけ**（実装はW4） |
 | ☐ | **OAuth公開ステータスの最終確認** | G1-19 | 論点＝Testingだとrefreshトークン7日失効で週次自律バッチが停止。**現状Production設定済→「Production維持」で握る**。OAuth実装担当=一瀬につき確認 |
 | ☐ | **Firebase App Hosting の GitHub連携**（フロント本番ホスティング・🔧一瀬） | G1-7 | フロント＝`apps/web` を App Hosting で公開（決定済）。**GitHub App 連携はリポ所有者=一瀬のみ可**（鉄田collaborator不可で着手ブロック）→ **一瀬が backend 作成 or GitHub App 許可**。設定値: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数は `apps/web/apphosting.yaml` 済。鉄田準備(apphosting.yaml・mockビルド・PR #2)は✅。解除後は PR #2 マージ→自動デプロイ→URL確認 |
-| ☐ | **フロント本接続の前提一式**（鉄田が一瀬から受領・WP4.9） | G1-3/7 | フロント(`apps/web`)は **mock で実装済**（Auth/Firestoreプロバイダ含む・休眠中）。本接続(mock→firestore)に一瀬から次を受領: ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**API3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**。これらが揃えば `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続。※デプロイ前は鉄田が**ローカルUI仕上げ(WP4.8・行ずれ等の修正)**を先行 |
+| ☐ | **フロント本接続の前提一式**（鉄田が一瀬から受領・C4.9） | G1-3/7 | フロント(`apps/web`)は **mock で実装済**（Auth/Firestoreプロバイダ含む・休眠中）。本接続(mock→firestore)に一瀬から次を受領: ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**API3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**。これらが揃えば `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続。※デプロイ前は鉄田が**ローカルUI仕上げ(C4.8・行ずれ等の修正)**を先行 |
 
 ---
 
@@ -73,7 +73,7 @@
 | ☑ | GCPプロジェクト・Firestore・Storage・SA・Secret Manager・Firebase・予算アラート | 🔧 | ✅ `publishr-498123` 構築済 |
 | ☑ | **IAMで2人を招待**（鉄田のメール確定後） | 🔧 | ✅**2026-06-04完了**（ichisehiroshi@gmail.com 招待・権限付与済） |
 | ☑ | **OAuth同意画面**（drive.file/calendar.readonly/tasks.readonly） | 🔧 | ✅**2026-06-04完了**。**Productionステータス**で設定（Testingだとrefreshトークン7日失効→自律バッチ停止を回避・G1-19）。テストユーザー登録済 |
-| ☑ | **OAuthクライアント発行＋GitHub Secrets 6本**（CLIENT_ID/SECRET追加で4本→6本） | 🔧/📘 | ✅**2026-06-04完了**。クライアント`Publishr Web`発行・`GOOGLE_OAUTH_CLIENT_ID`/`_SECRET`登録済。⚠️リダイレクトURIは仮`localhost:8080`のみ→**本番URLはbackendデプロイ後に追記**（WBS 0.7） |
+| ☑ | **OAuthクライアント発行＋GitHub Secrets 6本**（CLIENT_ID/SECRET追加で4本→6本） | 🔧/📘 | ✅**2026-06-04完了**。クライアント`Publishr Web`発行・`GOOGLE_OAUTH_CLIENT_ID`/`_SECRET`登録済。⚠️リダイレクトURIは仮`localhost:8080`のみ→**本番URLはbackendデプロイ後に追記**（WBS B1.2） |
 
 ### 2-2. GitHub / モノレポ
 | | タスク | 担当 | 完了条件 |
@@ -111,17 +111,17 @@
 
 > 各週の★関門を通過できなければ次週へ持ち越さず即対処。**W2が全体の山場**。
 
-| 週 | 期間 | 友人の★関門 | 鉄田の★関門 |
+| 週 | 期間 | 一瀬の★関門 | 鉄田の★関門 |
 |---|---|---|---|
-| **W1** | 6/1-6/7 | ADKで「担当者立案→リーダーがスコア差し戻し（調査サブ=Google検索grounding）」が動く＋コスト/タイムアウト実測 | UIテンプレ選定・プロンプト実テスト（initialProfile確定✅／デモ動画台本✅は6/4完了） |
-| **W2** ⚡ | 6/8-6/14 | STEP0(Drive＋Calendar＋Tasks)→STEP1(3層Profile)→STEP2(3階層)→Firestore保存（モードA骨格） | 書店トップ＋本詳細(BookDraft 7項目)をFirestore購読で表示・登録UI |
-| **W3** | 6/15-6/21 | Scheduler曜日別起動＋STEP3キャスティング＋STEP4編集ループ(1R)＋予約→Pub/Sub→モードB本文編集ループ(最高3R) | 入荷理由F3・予約UI(同時5冊ガード)・読書/ハイライト・お気に入り著者UI・通知バナー |
-| **W4** | 6/22-6/28 | GitHub Actions自動デプロイ・Langfuse計装(2ループ＋grounding)・Eval 8件ゲート・Terraform・firestore.indexes | FB UI・棚の充実・世界観・Eval観点最終調整 |
-| **W5** | 6/29-7/5 | E2E通し・バグ潰し・dev/prodフラグをprodへ | デモ録画・ピッチ図解・README仕上げ |
+| **W1** | 6/8-6/14 | ADKで「担当者立案→リーダーがスコア差し戻し（調査サブ=Google検索grounding）」が動く＋コスト/タイムアウト実測 | UIテンプレ選定・プロンプト実テスト（initialProfile確定✅／デモ動画台本✅は6/4完了） |
+| **W2** ⚡ | 6/15-6/21 | STEP0(Drive＋Calendar＋Tasks)→STEP1(3層Profile)→STEP2(3階層)→Firestore保存（モードA骨格） | 書店トップ＋本詳細(BookDraft 7項目)をFirestore購読で表示・登録UI |
+| **W3** | 6/22-6/28 | Scheduler曜日別起動＋STEP3キャスティング＋STEP4編集ループ(1R)＋予約→Pub/Sub→モードB本文編集ループ(最高3R) | 入荷理由F3・予約UI(同時5冊ガード)・読書/ハイライト・お気に入り著者UI・通知バナー |
+| **W4** | 6/29-7/5 | GitHub Actions自動デプロイ・Langfuse計装(2ループ＋grounding)・Eval 8件ゲート・Terraform・firestore.indexes | FB UI・棚の充実・世界観・Eval観点最終調整 |
+| **W5** | 7/6-7/12 | E2E通し・バグ潰し・dev/prodフラグをprodへ | デモ録画・ピッチ図解・README仕上げ |
 
 ---
 
 ## §5. 今すぐ動く「最初の3手」
 1. ✅ 📘 ~~initialProfile選択肢の確定 ＋ デモ台本~~・gcloud×Norton恒久対処（**2026-06-04 すべて完了**／デモはカット割り廃止→動画台本2本立てへ置換）。
-2. 📘 **友人MTG（明日夕方）で§1の全議題を握る**＝特にG1-13 Picker・G1-17 Langfuse方式・役割分担。**鉄田単独タスクは完了済→残ゲートはこのMTGのみ**。
+2. 📘 **友人MTG（本日6/5夕方）で§1の全議題を握る**＝特にG1-13 Picker・G1-17 Langfuse方式・役割分担。**鉄田単独タスクは完了済→残ゲートはこのMTGのみ**。
 3. 🔧 **MTG後：CI空パイプ疎通**（リポ/scaffold/GCPは構築済）→ W1 ADK疎通へ。

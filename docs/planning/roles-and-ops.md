@@ -5,7 +5,7 @@
 > - **作業分解・依存・週次・DoD・マイルストーン → [wbs.md](wbs.md) が正**
 > - **着手ゲート（友人MTG議題・環境・残素材） → [kickoff-checklist.md](kickoff-checklist.md) が正**
 > - 旧版にあった §W0準備・§W1〜W6 ToDo・§鉄田独立トラックは上記2枚へ移管（二重管理を排除）。
-> **担当凡例**: 👥=2人で合意 / 🔧=友人（エンジニア）/ 📘=鉄田（Claude Code含む）
+> **担当凡例**: **鉄田・一瀬**=2人で合意 / **一瀬**=友人（エンジニア）/ **鉄田**（Claude Code含む）。WBS([wbs.md](wbs.md))のタスク担当も同じ3名表記に統一。
 
 ---
 
@@ -21,23 +21,23 @@
 > 工数の食い合いを解く肝＝**フロントを鉄田がClaude Codeで巻き取り、友人はエージェント＝審査の核に集中**（アーキ §5）。
 > **🔑 エージェントの分業原則（一瀬提案で明確化・2026-06-03）**: **プロンプト・人格・判断基準の「設計」＝鉄田**（`packages/prompts`）／**ランタイム実装・Vertex接続・実行基盤＝一瀬**（`agents/*.py`・`apps/api`）。「中身の質」と「動かす」を物理分離する。詳細は [../design/agent-responsibilities.md](../design/agent-responsibilities.md)。
 
-| 領域 | 主担当 | 境界・補足 | WBS |
+| 領域 | 主担当 | 境界・補足 | WBS（カテゴリ版） |
 |---|---|---|---|
-| ADKマルチエージェントの**ランタイム実装**（STEP0-5・モードB） | 🔧友人 | 基準1の中核。最優先。**プロンプト設計は📘** | WP1/2 |
-| **エージェントのプロンプト・人格・判断基準の設計**（企画3階層／キャスティング／編集長［プレビュー3観点・本文ルーブリック］／著者／Eval judge） | 📘鉄田 | ✅ `packages/prompts/` 11本整備済。残＝W1実テスト＆eval兼用 | WP5 |
-| STEP0観測・OAuth・Picker（サーバ側） | 🔧友人 | 選択UIは📘と境界調整（G1-13） | WP1.2 |
-| Cloud Run / Scheduler / Pub/Sub / Firestore / GCS | 🔧友人 | 状態機械・自律トリガー・索引・本文保護 | WP3 |
-| Imagen表紙生成連携（STEP5） | 🔧友人 | dev時はモック（コスト） | WP1.7 |
-| Langfuse計装・CI/CD・Eval ゲート実装・Terraform | 🔧友人 | L4の実装 | WP6 |
-| API 3本（reserve/OAuth/trigger） | 🔧友人 | 境界は `API契約仕様.md`・予約同時5冊 | WP2.1 |
-| 共有スキーマ（型の正本・`packages/shared-schema`） | 🔧友人 | fixtures（personas等）は📘。B7/G1-11 | WP0.4 |
-| コスト実測・監視（GCP/Langfuse） | 🔧友人 | 方針・上限ガード設計は📘 | WP9 |
-| 書店フロントUI（全画面・Picker UI含む） | 📘鉄田 | テンプレ＋Claude Code。`../UI仕様/UI仕様書.md` | WP4 |
-| ユーザー登録フォーム（initialProfile選択肢） | 📘鉄田 | G1-9。選択肢は鉄田確定 | WP4.1/5.2 |
-| お気に入り著者UI・ハイライト・FB（Firestore直書き） | 📘鉄田 | ルールは `Firestoreセキュリティルール.md` | WP4.5/4.6 |
-| Eval Set設計・品質ゲート項目 | 📘鉄田 | ✅8件作成済。CI実装は🔧 | WP7 |
-| デモ台本・録画・ピッチ図解・README | 📘鉄田 | 基準2・4の訴求 | WP8 |
-| テーマ・スコープ管理・コスト概算（方針・ガード） | 📘鉄田 | 意思決定・予算 | WP9 |
+| ADKマルチエージェントの**ランタイム実装**（STEP0-5・モードB） | 一瀬 | 基準1の中核。最優先。**プロンプト設計は鉄田** | C1/C2 |
+| **エージェントのプロンプト・人格・判断基準の設計**（企画3階層／キャスティング／編集長［プレビュー3観点・本文ルーブリック］／著者／Eval judge） | 鉄田 | ✅ `packages/prompts/` 11本整備済。残＝W1実テスト＆eval兼用 | A3 |
+| STEP0観測・OAuth・Picker（サーバ側） | 一瀬 | 選択UIは鉄田と境界調整（G1-13） | C1.1 |
+| Cloud Run / Scheduler / Pub/Sub / Firestore / GCS | 一瀬 | 状態機械・自律トリガー・索引・本文保護 | C3/C1.7 |
+| Imagen表紙生成連携（STEP5） | 一瀬 | dev時はモック（コスト） | C1.6 |
+| Langfuse計装・CI/CD・Eval ゲート実装・Terraform | 一瀬 | L4の実装 | C5.6/B3/C5.3/B4 |
+| API 3本（reserve/OAuth/trigger） | 一瀬 | 境界は `API契約仕様.md`・予約同時5冊 | C2.1 |
+| 共有スキーマ（型の正本・`packages/shared-schema`） | 一瀬 | fixtures（personas等）は鉄田。B7/G1-11 | A5.2 |
+| コスト実測・監視（GCP/Langfuse） | 一瀬 | 方針・上限ガード設計は鉄田 | C5.8 |
+| 書店フロントUI（全画面・Picker UI含む） | 鉄田 | テンプレ＋Claude Code。`../UI仕様/UI仕様書.md` | C4 |
+| ユーザー登録フォーム（initialProfile選択肢） | 鉄田 | G1-9。選択肢は鉄田確定 | C4.1/A3.2 |
+| お気に入り著者UI・ハイライト・FB（Firestore直書き） | 鉄田 | ルールは `Firestoreセキュリティルール.md` | C4.5/C4.6 |
+| Eval Set設計・品質ゲート項目 | 鉄田 | ✅8件作成済。CI実装は一瀬 | A4/C5.3 |
+| デモ台本・録画・ピッチ図解・README | 鉄田 | 基準2・4の訴求 | C6 |
+| テーマ・スコープ管理・コスト概算（方針・ガード） | 鉄田 | 意思決定・予算 | C5.7/C5.8 |
 
 > 担当の「いつ・何待ち・完了条件」は WBS の各WP表（担当列・依存・DoD）を参照。
 
@@ -46,7 +46,7 @@
 ## 2. 運用ルール
 - **タスク管理**: チェックリスト§1⑥で1ツール（GitHub Projects/Notion/Todoist）に決め、**WBSのWP/タスクを起票**（二重管理しない）。WBS＝設計図、ツール＝日々の進捗。
 - **同期頻度**: 週1の関門チェック（WBSマイルストーンM1〜M6）＋詰まったら即連絡（撤退せず対策）。
-- **スコープ変更**: MVP §4 OUT との照合を必須に（「入れる＝何かを捨てる」）。Stretchは W6 余力次第。
+- **スコープ変更**: MVP §4 OUT との照合を必須に（「入れる＝何かを捨てる」）。Stretchは W5 余力次第。
 - **コスト**: dev/prodフラグをデフォルトdev（本文ページ/Imagen/冊数）。予算アラート50%でLangfuse内訳点検（G1-16）。
 - **真実源の分担**: 役割・運用＝本書／作業・スケジュール＝WBS.md／着手ゲート＝着手チェックリスト.md／設計＝設計資料・packages/prompts。
 
