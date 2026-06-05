@@ -39,7 +39,7 @@ RootSequential（モードA・Cloud Run Job のエントリ／起動時に theme
 ├─ [STEP0] ObservationTool（ツール・非エージェント／土朝のみ実行）
 │      Drive/Calendar/Tasks 取得＋テキスト抽出 → state["observation"]
 │
-├─ [STEP1] ReaderAnalystAgent（LlmAgent・Flash／土朝のみ実行・週1回）
+├─ [STEP1] ReaderAnalystAgent（LlmAgent・Pro／土朝のみ実行・週1回）
 │      in: state["observation"] (+前回 profile + initialProfile)
 │      out: state["readerProfile"]（水/日runは Firestore の profile を読んで state に載せ直す）
 │

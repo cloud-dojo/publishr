@@ -114,6 +114,7 @@
 | 本文・画像 | Cloud Storage | 本文(MD/JSON)・表紙画像 | 大きいテキスト/バイナリはDBに入れない |
 | 検索 | Elasticsearch（Elastic Cloud） | 続編記憶・既出概念の横断検索 | **今回は外す判断もあり**（§9参照） |
 | 観測 | **Langfuse Cloud（マネージド）** | トレース・Eval Set | GKE自前運用は不採用（§8） |
+| 評価 | **Vertex AI Gen AI Evaluation Service**（GEAP/Vertex AI） | Eval品質ゲート（LLM-as-judge・4観点ルーブリック・8件） | 自作judgeでなくマネージド評価サービス。CIの品質ゲートに使用（§10）。詳細＝`publishr_other/GEAP②_EvalService具体化.md` |
 | 認証 | Firebase Auth + Google OAuth | ログイン＋各種スコープ同意 | Drive→Calendar→Gmail の順にスコープ追加が自然な拡張路線 |
 | 外部連携（拡張） | Google Calendar API / Gmail API / Notion API / Kindle / Pocket / YouTube Data API 等 | 拡張インプット取得 | 採否は後工程で決定。Calendar が最優先候補（同じOAuthで追加できる） |
 | CI/CD | GitHub Actions → Cloud Build → Cloud Run | 自動デプロイ | 基準5・DevOps証明 |

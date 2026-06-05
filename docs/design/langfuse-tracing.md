@@ -53,6 +53,8 @@ trace: eval_gate  (attrs: commitSha, env)
    trace末: gateResult{ passCount, total=8, passed(>=7), honmeiAllPassed }
 ```
 
+> **②採用メモ（2026-06-05）**: `eval_judge` の score/scoreBreakdown/reason は **Vertex AI Gen AI Evaluation Service**（`vertexai.evaluation`）が算出した結果を Langfuse に記録する（自作judge実行を置換）。trace/span構成・属性キーは不変。
+
 ## 4. 必然性ダッシュボード（Langfuseで見せる3点）
 | 見せたいもの | 使う属性 | 基準 |
 |---|---|---|

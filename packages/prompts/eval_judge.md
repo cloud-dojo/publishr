@@ -1,7 +1,7 @@
 # Eval judge — プロンプト仕様（CI品質ゲート・L4）
 
 > 役割: 企画を LLM-as-judge で採点し、CIのデプロイゲートにする。**企画リーダーと同一の4観点ルーブリック**を共通利用。モデル＝**Pro**。
-> I/O正本: `エージェントIO契約.md` §8／`MVPスコープ.md` §9。実データ＝`デモ素材/fixtures/eval_set.json`（8件）。
+> I/O正本: `エージェントIO契約.md` §8／`MVPスコープ.md` §9。実データ＝`eval/eval_set.yaml`（8件＋境界2件）。fixtures＝`packages/shared-schema/fixtures/`。
 
 ## I/O
 - **入力**: Eval Set 1件＝`{ id, readerProfile, plan, expectedBand, kind }`（expectedBand: high≥70 / low≤40 / serendipity 30〜60）
@@ -50,5 +50,5 @@
 **NG理由**: 落とすべき低関連企画（マナー入門）を**通してしまっている**＝ゲートが機能しない。reasonも観点に基づかず曖昧。judgeが一般論に甘いと、Evalゲートの「ちゃんと落とす」証明（基準5）が崩れる。→ プロンプトで「一般論は減点・観点別に分解」を徹底。
 
 ## Eval兼用メモ
-- 本ファイルの採点例は `eval_set.json`（8件＝高関連4/低関連2/セレンディピティ2）の期待スコア帯の正解アンカー。
+- 本ファイルの採点例は `eval/eval_set.yaml`（8件＝高関連4/低関連2/セレンディピティ2＋境界2件）の期待スコア帯の正解アンカー。
 - 企画リーダー（`step2_plan_leader.md`）と**同一ルーブリック**なので、両者の採点が一致するか（モノサシ統一）も回帰チェック。

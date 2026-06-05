@@ -14,7 +14,7 @@ meta:
     Publishr Eval Set（企画の関連性スコア／LLM-as-judge）。佐倉美咲プロファイルに対する
     (企画, 期待スコア帯) 8件。CIの品質ゲートで使用。スコア0-100・4観点×25 に整合。
   persona: 佐倉美咲（35歳・食品メーカー新任マーケ課長・部下7名・年上佐藤健一42歳）
-  source: デモ素材/デモペルソナ.md ＋ fixtures/{drive,calendar,tasks}.json
+  source: packages/shared-schema/fixtures/{drive,calendar,tasks}.json（evidence源の id 規約＝drv_/cal_/tsk_。例: drive/03=drv_003・calendar cal_028＝6/5役員報告）
   judge: Vertex AI Gemini Pro
   scoreRange: [0, 100]
   rubricObservations: [relevance, differentiation, researchUse, titleHook]
@@ -28,6 +28,11 @@ meta:
     high_relevance: 4
     low_relevance: 2
     serendipity: 2
+  diagnostic:
+    note: >-
+      上記8件はCIゲート（8件中7件パスで通過）。これとは別に、閾値70近傍の判別力と
+      judge再現性(C5.4)・閾値運用調整(C5.5)を確認するための borderlineCases を2件付す。
+      borderlineCases は意図的に70近傍に置くため、8件中7件の通過規則には含めない（診断専用）。
 
 # 採点ルーブリック（judge への共有方針）
 rubric: >-
@@ -196,3 +201,35 @@ cases:
       agendaOutline: [宗教とブランド, 物語の力, 共同体の設計, パーパスへの接続]
       recommendedAuthorTypes: [教養・宗教社会学×マーケの越境型]
     rationale: 中期戦略メモのパーパス関心に隣接する教養。実務直撃ではない中レンジで適正(30〜60)。
+
+# 境界(閾値70近傍)の判別力チェック（診断専用・8件ゲートには含めない・C5.4再現性/C5.5閾値調整）
+borderlineCases:
+  # ギリ通す: 局面に的中し観測に紐づくが、差別化・調査反映が高関連4件よりやや弱い
+  - id: eval_b1
+    kind: borderline_pass
+    expectedBand: [68, 80]
+    plan:
+      tentativeTitle: 部下との1on1を「型」にする——新任マネージャーの対話設計
+      readerSituation: 新任2ヶ月、7名との1on1を始めたが形骸化しそうで手応えがない
+      whyNowForYou: 課長就任メモ(drive/03=drv_003)に『1on1定例化(形骸化しそう)』、1on1議事(drive/06=drv_006)に相手ごとの悩みが並ぶから
+      coreMessage: 1on1は雑談でも査定でもなく、期待役割をすり合わせ直す定例にする
+      diffFromMarket: 汎用1on1本でなく、年上の佐藤さんを含む経験バラバラの7名への相手別1on1設計に寄せる（ただしmarketGapの固有性はeval_01ほど鋭くない）
+      keyInsights: [1on1の目的設計, 相手タイプ別の問い, 形骸化を防ぐ仕組み]
+      agendaOutline: [なぜ形骸化するか, 目的の設計, 相手別の対話, 続ける仕組み]
+      recommendedAuthorTypes: [人事・組織開発型, 現場マネージャー型]
+    rationale: 観測(drv_003/006)に紐づき局面に的中するが、差別化・調査反映が高関連4件よりやや弱い。総合70を僅かに上回るのが正答＝「ギリ通す」境界の再現性を見る。
+
+  # ギリ落とす: 話題は隣接するが固有局面に踏み込まない一般論（lowほど低くはならない）
+  - id: eval_b2
+    kind: borderline_fail
+    expectedBand: [50, 68]
+    plan:
+      tentativeTitle: リーダーシップの教科書——チームを動かす5つの力
+      readerSituation: チームを率いるすべてのリーダーへ
+      whyNowForYou: マネージャーになったあなたに、リーダーシップの基礎を体系的に
+      coreMessage: 信頼・ビジョン・傾聴・権限委譲・評価の5つの力でチームは動く
+      diffFromMarket: 5つの力を体系的に網羅している点（固有局面への限定はなし）
+      keyInsights: [信頼, ビジョン, 傾聴, 権限委譲, 評価]
+      agendaOutline: [リーダーとは, 信頼の作り方, ビジョンを語る, 傾聴, 委譲と評価]
+      recommendedAuthorTypes: [リーダーシップ論の総合型]
+    rationale: 委譲・評価など佐倉さんの関心に触れはするが、年上の佐藤さん/6-5役員報告/リニューアルの固有局面に踏み込まず「教科書/5つの力」の最大公約数。総合70を僅かに下回るのが正答＝「ギリ落とす」境界の再現性を見る。マナー入門(eval_05)のような明確なlowとは別物。

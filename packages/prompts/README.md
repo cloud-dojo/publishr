@@ -10,8 +10,8 @@
 
 1. **変数記法**: プロンプト内の差し込みは `{{変数名}}`（例 `{{readerProfile}}`・`{{approvedPlan}}`・`{{persona}}`）。ランタイムが実値を注入する。
 2. **出力は必ず指定スキーマのJSONのみ**（前置き・後置きの散文を出さない）。スキーマ定義は IO契約 §該当節を参照。ADKの構造化出力で強制。
-3. **例の統一ベース＝デモペルソナ「佐倉 美咲」**（食品メーカー マルミナ食品・マーケ課長/2026-04新任・部下7名・年上の佐藤健一42歳・「しずく天然水」春リニューアル・6/5役員中間報告・評価面談）。`デモ素材/デモペルソナ.md`・`デモ素材/fixtures/` と整合。
-4. **良い/悪い例は二度使う**: ①プロンプトのfew-shot ②`eval/`のEval fixture（採点系の合格/不合格判定）。一度作れば両方に効く。
+3. **例の統一ベース＝デモペルソナ「佐倉 美咲」**（食品メーカー マルミナ食品・マーケ課長/2026-04新任・部下7名・年上の佐藤健一42歳・「しずく天然水」春リニューアル・6/5役員中間報告・評価面談）。`packages/shared-schema/fixtures/`（drive/calendar/tasks＝佐倉美咲の観測データ正本）と整合。
+4. **few-shot 規約**: 各プロンプトの **✅良い例を1件だけ** system 末尾に few-shot として差し込む（生成系は「形式・踏み込みの参考＝**内容はコピーせず入力に従え**」の注記を必須＝overfit防止）。**❌悪い例は few-shot に入れず** `eval/` の Eval fixture 専用（採点系の合格/不合格の回帰）。**採点系（leader / editor×2 / judge）は常時ON固定**（スコア内訳つき良い例で閾値を校正＝再現性C5.4）、**生成系（owner / author×2 / persona / cover / step1）はフラグで既定ON・dev で外せる**（`PROMPT_FEWSHOT=on/off`・コスト規律 アーキ§11 R7）。例は一度作れば few-shot と eval の両用。
 5. **モデル**: ハイブリッド（IO契約 §9）。判断が重い工程＝Pro／観測寄り＝Flash。
 6. **知財**: 著者ペルソナ・著者名・経歴はすべて架空。実在著者は作風参考に留める。
 7. **悪い例の役割**: 「一般論・最大公約数・水増し・ペルソナ不在」など**Publishrが避けるべき失敗モード**を具体化し、採点エージェント（リーダー/編集長/judge）が確実に弾けることを示す。
@@ -29,6 +29,7 @@
 | `step3_casting_editor.md` | キャスティング編集者 | **Pro** | `GeneratedPersonaSet`（5人・2軸）§5-3a |
 | `step4_author_preview.md` | 著者（プレビュー執筆） | **Pro** | `BookDraft`（7フィールド）§5-2a |
 | `step4_editor_preview.md` | 編集長（プレビュー採点） | **Pro** | `EditorVerdict`（プレビュー3観点）§5-2b |
+| `step5_cover.md` | 装丁（カバー方針→Imagenプロンプト） | Flash＋Imagen | `coverPrompt`（英語）§6 |
 | `modeB_author_body.md` | 著者（本文執筆） | **Pro** | 本文MD §7 |
 | `modeB_editor_body.md` | 編集長（本文採点） | **Pro** | 本文ルーブリック5観点 §7 |
 | `eval_judge.md` | Eval judge | **Pro** | 企画4観点（リーダーと共通）§8 |

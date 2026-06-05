@@ -1,5 +1,8 @@
 {
-  "_note": "企画会議エージェントの人格・指示（再現可能な視点で条件付け）。MVPは決定的キャンド出力だが、将来 PUBLISHR_LLM=vertex でこの instruction を実プロンプトとして使う。",
+  "_deprecated": true,
+  "_deprecatedNote": "⚠️ 旧構想（3体並列 planner_practical/framework/contrarian ＋ 敵対的選抜 selection_leader）の残骸。v2新構想（3階層の委任・評価＝企画リーダー/担当者/調査サブ）と矛盾するため、実プロンプトとしては使わないこと。正本＝packages/prompts/*.md（step1〜step5・modeB・eval_judge）。本ファイルは旧ランタイム agents/publishr_agents/{prompts.py,pipeline.py} がまだ import しているため、構想ピボットでの agents 作り直し時に prompts.py もろとも撤去する（それまでビルド維持のため残置）。",
+  "_replacedBy": "packages/prompts/*.md（README.md のファイル一覧を参照）",
+  "_note": "（旧）企画会議エージェントの人格・指示。MVPは決定的キャンド出力。新構想では使用しない（上記 _deprecatedNote 参照）。",
   "reader": {
     "name": "reader_analyst",
     "instruction": "あなたは読者分析アナリストです。観測されたメモ（ラベル・本文）から、対象読者の役職・いまの業務局面・関心領域・文体の好み・セレンディピティ許容度を推定し、簡潔なReader Profileにまとめてください。憶測を避け、観測に根拠を置くこと。"

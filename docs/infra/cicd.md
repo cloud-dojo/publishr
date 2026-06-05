@@ -14,7 +14,7 @@
 [ GitHub Actions ] ←── W4で実装
   Step 1: lint（Python / TypeScript）
   Step 2: Eval Gate（審査基準5・Observability L4の証明）
-           ├ fixtures/eval_set.json × Gemini judge（4観点共通ルーブリック）
+           ├ eval/eval_set.yaml × Gemini judge（4観点共通ルーブリック・Vertex AI Gen AI Evaluation Service）
            ├ 本命の総合スコア < 70 → ❌ デプロイ停止
            └ 8件中7件パス（87.5%）→ ✅ 通過
         │ pass
@@ -72,10 +72,12 @@ jobs:
           LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GCP_SA_KEY }}
-        run: python scripts/eval_gate.py --threshold 70 --pass-rate 0.875
+        run: python scripts/eval_harness.py   # Vertex AI Gen AI Evaluation Service（vertexai.evaluation）で8件採点 → 本命<70 / 8件中7件で停止
       - name: Trigger Cloud Build
         # gcloud builds triggers run ... （W4で詳細化）
 ```
+
+> **②採用メモ（2026-06-05）**: Eval Gate は自作judgeでなく **Vertex AI Gen AI Evaluation Service**（`vertexai.evaluation`・実体＝`scripts/eval_harness.py`）。SA `publishr-runner` に **`roles/aiplatform.user`** を付与。**eval実行リージョン＝`us-central1`**（appの`asia-northeast1`とは別に `vertexai.init(location=...)` で指定）。**ルーブリック／Evalセット8件／ゲート方針（<70・7/8）は不変**＝実装エンジンの差し替えのみ。実装詳細＝`publishr_other/GEAP②_EvalService具体化.md`。
 
 ### GitHub Secrets 登録リスト（W1 GitHub作成後に鉄田が設定）
 
@@ -173,7 +175,7 @@ L4: Continuous Eval ← ★ Eval Gate が CI に組み込まれている
 | **W1** | GitHub Secrets 登録（§2の6項目） | 鉄田 |
 | **W2** | 手動デプロイでE2E縦通し確認（CI/CDはまだ手動） | 友人 |
 | **W3** | Cloud Scheduler 3ジョブ設定・Pub/Sub動作確認 | 友人 |
-| **W4** | GitHub Actions `.yml` 作成・Eval Gate スクリプト（`scripts/eval_gate.py`）・Terraform コア資源・自動デプロイ完成 | 友人（実装）＋鉄田（Evalスクリプト） |
+| **W4** | GitHub Actions `.yml` 作成・Eval Gate（`scripts/eval_harness.py`・Vertex AI Gen AI Evaluation Service）・Terraform コア資源・自動デプロイ完成 | 友人（実装）＋鉄田（Eval設計） |
 | **W5** | CI/CD 安定確認・Langfuse ダッシュボード整備・デモ録画 | 両者 |
 
 ---

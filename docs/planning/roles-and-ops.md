@@ -38,6 +38,7 @@
 | Eval Set設計・品質ゲート項目 | 鉄田 | ✅8件作成済。CI実装は一瀬 | A4/C5.3 |
 | デモ台本・録画・ピッチ図解・README | 鉄田 | 基準2・4の訴求 | C6 |
 | テーマ・スコープ管理・コスト概算（方針・ガード） | 鉄田 | 意思決定・予算 | C5.7/C5.8 |
+| **Eval品質ゲートの実装（Gen AI Eval Service・GEAP）＝一瀬／ProtoPedia作品ページ作成＝鉄田** | 一瀬・鉄田 | 2026-06-05追記。Eval実装ルート＝`publishr_other/GEAP②_EvalService具体化.md`（設計=鉄田✅・実装=一瀬）／ProtoPedia草案＝`publishr_other/Protopedia提出/` | C5.3/C6.7 |
 
 > 担当の「いつ・何待ち・完了条件」は WBS の各WP表（担当列・依存・DoD）を参照。
 
