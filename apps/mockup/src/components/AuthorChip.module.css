@@ -1,0 +1,120 @@
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #2a3550, #0f1420);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.name {
+  font-family: var(--font-serif);
+  color: var(--text-primary);
+  font-size: 15px;
+}
+.style {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* --- compact --- */
+.compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--bg-hairline);
+  background: var(--bg-card);
+  transition: var(--transition);
+}
+.compact:hover {
+  border-color: var(--gold-dim);
+  background: var(--bg-card-hover);
+}
+.compactMeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.fav {
+  font-size: 18px;
+  color: var(--gold-dim);
+  transition: var(--transition);
+}
+.favOn {
+  color: var(--gold-bright);
+}
+
+/* --- select card --- */
+.selectCard {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: var(--transition);
+}
+.selectCard:hover {
+  border-color: var(--gold-dim);
+}
+.selectHead {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+.tag {
+  font-size: 10px;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+}
+.voice {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.preface {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--surface-reader-text);
+  background: var(--surface-preface);
+  border-radius: 6px;
+  padding: 12px 14px;
+  line-height: 1.8;
+  font-family: var(--font-serif);
+}
+.selectBtn {
+  margin-top: auto;
+  padding: 10px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #1a1206;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  transition: var(--transition);
+}
+.selectBtn:hover {
+  filter: brightness(1.08);
+}

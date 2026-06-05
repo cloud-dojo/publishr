@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "description": "Publishr デモ用 Calendar fixture。佐倉美咲の直近1ヶ月(2026-05-04〜06-05)。STEP0 ObservationBundle の calendar.events に対応（title/start/end/attendeesCount/recurring）。±14日取得・attendeesCount=参加人数＝重要局面の手がかり・recurring=定例か単発か。",
+    "persona": "佐倉美咲（35歳・食品メーカー マーケ課長）",
+    "source": "calendar.md と同一内容",
+    "scope": "calendar.readonly",
+    "timeZone": "Asia/Tokyo",
+    "fieldNote": "summary=タイトル（STEP0でtitleにマップ）。attendeesCount/recurringはObservationBundleが要求するシグナル（2026-06-03 v2追加）。"
+  },
+  "events": [
+    { "id": "cal_001", "summary": "マーケ部 朝会（週次キックオフ）", "start": "2026-05-04T09:30:00+09:00", "end": "2026-05-04T10:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+    { "id": "cal_002", "summary": "1on1（中村さき）", "start": "2026-05-04T11:00:00+09:00", "end": "2026-05-04T11:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "2年目。褒めて伸ばす。フィードバックの粒度を工夫" },
+    { "id": "cal_003", "summary": "部長との週次定例（報連相）", "start": "2026-05-04T16:00:00+09:00", "end": "2026-05-04T16:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "" },
+    { "id": "cal_004", "summary": "しずく天然水 リニューアル定例", "start": "2026-05-07T14:00:00+09:00", "end": "2026-05-07T15:00:00+09:00", "attendeesCount": 5, "recurring": true, "description": "" },
+    { "id": "cal_005", "summary": "量販店折衝 同行（渡辺さん）", "start": "2026-05-08T15:00:00+09:00", "end": "2026-05-08T17:00:00+09:00", "attendeesCount": 3, "recurring": false, "description": "ベテランの渡辺さんのやり方を観察" },
+
+    { "id": "cal_006", "summary": "マーケ部 朝会", "start": "2026-05-11T09:30:00+09:00", "end": "2026-05-11T10:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+    { "id": "cal_007", "summary": "1on1（鈴木あや）", "start": "2026-05-11T13:00:00+09:00", "end": "2026-05-11T13:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "新商品企画を担当したいとの申し出。権限委譲どこまで？" },
+    { "id": "cal_008", "summary": "1on1（田中健太）", "start": "2026-05-13T14:00:00+09:00", "end": "2026-05-13T14:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "最近やや停滞気味。踏み込むか待つか" },
+    { "id": "cal_009", "summary": "デジタル広告 運用レビュー（高橋）", "start": "2026-05-14T10:00:00+09:00", "end": "2026-05-14T11:00:00+09:00", "attendeesCount": 3, "recurring": false, "description": "" },
+    { "id": "cal_010", "summary": "マーケ部 全体会議", "start": "2026-05-15T10:00:00+09:00", "end": "2026-05-15T11:30:00+09:00", "attendeesCount": 12, "recurring": true, "description": "決議ゼロで終わってしまった。ファシリ要改善" },
+    { "id": "cal_011", "summary": "部長との週次定例", "start": "2026-05-15T17:00:00+09:00", "end": "2026-05-15T17:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "" },
+
+    { "id": "cal_012", "summary": "マーケ部 朝会", "start": "2026-05-18T09:30:00+09:00", "end": "2026-05-18T10:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+    { "id": "cal_013", "summary": "1on1（佐藤健一）", "start": "2026-05-18T11:00:00+09:00", "end": "2026-05-18T11:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "佐藤さんのプライドを傷つけないよう気を付ける。距離感が掴めない" },
+    { "id": "cal_014", "summary": "リサーチ進捗レビュー（伊藤）", "start": "2026-05-19T15:00:00+09:00", "end": "2026-05-19T16:00:00+09:00", "attendeesCount": 3, "recurring": false, "description": "" },
+    { "id": "cal_015", "summary": "【終日】新任マネージャー研修", "start": "2026-05-20T10:00:00+09:00", "end": "2026-05-20T18:00:00+09:00", "attendeesCount": 20, "recurring": false, "description": "終日研修" },
+    { "id": "cal_016", "summary": "しずく天然水 リニューアル定例", "start": "2026-05-22T15:00:00+09:00", "end": "2026-05-22T16:00:00+09:00", "attendeesCount": 5, "recurring": true, "description": "カラーの議論で時間切れ。誰に売るかまで到達できず" },
+
+    { "id": "cal_017", "summary": "マーケ部 朝会", "start": "2026-05-25T09:30:00+09:00", "end": "2026-05-25T10:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+    { "id": "cal_018", "summary": "1on1（伊藤莉子）", "start": "2026-05-25T13:00:00+09:00", "end": "2026-05-25T13:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "育成段階。任せる仕事の幅を相談" },
+    { "id": "cal_019", "summary": "パッケージ刷新 デザイン案レビュー会", "start": "2026-05-26T11:00:00+09:00", "end": "2026-05-26T12:00:00+09:00", "attendeesCount": 6, "recurring": false, "description": "" },
+    { "id": "cal_020", "summary": "役員への壁打ち（リニューアル方針のプレビュー）", "start": "2026-05-27T16:00:00+09:00", "end": "2026-05-27T17:00:00+09:00", "attendeesCount": 4, "recurring": false, "description": "方向性に自信が持てない。根拠を固めたい" },
+    { "id": "cal_021", "summary": "新商品 市場テスト 進捗MTG", "start": "2026-05-28T14:00:00+09:00", "end": "2026-05-28T15:00:00+09:00", "attendeesCount": 5, "recurring": false, "description": "" },
+    { "id": "cal_022", "summary": "1on1（高橋慎一）", "start": "2026-05-29T10:00:00+09:00", "end": "2026-05-29T10:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "自走できる。任せ方の確認だけ" },
+
+    { "id": "cal_023", "summary": "マーケティング部 チーム定例ミーティング", "start": "2026-06-01T10:00:00+09:00", "end": "2026-06-01T11:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+    { "id": "cal_024", "summary": "上期評価 一次評価ドラフト 作成ブロック", "start": "2026-06-01T15:00:00+09:00", "end": "2026-06-01T16:00:00+09:00", "attendeesCount": 1, "recurring": false, "description": "測りにくい仕事の人をどう評価する？" },
+    { "id": "cal_025", "summary": "役員中間報告 ストーリーライン検討ブロック（自習枠）", "start": "2026-06-02T13:00:00+09:00", "end": "2026-06-02T14:00:00+09:00", "attendeesCount": 1, "recurring": false, "description": "" },
+    { "id": "cal_026", "summary": "1on1（佐藤健一）", "start": "2026-06-03T13:00:00+09:00", "end": "2026-06-03T13:30:00+09:00", "attendeesCount": 2, "recurring": true, "description": "今後の期待役割のすり合わせ。少し気まずいが乗り切る" },
+    { "id": "cal_027", "summary": "役員中間報告 リハーサル（部長レビュー）", "start": "2026-06-04T16:00:00+09:00", "end": "2026-06-04T17:00:00+09:00", "attendeesCount": 3, "recurring": false, "description": "" },
+    { "id": "cal_028", "summary": "【重要】役員中間報告会（しずく天然水リニューアル）", "start": "2026-06-05T15:00:00+09:00", "end": "2026-06-05T17:00:00+09:00", "attendeesCount": 8, "recurring": false, "description": "本番" }
+  ]
+}

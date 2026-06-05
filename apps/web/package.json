@@ -10,10 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@publishr/shared-schema": "*",
+    "firebase": "^12.14.0",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "@publishr/shared-schema": "*",
     "zod": "^3.23.8"
   },
   "devDependencies": {

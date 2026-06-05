@@ -3,19 +3,20 @@ import type { Book } from "@publishr/shared-schema";
 type BadgeSpec = { cls: string; label: string; pulse: boolean };
 
 function spec(status: Book["status"], shelf: Book["shelf"]): BadgeSpec {
-  if (shelf === "odd") return { cls: "badge--odd", label: "異色作", pulse: false };
+  // 新しい出会い（モックアップ serendipity 相当）
+  if (shelf === "odd") return { cls: "badge--odd", label: "新しい出会い", pulse: false };
   switch (status) {
     case "writing":
       return { cls: "badge--writing", label: "執筆中", pulse: true };
     case "reserved":
-      return { cls: "badge--writing", label: "執筆依頼中", pulse: true };
+      return { cls: "badge--writing", label: "予約中", pulse: false };
     case "published":
       return { cls: "badge--done", label: shelf === "library" ? "読了" : "入荷", pulse: false };
     case "draft":
     default:
       return shelf === "press"
         ? { cls: "badge--soon", label: "もうすぐ", pulse: false }
-        : { cls: "badge--new", label: "NEW 入荷", pulse: true };
+        : { cls: "badge--new", label: "関心", pulse: false };
   }
 }
 

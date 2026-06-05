@@ -1,45 +1,198 @@
-# Publishr Eval Set（サンプル）
-# ── これは「良い企画・良い本とは何か」を非エンジニア(B)が言葉で定義する成果物 ──
-#   設計・基準づくり: B（非エンジニア）   採点ロジックの実装・CIゲート化: A（エンジニア）
-#   使い方: 各項目の score が閾値未満なら CI でデプロイを止める（品質ゲート＝基準5/L4）
-#   B は「観点・良い例・悪い例」を埋めるだけでよい（コード不要）。
+# =============================================================================
+# Publishr Eval Set（企画の関連性スコア / LLM-as-judge）
+# -----------------------------------------------------------------------------
+# 新構想（Drive+Calendar+Tasks 観測 / 企画3階層 / 4観点×25点・100点満点・閾値70）版。
+# 佐倉美咲プロファイルに対する (企画, 期待スコア帯) 8件。CI の品質ゲートで使用（MVPスコープ §9）。
+# judge プロンプトは packages/prompts/eval_judge.md と一致させること。
+#
+# ⚠️ 旧 eval_set.yaml（Keep観測 / 3体 / 5観点1-5点）から構想ごと差し替え。
+#    旧版は git 履歴から参照可能。Eval ハーネス側のスキーマ更新は別途（一瀬さん主導）。
+# =============================================================================
 
-- id: plan_relevance
-  観点: 入荷理由が観測(Keepメモ)の“具体的な事実”に紐づいているか
-  対象: plan.reason
-  採点: 1-5   # 5=具体メモを名指しで引用 / 3=テーマは合うが一般的 / 1=観測と無関係
-  閾値: ">=4"
-  良い例: "直近のメモに「管掌範囲の拡大」「1on1の負荷増」が増加。30名規模への移行期と読みました。"
-  悪い例: "マネジメントに関心がありそうなので書きました。"
+meta:
+  description: >-
+    Publishr Eval Set（企画の関連性スコア／LLM-as-judge）。佐倉美咲プロファイルに対する
+    (企画, 期待スコア帯) 8件。CIの品質ゲートで使用。スコア0-100・4観点×25 に整合。
+  persona: 佐倉美咲（35歳・食品メーカー新任マーケ課長・部下7名・年上佐藤健一42歳）
+  source: デモ素材/デモペルソナ.md ＋ fixtures/{drive,calendar,tasks}.json
+  judge: Vertex AI Gemini Pro
+  scoreRange: [0, 100]
+  rubricObservations: [relevance, differentiation, researchUse, titleHook]
+  rubricNote: 4観点・各0〜25点・合計0〜100。企画リーダー（エージェントIO契約 §4-2a）と同一ルーブリック。
+  threshold:
+    honmeiMin: 70           # 本命企画の合格下限
+    serendipityBand: [30, 60]
+    lowMax: 40              # ずれ企画の上限（ゲートが落とす）
+    passRule: 8件中7件パスで通過（87.5%）
+  composition:
+    high_relevance: 4
+    low_relevance: 2
+    serendipity: 2
 
-- id: proposal_diversity
-  観点: 3つの企画(実務直撃/フレームワーク/逆張り)が“構造的に別物”か（言い換えでない）
-  対象: candidates
-  採点: 1-5   # 5=切り口が三者三様 / 1=同じ主張の言い換え
-  閾値: ">=4"
-  良い例: ["任せ方の設計図", "問いで動かす現場", "あえて抱え込め"]
-  悪い例: ["権限委譲のすすめ", "上手な権限委譲", "委譲のコツ"]
+# 採点ルーブリック（judge への共有方針）
+rubric: >-
+  読者プロファイル（3層）に対する企画(PlanProposal 8項目)の的中度を4観点×各0〜25点（合計0〜100）で採点する。
+  ①relevance=役職/組織規模/業界/currentWork(局面・課題)へのリアルな踏み込み
+  ②differentiation=既製本が構造的に出せない固有局面への差別化
+  ③researchUse=調査(売れ筋/marketGap・テーマ知見)の反映
+  ④titleHook=この読者一人を掴むタイトルのエッジ。
+  一般論的（最大公約数的）は減点。セレンディピティ企画は『業務直結ではないが関心の隣接領域に届く教養』を
+  中レンジ(30〜60)で評価。
 
-- id: selection_adversarial
-  観点: 選抜が敵対的か（全却下→再提出が1回起き、再提出後に採否が割れる）
-  対象: reject_log
-  採点: boolean   # R1に却下あり かつ R2に採用と却下/保留が混在
-  閾値: "== true"
-  良い例: "R1で全却下→再提出→R2で『任せ方の設計図』採用・他は却下/保留"
-  悪い例: "全部いきなり採用（＝自己却下が起きていない）"
+# 採点対象の読者プロファイル（3層構造: base / currentWork / readingBehavior）
+readerProfile:
+  base:
+    industry: 食品・飲料メーカー
+    jobType: マーケティング・ブランド
+    position: 課長・マネージャー（2026/04新任）
+    orgScale: 部下7名（年上ベテランの佐藤健一42歳・経験19年を含む）
+    readingGenres:
+      - すぐ使える実践書・ハウツー
+      - 事例・ストーリーで学ぶ
+  currentWork:
+    currentSituation: >-
+      新任2ヶ月。しずく天然水の春リニューアル判断と6/5役員中間報告を控え方針に自信が持てない／
+      初の上期評価面談準備／年上部下マネジメントに戸惑い／会議過多で読書時間ゼロ
+    activeWorkThemes:
+      - しずく天然水 春リニューアルの意思決定
+      - 新任マネジメント
+      - 上期評価面談の準備
+      - 会議ファシリテーション
+    challenges:
+      - 年上で実力者の佐藤さんにどこまで・どう任せるかの距離感
+      - リニューアル方針に確信が持てず役員報告の根拠を固めきれない
+      - 測りにくい仕事をどう評価するか
+    upcomingKeyEvents:
+      - { title: 役員中間報告, date: 2026-06-05 }
+      - { title: 上期評価面談（初）, date: 2026-06-中旬 }
+    evidence:
+      - { claim: 年上部下の任せ方に悩む, source: "drive:06_1on1_議事メモ集" }
+      - { claim: 6/5に役員中間報告, source: "calendar:cal_028_役員中間報告" }
+      - { claim: 春リニューアルを担当, source: "drive:01_しずく天然水_春リニューアル企画書" }
+  readingBehavior:
+    recentReads: []
+    highlightsSummary: ""
+    dropSignals: []
+    feedbackSummary: ""
+    serendipityTolerance: mid
+    stylePreference: 実務的・対話的
 
-- id: author_voice_consistency
-  観点: 序文・アジェンダが作家ペルソナの文体/思想/口癖を保っているか
-  対象: book.prefaceSample, book.agenda
-  採点: 1-5   # 5=その作家にしか書けない声 / 1=没個性
-  閾値: ">=4"
-  良い例: "霧島 玄：短く断定『結論から言う。…それは設計の問題だ』"
-  悪い例: "誰が書いても同じ一般的な自己啓発文"
+# 8件の評価ケース（高関連4 / ずれ2 / セレンディピティ2）
+cases:
+  # --- 高関連: 役職・年上部下・評価の3局面に同時的中 -------------------------
+  - id: eval_01
+    kind: high_relevance
+    expectedBand: [70, 100]
+    plan:
+      tentativeTitle: 年上のベテラン部下に、どう任せ・どう評価しますか？
+      readerSituation: 新任2ヶ月。初めて年上で実力者の佐藤さんを含む7名を率いる移行期にいる
+      whyNowForYou: 1on1メモに『任せ方に迷う』が続き、6/5役員報告と初の評価面談が重なる今に最も効くから
+      coreMessage: 年上の部下は『管理』ではなく『期待役割の合意』で動いてもらう。権限は気分でなく構造で配る
+      diffFromMarket: 売れ筋は一般マネージャー向けの委譲論。本書は『新任×年上の実力者部下×消費財ブランド職』の局面に限定して具体化（marketGap）
+      keyInsights:
+        - 権限の三層モデル（報告のみ/相談の上で実行/完全委任）
+        - 敬意と権限の分離
+        - 任せた後の関わり方
+      agendaOutline: [なぜ抱え込むのか, 任せられないの正体, 年上部下への任せ方, 権限の三層モデル, 7人分の権限設計図, 任せたあとの関わり方]
+      recommendedAuthorTypes: [経営コンサル出身ロジカル型, 現場叩き上げ型, 組織論の学術型]
+    rationale: 役職(新任課長)・年上部下・評価の3局面に同時的中。4観点とも高得点で総合70以上が正答。
 
-- id: stocking_reason_credibility
-  観点: 「なぜ“いま”あなたに」が観測の証拠を引用し、局面を名指ししているか(F3)
-  対象: plan.reason, plan.readerSituation
-  採点: 1-5
-  閾値: ">=4"
-  良い例: "あなたはいま10→30名規模への移行期にいる、と読みました。"
-  悪い例: "リーダーとして成長したい方へ。"
+  - id: eval_02
+    kind: high_relevance
+    expectedBand: [70, 100]
+    plan:
+      tentativeTitle: 新任マネージャーの最初の90日
+      readerSituation: 昇格2ヶ月、何から手をつければよいか手探りで走っている
+      whyNowForYou: 課長就任メモ(drive/03)の『最初の90日でやること』が未整理のまま走っているから
+      coreMessage: プレイヤーから『人を通して成果を出す』への移行を、最初の90日で型にする
+      diffFromMarket: 汎用の90日本でなく、消費財ブランド職×部下7名×春リニューアル進行中という同時並行局面に合わせた優先順位設計
+      keyInsights: [移行期の意思決定の型, 先に決めること/後回しにすること, 信頼の初期構築]
+      agendaOutline: [移行の心理, 最初の30日, 60日, 90日, やらないことの決定]
+      recommendedAuthorTypes: [経営コンサル出身ロジカル型, 人事・組織開発型]
+    rationale: 課長就任メモの移行期に直撃。移行の型として的中、総合70以上が正答。
+
+  - id: eval_03
+    kind: high_relevance
+    expectedBand: [70, 100]
+    plan:
+      tentativeTitle: '"ダメ出し"にしない評価面談——測りにくい仕事をどう評価するか'
+      readerSituation: 初の上期評価面談を控え、メンバーの目標記入も止まっている
+      whyNowForYou: 評価面談タスクと目標未記入(drive/04)に直面し、何を基準に伝えるか分からないから
+      coreMessage: 数字で測れない仕事を、モチベーションを下げずに評価し言語化するフィードバックの型
+      diffFromMarket: 一般的なフィードバック本でなく、新任課長が初の評価面談で測りにくい仕事を扱う局面に限定
+      keyInsights: [事実と解釈の分離, 期待役割の事前合意, 面談の構造化]
+      agendaOutline: [評価の不安の正体, 測りにくさへの向き合い方, 面談の準備, 伝え方の型, 面談後の関わり]
+      recommendedAuthorTypes: [人事・評価制度の専門家型, 現場マネージャー型]
+    rationale: 評価タスクと目標未記入に直撃。新任が最も困る論点に的中、総合70以上が正答。
+
+  - id: eval_04
+    kind: high_relevance
+    expectedBand: [70, 100]
+    plan:
+      tentativeTitle: なんとなくグリーンで終わらせない——ブランド・リニューアルの意思決定
+      readerSituation: しずく天然水の春リニューアルで方向性に自信が持てず、6/5役員報告の根拠を固めたい
+      whyNowForYou: リニューアル定例(drive/01・05)で『誰に売るか』まで到達できず、役員報告が迫るから
+      coreMessage: 競合の後追いに見えない『独自の必然性』を、役員に通る根拠へ落とす意思決定フレーム
+      diffFromMarket: 汎用ブランド論でなく、消費財の主力リニューアル×役員説得という具体局面に絞り、marketGap(競合分析drive/05)を反映
+      keyInsights: [独自の必然性の言語化, 意思決定基準の明文化, 役員説得のストーリー設計]
+      agendaOutline: [後追いの罠, 誰に売るかの再定義, 根拠の組み立て, 役員に通すストーリー]
+      recommendedAuthorTypes: [ブランド戦略コンサル型, マーケ実務叩き上げ型]
+    rationale: リニューアル局面と役員報告のプレッシャーに直撃。業務テーマに的中、総合70以上が正答。
+
+  # --- ずれ: 局面に的中しない一般論（ゲートが落とすべき） --------------------
+  - id: eval_05
+    kind: low_relevance
+    expectedBand: [0, 40]
+    plan:
+      tentativeTitle: 新入社員のためのビジネスマナー入門
+      readerSituation: 社会人1年目で基本マナーを身につけたい人
+      whyNowForYou: （あえて外す）対象読者が新入社員で、管理職の佐倉さんの局面とずれている
+      coreMessage: 名刺交換・メール作法・敬語など、社会人1年目が身につける基本マナー
+      diffFromMarket: 特になし（一般的なマナー本）
+      keyInsights: [挨拶, メール作法, 敬語]
+      agendaOutline: [身だしなみ, 名刺交換, メール, 電話応対]
+      recommendedAuthorTypes: [マナー講師型]
+    rationale: 対象読者がずれ、一般論で局面に的中せず。4観点とも低得点で総合40以下が正答（ゲートが落とす証明）。
+
+  - id: eval_06
+    kind: low_relevance
+    expectedBand: [0, 40]
+    plan:
+      tentativeTitle: 起業1年で年商1億——独立スタートアップ術
+      readerSituation: ゼロから事業を立ち上げたい起業志望者
+      whyNowForYou: （あえて外す）大企業内でブランドとチームを預かる課長の前提とは異なる
+      coreMessage: ゼロから事業を立ち上げ、最速で売上を作る独立起業のロードマップ
+      diffFromMarket: 特になし（一般的な起業本）
+      keyInsights: [資金調達, PMF, 初期売上]
+      agendaOutline: [起業の準備, 最初の顧客, 資金, 拡大]
+      recommendedAuthorTypes: [連続起業家型]
+    rationale: 大企業内マーケ課長の局面(組織・評価・ブランド)と無関係。総合40以下が正答。
+
+  # --- セレンディピティ: 業務直結でないが関心の隣接領域（中レンジ） ----------
+  - id: eval_07
+    kind: serendipity
+    expectedBand: [30, 60]
+    plan:
+      tentativeTitle: リーダーのための東洋哲学入門
+      readerSituation: 任せ方と意思決定の軸に悩むリーダー
+      whyNowForYou: 直接の業務書ではないが、『任せる』『意思決定の軸』に悩むあなたの根に響くかもしれない
+      coreMessage: 老荘・禅の『無為・任せる』思想を、現代のリーダーシップと意思決定に接続する
+      diffFromMarket: 実務ハウツーでなく、関心の隣接領域(教養)から軸を養う越境型
+      keyInsights: [無為と委譲, 中庸と意思決定, リーダーの内省]
+      agendaOutline: [東洋思想の概観, 無為と任せる, 意思決定の軸, 現代への接続]
+      recommendedAuthorTypes: [東洋思想×リーダー論の思想型]
+    rationale: 業務直結ではないが関心領域(任せる・意思決定)に隣接。近すぎず遠すぎず中レンジ＝セレンディピティ適正(30〜60)。
+
+  - id: eval_08
+    kind: serendipity
+    expectedBand: [30, 60]
+    plan:
+      tentativeTitle: ブランドはなぜ"宗教"に似るのか——パーパスと信仰の構造
+      readerSituation: パーパスブランディングを深く理解したいマーケター
+      whyNowForYou: 中期戦略メモ(drive/07)で『パーパスブランディングを深く理解したい』と書いていたあなたへ
+      coreMessage: 信仰とブランドの構造的な相似から、パーパスブランディングの本質を捉え直す教養
+      diffFromMarket: 実務マーケ本でなく、教養(宗教社会学)からブランドを捉え直す越境型
+      keyInsights: [信仰とブランドの相似, 物語と共同体, パーパスの本質]
+      agendaOutline: [宗教とブランド, 物語の力, 共同体の設計, パーパスへの接続]
+      recommendedAuthorTypes: [教養・宗教社会学×マーケの越境型]
+    rationale: 中期戦略メモのパーパス関心に隣接する教養。実務直撃ではない中レンジで適正(30〜60)。
