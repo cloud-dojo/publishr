@@ -132,6 +132,22 @@ export interface InitialProfileInput {
   position: string;
   recentInterests: string[];
   readingGenres: string[];
+  /** 新しい出会いの幅（セレンディピティ）。4段階のワードで保持。 */
+  serendipity?: string;
   skipped: boolean;
   createdAt: string;
+}
+
+// 「新しい出会いの幅」= いつもの関心からどれだけ離れた本を混ぜるか（旧:セレンディピティ許容度）。
+// 狭い→広い の4段階ワード。
+export const serendipityOptions: string[] = [
+  "いつもの専門を深く",
+  "ときどき寄り道",
+  "バランス重視",
+  "広く新しい刺激を",
+];
+
+/** profileSteps から特定カテゴリの選択肢を取り出す。 */
+export function optionsFor(key: ProfileStepKey): string[] {
+  return profileSteps.find((s) => s.key === key)?.options ?? [];
 }
