@@ -10,12 +10,8 @@ import { Topbar } from "@/components/shell/Topbar";
 import { applyGranularity, parseBook, splitChapter } from "@/data/bookText";
 import { useActions, useProvider } from "@/data/hooks";
 
-const FB_OPTIONS = [
-  { key: "timely", mark: "▲", label: "まさに今ほしかった" },
-  { key: "helpful", mark: "○", label: "参考になった" },
-  { key: "generic", mark: "△", label: "少し一般的すぎる" },
-  { key: "early", mark: "▽", label: "自分には早い" },
-];
+const GOOD_REASONS = ["参考になった", "共感した", "実践したい", "もっと知りたい"];
+const BAD_REASONS = ["一般論すぎる", "自分には合わない", "内容が難しい", "文体が読みづらい"];
 const GRANULARITY_LABELS: Record<Granularity, string> = {
   full: "フル",
   summary: "要約",
@@ -44,7 +40,8 @@ export default function ReaderPage() {
   const [stride, setStride] = useState(1);
   const [turning, setTurning] = useState(false);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
-  const [fb, setFb] = useState<number | null>(null);
+  const [reaction, setReaction] = useState<"good" | "bad" | null>(null);
+  const [reason, setReason] = useState<string | null>(null);
   const [fontStep, setFontStep] = useState(1);
   const [chapterMarks, setChapterMarks] = useState<{ col: number; label: string }[]>([]);
   const [draftAnnotations, setDraftAnnotations] = useState<ReadingAnnotation[] | null>(null);
@@ -180,9 +177,28 @@ export default function ReaderPage() {
       },
     ]);
   };
-  const saveReaction = (reactionKey: string, index: number) => {
-    setFb(index);
-    void sendFeedback(book.id, { readingReaction: reactionKey });
+  const setReactionFB = (value: string | null) => {
+    void sendFeedback(book.id, { readingReaction: value });
+  };
+  const chooseReaction = (value: "good" | "bad") => {
+    if (reaction === value) {
+      setReaction(null);
+      setReason(null);
+      setReactionFB(null);
+    } else {
+      setReaction(value);
+      setReason(null);
+      setReactionFB(value);
+    }
+  };
+  const pickReason = (r: string) => {
+    if (reason === r) {
+      setReason(null);
+      if (reaction) setReactionFB(reaction);
+    } else {
+      setReason(r);
+      if (reaction) setReactionFB(`${reaction}:${r}`);
+    }
   };
 
   return (
@@ -335,20 +351,56 @@ export default function ReaderPage() {
 
           <div className="tool-card panel">
             <div className="tc-h">
-              <span className="k">◇</span> 読みながら、ひとこと
+              <span className="k">◇</span> この本へのフィードバック
             </div>
-            <div className="fb-q">この章は、いまのあなたに役立ちそうですか？</div>
-            <div className="fb-opts">
-              {FB_OPTIONS.map((option, i) => (
-                <div
-                  key={option.key}
-                  className={`chip ${fb === i || book.feedback.readingReaction === option.key ? "on" : ""}`}
-                  onClick={() => saveReaction(option.key, i)}
-                >
-                  {option.mark} {option.label}
+            <div className="fb-q">この本は、あなたに響きましたか？</div>
+            <div className="gb-row">
+              <button
+                type="button"
+                className={`gb-btn${reaction === "good" ? " on good" : ""}`}
+                onClick={() => chooseReaction("good")}
+              >
+                👍 いいね
+              </button>
+              <button
+                type="button"
+                className={`gb-btn${reaction === "bad" ? " on bad" : ""}`}
+                onClick={() => chooseReaction("bad")}
+              >
+                👎 いまいち
+              </button>
+            </div>
+
+            {reaction && (
+              <div className="gb-reasons">
+                <div className="gb-reasons-q">
+                  {reaction === "good" ? "どこが良かったですか？" : "どこが気になりましたか？"}
                 </div>
-              ))}
-            </div>
+                <div className="fb-opts">
+                  {(reaction === "good" ? GOOD_REASONS : BAD_REASONS).map((r) => (
+                    <div
+                      key={r}
+                      className={`chip${reason === r ? " on" : ""}`}
+                      onClick={() => pickReason(r)}
+                    >
+                      {r}
+                    </div>
+                  ))}
+                  <div
+                    className={`chip${reason === "その他" ? " on" : ""}`}
+                    onClick={() => pickReason("その他")}
+                  >
+                    その他
+                  </div>
+                </div>
+                {reason === "その他" && (
+                  <div className="gb-other-note">
+                    詳しい感想は、下の「読み終えた → 感想を書く」からご記入ください。
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="muted" style={{ fontSize: 11, marginTop: 10, lineHeight: 1.5 }}>
               あなたの選択は次の入荷の企画に反映されます。
             </div>
