@@ -12,7 +12,7 @@
 > **着手前ゲートの通過状況**：環境構築（層2）＋鉄田単独タスク（層3）は**✅完了**。**残るゲートは ①友人MTGの握り（層1・本日6/5夕方予定）のみ**。これを通過すれば W1（6/8〜）「ADK疎通」に進める。
 > - ✅ 済：GCP基盤・IAM2人・OAuth一式(Production)・Secrets6本・リポ/collaborator・モノレポscaffold・prompts11本・Eval Set・サンプル3ソース
 > - ✅ 済（鉄田単独・6/4）：initialProfile選択肢確定／gcloud×Norton恒久対処／デモ＝カット割り廃止→動画台本2本立てへ置換
-> - ⏸ MTG待ち：役割分担最終合意・ADK実現性・Drive Picker(G1-13)・Cloud Build方式(G1-18)・OAuth公開(G1-19)・通知方式(G1-15)・**Firebase App Hosting の GitHub連携(G1-7・🔧一瀬／鉄田準備✅・PR #2)**
+> - ⏸ MTG待ち：役割分担最終合意・ADK実現性・Drive Picker(G1-13)・Cloud Build方式(G1-18)・OAuth公開(G1-19)・通知方式(G1-15)・**Firebase App Hosting の GitHub連携(G1-7・🔧一瀬／鉄田準備=apphosting.yaml は main マージ済み)**
 > ※詳細な作業分解は [wbs.md](wbs.md)、論点の中身は [open-issues.md](open-issues.md)。
 
 ---
@@ -60,7 +60,7 @@
 | ☐ | **観測ログ保存先・エラー方針** | I-19/I-20 | ObservationBundleの保存先コレクション／Pub/Sub冪等キー・reserveトランザクション・Jobタイムアウトの最小方針 |
 | ☐ | **Cloud Build↔GitHub接続方式 A/B** | G1-18 | 論点＝自動デプロイの繋ぎ方。**A=GitHub App接続（個人リポなので所有者=一瀬のみ可）／B=Actionsから`gcloud builds submit`（鉄田側で完結・推奨）**。現状トリガー未接続を確認済。**AかBを握るだけ**（実装はW4） |
 | ☐ | **OAuth公開ステータスの最終確認** | G1-19 | 論点＝Testingだとrefreshトークン7日失効で週次自律バッチが停止。**現状Production設定済→「Production維持」で握る**。OAuth実装担当=一瀬につき確認 |
-| ☐ | **Firebase App Hosting の GitHub連携**（フロント本番ホスティング・🔧一瀬） | G1-7 | フロント＝`apps/web` を App Hosting で公開（決定済）。**GitHub App 連携はリポ所有者=一瀬のみ可**（鉄田collaborator不可で着手ブロック）→ **一瀬が backend 作成 or GitHub App 許可**。設定値: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数は `apps/web/apphosting.yaml` 済。鉄田準備(apphosting.yaml・mockビルド・PR #2)は✅。解除後は PR #2 マージ→自動デプロイ→URL確認 |
+| ☐ | **Firebase App Hosting の GitHub連携**（フロント本番ホスティング・🔧一瀬） | G1-7 | フロント＝`apps/web` を App Hosting で公開（決定済）。**GitHub App 連携はリポ所有者=一瀬のみ可**（鉄田collaborator不可で着手ブロック）→ **一瀬が backend 作成 or GitHub App 許可**。設定値: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数は `apps/web/apphosting.yaml` 済。鉄田準備(`apps/web/apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。解除後は **一瀬の backend 作成／GitHub App 連携→自動デプロイ→URL確認** |
 | ☐ | **フロント本接続の前提一式**（鉄田が一瀬から受領・C4.9） | G1-3/7 | フロント(`apps/web`)は **mock で実装済**（Auth/Firestoreプロバイダ含む・休眠中）。本接続(mock→firestore)に一瀬から次を受領: ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**API3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**。これらが揃えば `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続。※デプロイ前は鉄田が**ローカルUI仕上げ(C4.8・行ずれ等の修正)**を先行 |
 
 ---

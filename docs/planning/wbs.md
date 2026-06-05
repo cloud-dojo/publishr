@@ -15,7 +15,7 @@
 
 ## 🧭 現在地サマリ（2026-06-05時点）
 
-> **いまどこ**: **着手前の準備フェーズ（backend実装は未開始）**。設計・プロンプト・Eval・GCP基盤・OAuth認証まで整い、**コードを書き始める一歩手前**（友人MTG＝今日夕方の握り待ち）。次の山場は C1.0「ADK疎通」(W1)→ C1.1-C1.3「E2E縦通し」(W2)。
+> **いまどこ**: **canned/mock の骨格は前進・実装（実LLM・実Firestore・実escalate）はこれから**のフェーズ。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、さらに**フロント14ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み（友人MTG＝今日夕方の握り待ち）。次の山場は C1.0「ADK疎通＝実escalate実証」(W1)→ C1.1-C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)。
 >
 > **✅ できている（土台）**
 > - 設計docs一式／完成プロンプト11本（`packages/prompts/`）／Eval Set 8件（`eval/eval_set.yaml`）
@@ -25,7 +25,7 @@
 >
 > **【6/4完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・A3.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・C6)へ置換✅
 >
-> **【フロント先行・複数セッションで実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**※「backend実装未開始」はエージェント/APIの話で、フロントは先行している**。残＝**①ローカルUI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・一瀬待ち)**。
+> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・一瀬待ち) ④canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。
 >
 > **【提出物・GEAP方針・2026-06-05】** ProtoPedia作品ページ草案一式（ストーリー約4,000字・画像5＋システム構成図・全フィールド記入シート）を作成＝対外 `publishr_other/Protopedia提出/`（WBS **C6.7/C6.8**・P-6/P-7）。**GEAP（旧Vertex AI）はプラスアルファで②Gen AI Evaluation Service を品質ゲートに採用方針**（動くコード済・I-21/**C5.3**）、④Agent Runtimeはストレッチ（Schedulerトリガー非対応・F-7）。
 >
@@ -33,7 +33,7 @@
 > - **友人MTG（最重要・唯一の残ゲート・A5.1）**: ADK実現性(G1-1)・役割分担(G1-2)・**Drive Picker(G1-13)**・Cloud Build接続方式A/B(G1-18)・OAuth公開ステータス(G1-19)・通知方式(G1-15)・**相互の権限状態の確認** を握る
 >   - **＋ 設計/データの確定（A2点検で起票・いずれも叩き台あり＝即確定見込み）**: 観測束ObservationBundleの保存先(I-19)／API CORS・ベースパス(G1-7)／手動トリガー認可(G1-6)／読書ログ集約(I-9)／予約の原子性・冪等(I-20)。詳細と推奨は [open-issues.md](open-issues.md) と当日アジェンダ §3-4〜3-6
 > - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・B1.2／現状は仮の`localhost`のみ）
-> - **フロント本番ホスティング（B3.3・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(apphosting.yaml・mockビルド・**PR #2**)✅。**🔴ブロック=App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**→今日MTGで一瀬が backend 作成 or GitHub App 許可で解除
+> - **フロント本番ホスティング（B3.3・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(`apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。**🔴ブロック=App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**→今日MTGで一瀬が backend 作成 or GitHub App 許可で解除
 > - **フロント本接続の前提（C4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
 
 ---
@@ -96,7 +96,7 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | A3.1 | 完成プロンプト＋良い/悪い例（11本） | 各AIへの「指示文」と良い例・悪い例を作る（AIの中身の質を決める核）。実テストはC5.1 | 鉄田 | — | — | `packages/prompts` (旧WP5.1) | ✅完了 |
-| A3.2 | initialProfile 選択肢リスト確定 | ユーザー登録時に選ぶ選択肢（業界13/職種11/役職7/関心19/読み口7）のリストを決める | 鉄田 | W1（6/8–14） | — | `apps/web/src/data/profileOptions.ts`（正本・G1-9） (旧WP5.2) | ✅**2026-06-04完了** |
+| A3.2 | initialProfile 選択肢リスト確定 | ユーザー登録時に選ぶ選択肢（業界13/職種11/役職7/関心19/読み口7）のリストを決める | 鉄田 | —（✅6/4完了） | — | `apps/web/src/data/profileOptions.ts`（正本・G1-9） (旧WP5.2) | ✅**2026-06-04完了** |
 
 ## A4. Evalセット・品質基準設計
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -133,7 +133,7 @@ Publishr MVP（カテゴリWBS）
 |---|---|---|---|---|---|---|---|
 | B3.1 | CI/CD空パイプライン疎通 | コードをpushしたら自動でテスト→公開が動く「配線」を、まず中身カラ（"Hello"表示だけ）で通して土台を作る | 一瀬 | W1（6/8–14） | B2.1 | push→Actions→Cloud Run "Hello"（C1.0と兼用） (旧WP0.5) | 🔜着手前 |
 | B3.2 | GitHub Actions → Cloud Build → Cloud Run 自動デプロイ | mainブランチに反映したら自動でサーバー(Cloud Run)へ公開される仕組みを完成させる | 一瀬 | W4（6/29–7/5） | B3.1 | mainマージで自動デプロイ (旧WP6.1) | 🔜着手前 |
-| B3.3 | **Firebase App Hosting backend 作成（フロント本番ホスティング）** | フロント画面をネット公開する場所(App Hosting)を用意し、GitHubと連携して自動公開する。**連携はリポ所有者=一瀬しかできない作業** | 一瀬 | W1（6/8–14） | A5.1 | `apps/web`をApp Hostingでmock公開（Netlifyから移行・G1-7）。live=`main`／root=`apps/web`／region=`asia-east1`。鉄田準備(apphosting.yaml・**PR #2**)✅→解除後マージで自動デプロイ (旧WP0.8) | 🔴ブロック=**一瀬対応待ち** |
+| B3.3 | **Firebase App Hosting backend 作成（フロント本番ホスティング）** | フロント画面をネット公開する場所(App Hosting)を用意し、GitHubと連携して自動公開する。**連携はリポ所有者=一瀬しかできない作業** | 一瀬 | W1（6/8–14） | A5.1 | `apps/web`をApp Hostingでmock公開（Netlifyから移行・G1-7）。live=`main`／root=`apps/web`／region=`asia-east1`。鉄田準備(`apps/web/apphosting.yaml`)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)→**残＝一瀬が backend 作成 or GitHub App 許可で自動デプロイ解除** (旧WP0.8) | 🔴ブロック=**一瀬対応待ち** |
 
 ## B4. IaC（Terraform）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -149,11 +149,13 @@ Publishr MVP（カテゴリWBS）
 ## C1. エージェント・モードA（自律企画）★
 
 > Cloud Scheduler 週3回（土/水=本命・日=セレンディピティ）で起動し、観測→読者分析→企画→著者生成→編集→装丁を回して棚に5冊 draft で並べる。各STEPの内部タスクは共通パターン（①プロンプト結線 ②エージェント定義＋モデル割当＋I/Oスキーマ ③state配線 ④単体検証）。DoDは [agent-io-contract.md](../design/agent-io-contract.md) の各§を参照。担当は全て**一瀬**（ランタイム実装）。
+>
+> **🧭 実態（2026-06-05）**: ADK配線の骨格は **`agents/publishr_agents` に canned 出力で疎通済み**（`SequentialAgent`: observe→reader→`ParallelAgent`(企画3体)→選抜ゲート→著者アジェンダ→装丁／`InMemoryRunner`・`test_pipeline.py`あり）。**ただし①出力は決定的canned（実LLM未）②v2フローの簡略版**＝調査サブ×3 grounding(C1.3.1)・キャスティング5人2軸(C1.4)・プレビュー編集ループ(C1.5)は未・**③選抜ゲートは単発canned（実escalate/LoopAgent未）**。よって各STEPの「実装」は**実モデル＋v2 I/O＋実ループへの作り込みが本体**＝状態は原則 🔜（配線疎通分の C1.0 のみ 🟡）。
 
 ### C1.0 ADK基盤・疎通(MiniLoop)
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.0.1 | ★**ADK疎通(MiniLoop)** | **ADK=GoogleのAIエージェント開発キット**。「疎通」＝まず最小構成で動かし、AIがダメ出し→やり直しのループ（escalate/最大反復）が本当に回るか実証する**最重要の技術検証**。ここがダメならLangGraphへ逃げる判断 | 一瀬 | **W1（6/8–14）** | B3.1 | 再ループ・脱出が動く（ADK §7） (旧WP1.1★・M1) | 🔜着手前 |
+| C1.0.1 | ★**ADK疎通(MiniLoop)** | **ADK=GoogleのAIエージェント開発キット**。「疎通」＝まず最小構成で動かし、AIがダメ出し→やり直しのループ（escalate/最大反復）が本当に回るか実証する**最重要の技術検証**。ここがダメならLangGraphへ逃げる判断 | 一瀬 | **W1（6/8–14）** | B3.1 | 再ループ・脱出が動く（ADK §7） (旧WP1.1★・M1) | 🟡 配線疎通済(canned)／**実escalate未** |
 
 ### C1.1 STEP0 観測
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -194,9 +196,12 @@ Publishr MVP（カテゴリWBS）
 | C1.7.1 | Cloud Scheduler 曜日別トリガー（土/水/日） | 毎週決まった曜日に自動で企画が走る仕組み（Cloud Scheduler）。デモでは手動起動も可 | 一瀬 | W3（6/22–28） | C1.3.3 | 自律起動で棚更新 (旧WP1.8) | 🔜着手前 |
 
 ## C2. エージェント・モードB（後追い執筆）
+
+> **🧭 実態（2026-06-05）**: 予約フローの **mock が `apps/api` にある**（`reservation_service.reserve_now`＝`draft→reserved` の単純status遷移＋`ConflictError`／`advance`＝`reserved→writing→published` をタイマーで進める疑似ワーカー）。**ただし①同時5冊の Firestore transaction(I-20)・②Pub/Sub 実ワーカー・③本文編集ループ(編集長⇄著者・最高3R) は未**。C2.1 は mock 済み／C2.2・C2.3 は未着手。
+
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C2.1 | 予約API `POST /reserve`（同時5冊チェック＋Pub/Sub発行） | ユーザーが本を「予約」したら執筆を始める窓口。同時に5冊までの制限を入れる | 一瀬 | W3（6/22–28） | C3.1 | API契約 §3・I-16／予約の原子性＝Firestore transaction で count確認→条件付き遷移（I-20） (旧WP2.1) | 🔜着手前 |
+| C2.1 | 予約API `POST /reserve`（同時5冊チェック＋Pub/Sub発行） | ユーザーが本を「予約」したら執筆を始める窓口。同時に5冊までの制限を入れる | 一瀬 | W3（6/22–28） | C3.1 | API契約 §3・I-16／予約の原子性＝Firestore transaction で count確認→条件付き遷移（I-20） (旧WP2.1) | 🟡 mock実装済（`reserve_now`単純版・5冊transaction/Pub-Sub未） |
 | C2.2 | Pub/Sub → 執筆ワーカー起動 | 予約を受けて、裏側で執筆処理を起動する仕組み（メッセージ連携）。二重起動を防ぐ | 一瀬 | W3（6/22–28） | C2.1 | 冪等ガード（I-20） (旧WP2.2) | 🔜着手前 |
 | C2.3 | 本文編集ループ（編集長⇄著者・最高3R・約100p） | 著者AIが約100ページ書き、編集長AIが採点→弱い章だけ書き直す（最大3回）。完成したら本文を保存 | 一瀬 | W3（6/22–28） | C1.5.1,C2.2 | published・editRounds記録（§7） (旧WP2.3) | 🔜着手前 |
 
@@ -207,6 +212,7 @@ Publishr MVP（カテゴリWBS）
 | C3.2 | 複合インデックス列挙＋firestore.indexes.json | 一覧画面の検索が速く正しく動くよう、DBに索引を登録する（無いと実行時エラーになる） | 一瀬 | W2–W3（6/15–28） | C4.2,C4.7 | 実行時エラー回避（I-15） (旧WP3.2) | 🔜着手前 |
 | C3.3 | GCS本文保護（署名付きURL or IAM） | 本文ファイルを他人が読めないよう、アクセス制限をかける | 一瀬 | W3（6/22–28） | C2.3 | 他者本文を読めない（I-10） (旧WP3.3) | 🔜着手前 |
 | C3.4 | 観測ログ保存先コレクション（observationLogs等） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | 一瀬 | W2（6/15–21） | C1.1.1 | STEP0直書き可（I-19） (旧WP3.4) | 🔜着手前 |
+| C3.5 | **BFF（apps/api）の Firestore リポジトリ実装＋mock→firestore切替** | `apps/api` は `protocol.py`＋`mock_repository.py` のリポジトリパターンで実装済み。`RepositoryProtocol` の Firestore 実装を足し、mock から切替える（＝抜け漏れ補完・2026-06-05起票） | 一瀬 | W2–W3（6/15–28） | C3.1 | Firestore実装を追加し `DATA_SOURCE=firestore` で起動可（フロントC4.9・モードB C2.x の本接続前提）。mock側✅ | 🔜着手前（mock側✅） |
 
 ## C4. フロント（書店UI・14ルート）
 
