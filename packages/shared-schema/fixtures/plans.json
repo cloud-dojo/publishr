@@ -13,7 +13,9 @@
       "04: 失敗を許容する仕組み",
       "終: あなたが現場を離れる日"
     ],
-    "recommendedAuthorTypes": ["理論派", "現場実務派"]
+    "recommendedAuthorTypes": ["理論派", "現場実務派"],
+    "proposalId": "", "themeKind": "honmei", "round": 0,
+    "tentativeTitle": "", "whyNowForYou": "", "diffFromMarket": "", "keyInsights": []
   },
   {
     "id": "plan_toi",
@@ -27,7 +29,9 @@
       "02: 朝会を、問いの場に変える",
       "終: 問いが文化になるとき"
     ],
-    "recommendedAuthorTypes": ["現場実務派", "心理・対人派"]
+    "recommendedAuthorTypes": ["現場実務派", "心理・対人派"],
+    "proposalId": "", "themeKind": "honmei", "round": 0,
+    "tentativeTitle": "", "whyNowForYou": "", "diffFromMarket": "", "keyInsights": []
   },
   {
     "id": "plan_shijizero",
@@ -41,7 +45,9 @@
       "02: 標準化の最小単位",
       "終: 増員に耐える仕組み"
     ],
-    "recommendedAuthorTypes": ["仕組み化・データ派"]
+    "recommendedAuthorTypes": ["仕組み化・データ派"],
+    "proposalId": "", "themeKind": "serendipity", "round": 0,
+    "tentativeTitle": "", "whyNowForYou": "", "diffFromMarket": "", "keyInsights": []
   },
   {
     "id": "plan_suuji",
@@ -54,6 +60,8 @@
       "01: 現場の数字を三つに絞る",
       "終: 数字で語るリーダーへ"
     ],
-    "recommendedAuthorTypes": ["定量・財務派", "現場実務派"]
+    "recommendedAuthorTypes": ["定量・財務派", "現場実務派"],
+    "proposalId": "", "themeKind": "serendipity", "round": 0,
+    "tentativeTitle": "", "whyNowForYou": "", "diffFromMarket": "", "keyInsights": []
   }
 ]
