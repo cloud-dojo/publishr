@@ -4,7 +4,7 @@
 > **凡例**: 🔴未決 ／ 🟡方針あり・要確認 ／ ✅決着（下部のログ参照）。各論点に【出典】を付す。
 > **前提**: PatentSentinel（代替案）は不採用。**撤退はしない＝Publishrをやりきる**前提のため、撤退基準・採用GO判断の論点は持たない。
 > **全体の目次は [正本マップ](../README.md)。**
-> **🧭 現在地（2026-06-04）**: 環境系の論点（OAuth保存先G1-5・GCP構築・Secrets）は決着。**鉄田単独の先行タスクも完了**＝G1-9(initialProfile)✅・G1-20(gcloud×Norton)✅・G1-10(Eval実データ)方針確定済。デモはカット割り廃止→動画台本2本立てへ置換✅。**残る決定ゲートは友人MTG（本日6/5夕方予定）のみ**＝ここで G1-1(ADK実現性)／G1-2(役割)／**G1-13(Drive Picker・最重要)**／G1-15(通知)／G1-18(Cloud Build方式)／G1-19(OAuth公開) を握ればW1着手可。
+> **🧭 現在地（2026-06-05）**: 環境系の論点（OAuth保存先G1-5・GCP構築・Secrets）は決着。**鉄田単独の先行タスクも完了**＝G1-9(initialProfile)✅・G1-20(gcloud×Norton)✅・G1-10(Eval Set 8件)✅。デモはカット割り廃止→動画台本2本立てへ置換✅。**残る決定ゲートは友人MTG（本日6/5夕方予定）のみ**＝ここで G1-1(ADK実現性)／G1-2(役割)／**G1-13(Drive Picker・最重要)**／G1-15(通知)／G1-18(Cloud Build方式)／G1-19(OAuth公開) を握ればW1着手可。
 
 ---
 
@@ -21,7 +21,7 @@
 | G1-7 | フロント本番ホスティング／APIベースパス／CORS | 🟡ホスティング決着・連携ブロック中 | **ホスティング＝Firebase App Hosting で確定（フロント＝`apps/web`/Next.js＝G1-11も解消・2026-06-04）**。`apps/web/apphosting.yaml`(root=apps/web・`NEXT_PUBLIC_DATA_SOURCE=mock`)・mock本番ビルド緑は**main マージ済み**（commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済）。リージョン=`asia-east1`(Tokyo無のため)。**🔴ブロック＝App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**（鉄田はcollaboratorで不可・G1-18と同種の所有者依存）。→ **一瀬が backend 作成 or GitHub App 許可で解除**（本日MTG／WBS B3.3）。**CORS/ベースパス叩き台＝API は単一Cloud Runに `/api/*` 集約・フロントは `NEXT_PUBLIC_API_BASE_URL` 注入／CORS許可＝App Hosting本番ドメイン＋`localhost:3000`・GET/POST・Authorization+Content-Type・cookie不使用**（MTGアジェンダ §3-4）【API §6-4・CICD §3】 |
 | G1-8 | 企画リーダーのスコア閾値・満点定義 | 🟡仮置き70/100 | MVPは4観点×各25点・閾値70。運用調整【AGENT §10-7・ADK §9-10・MVP §8】 |
 | G1-9 | initialProfile 選択肢リスト（業界/職種/役職/関心/読書傾向） | ✅決着 | **2026-06-04確定**＝5ステップ（業界13/職種11/役職7/関心19/読み口7）を `apps/web/src/data/profileOptions.ts`（正本）に実装（`apps/mockup/...` は同内容の参照コピー）。叩き台 `API契約仕様.md` §2-a 準拠【MVP §8】 |
-| G1-10 | Eval Set 8件の実データ作成 | 🔴未（鉄田） | 方針確定・素材作成のみ残【MVP §8】 |
+| G1-10 | Eval Set 8件の実データ作成 | ✅決着 | **2026-06-04確定**＝`eval/eval_set.yaml` に8件（eval_01–08・4観点0-100/expectedBand）＋境界2件（eval_b1/b2）を full data で実装済。WBS A4.1=✅・TOP5クローズと整合（残＝judgeハーネス実装は別論点 I-21）【MVP §8】 |
 | G1-11 | フロントUIテンプレ／ライブラリ選定 | 🟡フレームワーク決着・スキーマ正本残 | **フロント＝Next.js（`apps/web`）で確定（2026-06-04）**。モックアップ（`apps/mockup`/Vite）はデザイン参照専用に降格。**併せて front/back 共有スキーマの正本の置き場所（Pydantic/TS/JSON Schemaのどれを単一ソースにし、モノレポのどこに置くか）をW1 scaffold時に確定＝型ドリフト防止**（型SOT＝`@publishr/shared-schema`で運用中）【ARCH §12・本台帳B7由来】 |
 | G1-12 | サンプルDrive準備 | ✅完了 | 佐倉美咲ペルソナで Drive10/Calendar28/Tasks15 整備済（2026-06-02）。デモ再現性の要【ARCH §12】 |
 | G1-13 | **drive.file のファイル選択方式（Google Picker 連携）** | 🔴未 | `drive.file` はアプリがDrive内を走査・一覧**できない**（ユーザーが選んだファイルのみ）。`connectedSources.drive.folderIds[]` の取得は **Google Picker API** 前提で確定する必要。選択粒度（ファイル/フォルダ）と保持方法も。後出しは登録フロー作り直し＝最重要。友人MTG【ARCH §3/§6-5・API §2-a/§4】 |
@@ -29,9 +29,9 @@
 | G1-15 | **入荷/執筆完了の通知方式** | 🟡推奨デフォルトあり | デモ カット3「入荷通知」・カット5「予告通知」が依存。**MVP=アプリ内 Firestore購読＋トースト/バナーで十分（FCMプッシュ不要）**。これを明記しFCM工数化を防ぐ。友人MTGで最終確認【デモシナリオ カット3/5・UI 3-8】 |
 | G1-16 | **LLMコスト概算と上限ガード方針** | 🟡ドラフト済 | `../design/cost-estimate.md` 作成済（ハイブリッド＋予約上限5冊＋編集ループ）。dev/prodガードは `.env.example` に追加済（BODY_PAGE_COUNT/ENABLE_IMAGEN/BATCH_BOOKS_OVERRIDE）。残＝W1実測で実値上書き |
 | G1-17 | **Langfuseトレース仕様（必然性の証跡）** | 🟡ドラフト済 | `../design/langfuse-tracing.md` 作成済（企画スコアループ・編集ループ2系統・調査groundingの取得URLをspan属性で残す）。**実装方式（OTel経由 or Langfuse SDK直）・grounding取得元フィールドを友人MTG／W1疎通で確定**。実装は友人・W4【CICD §5】 |
-| G1-20 | **gcloud CLI×Norton のHTTPS検査でCLIが通らない** | ✅決着 | **2026-06-04 恒久対処完了**（W1のADK/デプロイでgcloud CLIが利用可能に）。※対処方式の詳細は `GCP環境構築ログ.md` に追記のこと【GCP環境構築ログ.md 2026-06-04】 |
 | G1-18 | **Cloud Build↔GitHub接続方式（A:所有者がGitHub App接続 ／ B:Actionsから `gcloud builds submit` で常時接続を省略）** | 🟡推奨B | リポ `hiroshiichise/publishr` は**個人アカウント所有**で、GitHub App認可は**所有者(一瀬)のみ**可。鉄田のGitHub Secrets登録はコラボレーター権限で可能と実機確認済（2026-06-04・4本登録済）。Cloud Buildトリガーは現状**未接続**を確認済（タスク4=完了）。**推奨＝B（所有者依存を避け最小構成・Actions主導フローと整合）**。AかBを**友人MTGで確定**。実装はW4【CICD §3・GCP環境構築ログ.md 2026-06-04】 |
 | G1-19 | **OAuth同意画面の公開ステータス（Testing vs Production未審査）** | 🟡推奨Production | **Testingモードはリフレッシュトークンが7日で失効**→週次自律バッチ（Cloud Scheduler×Secret Manager保存トークン）が1週間後に停止しPublishrの自律性が壊れる。**Production(未審査)ならトークン長期有効**（未審査警告はバイパス可・100ユーザー上限）。現状はProductionに設定済（2026-06-04）。**推奨＝Production維持**。OAuth実装担当=友人につき**MTGで握る**【G1-5・API §6-1・GCP環境構築ログ.md 2026-06-04】 |
+| G1-20 | **gcloud CLI×Norton のHTTPS検査でCLIが通らない** | ✅決着 | **2026-06-04 恒久対処完了**（W1のADK/デプロイでgcloud CLIが利用可能に）。※対処方式の詳細は `GCP環境構築ログ.md` に追記のこと【GCP環境構築ログ.md 2026-06-04】 |
 
 ---
 
@@ -74,8 +74,8 @@
 | I-17 | セレンディピティの冊数（5冊 or 3冊） | 🟡暫定5冊維持 | 暫定は本命5＋セレンディピティ5＝週15冊。3冊に絞ると週13冊。デモ・コスト・物語のバランスで判断【MVP §5-2】 |
 | I-18 | STEP4プレビュー編集ループの合格閾値 | 🟡仮置き | **プレビュー＝総合50/75＋足切り10（仮置き）／本文＝総合70/100（仮置き）**。企画リーダー（70/100）より緩め。明らかな不足のみ1Rで弾く水準を実データで運用調整（C5.5）【AGENT §5-2b・§7・prompts step4_editor_preview/modeB_editor_body】 |
 | I-19 | **ObservationBundle（観測ログ）の保存先コレクション** | 🟡叩き台あり・MTGで確定 | データモデルは plans/books/personas/users のみで STEP0出力の保存先が未定義＝直書きできない。**推奨パッケージ＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（日付docID＝冪等）に フル束をインライン保存・サーバ書込/本人read。生テキストのGCS分離・retention/TTLは将来F項目**。MTGアジェンダ §3-5 で確定→ tech-arch §3／AGENT §2・付録／FIRESTORE §1・本文に match 追加／WBS C3.4 に反映【AGENT §2・FIRESTORE §1・ARCH §3】 |
-| I-21 | **v2 Evalハーネスの再構築（LLM-judge化）** | 🔴未（一瀬） | 現 `scripts/eval_harness.py`＋`apps/api/tests/test_eval_harness.py` は**旧構想**（5観点1-5点・`plan_relevance` 等の旧id・キャンド `run_pipeline` 前提）で、v2 `eval/eval_set.yaml`（`eval_01…`/`expectedBand`/4観点0-100）と不整合＝**テスト既にレッド**。**v2ハーネス＝`eval_set.yaml` を Gemini judge（`packages/prompts/eval_judge.md` と同一ルーブリック）で採点し、`cases`(8件・7/8でゲート)と `borderlineCases`(診断・C5.4/5.5)を読む** へ再構築。**Eval設計＝鉄田✅／ハーネス実装＝一瀬**。C5.1プロンプト実テスト・C5.3 CIゲート・C5.4再現性の前提。MTGアジェンダ §2。**【2026-06-05 実装ルート】v2ハーネスは Vertex AI Gen AI Evaluation Service（GEAP＝旧Vertex AI）で実装が有力**＝自作judgeより軽く、基準5の"純正運用"訴求に直結。動くコード＋設計＝対外資料 `publishr_other/GEAP②_EvalService具体化.md`（`from vertexai.evaluation import EvalTask, PointwiseMetric`／`metric_prompt_template`へ`eval_judge.md`移植／`CustomMetric`で構造化確実版／kind別ゲート 本命≥70+足切り/ずれ≤40/セレンディピティ30-60・8件中7/`borderlineCases`診断除外／CI差し替え・judge=Vertex Gemini Pro）【AGENT §8・eval_set.yaml 冒頭注記・WBS C5.3/C5.4・publishr_other/GEAP②】 |
 | I-20 | **エラー/リトライ/冪等/タイムアウト方針** | 🟡叩き台あり・MTGで確定 | **MVP最小方針＝①reserveは Firestore transaction で count確認→条件付き`draft→reserved` ②Pub/Sub冪等＝status が writing/published ならスキップ（bookId基準・messageId不要） ③モードA Job失敗＝ログ＋手動再実行（自動リトライなし） ④本文100pは章ごと分割保存で途中再開可＝Cloud Runタイムアウト上限内**。W1で dev最小構成の実行時間を実測。MTGアジェンダ §3-6【ADK §6・API §3】 |
+| I-21 | **v2 Evalハーネスの再構築（LLM-judge化）** | 🔴未（一瀬） | 現 `scripts/eval_harness.py`＋`apps/api/tests/test_eval_harness.py` は**旧構想**（5観点1-5点・`plan_relevance` 等の旧id・キャンド `run_pipeline` 前提）で、v2 `eval/eval_set.yaml`（`eval_01…`/`expectedBand`/4観点0-100）と不整合＝**テスト既にレッド**。**v2ハーネス＝`eval_set.yaml` を Gemini judge（`packages/prompts/eval_judge.md` と同一ルーブリック）で採点し、`cases`(8件・7/8でゲート)と `borderlineCases`(診断・C5.4/5.5)を読む** へ再構築。**Eval設計＝鉄田✅／ハーネス実装＝一瀬**。C5.1プロンプト実テスト・C5.3 CIゲート・C5.4再現性の前提。MTGアジェンダ §2。**【2026-06-05 実装ルート】v2ハーネスは Vertex AI Gen AI Evaluation Service（GEAP＝旧Vertex AI）で実装が有力**＝自作judgeより軽く、基準5の"純正運用"訴求に直結。動くコード＋設計＝対外資料 `publishr_other/GEAP②_EvalService具体化.md`（`from vertexai.evaluation import EvalTask, PointwiseMetric`／`metric_prompt_template`へ`eval_judge.md`移植／`CustomMetric`で構造化確実版／kind別ゲート 本命≥70+足切り/ずれ≤40/セレンディピティ30-60・8件中7/`borderlineCases`診断除外／CI差し替え・judge=Vertex Gemini Pro）【AGENT §8・eval_set.yaml 冒頭注記・WBS C5.3/C5.4・publishr_other/GEAP②】 |
 
 ---
 
