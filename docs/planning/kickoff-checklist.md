@@ -7,12 +7,13 @@
 
 ---
 
-## 🧭 現在地（2026-06-04）
+## 🧭 現在地（2026-06-05）
 
-> **着手前ゲートの通過状況**：環境構築（層2）＋鉄田単独タスク（層3）は**✅完了**。**残るゲートは ①友人MTGの握り（層1・本日6/5夕方予定）のみ**。これを通過すれば W1（6/8〜）「ADK疎通」に進める。
+> **着手前ゲートの通過状況**：環境構築（層2）＋鉄田単独タスク（層3）に加え、**友人MTG（層1・2026-06-05）も完了＝着手前ゲートを全件クローズ**。W1（6/8〜）「ADK疎通」に進める。
 > - ✅ 済：GCP基盤・IAM2人・OAuth一式(Production)・Secrets6本・リポ/collaborator・モノレポscaffold・prompts11本・Eval Set・サンプル3ソース
 > - ✅ 済（鉄田単独・6/4）：initialProfile選択肢確定／gcloud×Norton恒久対処／デモ＝カット割り廃止→動画台本2本立てへ置換
-> - ⏸ MTG待ち：役割分担最終合意・ADK実現性・Drive Picker(G1-13)・Cloud Build方式(G1-18)・OAuth公開(G1-19)・通知方式(G1-15)・**Firebase App Hosting の GitHub連携(G1-7・🔧一瀬／鉄田準備=apphosting.yaml は main マージ済み)**
+> - ✅ MTG決着（6/5）：役割分担基本合意（基盤Firebaseのみ担当未定）・ADK実現性(一旦これでいく)・Drive Picker(G1-13=フォルダ単位)・Cloud Build方式(G1-18=方式A)・OAuth公開(G1-19=Production維持)・通知方式(G1-15=FCM不要)・**Firebase App Hosting の GitHub連携(G1-7)＝GitHub組織化→鉄田にオーナー権限→鉄田が連携実施（組織移管・鉄田オーナー権限は✅2026-06-05完了／連携作業はW1）**・連携/データ詳細(G1-3/5/6/7・I-19/I-9/I-20)を確定
+> - 🟡 先送り：Langfuseトレース実装方式(G1-17＝OTel/SDK直は判断不可・今後検証)
 > ※詳細な作業分解は [wbs.md](wbs.md)、論点の中身は [open-issues.md](open-issues.md)。
 
 ---
@@ -37,30 +38,30 @@
 ### 1-A. 合意ごと（👥）
 | | 議題 | 完了条件 |
 |---|---|---|
-| ☐ | **①主要マイルストーン** | W1=ADK疎通／W2=E2E縦通し を最重要として共有（撤退せず＝対策で乗り切る） |
-| ☐ | **②役割分担の最終合意** | 友人＝エージェント実装＋基盤／鉄田＝フロント＋プロンプト設計＋Eval。境界＝`実行計画 §2`（設計=鉄田／実装=友人） |
-| ☐ | **⑥タスク管理の置き場所** | GitHub Projects / Notion / Todoist のいずれか1つに決め、W0〜W5（カテゴリA/B/C）を起票 |
+| ☑ | **①主要マイルストーン** | ✅合意（6/5）。W1=ADK疎通／W2=E2E縦通し を最重要として共有（撤退せず＝対策で乗り切る） |
+| ☑ | **②役割分担の最終合意** | ✅基本合意（6/5）。友人＝エージェント実装＋基盤／鉄田＝フロント＋プロンプト設計＋Eval。境界＝`実行計画 §2`（設計=鉄田／実装=友人）。**※基盤Firebase部分のみ担当未定＝鉄田補助の可能性・後決め** |
+| ☑ | **⑥タスク管理の置き場所** | ✅合意（6/5）。GitHub Projects / Notion / Todoist のいずれか1つに決め、W0〜W5（カテゴリA/B/C）を起票 |
 
 ### 1-B. 技術フィージビリティの握り（🔧）
 | | 議題 | 出典 | 完了条件 |
 |---|---|---|---|
-| ☐ | **③ADK実現可能性** | G1-1 | 「担当者が立案→リーダーがスコアで差し戻し」がW1で動く感触。NG時はSTEP2をLangGraphへ逃がす判断 |
-| ☐ | **ADKでLoopAgent 2系統**が組めるか | 台帳ADK論点2 | STEP2壁打ち＋編集ループ（STEP4 1R／モードB 最高3R）＝同一機構の使い回し |
-| ☐ | **④3ソースAPI疎通** | — | Drive(drive.file)／Calendar(readonly)／Tasks(readonly) が個人アカウントで叩けるか |
-| ☐ | **⑤LLM-as-judge の CI組み込み** | MVP §9-5 | GitHub ActionsでGeminiスコア取得→Eval判定が5週で可能か |
+| ☑ | **③ADK実現可能性** | G1-1 | ✅「一旦これでいく」で合意（6/5）。論点は残るがW1 Hello Worldで実証。NG時(6/14末)はSTEP2をLangGraphへ逃がす判断ラインも合意 |
+| ☑ | **ADKでLoopAgent 2系統**が組めるか | 台帳ADK論点2 | ✅W1で実証する前提で合意。STEP2壁打ち＋編集ループ（STEP4 1R／モードB 最高3R）＝同一機構の使い回し |
+| ☑ | **④3ソースAPI疎通** | G1-14 | ✅W1で疎通確認する段取りで合意（6/5）。Drive(drive.file)／Calendar(readonly)／Tasks(readonly) |
+| ☑ | **⑤LLM-as-judge の CI組み込み** | MVP §9-5 | ✅方針合意。実装ルート=Gen AI Evaluation Service（GEAP）有力（I-21・C5.3） |
 
 ### 1-C. 着手前に決める設計判断（G系・🔧/👥）
 | | 議題 | 台帳 | 決めること |
 |---|---|---|---|
-| ☐ | **Drive Picker連携** ★最重要 | G1-13 | drive.fileはDrive走査不可→Google Picker前提を確定。選択粒度（ファイル/フォルダ）・folderIds/fileIdsの取得とサーバ保存・鉄田/友人の責務線 |
-| ☐ | **grounding課金** | G1-14 | 調査サブB/CのGoogle検索groundingの課金有無・単価。Eval多回実行時のガード（Eval時はgrounding無効化等） |
-| ☐ | **通知方式** | G1-15 | MVP=アプリ内Firestore購読＋バナーで確定（FCM不要）の合意 |
-| ☐ | **Langfuseトレース実装方式** | G1-17 | OTel経由 or Langfuse SDK直／grounding取得URLの取得元。仕様は`../design/langfuse-tracing.md`済 |
-| ☐ | **連携方式・予約・トークン保存の確認** | G1-3/5/6/7 | Firestore直＋API3本／予約=POST /reserve（同時5冊チェック）／OAuth refresh=Secret Manager／CORS・ベースパス |
-| ☐ | **観測ログ保存先・エラー方針** | I-19/I-20 | ObservationBundleの保存先コレクション／Pub/Sub冪等キー・reserveトランザクション・Jobタイムアウトの最小方針 |
-| ☐ | **Cloud Build↔GitHub接続方式 A/B** | G1-18 | 論点＝自動デプロイの繋ぎ方。**A=GitHub App接続（個人リポなので所有者=一瀬のみ可）／B=Actionsから`gcloud builds submit`（鉄田側で完結・推奨）**。現状トリガー未接続を確認済。**AかBを握るだけ**（実装はW4） |
-| ☐ | **OAuth公開ステータスの最終確認** | G1-19 | 論点＝Testingだとrefreshトークン7日失効で週次自律バッチが停止。**現状Production設定済→「Production維持」で握る**。OAuth実装担当=一瀬につき確認 |
-| ☐ | **Firebase App Hosting の GitHub連携**（フロント本番ホスティング・🔧一瀬） | G1-7 | フロント＝`apps/web` を App Hosting で公開（決定済）。**GitHub App 連携はリポ所有者=一瀬のみ可**（鉄田collaborator不可で着手ブロック）→ **一瀬が backend 作成 or GitHub App 許可**。設定値: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数は `apps/web/apphosting.yaml` 済。鉄田準備(`apps/web/apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。解除後は **一瀬の backend 作成／GitHub App 連携→自動デプロイ→URL確認** |
+| ☑ | **Drive Picker連携** ★最重要 | G1-13 | ✅確定（6/5）＝Google Picker前提・**選択粒度＝フォルダ単位**でユーザー指定。`connectedSources.drive.folderIds[]` でサーバ保持。フロント=Picker UI(鉄田)／バック=ID保存・読取(一瀬) |
+| 🟡 | **grounding課金** | G1-14 | 3ソース疎通はW1で確認の段取りで合意。**残＝調査サブB/CのGoogle検索groundingの課金有無・単価はW1疎通で確認**（Eval時はgrounding無効化等のガード） |
+| ☑ | **通知方式** | G1-15 | ✅確定（6/5）＝MVP=アプリ内Firestore購読＋バナー（FCM不要） |
+| 🟡 | **Langfuseトレース実装方式** | G1-17 | **先送り（6/5・判断不可）＝OTel経由 or Langfuse SDK直は今後W1以降に検証しながら確定**。3シグナル設計・仕様は`../design/langfuse-tracing.md`済 |
+| ☑ | **連携方式・予約・トークン保存の確認** | G1-3/5/6/7 | ✅確定（6/5）＝Firestore直＋API3本／予約=POST /reserve（同時5冊チェック）／OAuth refresh=Secret Manager／CORS・ベースパス(`/api/*`集約・App Hosting本番+localhost:3000・GET/POST・Authorization/Content-Type) |
+| ☑ | **観測ログ保存先・エラー方針** | I-19/I-20 | ✅確定（6/5）＝ObservationBundle保存先=`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション／reserve=Firestore transaction・Pub/Sub冪等=status writing/publishedでスキップ・Jobは章分割保存で再開可 |
+| ☑ | **Cloud Build↔GitHub接続方式** | G1-18 | ✅確定（6/5）＝**方式A（GitHub App直結）**。GitHub組織化→鉄田にオーナー権限付与で所有者依存が解消されるため、鉄田が GitHub App 直結で接続（旧推奨B=Actions主導は不採用）。現状トリガー未接続。実装はW4 |
+| ☑ | **OAuth公開ステータスの最終確認** | G1-19 | ✅確定（6/5）＝**Production維持**（Testingだとrefreshトークン7日失効で週次自律バッチが停止）。OAuth実装担当=一瀬へ認識共有済 |
+| ☑ | **Firebase App Hosting の GitHub連携**（フロント本番ホスティング） | G1-7 | ✅確定（6/5）＝フロント＝`apps/web` を App Hosting で公開。**組織移管（`cloud-dojo/publishr`）・鉄田オーナー権限は✅2026-06-05完了→鉄田が GitHub App 連携を実施**。設定値: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数は `apps/web/apphosting.yaml` 済。鉄田準備(`apps/web/apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。残＝**鉄田が backend 作成＋GitHub App 連携→自動デプロイ→URL確認（W1）** |
 | ☐ | **フロント本接続の前提一式**（鉄田が一瀬から受領・C4.9） | G1-3/7 | フロント(`apps/web`)は **mock で実装済**（Auth/Firestoreプロバイダ含む・休眠中）。本接続(mock→firestore)に一瀬から次を受領: ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**API3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**。これらが揃えば `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続。※デプロイ前は鉄田が**ローカルUI仕上げ(C4.8・行ずれ等の修正)**を先行 |
 
 ---
@@ -78,9 +79,9 @@
 ### 2-2. GitHub / モノレポ
 | | タスク | 担当 | 完了条件 |
 |---|---|---|---|
-| ☑ | リポジトリ作成（private）・2人をcollaborator | 🔧 | ✅完了（`hiroshiichise/publishr`・鉄田collaborator・招待受領済）。提出時public化は将来 |
+| ☑ | リポジトリ作成（private）・2人をcollaborator | 🔧 | ✅完了。**2026-06-05：個人リポ(`hiroshiichise/publishr`)から組織アカウント `cloud-dojo` へ移管完了→現 `cloud-dojo/publishr`・鉄田もオーナー権限付与済**。提出時public化は将来 |
 | ☑ | **モノレポscaffold**：`apps/web` `apps/api` `agents` `packages/prompts` `packages/shared-schema` `eval` `infra` `docs` | 🔧 | ✅scaffold済（`agents/``apps/``packages/``eval/``docs/`存在。`infra/`はTerraform未投入＝W4） |
-| ☐ | **共有スキーマの正本の置き場所**（Pydantic/TS/JSON Schemaのどれか）を `packages/shared-schema` で確定 | 👥 | 型ドリフト防止（G1-11/B7）。**MTGで握る** |
+| ☑ | **共有スキーマの正本の置き場所**（Pydantic/TS/JSON Schemaのどれか）を `packages/shared-schema` で確定 | 👥 | ✅確定（6/5）＝`packages/shared-schema`（`@publishr/shared-schema`）に置く方針・改善方針を握った。型ドリフト防止（G1-11/B7）。**スキーマ内容の更新は鉄田が引き継ぎ** |
 | ☑ | `packages/prompts` を投入（作成済11本を移植） | 📘 | ✅完了（`packages/prompts/`にMD投入済。旧`planning.json`はローダMD切替後に削除予定） |
 | ☐ | ブランチ運用ルール（main保護＋feature＋軽量PR） | 👥 | 過剰にしない |
 | ☐ | シークレット管理方針（`.env.example`はコミット／実値はSecret Manager／鍵はGit禁止） | 👥 | `.env.example`は更新済（予約上限・編集R・dev/prodガード） |
@@ -123,5 +124,5 @@
 
 ## §5. 今すぐ動く「最初の3手」
 1. ✅ 📘 ~~initialProfile選択肢の確定 ＋ デモ台本~~・gcloud×Norton恒久対処（**2026-06-04 すべて完了**／デモはカット割り廃止→動画台本2本立てへ置換）。
-2. 📘 **友人MTG（本日6/5夕方）で§1の全議題を握る**＝特にG1-13 Picker・G1-17 Langfuse方式・役割分担。**鉄田単独タスクは完了済→残ゲートはこのMTGのみ**。
-3. 🔧 **MTG後：CI空パイプ疎通**（リポ/scaffold/GCPは構築済）→ W1 ADK疎通へ。
+2. ✅ 📘 ~~友人MTG（6/5）で§1の全議題を握る~~（**2026-06-05 完了**＝役割分担基本合意・ADK一旦これでいく・Drive Pickerフォルダ単位・Cloud Build方式A・OAuth Production維持・連携/データ詳細を確定。Langfuse実装方式のみ先送り）。
+3. 📘🔧 **次の一手：GitHub組織化→鉄田にオーナー権限付与→鉄田が App Hosting/Cloud Build 連携／CI空パイプ疎通**（リポ/scaffold/GCPは構築済）→ W1 ADK疎通へ。鉄田は C4.8 UIローカル仕上げ・共有スキーマ正本確定(A5.2)を先行。

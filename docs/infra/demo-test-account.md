@@ -67,7 +67,7 @@ Publishr_佐倉美咲/
 
 ## 観測ツール実装時の参考
 
-- Drive Picker方式（G1-13）が確定後、フォルダIDをどちら渡すか決める
+- **Drive Picker＝フォルダ単位で確定（G1-13・MTG 2026-06-05）**。Google Picker で選んだフォルダを `connectedSources.drive.folderIds[]` に保存し、下記フォルダIDを指定する
 - テスト時: `本番テスト用` フォルダIDを指定
 - デモ録画時: `デモ動画用` フォルダIDを指定
 - WBS参照: C1.1.1（観測ツール実装）/ C6.2（デモのデータ戦略）

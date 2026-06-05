@@ -221,14 +221,16 @@ users/{uid}.initialProfile {
 
 **表示内容**:
 - 接続する3ソースの説明（何のデータを・なぜ使うか）
-  - Google Drive: 業務資料・関心フォルダのテキスト
+  - Google Drive: 業務資料・関心フォルダのテキスト（**Google Picker でフォルダ単位選択**・G1-13確定）
   - Google Calendar: スケジュール・役割文脈
   - Google Tasks: タスクリスト・優先度文脈
 - 「Googleアカウントで連携する」ボタン
+- **Drive フォルダ選択（Google Picker）**ボタン＝観測対象フォルダをユーザーが選ぶ（drive.fileは走査不可のため／G1-13＝MTG 2026-06-05確定・フォルダ単位）
 - 各ソースの接続状態（✅ / ⬜）
 
 **アクション**:
 - 「連携する」→ `GET /api/auth/google/start` → Google OAuth同意画面
+- 「Drive フォルダを選ぶ」→ Google Picker（フォルダ単位）→ 選択フォルダを `connectedSources.drive.folderIds[]` に保存
 - OAuth完了 → `GET /api/auth/google/callback` → 書店トップ（3-4）
 
 **Firestore読み取り**（接続状態確認）:
@@ -668,11 +670,11 @@ db.collection("books").doc(bookId)
 
 | ID | 論点 | 状態 | 決定タイミング |
 |---|---|---|---|
-| G1-11 | フロントUIテンプレ／ライブラリ選定（React/Vue/Next.js等） | 🔴未決 | W1・鉄田決定 |
-| G1-9 | initialProfile選択肢の最終確定（§3-2に叩き台記載済み） | 🔴未決 | W1確定 |
+| G1-11 | フロントUIテンプレ／ライブラリ選定（React/Vue/Next.js等） | ✅確定 | Next.js（`apps/web`）で確定（2026-06-04） |
+| G1-9 | initialProfile選択肢の最終確定（§3-2に叩き台記載済み） | ✅確定 | `apps/web/src/data/profileOptions.ts` に実装（2026-06-04） |
 | I-5 | initialProfile変更可否 | 🟡MVP不可 | 変更UIはMVP対象外 |
 | I-7 | favoriteAuthors上限件数 | 🟡10件 | §3-11に実装済み |
-| – | 執筆中通知の進捗バー（`writingProgress`フィールド） | 🔴未確認 | 友人MTGで確認 |
+| – | 執筆中通知の進捗バー（`writingProgress`フィールド） | 🔴未確認 | 実装時に判断（MVP範囲外候補） |
 | – | 書庫フィルタータブの最終構成（themeKind別/著者別） | 🔴未決 | W3 UI実装時 |
 | – | ハイライトのテーマ分類（クライアントサイドか・Langfuse連携か） | 🔴未決 | W4 実装時 |
 

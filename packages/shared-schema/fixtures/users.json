@@ -8,6 +8,8 @@
       "workTheme": "30名規模への移行・権限委譲",
       "estimatedInterests": ["権限委譲", "属人化の解消", "意思決定", "1on1の負荷"],
       "serendipityTolerance": "中"
-    }
+    },
+    "initialProfile": null,
+    "favoriteAuthors": []
   }
 ]

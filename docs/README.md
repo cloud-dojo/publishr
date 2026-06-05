@@ -9,7 +9,7 @@
 
 | 正本 | 役割 | 中身 |
 |---|---|---|
-| **GitHub**（`hiroshiichise/publishr`・private） | プロダクト一式の正本 | コード全部 ＋ Markdownの設計/要件/UI/インフラログ。機械fixtureは `packages/shared-schema/fixtures/*.json` |
+| **GitHub**（`cloud-dojo/publishr`・private） | プロダクト一式の正本 | コード全部 ＋ Markdownの設計/要件/UI/インフラログ。機械fixtureは `packages/shared-schema/fixtures/*.json`。**2026-06-05：個人リポ(`hiroshiichise/publishr`)から組織アカウント `cloud-dojo` へ移管完了・鉄田もオーナー権限付与済** |
 | **Google Drive** | 対外・リッチ/バイナリ資料 | ピッチ資料、demo台本（デモシナリオ/ペルソナ/著者ペルソナ集/サンプル文書）、会議記録 |
 
 **境界ルール（1問で裁く）**: 「**テキストで頻繁に編集する計画・設計か？** → Yes=GitHub / **リッチ・バイナリの対外資料か？** → Drive」

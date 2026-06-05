@@ -1,6 +1,7 @@
 # Publishr CI/CD・IaC 設計仕様書
 
-> **位置づけ**: GitHub Actions / Cloud Build / Terraform の「何を・なぜ・いつ作るか」を定義した設計仕様。実装ファイル（`.yml` / `.tf`）はW4で作成する。友人MTGで共有し、W1のGitHub設定作業の根拠にする。
+> **位置づけ**: GitHub Actions / Cloud Build / Terraform の「何を・なぜ・いつ作るか」を定義した設計仕様。実装ファイル（`.yml` / `.tf`）はW4で作成する。友人MTG（2026-06-05・共有済）の根拠資料。
+> **🔑 GitHub所有権（MTG 2026-06-05決定／✅移管完了）**: GitHubを**組織アカウント `cloud-dojo` へ移管→鉄田にもオーナー権限を付与（2026-06-05完了。現 `cloud-dojo/publishr`）**。これにより **Cloud Build↔GitHub 接続（方式A=GitHub App直結）・App Hosting 連携は鉄田が実施**（旧「リポ所有者=一瀬のみ」の所有者依存は解消）。
 > **全体の目次は `../目次.md`。未確定論点は `../計画/未決論点台帳.md`（OPEN_ISSUES）。**
 
 ---
@@ -19,7 +20,7 @@
            └ 8件中7件パス（87.5%）→ ✅ 通過
         │ pass
         ▼
-[ Cloud Build trigger ] ←── W1で接続（友人担当）
+[ Cloud Build trigger ] ←── 鉄田が接続（方式A=GitHub App直結／組織移管・鉄田オーナー権限は2026-06-05完了で所有者依存解消・W4）
   - Docker イメージビルド
   - Artifact Registry push
         │
@@ -32,6 +33,7 @@
 [ Langfuse ]（クラウドマネージド・無料枠）
   - Eval 結果・トレース・スコア/ラウンド数を自動記録
   - 品質劣化の可視化 ＝ Observability L4
+  - ※実装方式（OTel経由 or Langfuse SDK直）は先送り（MTG 2026-06-05・判断不可。今後W1疎通以降に検証して確定・G1-17）
 ```
 
 ### なぜこの構成か（審査基準5への回答）
@@ -92,12 +94,14 @@ jobs:
 
 ---
 
-## §3. Cloud Build 設定（W1で友人が設定）
+## §3. Cloud Build 設定（W4で鉄田が設定・方式A）
 
-**友人担当タスク**（GCP環境構築ログ.md「残タスク」より）:
-1. GitHub リポジトリ作成（`publishr`・Public）
-2. 鉄田を Collaborator に追加
-3. GCP コンソール > Cloud Build > トリガー > GitHub接続
+**前提（✅2026-06-05完了）**: GitHubを組織アカウント `cloud-dojo` へ移管（現 `cloud-dojo/publishr`）→鉄田にオーナー権限付与済。これにより鉄田が GitHub App 直結（方式A）で接続できる。
+
+**タスク**:
+1. ~~GitHub 組織アカウント作成・現リポを `cloud-dojo/publishr` へ移管（2人がオーナー）~~ ✅完了（2026-06-05）
+2. ~~鉄田にオーナー権限を付与（一瀬も維持）~~ ✅完了（2026-06-05）
+3. GCP コンソール > Cloud Build > トリガー > GitHub接続（**方式A=GitHub App直結／鉄田が実施**）
 4. `main` ブランチ push で自動ビルドのトリガー設定
 
 **ビルド設定ファイル**: `cloudbuild.yaml`（W4で作成）
@@ -171,17 +175,18 @@ L4: Continuous Eval ← ★ Eval Gate が CI に組み込まれている
 
 | 週 | 作業 | 担当 |
 |---|---|---|
-| **W1** | GitHubリポジトリ作成・Cloud Build接続・鉄田Collaborator追加 | 友人 |
+| **W1** | ~~GitHub組織アカウント作成・`cloud-dojo/publishr` へ移管・鉄田にオーナー権限付与~~（✅2026-06-05完了）・App Hosting連携（鉄田）／Cloud Build接続（方式A）はW4 | 鉄田（一瀬と協働） |
 | **W1** | GitHub Secrets 登録（§2の6項目） | 鉄田 |
 | **W2** | 手動デプロイでE2E縦通し確認（CI/CDはまだ手動） | 友人 |
 | **W3** | Cloud Scheduler 3ジョブ設定・Pub/Sub動作確認 | 友人 |
 | **W4** | GitHub Actions `.yml` 作成・Eval Gate（`scripts/eval_harness.py`・Vertex AI Gen AI Evaluation Service）・Terraform コア資源・自動デプロイ完成 | 友人（実装）＋鉄田（Eval設計） |
-| **W5** | CI/CD 安定確認・Langfuse ダッシュボード整備・デモ録画 | 両者 |
+| **W5** | CI/CD 安定確認・Langfuse ダッシュボード整備（実装方式はG1-17でW1以降に確定）・デモ録画 | 両者 |
 
 ---
 
-## §7. 未確定（友人MTGで詰める）
+## §7. 未確定（実装時に詰める）
 
 - `cloudbuild.yaml` のビルドステップ詳細（Dockerfile構成）→ W1の後
 - Terraform の state バックエンド（GCSバケット名）→ W3着手前に決定
 - staging 環境を別 Cloud Run サービスとして持つか → W4で判断（MVP は production のみでよい）
+- Langfuseトレース実装方式（OTel経由 or SDK直）→ 先送り・W1疎通以降に確定（G1-17）
