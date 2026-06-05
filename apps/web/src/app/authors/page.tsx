@@ -19,6 +19,11 @@ function monogramOf(name: string): string {
   return name.trim().charAt(0);
 }
 
+// 信条（心情）の一言＝thought の最初の一文。どんな人かが伝わる短い惹句。
+function credoOf(p: Persona): string {
+  return (p.persona?.thought ?? "").split(/[。.！!？?]/)[0].trim();
+}
+
 function AuthorChip({ persona, isFav }: { persona: Persona; isFav: boolean }) {
   const onToggle = (e: MouseEvent) => {
     e.preventDefault();
@@ -36,6 +41,7 @@ function AuthorChip({ persona, isFav }: { persona: Persona; isFav: boolean }) {
         <span className="ach-meta">
           <span className="ach-name">{persona.name}</span>
           <span className="ach-style">{styleLine(persona)}</span>
+          {credoOf(persona) && <span className="ach-credo">「{credoOf(persona)}」</span>}
         </span>
       </Link>
       <button
@@ -84,7 +90,7 @@ export default function AuthorsPage() {
           <div>
             <div className="eyebrow">All authors</div>
             <div className="section-title">
-              この書店の<span className="accent">すべて</span>の書き手
+              現在、書店に並んでいる<span className="accent">すべて</span>の書き手
             </div>
             <div className="section-sub">
               Publishr が企画ごとに生み出した著者たち。読書ページや著者ページからお気に入りに登録できます。

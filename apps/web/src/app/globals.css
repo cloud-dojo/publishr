@@ -413,13 +413,14 @@ mark.hl.note { background: linear-gradient(180deg,transparent 55%,rgba(140,59,77
 /* ===== 作家一覧 (authors) ===== */
 .author-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 @media (max-width: 900px) { .author-grid { grid-template-columns: 1fr; } }
-.author-chip { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--ink-800); border: 1px solid var(--line); border-radius: var(--radius-sm); transition: transform .2s, border-color .2s, background .2s; }
+.author-chip { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: var(--ink-800); border: 1px solid var(--line); border-radius: var(--radius-sm); transition: transform .2s, border-color .2s, background .2s; }
 .author-chip:hover { transform: translateY(-2px); border-color: var(--gold); background: var(--ink-850); }
-.ach-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; text-decoration: none; color: inherit; }
+.ach-main { display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0; text-decoration: none; color: inherit; }
 .ach-avatar { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--gold-bright); border: 1px solid var(--gold); background: radial-gradient(circle at 30% 30%, #2a3550, #0f1420); }
-.ach-meta { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ach-meta { min-width: 0; display: flex; flex-direction: column; gap: 3px; padding-top: 1px; }
 .ach-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--text-100); }
 .ach-style { font-size: 11.5px; color: var(--text-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ach-credo { font-family: var(--font-display); font-size: 12.5px; color: var(--gold); line-height: 1.5; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ach-fav { flex: none; background: none; border: none; cursor: pointer; font-size: 19px; line-height: 1; color: var(--text-500); padding: 4px; transition: color .2s, transform .15s; }
 .ach-fav:hover { transform: scale(1.15); color: var(--gold-bright); }
 .ach-fav.on { color: var(--gold-bright); }
@@ -567,7 +568,7 @@ mark.hl.note { background: linear-gradient(180deg,transparent 55%,rgba(140,59,77
 .page-clip { position: relative; height: 100%; overflow: hidden; }
 .page-flow { height: 100%; column-fill: auto; transition: transform .4s cubic-bezier(.2,.7,.2,1), opacity .2s ease; will-change: transform; }
 .page-flow.is-turning { opacity: .45; }
-.page-flow p { font-size: 16px; line-height: 1.85; margin: 0 0 14px; text-align: justify; cursor: pointer; border-radius: 3px; transition: background .15s; }
+.page-flow p { font-size: 1em; line-height: 1.85; margin: 0 0 14px; text-align: justify; cursor: pointer; border-radius: 3px; transition: background .15s; }
 .page-flow p:hover { background: rgba(201,163,95,.16); }
 .page-flow p.sel { background: rgba(201,163,95,.24); }
 .page-flow .lead::first-letter { font-size: 2.8em; float: left; line-height: .82; padding: 4px 9px 0 0; color: var(--brass); font-weight: 800; }
@@ -577,9 +578,9 @@ mark.hl.note { background: linear-gradient(180deg,transparent 55%,rgba(140,59,77
    　目立つ見出しで章の区切りを示す。 */
 .rd-opener { break-inside: avoid; margin: 6px 0 22px; }
 .rd-opener:not(:first-child) { margin-top: 14px; }
-.rd-opener-no { font-family: var(--font-en); font-size: 26px; font-weight: 600; color: var(--brass); line-height: 1; letter-spacing: 1px; }
+.rd-opener-no { font-family: var(--font-en); font-size: 1.65em; font-weight: 600; color: var(--brass); line-height: 1; letter-spacing: 1px; }
 .rd-opener-rule { width: 40px; height: 2px; background: rgba(43,33,22,.4); margin: 11px 0; }
-.rd-opener-title { font-family: var(--font-display); font-size: 23px; font-weight: 800; color: #1d150a; line-height: 1.4; }
+.rd-opener-title { font-family: var(--font-display); font-size: 1.45em; font-weight: 800; color: #1d150a; line-height: 1.4; }
 
 .rd-nav { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--ink-800); color: var(--gold-bright); font-size: 22px; line-height: 1; cursor: pointer; display: grid; place-items: center; z-index: 4; transition: border-color .2s, box-shadow .2s, opacity .2s; }
 .rd-nav:hover:not(:disabled) { border-color: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
