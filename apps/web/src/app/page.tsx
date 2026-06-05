@@ -5,27 +5,28 @@ import type { Book } from "@publishr/shared-schema";
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
-import { usePlanningCandidates, useProvider } from "@/data/hooks";
-import { arrivalLabel } from "@/lib/arrival";
+import { useProvider } from "@/data/hooks";
+import { ARRIVAL_WINDOW_DAYS, arrivalLabel, isWithinDays } from "@/lib/arrival";
 
 export default function HomePage() {
   const provider = useProvider();
-  const { approvedPlanIds } = usePlanningCandidates();
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason;
 
-  const approvedPlanSet = new Set(approvedPlanIds);
-  // shelf 対応: arrivals=関心 / odd=新しい出会い / press=執筆中
-  const interestsBase = provider
-    .booksByShelf("arrivals")
-    .filter((b) => approvedPlanSet.size === 0 || approvedPlanSet.has(b.planId));
-  // TODO(暫定): レイアウト確認用に同じ本を繰り返して4冊に水増し。データ確定後 interestsBase に戻す。
-  const interests =
-    interestsBase.length > 0
-      ? Array.from({ length: 4 }, (_, i) => interestsBase[i % interestsBase.length])
-      : interestsBase;
-  const encounters = provider.booksByShelf("odd");
-  const press = provider.booksByShelf("press");
+  // 棚＝status＋shelf(=themeKind相当)＋直近7日ウィンドウで導出（mvp-scope §5-2）。
+  // - 関心/新しい出会い：status=draft かつ 入荷から7日以内（予約すると status が変わり自動で棚落ち）
+  // - 執筆中：status=reserved/writing（予約された本がここへ移る）
+  const now = new Date();
+  const isFreshDraft = (b: Book) =>
+    b.status === "draft" && isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
+  const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+
+  const interests = provider.booksByShelf("arrivals").filter(isFreshDraft).sort(byNewest);
+  const encounters = provider.booksByShelf("odd").filter(isFreshDraft).sort(byNewest);
+  const press = provider
+    .listBooks()
+    .filter((b) => b.status === "writing" || b.status === "reserved")
+    .sort(byNewest);
   const user = provider.getUser(DEMO_USER_ID);
   const arrival = arrivalLabel(); // 今朝 / 昨日 / おととい / 先日
 
@@ -72,9 +73,9 @@ export default function HomePage() {
           <div className="group-note">観測したいまの状況に、まっすぐ応える本。</div>
         </div>
         <div className="shelf-grid">
-          {interests.map((b, i) => (
+          {interests.map((b) => (
             <BookCard
-              key={`${b.id}-${i}`}
+              key={b.id}
               book={b}
               authorName={authorName(b)}
               reason={reason(b)}

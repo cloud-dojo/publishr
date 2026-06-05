@@ -20,6 +20,21 @@ export function latestArrivalDate(now: Date = new Date()): Date {
   return base;
 }
 
+/** "今週の入荷"棚の保持期間（日）。これより古い未予約 draft は棚落ち。 */
+export const ARRIVAL_WINDOW_DAYS = 7;
+
+/** createdAt(ISO) が now から指定日数以内か。未設定(undefined)は true（棚から消さない）。 */
+export function isWithinDays(
+  createdAt: string | undefined,
+  days: number,
+  now: Date = new Date()
+): boolean {
+  if (!createdAt) return true;
+  const t = new Date(createdAt).getTime();
+  if (Number.isNaN(t)) return true;
+  return now.getTime() - t <= days * 86_400_000;
+}
+
 /** 直近入荷からの相対表現。今朝 / 昨日 / おととい / 先日。 */
 export function arrivalLabel(now: Date = new Date()): string {
   const arrived = latestArrivalDate(now);

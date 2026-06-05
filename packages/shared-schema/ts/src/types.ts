@@ -136,6 +136,9 @@ export interface Book {
   body: string | null;
   annotations: ReadingAnnotation[];
   feedback: Feedback;
+  // 入荷日時(ISO8601)。"今週の入荷"棚の直近7日ウィンドウ判定に使用。
+  // ※ Python側(models.py)/Firestoreにも追加予定（本接続フェーズで一瀬さんと同期）。
+  createdAt?: string;
 }
 
 // 企画会議の「却下→再提出」ログ（基準1の証拠）
