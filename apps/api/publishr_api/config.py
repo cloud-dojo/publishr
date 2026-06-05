@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     data_source: str = "mock"
     # mock = 決定的キャンド(MVP) / vertex = Vertex Gemini(将来)
     publishr_llm: str = "mock"
+    # プロンプトの few-shot 注入: on(既定) / off(dev コスト節約)。採点系は常時ON固定（render.py）。
+    prompt_fewshot: str = "on"
 
     # 予約後の状態遷移タイマー（秒）。デモ用に短く。
     reserve_to_writing_sec: float = 2.0
