@@ -26,7 +26,7 @@
 | ADKマルチエージェントの**ランタイム実装**（STEP0-5・モードB） | 一瀬 | 基準1の中核。最優先。**プロンプト設計は鉄田** | C1/C2 |
 | **エージェントのプロンプト・人格・判断基準の設計**（企画3階層／キャスティング／編集長［プレビュー3観点・本文ルーブリック］／著者／Eval judge） | 鉄田 | ✅ `packages/prompts/` 11本整備済。残＝W1実テスト＆eval兼用 | A3 |
 | STEP0観測・OAuth・Picker（サーバ側） | 一瀬 | 選択UIは鉄田と境界調整（G1-13） | C1.1 |
-| Cloud Run / Scheduler / Pub/Sub / Firestore / GCS | 一瀬 | 状態機械・自律トリガー・索引・本文保護 | C3/C1.7 |
+| Cloud Run / Scheduler / Pub/Sub / Firestore / GCS | 一瀬 | 状態機械・自律トリガー・索引・本文保護。**※基盤Firebase部分（Firestore/GCS）の担当は未定＝鉄田が一瀬を補助する可能性あり・後決め（MTG 2026-06-05）** | C3/C1.7 |
 | Imagen表紙生成連携（STEP5） | 一瀬 | dev時はモック（コスト） | C1.6 |
 | Langfuse計装・CI/CD・Eval ゲート実装・Terraform | 一瀬 | L4の実装 | C5.6/B3/C5.3/B4 |
 | API 3本（reserve/OAuth/trigger） | 一瀬 | 境界は `API契約仕様.md`・予約同時5冊 | C2.1 |
@@ -39,6 +39,7 @@
 | デモ台本・録画・ピッチ図解・README | 鉄田 | 基準2・4の訴求 | C6 |
 | テーマ・スコープ管理・コスト概算（方針・ガード） | 鉄田 | 意思決定・予算 | C5.7/C5.8 |
 | **Eval品質ゲートの実装（Gen AI Eval Service・GEAP）＝一瀬／ProtoPedia作品ページ作成＝鉄田** | 一瀬・鉄田 | 2026-06-05追記。Eval実装ルート＝`publishr_other/GEAP②_EvalService具体化.md`（設計=鉄田✅・実装=一瀬）／ProtoPedia草案＝`publishr_other/Protopedia提出/` | C5.3/C6.7 |
+| **GitHub組織・ビルド連携（App Hosting / Cloud Build↔GitHub）** | 鉄田 | **MTG 2026-06-05決定／✅移管完了**：GitHubを組織アカウント `cloud-dojo` へ移管→鉄田にもオーナー権限を付与（2026-06-05完了）。これにより App Hosting の GitHub App 連携(B3.3)・Cloud Build↔GitHub 接続(方式A・G1-18) は**鉄田が実施**（旧「リポ所有者=一瀬のみ可」の所有者依存は解消） | B3 |
 
 > 担当の「いつ・何待ち・完了条件」は WBS の各WP表（担当列・依存・DoD）を参照。
 
@@ -51,4 +52,4 @@
 - **コスト**: dev/prodフラグをデフォルトdev（本文ページ/Imagen/冊数）。予算アラート50%でLangfuse内訳点検（G1-16）。
 - **真実源の分担**: 役割・運用＝本書／作業・スケジュール＝WBS.md／着手ゲート＝着手チェックリスト.md／設計＝設計資料・packages/prompts。
 
-> 役割分担の**最終確定は友人MTG**（チェックリスト§1-A②）で行い、合意後に本表のステータスを更新する。
+> 役割分担は**友人MTG（2026-06-05）で基本合意・確定**（チェックリスト§1-A②）。残る未定は基盤Firebase部分の担当のみ（鉄田補助の可能性・後決め）。

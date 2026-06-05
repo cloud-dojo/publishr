@@ -94,7 +94,7 @@
 | 友人をIAMに招待 | 鉄田 | `ichisehiroshi@gmail.com` を **編集者(Editor)** で追加（コンソール） |
 | CIデプロイ用SA作成 | 鉄田 | `publishr-ci-deployer@publishr-498123.iam.gserviceaccount.com`（runtime用 `publishr-runner` と分離）。付与ロール：Cloud Run 管理者／Cloud Build 編集者／サービス アカウント ユーザー／Artifact Registry 書き込み／ストレージ管理者 |
 | SAキー発行・退避 | 鉄田 | JSONキー発行→**git管理外**へ退避：`C:\Users\ytets\.gcp-keys\publishr-ci-deployer.json`（リポにはコミットしない） |
-| GitHubリポジトリ作成 | 友人 | `hiroshiichise/publishr`（**個人アカウント所有**）作成済・鉄田はCollaborator |
+| GitHubリポジトリ作成 | 友人 | `hiroshiichise/publishr`（**個人アカウント所有**）作成済・鉄田はCollaborator。**【2026-06-05完了】組織アカウント `cloud-dojo` 作成→`cloud-dojo/publishr` へ移管→鉄田にもオーナー権限付与済** |
 | GitHub Secrets 登録 | 鉄田 | `GCP_PROJECT_ID` / `GCP_SA_KEY`(生JSON) / `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` の4本を登録（※コラボレーター権限で登録可能だった） |
 
 > ⚠️ **gcloud CLIは現状このPCで使用不可**：NortonのSSL/TLS検査（`Norton Web/Mail Shield Root`）がHTTPSをMITMし、gcloud同梱CAが弾く。検証オフは安全機構が不許可。上記はすべて**ブラウザのGCPコンソール＋ローカルPowerShell**で実施。詳細・回避策は `ERRORS.md` 参照。
@@ -104,15 +104,16 @@
 |---|---|---|
 | ~~OAuth同意画面＋クライアント作成~~ | 鉄田 | ✅**完了（2026-06-04）**：Google Auth Platform設定（アプリ名`Publishr`・外部・**本番(未審査)**）／スコープ3つ（`drive.file`・`calendar.readonly`・`tasks.readonly`）／Webクライアント`Publishr Web`作成（リダイレクトURI=仮`http://localhost:8080/api/auth/google/callback`）／`GOOGLE_OAUTH_CLIENT_ID/SECRET`の2本をSecrets登録＝**Secrets計6本完了** |
 | OAuth 残作業 | 鉄田/友人 | ①Drive/Calendar/Tasks **API有効化**（ランタイム前まで）②**本番リダイレクトURI**追記（バックエンドURL確定後）③**Testing/Production方針の握り**（G1-19・トークン7日失効回避） |
-| Cloud BuildとGitHub連携 | 友人 | 個人リポのGitHub App認可は**所有者(一瀬)のみ**。または Actions→`gcloud builds submit` で接続省略（要MTG方針確定） |
+| Cloud BuildとGitHub連携 | 鉄田 | **【MTG 2026-06-05確定】方式A=GitHub App直結**。組織移管・鉄田オーナー権限は**✅2026-06-05完了**し所有者依存が解消されたため、**鉄田が GitHub App 直結で接続**（旧 Actions→`gcloud builds submit` の方式Bは不採用）。接続作業はW4 |
 | ~~gcloud CLI × Norton の恒久解決~~ | 鉄田 | ✅**解決（2026-06-04）**：WSL2(Ubuntu/ARM64)導入＋gcloud導入で回避を実証（WSLはNortonのMITM対象外）。以後の開発はWSL側で。詳細→ERRORS.md |
-| 「Cloud Build接続済みか」確認 | 友人 | 一瀬さんが既に何か接続したか要確認 |
+| 「Cloud Build接続済みか」確認 | 鉄田 | 現状トリガー**未接続**を実機確認済（open-issues G1-18）。鉄田はオーナー権限取得済（2026-06-05）→方式Aで接続（W4） |
 
-### 友人への依頼事項（GitHub関連・当初メモ／一部完了）
+### GitHub関連の段取り（当初メモ／MTG 2026-06-05で更新）
 1. ~~リポジトリ名：`publishr`、Visibility：Public で作成~~ → 作成済（現状は個人リポ。提出時にPublic化）
 2. ~~鉄田のGitHubアカウントをCollaboratorに追加~~ → 完了
-3. Cloud Build → トリガー → GitHubを接続（GCPプロジェクトID：`publishr-498123`）→ 所有者操作 or 省略を検討
-4. `main`ブランチpushで自動ビルドのトリガー設定 → 上記方針確定後
+3. **【✅2026-06-05完了】組織アカウント `cloud-dojo` 作成→`cloud-dojo/publishr` へ移管→鉄田にオーナー権限付与済**
+4. Cloud Build → トリガー → GitHubを接続（GCPプロジェクトID：`publishr-498123`）→ **方式A=GitHub App直結／鉄田が実施**（組織移管・鉄田オーナー権限完了で所有者依存が解消・W4）
+5. `main`ブランチpushで自動ビルドのトリガー設定（W4）
 
 ---
 

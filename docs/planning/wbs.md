@@ -7,7 +7,7 @@
 > **クリティカルパス**: B(基盤) → C1.0(ADK疎通) → **C1.1-C1.3＋C4のE2E縦通し（W2★最重要）** → C2/C5 → C6（録画）。
 
 > **🧑‍🤝‍🧑 担当の凡例（3パターン）**: **鉄田**（=あなた・フロント/プロンプト/Eval設計/デモ担当）／**一瀬**（=友人エンジニア・エージェント/基盤/DevOps担当）／**鉄田・一瀬**（2人で一緒にやる）。割り当ては [roles-and-ops.md](roles-and-ops.md) の役割分担表に準拠。
-> **🔑 権限オーナーの前提（2026-06-05時点・仮）**: **Google Cloud のオーナー権限＝鉄田**／**GitHub のオーナー権限＝一瀬**。よって**コンソール操作・権限設定など“オーナーしか触れないセットアップ作業”は、GitHub系＝一瀬・Google Cloud系＝鉄田**で割り当てている（※相互に権限を渡し合えば入れ替え可。今日の権限確認後に調整）。コードを書く実装タスクは役割分担表どおり。
+> **🔑 権限オーナーの前提（MTG 2026-06-05で更新）**: **Google Cloud のオーナー権限＝鉄田**／**GitHub＝組織アカウント `cloud-dojo` を新規作成し現リポを `cloud-dojo/publishr` へ移管→鉄田にもオーナー権限を付与（✅2026-06-05完了）**。これにより**App Hosting の GitHub App 連携(B3.3)・Cloud Build↔GitHub 接続(方式A・G1-18)は鉄田が実施**できる（旧「GitHub系＝一瀬のみ」の所有者依存は解消）。コードを書く実装タスクは役割分担表どおり。※基盤Firebase部分（Firestore/GCS）の担当は未定＝鉄田が一瀬を補助する可能性あり（後決め）。
 > **📅 予定週の凡例（実日付・今日=6/5基準）**: 週は月曜はじまり。**W0=今週=6/1–6/7**（準備）／**W1=6/8–6/14**／**W2=6/15–6/21**（★E2E山場）／**W3=6/22–6/28**／**W4=6/29–7/5**／**W5=7/6–7/12**（7/10提出）。各表の「予定週」列に `W2（6/15–21）` の形で明記。
 > **状態マーク**: ✅完了 ／ 🔜着手前（準備OK）／ ⏸MTG・他者待ち ／ 🟡進行中/mock実装済 ／ 🔴ブロック。
 
@@ -15,25 +15,25 @@
 
 ## 🧭 現在地サマリ（2026-06-05時点）
 
-> **いまどこ**: **canned/mock の骨格は前進・実装（実LLM・実Firestore・実escalate）はこれから**のフェーズ。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、さらに**フロント14ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み（友人MTG＝今日夕方の握り待ち）。次の山場は C1.0「ADK疎通＝実escalate実証」(W1)→ C1.1-C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)。
+> **いまどこ**: **canned/mock の骨格は前進・実装（実LLM・実Firestore・実escalate）はこれから**のフェーズ。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、さらに**フロント14ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**（新構想で正本確定／役割基本合意／ADK一旦これでいく／Drive Picker＝フォルダ単位／連携・データ詳細を確定／GitHub組織化で App Hosting・Cloud Build を鉄田が連携／Langfuse実装方式のみ先送り）。次の山場は C1.0「ADK疎通＝実escalate実証」(W1)→ C1.1-C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)。
 >
 > **✅ できている（土台）**
 > - 設計docs一式／完成プロンプト11本（`packages/prompts/`）／Eval Set 8件（`eval/eval_set.yaml`）
 > - GCP基盤（`publishr-498123`：Firestore/Storage/SA/Secret Manager/Firebase/予算アラート）
 > - **【6/4完了】GCP IAM 2人招待・OAuth同意画面(Production)・テストユーザー・OAuthクライアント`Publishr Web`発行・GitHub Secrets 計6本**（GCP_PROJECT_ID／GCP_SA_KEY／GOOGLE_OAUTH_CLIENT_ID／SECRET／LANGFUSE×2）
-> - GitHubリポ（一瀬所有・鉄田=collaborator）／モノレポscaffold（agents・apps・packages・eval・docs）／計画docsをrepoへ統合
+> - GitHubリポ（**2026-06-05に組織アカウント `cloud-dojo` へ移管完了→`cloud-dojo/publishr`・鉄田もオーナー権限付与済**）／モノレポscaffold（agents・apps・packages・eval・docs）／計画docsをrepoへ統合
 >
 > **【6/4完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・A3.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・C6)へ置換✅
 >
-> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・一瀬待ち) ④canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。
+> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・組織移管完了→鉄田が実施・W1) ④canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。
 >
 > **【提出物・GEAP方針・2026-06-05】** ProtoPedia作品ページ草案一式（ストーリー約4,000字・画像5＋システム構成図・全フィールド記入シート）を作成＝対外 `publishr_other/Protopedia提出/`（WBS **C6.7/C6.8**・P-6/P-7）。**GEAP（旧Vertex AI）はプラスアルファで②Gen AI Evaluation Service を品質ゲートに採用方針**（動くコード済・I-21/**C5.3**）、④Agent Runtimeはストレッチ（Schedulerトリガー非対応・F-7）。
 >
-> **⏳ 着手前に残っているゲート**（＝これを潰さないとC実装に進めない／手戻りする）
-> - **友人MTG（最重要・唯一の残ゲート・A5.1）**: ADK実現性(G1-1)・役割分担(G1-2)・**Drive Picker(G1-13)**・Cloud Build接続方式A/B(G1-18)・OAuth公開ステータス(G1-19)・通知方式(G1-15)・**相互の権限状態の確認** を握る
->   - **＋ 設計/データの確定（A2点検で起票・いずれも叩き台あり＝即確定見込み）**: 観測束ObservationBundleの保存先(I-19)／API CORS・ベースパス(G1-7)／手動トリガー認可(G1-6)／読書ログ集約(I-9)／予約の原子性・冪等(I-20)。詳細と推奨は [open-issues.md](open-issues.md) と当日アジェンダ §3-4〜3-6
+> **✅ 着手前ゲートはMTG 2026-06-05で全件クローズ（A5.1完了）**
+> - **友人MTG（2026-06-05実施・完了）**: ADK実現性(G1-1=一旦これでいくで合意)・役割分担(G1-2=基本合意／基盤Firebaseのみ担当未定)・**Drive Picker(G1-13=フォルダ単位・Picker前提で確定)**・Cloud Build接続(G1-18=方式A・組織化で確定)・OAuth公開ステータス(G1-19=Production維持)・通知方式(G1-15=FCM不要)を握った。Langfuse実装方式(G1-17)のみ先送り（今後検証）
+>   - **＋ 設計/データの確定（叩き台のまま即確定）**: 観測束ObservationBundleの保存先(I-19)／API CORS・ベースパス(G1-7)／手動トリガー認可(G1-6)／読書ログ集約(I-9)／予約の原子性・冪等(I-20) を**全て確定**。詳細は [open-issues.md](open-issues.md) と当日アジェンダ §3-4〜3-6
 > - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・B1.2／現状は仮の`localhost`のみ）
-> - **フロント本番ホスティング（B3.3・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(`apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。**🔴ブロック=App Hosting の GitHub App 連携はリポ所有者(一瀬)のみ可**→今日MTGで一瀬が backend 作成 or GitHub App 許可で解除
+> - **フロント本番ホスティング（B3.3・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(`apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。**連携ブロックは解消＝GitHub組織アカウント `cloud-dojo` への移管・鉄田オーナー権限は✅2026-06-05完了→鉄田が App Hosting の GitHub App 連携を実施（連携作業はW1）**
 > - **フロント本接続の前提（C4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
 
 ---
@@ -50,7 +50,7 @@ Publishr MVP（カテゴリWBS）
 ├─ B. 環境・インフラ構築          … 動かす土台（🔜MTG後着手）
 │   ├─ B1 GCP基盤・認証（IAM/OAuth/Secrets）  ← Google Cloud系=鉄田
 │   ├─ B2 リポ・モノレポ・ローカル環境
-│   ├─ B3 CI/CD・ホスティング（Actions/Cloud Build/App Hosting）  ← GitHub系=一瀬
+│   ├─ B3 CI/CD・ホスティング（Actions/Cloud Build/App Hosting）  ← 鉄田がGitHub連携を実施（組織移管・オーナー権限完了）
 │   └─ B4 IaC（Terraform）
 └─ C. 実装                   … コーディング本体
     ├─ C1 エージェント・モードA（自律企画）★ ← STEPでレベル3展開（一瀬）
@@ -75,7 +75,7 @@ Publishr MVP（カテゴリWBS）
 
 # A. 要件定義・設計
 
-> 何を作るか・どう作るかの確定。**大半は✅済**（残るは着手ゲート＝友人MTGと共有スキーマ正本の置き場所）。詳細は `docs/design/*.md`。
+> 何を作るか・どう作るかの確定。**大半は✅済**（着手ゲート＝友人MTGは2026-06-05完了・共有スキーマ正本の置き場所も確定）。詳細は `docs/design/*.md`。
 
 ## A1. 構想・MVPスコープ
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -106,15 +106,15 @@ Publishr MVP（カテゴリWBS）
 ## A5. 共有スキーマ正本確定／着手ゲート
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| A5.1 | 友人MTG（チェックリスト§1の全議題を握る） | 2人で役割分担・技術の実現性・未決事項・相互の権限状態を最終確認する打ち合わせ（今日夕方） | 鉄田・一瀬 | W0（6/1–7） | — | マイルストーン・役割・G系(Picker/grounding/通知/Langfuse方式)合意／**設計・データ決定(観測束保存先I-19・CORS/ベースパスG1-7・トリガー認可G1-6・読書ログ集約I-9・予約原子性I-20＝叩き台で即確定)** (旧WP0.1) | ⏸**未開催（今日夕方予定）＝最優先** |
-| A5.2 | 共有スキーマの正本確定＋packages/prompts投入 | Python/TS/JSONでデータの「型」定義を1か所に統一し、2人のコードで食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | A5.1 | 型ドリフト防止の単一ソース（G1-11）。prompts投入✅／正本の置き場所はMTGで確定 (旧WP0.4) | 🔜着手前 |
+| A5.1 | 友人MTG（チェックリスト§1の全議題を握る） | 2人で役割分担・技術の実現性・未決事項・相互の権限状態を最終確認する打ち合わせ | 鉄田・一瀬 | W0（6/1–7） | — | マイルストーン・役割・G系(Picker/通知/Cloud Build方式/OAuth)合意／**設計・データ決定(観測束保存先I-19・CORS/ベースパスG1-7・トリガー認可G1-6・読書ログ集約I-9・予約原子性I-20)を全て確定**。Langfuse実装方式(G1-17)のみ先送り (旧WP0.1) | ✅**2026-06-05 実施・完了** |
+| A5.2 | 共有スキーマの正本確定＋packages/prompts投入 | Python/TS/JSONでデータの「型」定義を1か所に統一し、2人のコードで食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | A5.1 | 型ドリフト防止の単一ソース（G1-11）。prompts投入✅／**正本＝`packages/shared-schema`（`@publishr/shared-schema`）に置く方針をMTG 2026-06-05で確定。スキーマ内容の更新は鉄田が引き継ぎ** (旧WP0.4) | 🔜着手前（置き場所✅確定） |
 
 ---
 
 # B. 環境・インフラ構築
 
-> 動かす土台。GCP本体は✅済。残りは**友人MTG後に着手**（CI/ホスティング/IaC）。一部に🔴ブロック（App Hostingの所有者連携）あり。詳細は `docs/infra/*.md`。
-> **担当の考え方**: B1（Google Cloudコンソール）＝**鉄田**（GCPオーナー）／B3（GitHub・App Hosting連携）＝**一瀬**（GitHubオーナー）。※権限を渡し合えば入れ替え可。
+> 動かす土台。GCP本体は✅済。残りは**友人MTG（2026-06-05完了）後に着手**（CI/ホスティング/IaC）。App Hostingの所有者連携ブロックは組織化決定で解消。詳細は `docs/infra/*.md`。
+> **担当の考え方**: B1（Google Cloudコンソール）＝**鉄田**（GCPオーナー）／B3（GitHub・App Hosting連携・Cloud Build接続）＝**鉄田**（GitHub組織 `cloud-dojo` への移管・オーナー権限取得は✅2026-06-05完了・MTG 2026-06-05決定）。
 
 ## B1. GCP基盤・認証（IAM/OAuth/Secrets）← Google Cloud系＝鉄田
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -125,15 +125,15 @@ Publishr MVP（カテゴリWBS）
 ## B2. リポ・モノレポ・ローカル環境
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| B2.1 | GitHubリポ作成・モノレポscaffold | ソースコードを置くGitHub倉庫を作り、フォルダ構成（apps/agents/packages/eval/docs）を用意 | 一瀬 | W0–W1（6/1–14） | A5.1 | 2人がpush可・ディレクトリ確定（infra/TerraformはB4で投入） (旧WP0.3) | ✅リポ作成・collaborator・scaffold済 |
+| B2.1 | GitHubリポ作成・モノレポscaffold | ソースコードを置くGitHub倉庫を作り、フォルダ構成（apps/agents/packages/eval/docs）を用意 | 一瀬 | W0–W1（6/1–14） | A5.1 | 2人がpush可・ディレクトリ確定（infra/TerraformはB4で投入） (旧WP0.3) | ✅リポ作成・collaborator・scaffold済（**2026-06-05：組織アカウント `cloud-dojo` へ移管完了→`cloud-dojo/publishr`・鉄田にオーナー権限付与済**） |
 | B2.2 | ローカル環境統一（Python3.11/ADK SDK/Node） | 2人のPCで同じバージョンのツールを使うよう揃え、動作の食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | B2.1 | バージョン固定 (旧WP0.6) | 🔜着手前 |
 
-## B3. CI/CD・ホスティング（Actions/Cloud Build/App Hosting）← GitHub系＝一瀬
+## B3. CI/CD・ホスティング（Actions/Cloud Build/App Hosting）← 鉄田がGitHub連携を実施（組織移管・オーナー権限完了）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | B3.1 | CI/CD空パイプライン疎通 | コードをpushしたら自動でテスト→公開が動く「配線」を、まず中身カラ（"Hello"表示だけ）で通して土台を作る | 一瀬 | W1（6/8–14） | B2.1 | push→Actions→Cloud Run "Hello"（C1.0と兼用） (旧WP0.5) | 🔜着手前 |
-| B3.2 | GitHub Actions → Cloud Build → Cloud Run 自動デプロイ | mainブランチに反映したら自動でサーバー(Cloud Run)へ公開される仕組みを完成させる | 一瀬 | W4（6/29–7/5） | B3.1 | mainマージで自動デプロイ (旧WP6.1) | 🔜着手前 |
-| B3.3 | **Firebase App Hosting backend 作成（フロント本番ホスティング）** | フロント画面をネット公開する場所(App Hosting)を用意し、GitHubと連携して自動公開する。**連携はリポ所有者=一瀬しかできない作業** | 一瀬 | W1（6/8–14） | A5.1 | `apps/web`をApp Hostingでmock公開（Netlifyから移行・G1-7）。live=`main`／root=`apps/web`／region=`asia-east1`。鉄田準備(`apps/web/apphosting.yaml`)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)→**残＝一瀬が backend 作成 or GitHub App 許可で自動デプロイ解除** (旧WP0.8) | 🔴ブロック=**一瀬対応待ち** |
+| B3.2 | GitHub Actions → Cloud Build → Cloud Run 自動デプロイ（方式A=GitHub App直結） | mainブランチに反映したら自動でサーバー(Cloud Run)へ公開される仕組みを完成させる。**Cloud Build↔GitHub接続は方式A（GitHub App直結）で確定（G1-18・MTG 2026-06-05）＝鉄田はオーナー権限取得済（2026-06-05）→鉄田が接続** | 鉄田 | W4（6/29–7/5） | B3.1 | mainマージで自動デプロイ (旧WP6.1) | 🔜着手前 |
+| B3.3 | **Firebase App Hosting backend 作成（フロント本番ホスティング）** | フロント画面をネット公開する場所(App Hosting)を用意し、GitHubと連携して自動公開する。**組織移管（`cloud-dojo/publishr`）・鉄田オーナー権限は✅2026-06-05完了→鉄田が GitHub App 連携を実施** | 鉄田 | W1（6/8–14） | A5.1 | `apps/web`をApp Hostingでmock公開（Netlifyから移行・G1-7）。live=`main`／root=`apps/web`／region=`asia-east1`。鉄田準備(`apps/web/apphosting.yaml`)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)→**残＝鉄田が backend 作成＋GitHub App 連携** (旧WP0.8) | 🔜着手前（鉄田実施・所有者依存は解消済） |
 
 ## B4. IaC（Terraform）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -161,7 +161,7 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | C1.1.1 | 観測ツール実装（Drive/Calendar/Tasks ±14日） | ユーザーのDrive・カレンダー・ToDoを前後14日分読み取り、AIが状況把握する材料（生データ）を集めるツール | 一瀬 | W2（6/15–21） | B1.1,C1.0.1 | ObservationBundle生成（§2） (旧WP1.2) | 🔜着手前 |
-| C1.1.2 | Drive Pickerサーバ側連携 | Driveは全ファイルを見られない仕様のため、ユーザーが選んだファイルだけ取得する画面連携をサーバー側で実装 | 一瀬 | W2（6/15–21） | C1.1.1 | 選択ファイルのみ取得（G1-13） | 🔜着手前 |
+| C1.1.2 | Drive Pickerサーバ側連携 | Driveは全ファイルを見られない仕様のため、ユーザーが選んだフォルダだけ取得する画面連携をサーバー側で実装 | 一瀬 | W2（6/15–21） | C1.1.1 | 選択フォルダのみ取得＝`connectedSources.drive.folderIds[]` で保持（G1-13＝フォルダ単位・Google Picker前提で確定・MTG 2026-06-05） | 🔜着手前 |
 
 ### C1.2 STEP1 読者分析
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -208,10 +208,10 @@ Publishr MVP（カテゴリWBS）
 ## C3. データ/状態基盤（Firestore/GCS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | 一瀬 | W2（6/15–21） | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19をMTG確定後に反映） (旧WP3.1) | 🔜着手前 |
+| C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | 一瀬 | W2（6/15–21） | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19＝MTG 2026-06-05で確定済を反映） (旧WP3.1) | 🔜着手前 |
 | C3.2 | 複合インデックス列挙＋firestore.indexes.json | 一覧画面の検索が速く正しく動くよう、DBに索引を登録する（無いと実行時エラーになる） | 一瀬 | W2–W3（6/15–28） | C4.2,C4.7 | 実行時エラー回避（I-15） (旧WP3.2) | 🔜着手前 |
 | C3.3 | GCS本文保護（署名付きURL or IAM） | 本文ファイルを他人が読めないよう、アクセス制限をかける | 一瀬 | W3（6/22–28） | C2.3 | 他者本文を読めない（I-10） (旧WP3.3) | 🔜着手前 |
-| C3.4 | 観測ログ保存先コレクション（observationLogs等） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | 一瀬 | W2（6/15–21） | C1.1.1 | STEP0直書き可（I-19） (旧WP3.4) | 🔜着手前 |
+| C3.4 | 観測ログ保存先コレクション（`users/{uid}/observations/{YYYY-MM-DD}`） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | 一瀬 | W2（6/15–21） | C1.1.1 | STEP0が書込可＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（日付docID＝冪等・フル束インライン・サーバ書込/本人read／I-19＝MTG 2026-06-05で確定） (旧WP3.4) | 🔜着手前 |
 | C3.5 | **BFF（apps/api）の Firestore リポジトリ実装＋mock→firestore切替** | `apps/api` は `protocol.py`＋`mock_repository.py` のリポジトリパターンで実装済み。`RepositoryProtocol` の Firestore 実装を足し、mock から切替える（＝抜け漏れ補完・2026-06-05起票） | 一瀬 | W2–W3（6/15–28） | C3.1 | Firestore実装を追加し `DATA_SOURCE=firestore` で起動可（フロントC4.9・モードB C2.x の本接続前提）。mock側✅ | 🔜着手前（mock側✅） |
 
 ## C4. フロント（書店UI・14ルート）
@@ -247,7 +247,7 @@ Publishr MVP（カテゴリWBS）
 ## C6. デモ・提出物
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C6.1 | デモ動画台本（必然性3証跡を画に） | 審査用2.5分＋ピッチ内60秒の動画台本を作る。台本は完成、残りは録画 | 鉄田 | W1–W4（6/8–7/5） | — | 動画2本立て：①紹介2.5分／②デモ60秒。台本✅（`publishr_other/demo/動画台本/`） (旧WP8.1) | 🟡台本✅・録画残 |
+| C6.1 | デモ動画台本（必然性3証跡を画に） | 審査用2.5分＋ピッチ内60秒の動画台本を作る。台本は完成、残りは録画 | 鉄田 | W1–W4（6/8–7/5） | — | 動画2本立て：①紹介2.5分／②デモ60秒。台本✅（`publishr_other/demo/動画台本/`）。**MTG 2026-06-05：①プロダクト紹介2.5分（ProtoPedia提出YouTube）を先に作る＝鉄田タスク継続／②60秒ピッチ内デモは最終選考通過後に作る想定で今は着手しない** (旧WP8.1) | 🟡台本✅・①録画優先／②保留 |
 | C6.2 | デモのデータ戦略（seed投入 or ライブ） | デモ録画で毎回同じ結果が出るよう、データの準備方法（仕込み or 本番）を決める | 鉄田・一瀬 | W5（7/6–12） | 全機能 | 録画再現性確保（I-14） (旧WP8.2) | 🔜着手前 |
 | C6.3 | デモ録画（予約→入荷を撮る） | 予約→入荷の流れを録画・編集して提出用の動画にする | 鉄田 | W5（7/6–12） | C6.1,C6.2 | 提出動画 (旧WP8.3) | 🔜着手前 |
 | C6.4 | ピッチ図解（自律アーキ・必然性） | 自律アーキ・AIの必然性・将来構想を説明するスライドを作る | 鉄田 | W4–W5（6/29–7/12） | — | スライド (旧WP8.4) | 🔜着手前 |

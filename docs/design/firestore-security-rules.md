@@ -5,7 +5,7 @@
 > **位置づけ**: `エージェントIO契約.md` §11が前提にする「ハイライト/FB/★はフロントからFirestore直書き（セキュリティルールで保護）」を**実際に保護するルール**を定義する。ルール無しの直書き設計は「誰でも読める・書ける」状態になり得るため、直書き方式の成立条件そのもの。
 > **原典**: データモデル＝`技術アーキテクチャ.md` §3、連携方式＝`エージェントIO契約.md` §11、認証＝`API契約仕様.md` §2。
 > **担当**: 友人（ルール実装・デプロイ）。鉄田は直書きするフィールド範囲を本書で握る。
-> **ステータス**: 🟡 ドラフト（2026-06-02）。§2の `ownerUid` 追加は**データモデルへの小変更**＝友人MTGで合意してから反映。
+> **ステータス**: ✅ MTG 2026-06-05で関連論点を確定（ownerUid方式・読書ログ feedback集約 I-9・観測束 observations サブコレクション I-19）。本書はその確定を反映済み。
 
 ---
 
@@ -26,8 +26,9 @@
 | `users/{uid}.favoriteAuthors` | 本人のみ | **追加・削除のみ**（arrayUnion/Remove） | ワンクリック保存UI |
 | `plans/{planId}` | 所有者のみ | 不可（企画はサーバ生成） | 入荷理由等の表示用に読む |
 | `books/{bookId}` | 所有者のみ | **限定フィールドのみ**（FB/★） | status/title/body等は不可 |
-| `books/{bookId}/highlights/{hid}` | 所有者のみ | **作成・自分の分の削除のみ** | ハイライトはサブコレクション |
+| `books/{bookId}/highlights/{hid}` | 所有者のみ | **作成・自分の分の削除のみ** | ハイライトはサブコレクション（I-9） |
 | `personas/{personaId}` | 認証済みなら可（著者プロフィール表示） | 不可 | 内部資産（ephemeral含めサーバ書き込み）。読み取りのみ |
+| `users/{uid}/observations/{date}` | 本人のみ | **不可（サーバ専用書込）** | STEP0観測束 ObservationBundle（I-19＝MTG 2026-06-05確定。docID=YYYY-MM-DD・冪等） |
 
 > **ハイライト・簡易FBはサブコレクション or 限定フィールドに分離する**のが安全。本文(bodyUrl)・タイトル・status をクライアントに書かせない（改竄・不正な状態遷移の防止＝予約は必ず `POST /api/reserve` 経由）。
 
@@ -83,6 +84,13 @@ service cloud.firestore {
                         || !request.resource.data.diff(resource.data)
                               .affectedKeys().hasAny(['initialProfile']));
       allow delete: if false;
+
+      // ── observations（観測束 ObservationBundle・サブコレクション・I-19）──
+      // STEP0観測がサーバ（Admin）で書く。クライアントは本人read・書込不可。
+      match /observations/{date} {
+        allow read:  if isOwner(uid);
+        allow write: if false;
+      }
     }
 
     // ── plans：所有者のみ読める。生成はサーバのみ ──
@@ -102,7 +110,7 @@ service cloud.firestore {
       // status / title / bodyUrl / coverUrl / planId / ownerUid 等は変更不可
       allow update: if isSignedIn()
                     && resource.data.ownerUid == request.auth.uid
-                    && onlyChanged(['feedback']);   // feedback={rating,wantsSequel,read%,dropped}
+                    && onlyChanged(['feedback']);   // feedback={rating,wantsSequel,readPercent,dropped}（I-9集約・MTG 2026-06-05確定）
 
       // ── ハイライト（サブコレクション）──
       match /highlights/{hid} {
@@ -135,7 +143,7 @@ service cloud.firestore {
 }
 ```
 
-> ⚠️ `onlyChanged(['feedback'])` で許可フィールドを `feedback` に限定。読書ログ（read%/dropped）をクライアントが書くなら `feedback` 配下に入れる設計にして、トップレベルフィールドを直接書かせない。簡易FB・★・読了率はすべて `feedback` オブジェクトに集約すると、ルールが1行で済む。
+> ⚠️ `onlyChanged(['feedback'])` で許可フィールドを `feedback` に限定。**読書ログ（readPercent/dropped/rating/wantsSequel）は `feedback` オブジェクトに集約**（I-9＝MTG 2026-06-05確定。dwellSecはMVP対象外）＝トップレベルフィールドを直接書かせず、ルールが1行で済む。ハイライトのみ `highlights` サブコレクション。
 
 ---
 
@@ -152,4 +160,5 @@ service cloud.firestore {
 
 ## 5. 未確定
 
-> 本書に関する未確定論点は **`未決論点台帳.md` に集約**（関連: G1-4 ownerUid方式 vs ネスト／I-6 initialProfile書込制限の実装／I-8 favoriteAuthors参照方式／I-9 読書ログの置き場所／I-10 本文(GCS)保護／I-11 personas読み取り開放）。
+> 本書に関する未確定論点は **`未決論点台帳.md` に集約**（関連: G1-4 ownerUid方式 vs ネスト／I-6 initialProfile書込制限の実装／I-8 favoriteAuthors参照方式／I-10 本文(GCS)保護／I-11 personas読み取り開放）。
+> **✅ MTG 2026-06-05で確定済**: I-9 読書ログ＝`books/{bookId}.feedback` 集約＋ハイライトはサブコレクション／I-19 観測束＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（サーバ書込・本人read）。

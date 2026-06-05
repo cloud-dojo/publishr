@@ -2,8 +2,8 @@
 
 > 📑 全体の目次は [正本マップ](../README.md)／未決論点は [open-issues.md](../planning/open-issues.md)（B1）。
 > **位置づけ**: 「何を・どの単位でLangfuseに残すか」を定義する。狙いは **基準1（AIエージェントの必然性）の証跡を可視化**すること＝「調査サブが外部実データを取る」「企画リーダーがスコアで差し戻す」「編集長が著者を差し戻す」が**実行時に本当に起きている**ことをトレースで示す。Observability L4（継続評価）の土台。
-> **担当**: 計装実装＝友人（W4）。本書（何を残すか）＝鉄田ドラフト→友人MTGで確定。
-> **ステータス**: 🟡 ドラフト（2026-06-03）。span名・属性キーはW1のADK/Langfuse疎通で実APIに合わせて確定。
+> **担当**: 計装実装＝友人（W4）。本書（何を残すか）＝鉄田ドラフト→友人MTG（2026-06-05）で「何を残すか」は合意。実装方式（OTel/SDK直）のみ先送り（G1-17）。
+> **ステータス**: 🟡 ドラフト（2026-06-03）。**実装方式（OTel経由 or Langfuse SDK直）は MTG 2026-06-05で判断不可＝先送り（今後W1疎通以降に検証しながら確定・G1-17）**。3シグナル設計（何を残すか）自体は維持。span名・属性キーはW1のADK/Langfuse疎通で実APIに合わせて確定。
 
 ---
 
@@ -64,8 +64,8 @@ trace: eval_gate  (attrs: commitSha, env)
 | 品質ゲートが機能 | eval_gate の passCount・low帯を落とした事例 | 5 |
 | コスト/レイテンシ | 各spanの token/cost/latency（Langfuse標準） | 5（数字で語る） |
 
-## 5. 未確定（友人MTG・W1疎通で確定）
-- ADKのトレース連携方式（OpenTelemetry経由か Langfuse SDK直か）。
+## 5. 未確定（W1疎通以降で確定）
+- **ADKのトレース連携方式（OpenTelemetry経由か Langfuse SDK直か）＝MTG 2026-06-05で判断不可・先送り（G1-17）**。現時点では決めず、今後W1疎通以降に検証しながら確定する。
 - grounding の retrievedUrls をADK/Vertexのどのフィールドから取れるか（取れない場合は調査サブ出力の `findings[].source` を代替に）。
 - trace/span命名規約の最終化・属性キーのスネーク/キャメル統一。
 - コスト属性の取得（Vertex課金 × Langfuse cost フィールドのマッピング）。

@@ -5,7 +5,7 @@
 > **位置づけ**: 企画と実装の境界を固める唯一の実装直結ドキュメント。各STEPのエージェントが「何を受け取り・何を返すか」（JSONスキーマ）と「どう判断するか」（プロンプト骨子）を定義する。**W2のE2E縦通し**で友人（エンジニア）が手を動かす単位がこれ。
 > **原典との関係**: パイプライン構造＝`技術アーキテクチャ.md` §1、データモデル＝同 §3、スコープ/DoD＝`MVPスコープ.md` §3、Eval＝同 §9、役割設計＝構想サマリー §6-2d。本書はそれらを**実装可能な契約**に翻訳したもの。新しい仕様判断はせず、既存確定事項を機械可読に落とす。
 > **スコープ**: MVP（実働5週間版）。3ソース（Drive＋Calendar＋Tasks）＋初期登録プロフィール／STEP1=1エージェント圧縮・週1回（土朝）／STEP2=3階層構造（企画リーダー＝スコアゲート／企画担当者／サブ実行者）＋スコア閾値の差し戻し（最高3ラウンド）／STEP3著者はテーマ確定時に**都度生成・各run5人**（固定プール選抜から変更）。トリガーは週3回・曜日別（土/水=本命 各5冊、日=セレンディピティ 5冊＝週15冊）。
-> **ステータス**: 🟡 ドラフト（2026-06-03 改訂）。末尾「未確定の設計判断」を友人MTGで詰めてから実装着手。
+> **ステータス**: ✅ MTG 2026-06-05で関連論点（観測束保存先I-19・読書ログ集約I-9・Drive Pickerフォルダ単位G1-13・連携G1-3）を確定し反映済み。
 > **最終更新**: 2026年6月3日
 
 ---
@@ -87,7 +87,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 **使用モデル**: なし（API呼び出し＋テキスト抽出のみ）。
 
 ### 入力
-`users/{userId}.connectedSources`（アーキ §3）。MVPは `drive` / `calendar` / `tasks` の3つ。
+`users/{userId}.connectedSources`（アーキ §3）。MVPは `drive` / `calendar` / `tasks` の3つ。**Drive は Google Picker で選んだ `folderIds[]`（フォルダ単位）配下のみ取得**（drive.fileは走査不可・G1-13＝MTG 2026-06-05確定。フロント=Picker UI(鉄田)／バック=ID保存・読取(一瀬)）。
 
 ### 出力：`ObservationBundle`
 ```jsonc
@@ -123,14 +123,15 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
     ]
   },
   "readingFB": {                              // 2サイクル目以降。初回は空配列
-    "highlights": [ { "bookId": "string", "text": "string", "createdAt": "ISO8601" } ],
-    "logs":       [ { "bookId": "string", "readPercent": 0.0, "dropped": false, "dwellSec": 0 } ],
-    "simpleFB":   [ { "bookId": "string", "rating": 1, "wantsSequel": false } ]
+    "highlights": [ { "bookId": "string", "text": "string", "createdAt": "ISO8601" } ],  // 取得元＝books/{bookId}/highlights サブコレクション（I-9）
+    "feedback":   [ { "bookId": "string", "rating": 1, "wantsSequel": false, "readPercent": 0.0, "dropped": false } ]  // 取得元＝books/{bookId}.feedback 集約（I-9）。dwellSecはMVP対象外
   }
 }
 ```
 
-> **取得範囲（2026-06-03 v2・G1-14解決）**: **Calendar/Tasks は ±14日（過去2週間＋先2週間）**。「最近何をしたか（過去）」と「何を控えるか（未来＝例6/5役員報告）」の両方を拾う。Tasks は**未完了＋直近の完了**。Drive の `textExcerpt` は**1ファイル上限 約4,000字**でトリム（冒頭＋見出し優先）。
+> **保存先（I-19＝MTG 2026-06-05確定）**: STEP0が吐く `ObservationBundle` は **`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション**（日付docID＝冪等・再runは上書き）に**フル束をインライン保存**（STEP1再実行時にGoogle API再叩き不要＝デモ再現性 I-14）。サーバ専用書込・本人read（`Firestoreセキュリティルール.md` §3）。生テキストのGCS分離・retention/TTLは将来F項目。
+> **読書FBの取得元（I-9＝MTG 2026-06-05確定）**: `readingFB.highlights` は `books/{bookId}/highlights` サブコレクション、`readingFB.feedback` は `books/{bookId}.feedback`（`{rating,wantsSequel,readPercent,dropped}`）集約から読む。滞在ログ(dwellSec)はMVP対象外。
+> **取得範囲（2026-06-03 v2・G1-14解決）**: **Calendar/Tasks は ±14日（過去2週間＋先2週間）・生データのみ（要約しない）**。「最近何をしたか（過去）」と「何を控えるか（未来＝例6/5役員報告）」の両方を拾う。Tasks は**未完了＋直近の完了**。Drive の `textExcerpt` は**1ファイル上限 約4,000字**でトリム（冒頭＋見出し優先）。3ソース疎通はW1で確認（MTG 2026-06-05合意）。
 > **注意**: Gmail本文は読まない（MVPはGmail自体スコープ外）。MVPは**キュレーション済みサンプルDrive 約10件**が対象なので、4,000字×10件≒3万字≒約2万トークンで余裕（コスト・コンテキスト対策／§10-6確定）。乱雑な実Drive接続時のトリム精緻化は将来課題。`folderLabel` で業務/趣味を読み分ける（構想 §6-5）。**STEP0は生データのみを返し、要約・解釈はしない**（解釈はSTEP1に一本化）。
 
 ---
@@ -624,7 +625,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 
 ---
 
-## 11. フロント⇔バック連携方式（§10-5・デフォルト案／友人MTGで最終確認）
+## 11. フロント⇔バック連携方式（§10-5・MTG 2026-06-05で確定＝G1-3）
 
 > 原則：**Firestoreを正本（source of truth）とし、フロントは可能な限り直接読み書き**。バックエンド処理を伴う/機密な操作だけ薄いCloud Run APIを通す。スタックがCloud Run中心のため、FirestoreトリガーのCloud Functionsは足さない方針。
 
@@ -637,7 +638,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 | 手動トリガー（デモ用に企画バッチを起動） | **Cloud Run API**（Cloud Run Jobを叩く） | 友人 |
 
 > **役割分担との整合（アーキ §5）**: フロント（鉄田）はFirestore SDKで大半を完結、バックは最小API3本で済む＝工数を物理分離できる。
-> **要・友人MTG確認**: 予約のPub/Sub発火をPOST /reserve方式（明示API）で行うか、Firestoreトリガーで行うか。本書は明示API推奨（スタックにCloud Functionsを足さないため）。
+> **✅ MTG 2026-06-05確定（G1-3）**: 予約のPub/Sub発火は **POST /reserve 方式（明示API）** で行う（Firestoreトリガーは不採用＝スタックにCloud Functionsを足さない）。
 
 ---
 
@@ -654,4 +655,4 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 | お気に入り著者（ユーザーが読書後に保存） | `users/{userId}.favoriteAuthors[]` |
 | 初期プロフィール（ユーザー登録時入力） | `users/{userId}.initialProfile` |
 | 著者ペルソナ集.md の既存15件（任意参照素材） | プロンプト添付（Firestore格納は任意・ephemeral=false） |
-| 観測束（ObservationBundle要約） | Firestore観測ログ（アーキ DoD#1） |
+| 観測束（ObservationBundle・フル束インライン） | `users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（I-19＝MTG 2026-06-05確定・アーキ §3） |
