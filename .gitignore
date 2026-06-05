@@ -39,6 +39,7 @@ docs/*
 *:Zone.Identifier
 .idea/
 .vscode/
+.claude/
 
 # Build / coverage
 coverage/
