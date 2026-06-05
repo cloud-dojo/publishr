@@ -125,3 +125,30 @@
 - IAM: https://console.cloud.google.com/iam-admin/iam?project=publishr-498123
 - Secret Manager: https://console.cloud.google.com/security/secret-manager?project=publishr-498123
 - Langfuse: https://cloud.langfuse.com
+
+---
+
+## P1 実態確認（2026-06-06・[p1-gcp-setup-runbook.md](p1-gcp-setup-runbook.md) STEP A 実行結果）
+
+> owner（ichisehiroshi@gmail.com）で WSL2 gcloud から確認（全体プラン `docs/planning/docs-replicated-bonbon.md` Phase 1）。**「無いものだけ作る」原則で実在を突き合わせた結果**。
+
+### ✅ 実在を確認（既存・追加作成不要）
+- プロジェクト `publishr-498123` ACTIVE・課金有効（`billingAccounts/01AEB4-E28B10-3EE3A0`）
+- API 有効: aiplatform / run / cloudbuild / firestore / storage / pubsub / cloudscheduler / identitytoolkit / secretmanager / artifactregistry ＋ drive / calendar-json / tasks
+- Firestore: `(default)` FIRESTORE_NATIVE `asia-northeast1`
+- GCS: `gs://publishr-contents-498123`（ASIA-NORTHEAST1・publicAccessPrevention=enforced・UBLA=true）
+- SA `publishr-runner`: aiplatform.user / run.invoker / **datastore.editor**（=docsの datastore.user を包含）/ storage.objectAdmin / secretmanager.secretAccessor
+- SA `publishr-ci-deployer`: run.admin / cloudbuild.editor / iam.serviceAccountUser / artifactregistry.writer / storage.admin
+- 他SA: firebase-adminsdk / firebase-app-hosting-compute / default compute（App Hosting 連携の痕跡）
+- Secret Manager: `LANGFUSE_HOST` / `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY`
+- ADC quota project を `publishr-498123` に設定
+- **Vertex Gemini 疎通スモーク成功**（gemini-2.5-flash・asia-northeast1・ADC・"疎通OK"）＝**P1のDoD達成**
+
+### ⚠️ gap（要対応・主に owner/コンソール作業）
+- **`GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` が Secret Manager に無い**（Langfuse 3本のみ）。本ログ上部「Secrets計6本完了」と実態（3本）が齟齬。→ GitHub Secrets 側にあるなら住み分けを明記、backend が Secret Manager 参照なら OAuth クライアント値を登録。
+- OAuth 同意画面（本番/3スコープ）・OAuth Web クライアントの実在＝**コンソール確認のみ**（CLI不可）。
+- Firebase Authentication の Google プロバイダ有効化＝**コンソール確認**（identitytoolkit API は有効）。
+- 予算アラート ¥10,000：CLI照会は quota project 制約（billingbudgets API 未有効）で未確認。**コンソール確認推奨**。
+
+### 後回し（P1では作らない・P3〜P6）
+- Cloud Run サービス / Cloud Run Job（曜日別×3）/ Cloud Scheduler / Pub/Sub `book-writing` / Artifact Registry リポジトリ / Firebase App Hosting backend / OAuth 本番リダイレクトURI 追記。
