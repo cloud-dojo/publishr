@@ -2,7 +2,7 @@
 # Firebase App Hosting 設定: モノレポ内の Next.js アプリ (apps/web) を公開する
 # -----------------------------------------------------------------------------
 # - Firebase コンソール > App Hosting で backend を作成し、GitHub リポジトリ
-#   (hiroshiichise/publishr) を連携する。
+#   (cloud-dojo/publishr) を連携する。
 #     - live branch  = main
 #     - root directory = apps/web   ← この apphosting.yaml が読まれる
 # - npm workspaces のため install はリポジトリ root で走り、workspace 依存
