@@ -32,6 +32,9 @@ docs/*
 !docs/ui/
 !docs/infra/
 !docs/planning/
+# 生成された設計図(html/pdf)は非追跡
+docs/**/*.html
+docs/**/*.pdf
 .cursor/
 
 # OS / editor
