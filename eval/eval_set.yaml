@@ -14,7 +14,7 @@ meta:
     Publishr Eval Set（企画の関連性スコア／LLM-as-judge）。佐倉美咲プロファイルに対する
     (企画, 期待スコア帯) 8件。CIの品質ゲートで使用。スコア0-100・4観点×25 に整合。
   persona: 佐倉美咲（35歳・食品メーカー新任マーケ課長・部下7名・年上佐藤健一42歳）
-  source: packages/shared-schema/fixtures/{drive,calendar,tasks}.json（evidence源の id 規約＝drv_/cal_/tsk_。例: drive/03=drv_003・calendar cal_028＝6/5役員報告）
+  source: "packages/shared-schema/fixtures/{drive,calendar,tasks}.json（evidence源の id 規約＝drv_/cal_/tsk_。例: drive/03=drv_003・calendar cal_028＝6/5役員報告）"
   judge: Vertex AI Gemini Pro
   scoreRange: [0, 100]
   rubricObservations: [relevance, differentiation, researchUse, titleHook]
