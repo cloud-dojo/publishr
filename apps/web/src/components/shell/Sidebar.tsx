@@ -65,10 +65,7 @@ export function Sidebar() {
       <div className="sidebar-foot">
         <Link href="/account" className="reader-chip">
           <span className="reader-avatar">{reader?.initial ?? "読"}</span>
-          <span className="mini-meta">
-            <span className="reader-name">{reader?.name ?? "ゲスト"}</span>
-            <span className="reader-role">{reader?.profile.role ?? ""}</span>
-          </span>
+          <span className="reader-name">{reader?.name ?? "ゲスト"}</span>
         </Link>
       </div>
     </aside>
