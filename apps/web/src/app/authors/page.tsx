@@ -1,50 +1,71 @@
 "use client";
 
 import Link from "next/link";
+import type { MouseEvent } from "react";
 
 import type { Persona } from "@publishr/shared-schema";
 
 import { Topbar } from "@/components/shell/Topbar";
+import { toggleFavorite, useFavorites } from "@/data/favorites-store";
 import { useProvider } from "@/data/hooks";
 
-function tagsOf(p: Persona): string[] {
-  return [p.style, p.title].filter(Boolean);
+// スタイル行（例：理論派 / 組織設計 / 権限委譲）。最大3語をスラッシュ区切りで。
+function styleLine(p: Persona): string {
+  return [p.style, ...(p.expertise ?? [])].filter(Boolean).slice(0, 3).join(" / ");
 }
 
-function AuthorCard({ persona, bookCount }: { persona: Persona; bookCount: number }) {
+// アイコン文字＝苗字の頭文字（name 先頭1文字）。
+function monogramOf(name: string): string {
+  return name.trim().charAt(0);
+}
+
+function AuthorChip({ persona, isFav }: { persona: Persona; isFav: boolean }) {
+  const onToggle = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite({
+      personaId: persona.id,
+      name: persona.name,
+      savedAt: new Date().toISOString(),
+    });
+  };
   return (
-    <Link href={`/author/${persona.id}`} className="author-card panel">
-      <span className="ac-avatar">{persona.monogram}</span>
-      <span className="ac-meta">
-        <span className="ac-name">{persona.name}</span>
-        <span className="ac-reading">{persona.nameReading}</span>
-        <span className="ac-tags">
-          {tagsOf(persona).map((t) => (
-            <span key={t} className="ac-tag">
-              {t}
-            </span>
-          ))}
+    <div className="author-chip">
+      <Link href={`/author/${persona.id}`} className="ach-main">
+        <span className="ach-avatar">{monogramOf(persona.name)}</span>
+        <span className="ach-meta">
+          <span className="ach-name">{persona.name}</span>
+          <span className="ach-style">{styleLine(persona)}</span>
         </span>
-        <span className="ac-count">この書店に {bookCount}冊</span>
-      </span>
-    </Link>
+      </Link>
+      <button
+        type="button"
+        className={`ach-fav ${isFav ? "on" : ""}`}
+        onClick={onToggle}
+        aria-label={isFav ? "お気に入り解除" : "お気に入りに登録"}
+      >
+        {isFav ? "★" : "☆"}
+      </button>
+    </div>
   );
 }
 
 export default function AuthorsPage() {
   const provider = useProvider();
+  const favorites = useFavorites();
   const personas = provider.listPersonas();
   const books = provider.listBooks();
   const bookCount = (id: string) => books.filter((b) => b.authorPersonaId === id).length;
 
   const inStore = personas.filter((p) => bookCount(p.id) > 0);
+  const favs = personas.filter((p) => favorites.has(p.id));
 
   return (
     <>
       <Topbar
         greeting={
           <>
-            <b>著者の作家たち</b>　― あなたのために筆を執る、専属の書き手。
+            <b>作家たち</b>　― あなたのために筆を執る、専属の書き手。
           </>
         }
       />
@@ -57,12 +78,13 @@ export default function AuthorsPage() {
         </h1>
       </section>
 
+      {/* 並んでいる作家たち */}
       <section className="page section">
         <div className="section-head">
           <div>
-            <div className="eyebrow">Curated authors</div>
+            <div className="eyebrow">All authors</div>
             <div className="section-title">
-              企画ごとに生まれた<span className="accent">著者</span>
+              この書店の<span className="accent">すべて</span>の書き手
             </div>
             <div className="section-sub">
               Publishr が企画ごとに生み出した著者たち。読書ページや著者ページからお気に入りに登録できます。
@@ -71,10 +93,35 @@ export default function AuthorsPage() {
         </div>
         <div className="author-grid">
           {inStore.map((p) => (
-            <AuthorCard key={p.id} persona={p} bookCount={bookCount(p.id)} />
+            <AuthorChip key={p.id} persona={p} isFav={favorites.has(p.id)} />
           ))}
           {inStore.length === 0 && (
             <div className="muted">{provider.ready ? "まだ作家がいません。" : "読み込み中…"}</div>
+          )}
+        </div>
+      </section>
+
+      {/* お気に入りの作家 */}
+      <section className="page section">
+        <div className="section-head">
+          <div>
+            <div className="eyebrow">Your favorite authors</div>
+            <div className="section-title">
+              あなたの<span className="accent">お気に入り</span>の作家
+            </div>
+            <div className="section-sub">
+              お気に入りに登録すると、その著者がこれからもあなたのために本を書き続けます。
+            </div>
+          </div>
+        </div>
+        <div className="author-grid">
+          {favs.map((p) => (
+            <AuthorChip key={p.id} persona={p} isFav />
+          ))}
+          {favs.length === 0 && (
+            <div className="muted">
+              まだお気に入りの作家はいません。気に入った著者を ☆ で登録してみてください。
+            </div>
           )}
         </div>
       </section>

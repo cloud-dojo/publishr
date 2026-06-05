@@ -17,6 +17,8 @@ export default function FinishPage() {
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
   const [following, setFollowing] = useState(false);
   const [wantsSequel, setWantsSequel] = useState(book?.feedback.wantsSequel ?? false);
+  const [impression, setImpression] = useState("");
+  const [saved, setSaved] = useState(false);
 
   if (!book) {
     return (
@@ -37,6 +39,13 @@ export default function FinishPage() {
     const next = !wantsSequel;
     setWantsSequel(next);
     void sendFeedback(book.id, { wantsSequel: next });
+  };
+  const onSaveImpression = () => {
+    // mock: 自由記入の感想をローカル保存（フェーズ3で Firestore 直書きに差し替え）。
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(`publishr.impression.${book.id}`, impression);
+    }
+    setSaved(true);
   };
 
   return (
@@ -75,6 +84,40 @@ export default function FinishPage() {
             >
               {wantsSequel ? "✦ 続編を希望中" : "続編を希望する"}
             </button>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "var(--text-100)", marginBottom: 6 }}>
+            この本の感想
+          </div>
+          <div className="muted" style={{ fontSize: 12.5, marginBottom: 12 }}>
+            心に残った一節や、明日から試したいこと。自由に書き残せます。
+          </div>
+          <textarea
+            className="impression-input"
+            rows={5}
+            placeholder="例：『任せる』と『放る』は違う、という一文が刺さった。来週の1on1で、権限の線引きを見直してみる。"
+            value={impression}
+            onChange={(e) => {
+              setImpression(e.target.value);
+              setSaved(false);
+            }}
+          />
+          <div className="row gap12" style={{ marginTop: 12, alignItems: "center" }}>
+            <button
+              type="button"
+              className="btn btn--gold"
+              onClick={onSaveImpression}
+              disabled={!impression.trim()}
+            >
+              感想を保存
+            </button>
+            {saved && (
+              <span className="muted" style={{ fontSize: 12.5 }}>
+                保存しました。あなたの言葉は次の入荷の参考になります。
+              </span>
+            )}
           </div>
         </div>
 

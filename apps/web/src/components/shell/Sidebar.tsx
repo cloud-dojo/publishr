@@ -9,7 +9,7 @@ const NAV = [
   { href: "/", ico: "❖", label: "あなたの書店" },
   { href: "/library", ico: "▤", label: "わたしの書庫" },
   { href: "/highlights", ico: "❏", label: "ハイライト・付箋" },
-  { href: "/authors", ico: "✒", label: "著者の作家たち" },
+  { href: "/authors", ico: "✒", label: "作家たち" },
   { href: "/map", ico: "✦", label: "サイトマップ" },
 ];
 

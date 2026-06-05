@@ -1,45 +1,33 @@
 "use client";
 
-import { useState } from "react";
 import type { Book } from "@publishr/shared-schema";
 
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
-import { useActions, usePlanningCandidates, useProvider } from "@/data/hooks";
-
-type ArrivalStatus = "idle" | "running" | "success" | "error";
+import { usePlanningCandidates, useProvider } from "@/data/hooks";
+import { arrivalLabel } from "@/lib/arrival";
 
 export default function HomePage() {
   const provider = useProvider();
-  const { runPipeline } = useActions();
   const { approvedPlanIds } = usePlanningCandidates();
-  const [arrivalStatus, setArrivalStatus] = useState<ArrivalStatus>("idle");
-  const [arrivalMessage, setArrivalMessage] = useState("企画：編集会議 AI ／ 装丁：Imagen");
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason;
 
   const approvedPlanSet = new Set(approvedPlanIds);
-  const arrivals = provider
+  // shelf 対応: arrivals=関心 / odd=新しい出会い / press=執筆中
+  const interestsBase = provider
     .booksByShelf("arrivals")
     .filter((b) => approvedPlanSet.size === 0 || approvedPlanSet.has(b.planId));
+  // TODO(暫定): レイアウト確認用に同じ本を繰り返して4冊に水増し。データ確定後 interestsBase に戻す。
+  const interests =
+    interestsBase.length > 0
+      ? Array.from({ length: 4 }, (_, i) => interestsBase[i % interestsBase.length])
+      : interestsBase;
+  const encounters = provider.booksByShelf("odd");
   const press = provider.booksByShelf("press");
-  const odd = provider.booksByShelf("odd");
   const user = provider.getUser(DEMO_USER_ID);
-
-  const onRunArrivals = async () => {
-    setArrivalStatus("running");
-    setArrivalMessage("Keepメモを読み、企画会議を実行しています…");
-    try {
-      await runPipeline(DEMO_USER_ID);
-      setArrivalStatus("success");
-      setArrivalMessage("企画会議が完了しました。入荷理由と選抜ログを更新しました。");
-    } catch (error) {
-      console.error(error);
-      setArrivalStatus("error");
-      setArrivalMessage("入荷生成に失敗しました。BFF が起動しているか確認してください。");
-    }
-  };
+  const arrival = arrivalLabel(); // 今朝 / 昨日 / おととい / 先日
 
   return (
     <>
@@ -48,7 +36,7 @@ export default function HomePage() {
           <>
             おはようございます、<b>{user?.name ?? "田所 誠"}</b> さん。
             <br />
-            昨夜、あなたのために <b>{arrivals.length}冊</b> の新刊が入荷しました。
+            {arrival}、あなたのために <b>{interests.length}冊</b> の新刊が入荷しました。
           </>
         }
       />
@@ -56,41 +44,69 @@ export default function HomePage() {
       <section className="page-hero">
         <div className="ph-eyebrow">This morning&apos;s arrivals</div>
         <h1>
-          今朝、あなたの書店に
+          {arrival}、あなたの書店に
           <br />
           <span className="accent">新しい本</span>が並びました。
         </h1>
       </section>
 
-      {/* 今朝の入荷 */}
+      {/* 今週の入荷（関心 → 新しい出会い） */}
       <section className="page section">
         <div className="section-head">
           <div>
-            <div className="eyebrow">Curated for you, autonomously</div>
+            <div className="eyebrow">Curated for you this week</div>
             <div className="section-title">
-              今朝の<span className="accent">入荷</span>
+              今週の<span className="accent">入荷</span>
             </div>
             <div className="section-sub">
-              あなたの関心と仕事の局面を読み、編集部が自律的に企画しました。
+              あなたの状況を観測し、専属の編集部が選び、書き下ろした一冊たちです。
             </div>
           </div>
-          <div className="right vstack" style={{ alignItems: "flex-end", gap: 8 }}>
-            <button
-              type="button"
-              className={arrivalStatus === "success" ? "btn btn--gold" : "btn btn--ghost"}
-              onClick={onRunArrivals}
-              disabled={!provider.ready || arrivalStatus === "running"}
-            >
-              {arrivalStatus === "running" ? "企画会議中…" : "今朝の入荷を実行"}
-            </button>
-            <span>{arrivalMessage}</span>
-          </div>
         </div>
-        <div className="book-grid">
-          {arrivals.map((b) => (
-            <BookCard key={b.id} book={b} authorName={authorName(b)} reason={reason(b)} showWhy />
+
+        {/* グループ：いま、あなたの関心に */}
+        <div className="group-head">
+          <div className="group-title">
+            いま、あなたの関心に <span className="group-count">{interests.length}冊</span>
+          </div>
+          <div className="group-note">観測したいまの状況に、まっすぐ応える本。</div>
+        </div>
+        <div className="shelf-grid">
+          {interests.map((b, i) => (
+            <BookCard
+              key={`${b.id}-${i}`}
+              book={b}
+              authorName={authorName(b)}
+              reason={reason(b)}
+              showWhy
+              layout="row"
+            />
           ))}
         </div>
+
+        {/* グループ：新しい出会い */}
+        {encounters.length > 0 && (
+          <>
+            <div className="group-head group-head--spaced">
+              <div className="group-title">
+                新しい出会い <span className="group-count">{encounters.length}冊</span>
+              </div>
+              <div className="group-note">関心の少し外側から、視野を広げる本。</div>
+            </div>
+            <div className="shelf-grid">
+              {encounters.map((b) => (
+                <BookCard
+                  key={b.id}
+                  book={b}
+                  authorName={authorName(b)}
+                  reason={reason(b)}
+                  showWhy
+                  layout="row"
+                />
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       {/* いま執筆中 */}
@@ -107,32 +123,9 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <div className="rail">
+          <div className="shelf-grid">
             {press.map((b) => (
-              <BookCard key={b.id} book={b} authorName={authorName(b)} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 今月の異色作 */}
-      {odd.length > 0 && (
-        <section className="page section">
-          <div className="section-head">
-            <div>
-              <div className="eyebrow">The keeper&apos;s odd picks · 8 : 2</div>
-              <div className="section-title">
-                今月の<span className="accent">異色作</span>
-              </div>
-              <div className="section-sub">
-                いつもの実務書から少し離れた棚。あえて関心の&quot;隣&quot;を混ぜています。
-              </div>
-            </div>
-            <div className="right">店主より</div>
-          </div>
-          <div className="rail">
-            {odd.map((b) => (
-              <BookCard key={b.id} book={b} authorName={authorName(b)} />
+              <BookCard key={b.id} book={b} authorName={authorName(b)} layout="row" />
             ))}
           </div>
         </section>

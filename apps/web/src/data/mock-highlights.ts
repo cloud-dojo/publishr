@@ -1,7 +1,10 @@
-// ハイライト・付箋のモックデータ。
+// ハイライト・付箋のモックデータ＋読書ページ注釈の集約。
 // フェーズ3では Firestore `users/{uid}.readingFB.highlights[]` 購読に差し替える
 // （[[firestore-provider]] の seam）。それまでの画面確認用の暫定データ。
 // bookId は fixtures の蔵書（shelf=library）に対応させている。
+import type { Book } from "@publishr/shared-schema";
+
+import { chapterForPara } from "./bookText";
 
 export type HighlightKind = "highlight" | "note" | "bookmark";
 
@@ -84,8 +87,35 @@ export const MOCK_HIGHLIGHTS: MockHighlight[] = [
   },
 ];
 
-export function highlightsByKind(kind: HighlightKind | "all"): MockHighlight[] {
-  return kind === "all" ? MOCK_HIGHLIGHTS : MOCK_HIGHLIGHTS.filter((h) => h.kind === kind);
+/** 読書ページの注釈（book.annotations）を一覧表示用の形へ写像。 */
+export function annotationsToHighlights(books: Book[]): MockHighlight[] {
+  const out: MockHighlight[] = [];
+  for (const book of books) {
+    for (const a of book.annotations ?? []) {
+      const chapter = chapterForPara(book.body, a.paragraphIndex);
+      out.push({
+        id: a.id,
+        bookId: book.id,
+        kind: a.kind,
+        text: a.text,
+        chapter: chapter || undefined,
+        note: a.note ?? undefined,
+        tags: [],
+      });
+    }
+  }
+  return out;
+}
+
+/** シードデータと読書ページ由来のハイライトを結合（同一idは後勝ちで重複排除）。 */
+export function mergeHighlights(live: MockHighlight[]): MockHighlight[] {
+  const byId = new Map<string, MockHighlight>();
+  for (const h of [...MOCK_HIGHLIGHTS, ...live]) byId.set(h.id, h);
+  return [...byId.values()];
+}
+
+export function highlightsByKind(items: MockHighlight[], kind: HighlightKind | "all"): MockHighlight[] {
+  return kind === "all" ? items : items.filter((h) => h.kind === kind);
 }
 
 export interface HighlightGroup {
@@ -93,9 +123,12 @@ export interface HighlightGroup {
   items: MockHighlight[];
 }
 
-export function highlightsGroupedByBook(kind: HighlightKind | "all"): HighlightGroup[] {
+export function highlightsGroupedByBook(
+  items: MockHighlight[],
+  kind: HighlightKind | "all"
+): HighlightGroup[] {
   const groups = new Map<string, MockHighlight[]>();
-  for (const h of highlightsByKind(kind)) {
+  for (const h of highlightsByKind(items, kind)) {
     const list = groups.get(h.bookId) ?? [];
     list.push(h);
     groups.set(h.bookId, list);
@@ -103,9 +136,9 @@ export function highlightsGroupedByBook(kind: HighlightKind | "all"): HighlightG
   return [...groups.entries()].map(([bookId, items]) => ({ bookId, items }));
 }
 
-export function highlightTagCloud(): { tag: string; count: number }[] {
+export function highlightTagCloud(items: MockHighlight[]): { tag: string; count: number }[] {
   const counts = new Map<string, number>();
-  for (const h of MOCK_HIGHLIGHTS) {
+  for (const h of items) {
     for (const t of h.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
   }
   return [...counts.entries()]

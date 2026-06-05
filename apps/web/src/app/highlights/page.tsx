@@ -6,9 +6,10 @@ import { useState } from "react";
 import { Topbar } from "@/components/shell/Topbar";
 import { useProvider } from "@/data/hooks";
 import {
+  annotationsToHighlights,
   highlightsGroupedByBook,
   highlightTagCloud,
-  MOCK_HIGHLIGHTS,
+  mergeHighlights,
   type HighlightKind,
 } from "@/data/mock-highlights";
 
@@ -31,10 +32,12 @@ export default function HighlightsPage() {
   const provider = useProvider();
   const [tab, setTab] = useState<Tab>("all");
 
+  // シード＋読書ページで付けた注釈（book.annotations）をマージ
+  const items = mergeHighlights(annotationsToHighlights(provider.listBooks()));
   const count = (k: Tab) =>
-    k === "all" ? MOCK_HIGHLIGHTS.length : MOCK_HIGHLIGHTS.filter((h) => h.kind === k).length;
-  const groups = highlightsGroupedByBook(tab);
-  const cloud = highlightTagCloud();
+    k === "all" ? items.length : items.filter((h) => h.kind === k).length;
+  const groups = highlightsGroupedByBook(items, tab);
+  const cloud = highlightTagCloud(items);
   const bookTitle = (id: string) => provider.getBook(id)?.title ?? id;
 
   return (

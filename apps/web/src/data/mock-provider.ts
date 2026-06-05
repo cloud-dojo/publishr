@@ -12,10 +12,17 @@ import {
 } from "./canned";
 import { timing } from "./config";
 import { BaseProvider } from "./provider";
+import { EXTRA_LIBRARY_BOOKS, SAMPLE_BODIES } from "./sampleLibrary";
 
 export class MockProvider extends BaseProvider {
   protected async load(): Promise<void> {
     fixtures.books.forEach((b) => this.books.set(b.id, b));
+    // 読書ページ検証用：追加蔵書をマージ＋薄い body を複数章ダミーに差し替え（mock専用）。
+    EXTRA_LIBRARY_BOOKS.forEach((b) => this.books.set(b.id, b));
+    this.books.forEach((b, id) => {
+      const body = SAMPLE_BODIES[id];
+      if (body) this.books.set(id, { ...b, body });
+    });
     fixtures.plans.forEach((p) => this.plans.set(p.id, p));
     fixtures.personas.forEach((p) => this.personas.set(p.id, p));
     fixtures.users.forEach((u) => this.users.set(u.id, u));
