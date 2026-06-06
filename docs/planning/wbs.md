@@ -1,4 +1,4 @@
-# Publishr WBS（Work Breakdown Structure・カテゴリ版・2026-06-05）
+# Publishr WBS（Work Breakdown Structure・カテゴリ版・2026-06-06）
 
 > 📑 関連: [正本マップ](../README.md)／[kickoff-checklist.md](kickoff-checklist.md)（着手ゲート）／[roles-and-ops.md](roles-and-ops.md)（週次・役割）／[open-issues.md](open-issues.md)（未決論点）。
 > **目的**: MVPを「動くデモ動画＋再現可能リポジトリ」まで到達させる作業を、**成果物のカテゴリ単位（大分類A/B/C）**に分解し、各タスクに**タスク詳細（何をやるか）・担当・予定週（実日付）・依存・完了条件(DoD)・状態**を付ける。
@@ -34,7 +34,8 @@
 >   - **＋ 設計/データの確定（叩き台のまま即確定）**: 観測束ObservationBundleの保存先(I-19)／API CORS・ベースパス(G1-7)／手動トリガー認可(G1-6)／読書ログ集約(I-9)／予約の原子性・冪等(I-20) を**全て確定**。詳細は [open-issues.md](open-issues.md) と当日アジェンダ §3-4〜3-6
 > - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・B1.2／現状は仮の`localhost`のみ）
 > - **フロント本番ホスティング（B3.3・G1-7）**: ✅**2026-06-06完了**。Firebase App Hosting＋Next.js(`apps/web`)でmock公開済。公開URL=`publishr--publishr-498123.asia-east1.hosted.app`（build-010成功）。Turbopack×npm workspaces問題を解消し自動デプロイ稼働中。
-> - **フロント本接続の前提（C4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
+> - **フロント本接続の前提（C4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ~~②**Firestoreセキュリティルールのデプロイ**→✅**C3.1完了済み（2026-06-06・鉄田）**~~ ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
+> - **【2026-06-06完了・鉄田C3巻取り】** **C3.1** Firestoreセキュリティルール本番デプロイ（firebase.json/.firebaserc/firestore.rules/firestore.indexes.json）✅ **C3.4** 観測ログサブコレクションルール（C3.1に内包）✅ **C3.5** BFF FirestoreRepository実装（`apps/api/publishr_api/repositories/firestore_repository.py`・firebase-admin追加・DATA_SOURCE=firestore切替・テスト11件グリーン）✅。C3全体の担当を一瀬→**鉄田**へ変更。C4.9の②依存は解消。
 
 ---
 
@@ -63,7 +64,7 @@ Publishr MVP（カテゴリWBS）
     │   ├─ C1.6 STEP5 装丁
     │   └─ C1.7 自律トリガー(Scheduler)
     ├─ C2 エージェント・モードB（後追い執筆）（一瀬）
-    ├─ C3 データ/状態基盤（Firestore/GCS）（一瀬）
+    ├─ C3 データ/状態基盤（Firestore/GCS）（**鉄田**へ巻取り・一瀬外れ）
     ├─ C4 フロント（書店UI・14ルート）（鉄田）
     ├─ C5 品質・評価・観測・運用（Eval/Langfuse/コスト）
     └─ C6 デモ・提出物（鉄田）
@@ -208,11 +209,11 @@ Publishr MVP（カテゴリWBS）
 ## C3. データ/状態基盤（Firestore/GCS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | 一瀬 | W2（6/15–21） | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19＝MTG 2026-06-05で確定済を反映） (旧WP3.1) | 🔜着手前 |
-| C3.2 | 複合インデックス列挙＋firestore.indexes.json | 一覧画面の検索が速く正しく動くよう、DBに索引を登録する（無いと実行時エラーになる） | 一瀬 | W2–W3（6/15–28） | C4.2,C4.7 | 実行時エラー回避（I-15） (旧WP3.2) | 🔜着手前 |
-| C3.3 | GCS本文保護（署名付きURL or IAM） | 本文ファイルを他人が読めないよう、アクセス制限をかける | 一瀬 | W3（6/22–28） | C2.3 | 他者本文を読めない（I-10） (旧WP3.3) | 🔜着手前 |
-| C3.4 | 観測ログ保存先コレクション（`users/{uid}/observations/{YYYY-MM-DD}`） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | 一瀬 | W2（6/15–21） | C1.1.1 | STEP0が書込可＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（日付docID＝冪等・フル束インライン・サーバ書込/本人read／I-19＝MTG 2026-06-05で確定） (旧WP3.4) | 🔜着手前 |
-| C3.5 | **BFF（apps/api）の Firestore リポジトリ実装＋mock→firestore切替** | `apps/api` は `protocol.py`＋`mock_repository.py` のリポジトリパターンで実装済み。`RepositoryProtocol` の Firestore 実装を足し、mock から切替える（＝抜け漏れ補完・2026-06-05起票） | 一瀬 | W2–W3（6/15–28） | C3.1 | Firestore実装を追加し `DATA_SOURCE=firestore` で起動可（フロントC4.9・モードB C2.x の本接続前提）。mock側✅ | 🔜着手前（mock側✅） |
+| C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | **鉄田** | W0（6/1–7）→**6/6完了** | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19＝MTG 2026-06-05で確定済を反映） (旧WP3.1) | ✅**2026-06-06完了**（firebase.json・.firebaserc・firestore.rules・firestore.indexes.json 生成→`firebase deploy --only firestore:rules` 本番デプロイ済み） |
+| C3.2 | 複合インデックス列挙＋firestore.indexes.json | 一覧画面の検索が速く正しく動くよう、DBに索引を登録する（無いと実行時エラーになる） | **鉄田** | W2–W3（6/15–28） | C4.2,C4.7 | 実行時エラー回避（I-15） (旧WP3.2) | 🔜着手前（C4のクエリが固まり次第追記・firestore.indexes.json骨格は✅） |
+| C3.3 | GCS本文保護（署名付きURL or IAM） | 本文ファイルを他人が読めないよう、アクセス制限をかける | **鉄田** | W3（6/22–28） | C2.3 | 他者本文を読めない（I-10） (旧WP3.3) | 🔜着手前 |
+| C3.4 | 観測ログ保存先コレクション（`users/{uid}/observations/{YYYY-MM-DD}`） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | **鉄田** | W0（6/6完了・C3.1に内包） | C1.1.1 | STEP0が書込可＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（日付docID＝冪等・フル束インライン・サーバ書込/本人read／I-19＝MTG 2026-06-05で確定） (旧WP3.4) | ✅完了（C3.1に内包）firestore.rules の `match /users/{uid}/observations/{date}` で owner読み・書込み=false（サーバ専用）を宣言済み |
+| C3.5 | **BFF（apps/api）の Firestore リポジトリ実装＋mock→firestore切替** | `apps/api` は `protocol.py`＋`mock_repository.py` のリポジトリパターンで実装済み。`RepositoryProtocol` の Firestore 実装を足し、mock から切替える（＝抜け漏れ補完・2026-06-05起票） | **鉄田** | W0（6/6完了） | C3.1 | Firestore実装を追加し `DATA_SOURCE=firestore` で起動可（フロントC4.9・モードB C2.x の本接続前提）。mock側✅ | ✅**2026-06-06完了**（`firestore_repository.py` 実装・`firebase-admin>=6.5` 追加・`deps.py`でDATA_SOURCE切替・`uv run python -m pytest` 11件グリーン） |
 
 ## C4. フロント（書店UI・14ルート）
 
@@ -225,11 +226,11 @@ Publishr MVP（カテゴリWBS）
 | C4.2 | 書店トップ（入荷一覧・入荷理由） | 入荷した本が並ぶトップ画面と「なぜこの本が入荷したか」の理由表示 | 鉄田 | W2（6/15–21） | C3.1 | draft本＋入荷理由表示 (旧WP4.2) | 🟡mock実装済 |
 | C4.3 | 本詳細（BookDraft 7項目） | 本の詳細（タイトル/サブ/今あなたは/課題/核心/アジェンダ/序文）を見る画面 | 鉄田 | W2–W3（6/15–28） | C3.1,C1.5.1 | 7項目表示 (旧WP4.3) | 🟡mock実装済 |
 | C4.4 | 著者選択・予約UI（同時5冊ガード） | 著者を選んで本を予約する画面（同時5冊の上限を表示） | 鉄田 | W3（6/22–28） | C2.1 | reserve呼び出し・上限表示 (旧WP4.4) | 🟡mock実装済 |
-| C4.5 | 読書画面・ハイライト・簡易FB | 本を読む画面と、ハイライト・読了/評価の保存（Firestore直書き） | 鉄田 | W3（6/22–28） | C3.1 | ハイライト保存・FB記録 (旧WP4.5) | 🟡mock実装済 |
+| C4.5 | 読書画面・ハイライト・簡易FB | 本を読む画面と、ハイライト・読了/評価の保存（Firestore直書き） | 鉄田 | W3（6/22–28） | C3.1 | ハイライト保存・FB記録 (旧WP4.5) | ✅完了 |
 | C4.6 | お気に入り著者保存 | 気に入った著者を保存する機能（次回企画に15%混ざる） | 鉄田 | W3（6/22–28） | C3.1 | arrayUnion保存 (旧WP4.6) | 🟡mock実装済 |
 | C4.7 | わたしの書庫・通知バナー | 自分の本棚と、入荷/執筆完了のお知らせバナー（Firestore購読） | 鉄田 | W4（6/29–7/5） | C4.2 | 購読バナー（G1-15） (旧WP4.7) | 🟡mock実装済 |
 | C4.8 | **ローカルUI仕上げ（レイアウト/行ずれ修正・全画面QA）** | 画面のレイアウト崩れ・行ずれ・モックとの差分を実機で確認して直す。修正量が多めで**デプロイ前の山場** | 鉄田 | W2–W4（6/15–7/5） | C4.1-C4.7 | `npm run dev:web`で全画面確認・修正 (旧WP4.8) | 🔜**鉄田が先行着手** |
-| C4.9 | **Firestore本接続・Firebase Auth起動（mock→firestore切替）** | mockデータから本物のDB(Firestore)接続へ切替える。一瀬から設定値を受領後に作業 | 鉄田・一瀬 | W2–W3（6/15–28） | C3.1,B3.3,C2.1 | 一瀬から①Firebase設定値②ルールのデプロイ③API3本URL・CORS④`ownerUid`規約 を受領後、`NEXT_PUBLIC_DATA_SOURCE=firestore`へ切替 (旧WP4.9) | ⏸**一瀬待ち** |
+| C4.9 | **Firestore本接続・Firebase Auth起動（mock→firestore切替）** | mockデータから本物のDB(Firestore)接続へ切替える。一瀬から設定値を受領後に作業 | 鉄田・一瀬 | W2–W3（6/15–28） | C3.1,B3.3,C2.1 | 一瀬から①Firebase設定値(`NEXT_PUBLIC_FIREBASE_*`)②~~ルールのデプロイ→✅C3.1完了済み~~③API3本URL・CORS④`ownerUid`規約 を受領後、`NEXT_PUBLIC_DATA_SOURCE=firestore`へ切替 (旧WP4.9) | ⏸**一瀬待ち**（②依存は解消。残①③④） |
 
 ## C5. 品質・評価・観測・運用
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -269,7 +270,7 @@ Publishr MVP（カテゴリWBS）
 | B 環境・インフラ | B1.1/B2.1/**B3.3**✅ | B2.2/B3.1 | B1.2 | | B3.2/B4.1 | |
 | C1 エージェント(モードA) | | C1.0★ | C1.1-C1.3 | C1.4-C1.7 | | |
 | C2 エージェント(モードB) | | | | C2.1-2.3 | | |
-| C3 データ基盤 | | | C3.1/3.4 | C3.2/3.3 | | |
+| C3 データ基盤（鉄田） | **✅C3.1/3.4/3.5**（6/6完了） | | C3.2 | C3.3 | | |
 | C4 フロント | | | C4.1-4.3 | C4.4-4.6 | C4.7 | |
 | C5 品質・観測・運用 | | C5.1/5.7/5.8 | C5.2/5.4 | C5.9 | C5.3/5.5/5.6 | |
 | C6 デモ・提出 | | C6.1 | | | C6.4 | C6.2/6.3/6.5/6.6/**6.7/6.8** |
