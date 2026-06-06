@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@publishr/shared-schema": ["../../packages/shared-schema/ts/src/index.ts"],
-      "@publishr/shared-schema/*": ["../../packages/shared-schema/ts/src/*"]
+      "@publishr/shared-schema": ["./src/lib/shared-schema/index.ts"],
+      "@publishr/shared-schema/*": ["./src/lib/shared-schema/*"]
     }
   },
   "include": [

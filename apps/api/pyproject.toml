@@ -10,6 +10,7 @@ dependencies = [
     "pydantic-settings>=2.3",
     "publishr-schema",
     "publishr-agents",
+    "firebase-admin>=6.5",
 ]
 
 [project.optional-dependencies]

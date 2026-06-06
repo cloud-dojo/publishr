@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 共通ヘルパ
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // 更新時に「許可フィールド以外が変更されていない」ことを保証
+    function onlyChanged(allowedFields) {
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(allowedFields);
+    }
+
+    // ── users：本人のみ読める ──
+    // profile / connectedSources はサーバ（Admin）が書く。
+    // initialProfile（初回のみ）と favoriteAuthors（ワンクリック保存）はクライアントが書く。
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+
+      // ドキュメント新規作成：本人が initialProfile のみを持って作成（登録フォーム）
+      allow create: if isOwner(uid)
+                    && request.resource.data.keys().hasOnly(['initialProfile']);
+
+      // 更新：initialProfile（未設定時のみ）と favoriteAuthors のみ変更可
+      allow update: if isOwner(uid)
+                    && onlyChanged(['initialProfile', 'favoriteAuthors'])
+                    // initialProfile を変えるのは、まだ存在しない初回のみ（確定後はサーバ経由）
+                    && (!('initialProfile' in resource.data)
+                        || !request.resource.data.diff(resource.data)
+                              .affectedKeys().hasAny(['initialProfile']));
+      allow delete: if false;
+
+      // ── observations（観測束 ObservationBundle・サブコレクション・I-19）──
+      // STEP0観測がサーバ（Admin）で書く。クライアントは本人read・書込不可。
+      match /observations/{date} {
+        allow read:  if isOwner(uid);
+        allow write: if false;
+      }
+    }
+
+    // ── plans：所有者のみ読める。生成はサーバのみ ──
+    match /plans/{planId} {
+      allow read:  if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ── books：所有者のみ読める。クライアント書き込みはFB/★の限定フィールドのみ ──
+    match /books/{bookId} {
+      allow read:  if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+      // 新規作成・削除・全面更新はサーバのみ
+      allow create, delete: if false;
+
+      // 既存bookの「フィードバックだけ」をクライアントが更新可
+      // status / title / bodyUrl / coverUrl / planId / ownerUid 等は変更不可
+      allow update: if isSignedIn()
+                    && resource.data.ownerUid == request.auth.uid
+                    && onlyChanged(['feedback']);
+
+      // ── ハイライト（サブコレクション）──
+      match /highlights/{hid} {
+        allow read:   if isSignedIn()
+                      && get(/databases/$(database)/documents/books/$(bookId))
+                           .data.ownerUid == request.auth.uid;
+        // 自分のbookに、自分のuidでハイライトを作成・削除できる
+        allow create: if isSignedIn()
+                      && request.resource.data.ownerUid == request.auth.uid
+                      && get(/databases/$(database)/documents/books/$(bookId))
+                           .data.ownerUid == request.auth.uid;
+        allow delete: if isSignedIn()
+                      && resource.data.ownerUid == request.auth.uid;
+        allow update: if false;  // ハイライトは作る/消すのみ
+      }
+    }
+
+    // ── personas：認証済みなら読める（著者プロフィール表示）。書き込みはサーバのみ ──
+    match /personas/{personaId} {
+      allow read:  if isSignedIn();
+      allow write: if false;
+    }
+
+    // ── それ以外は全拒否 ──
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

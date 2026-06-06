@@ -1,17 +1,12 @@
 # =============================================================================
-# Firebase App Hosting 設定: モノレポ内の Next.js アプリ (apps/web) を公開する
+# Firebase App Hosting 設定（リポジトリルート版・モノレポ対応）
 # -----------------------------------------------------------------------------
-# - Firebase コンソール > App Hosting で backend を作成し、GitHub リポジトリ
-#   (cloud-dojo/publishr) を連携する。
-#     - live branch  = main
-#     - root directory = apps/web   ← この apphosting.yaml が読まれる
-# - npm workspaces のため install はリポジトリ root で走り、workspace 依存
-#   (@publishr/shared-schema) も解決される（next.config.ts の transpilePackages）。
-# - NEXT_PUBLIC_* は Next.js がビルド時にインライン展開するため availability に
-#   BUILD を含めること（含めないと値が埋め込まれない）。
-# - 機密値（NEXT_PUBLIC_FIREBASE_* の API キーは公開可・コミット可）と、
-#   サーバ専用シークレットは Secret Manager 参照（secret:）に分ける。
-# 参照: docs/infra/cicd.md / docs/design/api-contract.md
+# モノレポ構成のため apphosting.yaml をリポジトリルートに置き、rootDir で
+# Next.js アプリのサブディレクトリを指定する。
+# これにより npm install がリポジトリルートで実行され、
+# package-lock.json と @publishr/shared-schema が正しく解決される。
+#
+# Firebase コンソール > App Hosting > 設定 > ルートディレクトリ = / (root)
 # =============================================================================
 
 runConfig:

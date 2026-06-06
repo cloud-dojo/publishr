@@ -23,7 +23,10 @@ const SPINE: Record<string, string> = {
 export function Sidebar() {
   const pathname = usePathname();
   const reader = fixtures.users[0];
-  const library = fixtures.books.filter((b) => b.shelf === "library").slice(0, 4);
+  const library = fixtures.books
+    .filter((b) => b.shelf === "library" && b.status === "published")
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+    .slice(0, 5);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -46,7 +49,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="shelf-label">わたしの書庫</div>
+      <div className="shelf-label">最近読んだ本</div>
       <div className="mini-books">
         {library.map((b) => (
           <Link key={b.id} href={`/read/${b.id}`} className="mini-book">
@@ -56,7 +59,6 @@ export function Sidebar() {
             />
             <span className="mini-meta">
               <span className="mini-title">{b.title}</span>
-              <span className="mini-author">{authorName(b.authorPersonaId)}</span>
             </span>
           </Link>
         ))}
@@ -70,8 +72,4 @@ export function Sidebar() {
       </div>
     </aside>
   );
-}
-
-function authorName(personaId: string): string {
-  return fixtures.personas.find((p) => p.id === personaId)?.name ?? "";
 }

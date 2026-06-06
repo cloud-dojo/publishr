@@ -5,6 +5,10 @@ out/
 dist/
 *.tsbuildinfo
 .turbo/
+# ルートのpackage-lock.jsonはGit管理しない
+# (apps/web/package-lock.jsonは残す - Firebase App Hosting が使用)
+# Turbopackが複数lockfileを検出するとworkspace rootを誤検知するため
+/package-lock.json
 
 # Python
 __pycache__/
@@ -49,3 +53,7 @@ docs/**/*.pdf
 coverage/
 htmlcov/
 .coverage
+
+# Claude Code 内部ファイル
+.agents/
+skills-lock.json
