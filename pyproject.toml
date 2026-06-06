@@ -22,6 +22,13 @@ target-version = "py312"
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["packages", "agents", "apps/api"]
+pythonpath = ["packages/shared-schema/py", "agents", "apps/api"]
 filterwarnings = [
     "ignore:.*is deprecated and will be removed.*:DeprecationWarning",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
 ]

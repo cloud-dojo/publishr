@@ -21,5 +21,9 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
+    # FirestoreRepository のオーナーフィルタ用（MVP 単一ユーザー）。
+    # 本番では per-request uid に差し替える（C4.9 Firebase Auth 接続後）。
+    demo_uid: str = ""
+
 
 settings = Settings()

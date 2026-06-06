@@ -12,5 +12,7 @@ from .repositories.protocol import RepositoryProtocol
 @lru_cache
 def get_repository() -> RepositoryProtocol:
     if settings.data_source == "firestore":
-        raise NotImplementedError("Firestore は将来対応（MVPは DATA_SOURCE=mock）")
+        from .repositories.firestore_repository import FirestoreRepository
+
+        return FirestoreRepository(owner_uid=settings.demo_uid)
     return MockRepository()
