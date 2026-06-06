@@ -22,13 +22,10 @@ target-version = "py312"
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["packages", "agents", "apps/api"]
-<<<<<<< HEAD
 markers = [
     "vertex: requires live Vertex AI credentials; skipped unless PUBLISHR_RUN_VERTEX=1",
 ]
-=======
 pythonpath = ["packages/shared-schema/py", "agents", "apps/api"]
->>>>>>> 4f712e59bf74896293c55b62a72e6e31ea473d87
 filterwarnings = [
     "ignore:.*is deprecated and will be removed.*:DeprecationWarning",
 ]

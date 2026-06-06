@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Publishr WBS（Work Breakdown Structure・実装正本・2026-06-07）
-=======
-# Publishr WBS（Work Breakdown Structure・カテゴリ版・2026-06-06）
->>>>>>> 4f712e59bf74896293c55b62a72e6e31ea473d87
 
 > 📑 関連: [正本マップ](../README.md)／[kickoff-checklist.md](kickoff-checklist.md)（着手ゲート）／[roles-and-ops.md](roles-and-ops.md)（週次・役割）／[open-issues.md](open-issues.md)（未決論点）。
 > **本書の位置づけ（単一正本）**: **作業分解（A/B/C）＋実装順序（WBS IDの直列）＋ゲート＋検証**を1枚に統合した**エージェント実施の正本**。Claude Code / Cursor エージェントは**本書を読み込んで実施**する。MVPローカルスコープの骨格は [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)（ローカル一まわり）を補助参照。
@@ -18,7 +14,6 @@
 
 ---
 
-<<<<<<< HEAD
 # エージェント実施ガイド（実装順序・ゲート・検証）
 
 > **エージェントへの指示**: **①下の「実装順序」で今どの WBS ID か確認 → ②該当セクションの表を読む → ③ゲートを満たしてから次へ**。横の作り込みより縦串（観測→企画→棚→予約→執筆→読める）を優先。
@@ -95,9 +90,6 @@
 - **GCPコスト暴走**: mock既定・dev縮小・実LLM上限・公開API認証が主防御。Budget通知は補助。
 - **GCP齟齬**: B1.3は「無いものだけ作る」。台帳＝[gcp-setup-log.md](../infra/gcp-setup-log.md)。
 - **役割**: backend/ADK/基盤＝**一瀬**、フロント/プロンプト/Eval設計/デモ＝**鉄田**。App Hosting/Cloud Build GitHub連携＝**鉄田**（組織オーナー権限あり）。
-=======
-## 🧭 現在地サマリ（2026-06-06時点）
->>>>>>> 4f712e59bf74896293c55b62a72e6e31ea473d87
 
 ---
 
@@ -122,27 +114,17 @@
 >
 > **【2026-06-04完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・A3.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・C6)へ置換✅
 >
-<<<<<<< HEAD
 > **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり・**PUBLISHR_LLM dispatcher 済**）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・組織移管完了→鉄田が実施・W1) ④canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。
-=======
-> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ~~③App Hosting連携(B3.3)~~ →✅2026-06-06完了 ③canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。公開URL=`publishr--publishr-498123.asia-east1.hosted.app`。
->>>>>>> 4f712e59bf74896293c55b62a72e6e31ea473d87
 >
 > **【提出物・GEAP方針・2026-06-05】** ProtoPedia作品ページ草案一式（ストーリー約4,000字・画像5＋システム構成図・全フィールド記入シート）を作成＝対外 `publishr_other/Protopedia提出/`（WBS **C6.7/C6.8**・P-6/P-7）。**GEAP（旧Vertex AI）はプラスアルファで②Gen AI Evaluation Service を品質ゲートに採用方針**（動くコード済・I-21/**C5.3**）、④Agent Runtimeはストレッチ（Schedulerトリガー非対応・F-7）。
 >
 > **✅ 着手前ゲートはMTG 2026-06-05で全件クローズ（A5.1完了）**
 > - **友人MTG（2026-06-05実施・完了）**: ADK実現性(G1-1=一旦これでいくで合意)・役割分担(G1-2=基本合意／基盤Firebaseのみ担当未定)・**Drive Picker(G1-13=フォルダ単位・Picker前提で確定)**・Cloud Build接続(G1-18=方式A・組織化で確定)・OAuth公開ステータス(G1-19=Production維持)・通知方式(G1-15=FCM不要)を握った。Langfuse実装方式(G1-17)は全体設計は先送りだが、**MiniLoopは Langfuse SDK直で暫定実装済**（`observability.py`・C1.0.1）
 >   - **＋ 設計/データの確定（叩き台のまま即確定）**: 観測束ObservationBundleの保存先(I-19)／API CORS・ベースパス(G1-7)／手動トリガー認可(G1-6)／読書ログ集約(I-9)／予約の原子性・冪等(I-20) を**全て確定**。詳細は [open-issues.md](open-issues.md) と当日アジェンダ §3-4〜3-6
-<<<<<<< HEAD
-> - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・B1.2／現状は仮の`localhost`のみ）／Secret Manager に OAuth クライアント値未登録（B1.3 gap）／**セキュリティ再確認（2026-06-06）**＝[security-data-handling.md](../design/security-data-handling.md) 新設・G1-21（Cloud Run公開前ゲート）方針確定
-> - **フロント本番ホスティング（B3.3・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(`apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。**連携ブロックは解消＝GitHub組織アカウント `cloud-dojo` への移管・鉄田オーナー権限は✅2026-06-05完了→鉄田が App Hosting の GitHub App 連携を実施（連携作業はW1）**
-> - **フロント本接続の前提（C4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
-=======
 > - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・B1.2／現状は仮の`localhost`のみ）
 > - **フロント本番ホスティング（B3.3・G1-7）**: ✅**2026-06-06完了**。Firebase App Hosting＋Next.js(`apps/web`)でmock公開済。公開URL=`publishr--publishr-498123.asia-east1.hosted.app`（build-010成功）。Turbopack×npm workspaces問題を解消し自動デプロイ稼働中。
 > - **フロント本接続の前提（C4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ~~②**Firestoreセキュリティルールのデプロイ**→✅**C3.1完了済み（2026-06-06・鉄田）**~~ ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
 > - **【2026-06-06完了・鉄田C3巻取り】** **C3.1** Firestoreセキュリティルール本番デプロイ（firebase.json/.firebaserc/firestore.rules/firestore.indexes.json）✅ **C3.4** 観測ログサブコレクションルール（C3.1に内包）✅ **C3.5** BFF FirestoreRepository実装（`apps/api/publishr_api/repositories/firestore_repository.py`・firebase-admin追加・DATA_SOURCE=firestore切替・テスト11件グリーン）✅。C3全体の担当を一瀬→**鉄田**へ変更。C4.9の②依存は解消。
->>>>>>> 4f712e59bf74896293c55b62a72e6e31ea473d87
 
 ---
 
@@ -242,11 +224,7 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | A5.1 | 友人MTG（チェックリスト§1の全議題を握る） | 2人で役割分担・技術の実現性・未決事項・相互の権限状態を最終確認する打ち合わせ | 鉄田・一瀬 | W0（6/1–7） | — | マイルストーン・役割・G系(Picker/通知/Cloud Build方式/OAuth)合意／**設計・データ決定(観測束保存先I-19・CORS/ベースパスG1-7・トリガー認可G1-6・読書ログ集約I-9・予約原子性I-20)を全て確定**。Langfuse実装方式(G1-17)のみ先送り (旧WP0.1) | ✅**2026-06-05 実施・完了** |
-<<<<<<< HEAD
 | A5.2 | 共有スキーマの正本確定＋packages/prompts投入 | Python/TS/JSONでデータの「型」定義を1か所に統一し、2人のコードで食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | A5.1 | 型ドリフト防止の単一ソース（G1-11）。prompts投入✅／正本＝`packages/shared-schema`（`@publishr/shared-schema`）に置く方針をMTG 2026-06-05で確定／**v2 I/Oモデル（`agent_io.py`）＋fixtures/models 肉付けを 2026-06-06 完了** (旧WP0.4) | ✅**2026-06-06 コア完了**（置き場所✅・v2 I/O✅／Firestore本形との完全同期はC3.xで継続） |
-=======
-| A5.2 | 共有スキーマの正本確定＋packages/prompts投入 | Python/TS/JSONでデータの「型」定義を1か所に統一し、2人のコードで食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | A5.1 | 型ドリフト防止の単一ソース（G1-11）。prompts投入✅／**正本＝`packages/shared-schema`（`@publishr/shared-schema`）に置く方針をMTG 2026-06-05で確定。スキーマ内容の更新は鉄田が引き継ぎ** (旧WP0.4) | ✅**完了**（`packages/shared-schema/ts/src/types.ts`・`py/publishr_schema/models.py`・`agent_io.py` に v2 I/O 全型実装済・commit `0ede2d2`/`884b61d`） |
->>>>>>> 4f712e59bf74896293c55b62a72e6e31ea473d87
 
 ---
 
@@ -436,14 +414,9 @@ Publishr MVP（カテゴリWBS）
 | カテゴリ＼週 | W0<br>6/1–7 | W1<br>6/8–14 | W2⚡<br>6/15–21 | W3<br>6/22–28 | W4<br>6/29–7/5 | W5<br>7/6–12 |
 |---|---|---|---|---|---|---|
 | A 要件定義・設計 | A5.1 | A3.2/A5.2 | | | | |
-<<<<<<< HEAD
 | B 環境・インフラ | B1.1/B1.3/B2.1 | B2.2/B3.1/B3.3 | B1.2 | | B3.2/B4.1 | |
 | C0 ローカル基盤(H0) | **C0.1/C0.2✅** | | | | | |
 | C1 エージェント(モードA) | **C1.0.1✅** | C1.1-C1.3 | C1.4-C1.7 | | | |
-=======
-| B 環境・インフラ | B1.1/B2.1/**B3.3**✅ | B2.2/B3.1 | B1.2 | | B3.2/B4.1 | |
-| C1 エージェント(モードA) | | C1.0★ | C1.1-C1.3 | C1.4-C1.7 | | |
->>>>>>> 4f712e59bf74896293c55b62a72e6e31ea473d87
 | C2 エージェント(モードB) | | | | C2.1-2.3 | | |
 | C3 データ基盤（鉄田） | **✅C3.1/3.4/3.5**（6/6完了） | | C3.2 | C3.3 | | |
 | C4 フロント | | | C4.1-4.3 | C4.4-4.6 | C4.7 | |
