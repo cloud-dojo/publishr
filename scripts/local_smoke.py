@@ -118,7 +118,7 @@ def ensure_servers() -> tuple[list[tuple[str, subprocess.Popen]], str]:
         env = os.environ.copy()
         env.setdefault("NEXT_PUBLIC_DATA_SOURCE", "bff")
         env.setdefault("NEXT_PUBLIC_API_URL", "http://localhost:8000")
-        web = start("Web", ["npm", "--workspace", "apps/web", "run", "dev"], env=env)
+        web = start("Web", ["npm", "--prefix", "apps/web", "run", "dev"], env=env)
         started.append(("Web", web))
         current_web_url = wait_for_web(timeout=60)
     else:

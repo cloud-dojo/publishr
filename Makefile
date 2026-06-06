@@ -25,7 +25,7 @@ api:
 	uv run uvicorn publishr_api.main:app --reload --port 8000
 
 web:
-	npm --workspace apps/web run dev
+	npm --prefix apps/web run dev
 
 pipeline:
 	uv run python -m publishr_agents.run_pipeline --user u_tadokoro
@@ -45,7 +45,7 @@ test-py:
 	uv run pytest
 
 lint-web:
-	npm --workspace apps/web run lint
+	npm --prefix apps/web run lint
 
 typecheck-web:
-	npm --workspace apps/web run typecheck
+	npm --prefix apps/web run typecheck
