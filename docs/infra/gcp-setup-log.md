@@ -128,9 +128,9 @@
 
 ---
 
-## P1 実態確認（2026-06-06・[p1-gcp-setup-runbook.md](p1-gcp-setup-runbook.md) STEP A 実行結果）
+## B1.3 実態確認（2026-06-06・[p1-gcp-setup-runbook.md](p1-gcp-setup-runbook.md) STEP A 実行結果）
 
-> owner（ichisehiroshi@gmail.com）で WSL2 gcloud から確認（全体プラン `docs/planning/docs-replicated-bonbon.md` Phase 1）。**「無いものだけ作る」原則で実在を突き合わせた結果**。
+> owner（ichisehiroshi@gmail.com）で WSL2 gcloud から確認（[wbs.md](../planning/wbs.md) **B1.3**）。**「無いものだけ作る」原則で実在を突き合わせた結果**。
 
 ### ✅ 実在を確認（既存・追加作成不要）
 - プロジェクト `publishr-498123` ACTIVE・課金有効（`billingAccounts/01AEB4-E28B10-3EE3A0`）
@@ -142,7 +142,7 @@
 - 他SA: firebase-adminsdk / firebase-app-hosting-compute / default compute（App Hosting 連携の痕跡）
 - Secret Manager: `LANGFUSE_HOST` / `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY`
 - ADC quota project を `publishr-498123` に設定
-- **Vertex Gemini 疎通スモーク成功**（gemini-2.5-flash・asia-northeast1・ADC・"疎通OK"）＝**P1のDoD達成**
+- **Vertex Gemini 疎通スモーク成功**（gemini-2.5-flash・asia-northeast1・ADC・"疎通OK"）＝**B1.3のDoD達成**
 
 ### ⚠️ gap（要対応・主に owner/コンソール作業）
 - **`GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` が Secret Manager に無い**（Langfuse 3本のみ）。本ログ上部「Secrets計6本完了」と実態（3本）が齟齬。→ GitHub Secrets 側にあるなら住み分けを明記、backend が Secret Manager 参照なら OAuth クライアント値を登録。
@@ -150,12 +150,12 @@
 - Firebase Authentication の Google プロバイダ有効化＝**コンソール確認**（identitytoolkit API は有効）。
 - 予算アラート ¥10,000：CLI照会は quota project 制約（billingbudgets API 未有効）で未確認。**コンソール確認推奨**。
 
-### 後回し（P1では作らない・P3〜P6）
+### 後回し（B1.3では作らない・C1/C2/C5以降）
 - Cloud Run サービス / Cloud Run Job（曜日別×3）/ Cloud Scheduler / Pub/Sub `book-writing` / Artifact Registry リポジトリ / Firebase App Hosting backend / OAuth 本番リダイレクトURI 追記。
 
 ## セキュリティ再確認（2026-06-06）
 
-> 目的: Google Tasks/Drive連携とVertex AIの公開境界を、P4以降のCloud Run公開前に再確認した結果。結論として、**GCP IAM上はVertex AIが誰でも直接叩ける状態ではない**。一方で、アプリAPI側の認証未実装のままCloud Run公開・Vertex接続に進むと、公開API経由で間接的にVertexコストを発生させるリスクがある。
+> 目的: Google Tasks/Drive連携とVertex AIの公開境界を、C4.9（Cloud Run公開）前に再確認した結果。結論として、**GCP IAM上はVertex AIが誰でも直接叩ける状態ではない**。一方で、アプリAPI側の認証未実装のままCloud Run公開・Vertex接続に進むと、公開API経由で間接的にVertexコストを発生させるリスクがある。
 
 ### ✅ 確認できたこと
 - Project IAMで `roles/aiplatform.user` は `publishr-runner@publishr-498123.iam.gserviceaccount.com` のみ。`allUsers` / `allAuthenticatedUsers` へのVertex権限付与は見えない。

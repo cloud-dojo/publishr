@@ -1,10 +1,10 @@
-# P1 GCP基盤 実行手順書（Runbook・コマンド一覧）
+# B1.3 GCP基盤 実行手順書（Runbook・コマンド一覧）
 
-> **位置づけ**: 全体構築プラン [`docs/planning/docs-replicated-bonbon.md`](../planning/docs-replicated-bonbon.md) の **Phase 1（GCP基盤: 現状確認 → 不足分を構築）** を、コピペ実行できる `gcloud`/`gsutil`/`bq` コマンド列に落としたもの。
+> **位置づけ**: [wbs.md](../planning/wbs.md) の **B1.3（GCP基盤: 現状確認 → 不足分を構築）** を、コピペ実行できる `gcloud`/`gsutil`/`bq` コマンド列に落としたもの。
 > **原則**: docs は「構築済み」と記録するが実態と齟齬がある前提で、**まず STEP A で実在を確認し、STEP B では「無いものだけ」作る**（二重作成・課金事故の防止）。
 > **担当**: GCPオーナー（＝鉄田）。コンソール操作・認証情報が要る箇所のみ手作業。
 > **実行環境**: WSL2 (Ubuntu) の `gcloud`（Norton の HTTPS 検査回避のため。詳細は `ERRORS.md`）。
-> **完了条件（P1 DoD）**: 基盤がレディで、ローカルから ADC 経由で Vertex Gemini が呼べる（STEP D が通る）。Cloud Run/Job・Scheduler・Pub/Sub は **P1では作らない**（P3〜P5）。
+> **完了条件（B1.3 DoD）**: 基盤がレディで、ローカルから ADC 経由で Vertex Gemini が呼べる（STEP D が通る）。Cloud Run/Job・Scheduler・Pub/Sub は **B1.3では作らない**（C1/C2以降）。
 
 ⚠️ **このファイルのコマンドは Claude では実行しない**（オーナー認証と課金が伴うため）。ユーザーが端末で実行する。Claude セッションから流したい場合はプロンプトに `! <command>` を付けて実行する。
 
@@ -16,7 +16,7 @@
 export PROJECT_ID="publishr-498123"
 export PROJECT_NUMBER="355143691286"
 export REGION="asia-northeast1"          # アプリ / Firestore / GCS
-export EVAL_REGION="us-central1"          # Vertex AI Gen AI Evaluation Service（P6）
+export EVAL_REGION="us-central1"          # Vertex AI Gen AI Evaluation Service（C5.3）
 export BUCKET="publishr-contents-498123"  # 本文保存（非公開）
 export RUNNER_SA="publishr-runner@${PROJECT_ID}.iam.gserviceaccount.com"
 export CI_SA="publishr-ci-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -200,23 +200,23 @@ gcloud billing budgets create \
 gcloud auth application-default login
 gcloud auth application-default set-quota-project "${PROJECT_ID}"
 
-# リポジトリ .env（backend）に追記（mock既定は維持。Vertex接続はP2で PUBLISHR_LLM=vertex に切替）
+# リポジトリ .env（backend）に追記（mock既定は維持。Vertex接続はC1.0.1で PUBLISHR_LLM=vertex に切替）
 cat >> .env <<'EOF'
 
-# ── GCP / Vertex（P1で設定・実LLMはP2で有効化）──
+# ── GCP / Vertex（B1.3で設定・実LLMはC1.0.1で有効化）──
 GOOGLE_GENAI_USE_VERTEXAI=TRUE
 GOOGLE_CLOUD_PROJECT=publishr-498123
 GOOGLE_CLOUD_REGION=asia-northeast1
-# Eval(GEAP)用リージョン（P6）
+# Eval(GEAP)用リージョン（C5.3）
 GOOGLE_CLOUD_EVAL_REGION=us-central1
 EOF
 ```
 
-> `.env` は gitignore 済み。`PUBLISHR_LLM` は **mock のまま**（P1では実LLMを本線に入れない）。
+> `.env` は gitignore 済み。`PUBLISHR_LLM` は **mock のまま**（B1.3では実LLMを本線に入れない）。
 
 ---
 
-## STEP D. Vertex Gemini 疎通スモーク（P1のDoD）
+## STEP D. Vertex Gemini 疎通スモーク（B1.3のDoD）
 
 ```bash
 GOOGLE_GENAI_USE_VERTEXAI=TRUE GOOGLE_CLOUD_PROJECT="${PROJECT_ID}" GOOGLE_CLOUD_LOCATION="${REGION}" \
@@ -231,22 +231,22 @@ print("HELLO GEMINI:", resp.text.strip())
 PY
 ```
 
-- ✅ `HELLO GEMINI: 疎通OK` 等が返れば **P1完了**（ADCで Vertex が叩ける）。
-- ❌ 失敗時の典型: 権限不足（runner ではなく自分のアカウントに `aiplatform.user` が要る場合あり）／リージョンでのモデル未提供／quota 不足。エラーを STEP E の台帳に記録し、P2前に潰す。
+- ✅ `HELLO GEMINI: 疎通OK` 等が返れば **B1.3完了**（ADCで Vertex が叩ける）。
+- ❌ 失敗時の典型: 権限不足（runner ではなく自分のアカウントに `aiplatform.user` が要る場合あり）／リージョンでのモデル未提供／quota 不足。エラーを STEP E の台帳に記録し、C1.0.1前に潰す。
 
 ---
 
-## STEP E. インフラ台帳の更新（P1-4）
+## STEP E. インフラ台帳の更新（B1.3-4）
 
 `docs/infra/gcp-setup-log.md` を**実態に合わせて更新**する。
 
 - STEP A の確認結果（作成済み / 今回作成 / 意図的に後回し）を反映。
-- **後回し（P1では作らない）を明記**: Cloud Run サービス / Cloud Run Job（曜日別×3）/ Cloud Scheduler / Pub/Sub `book-writing` / Artifact Registry リポジトリ / Firebase App Hosting backend。
-- OAuth 本番リダイレクトURI 追記（B1.2）は backend デプロイ後（P5）であることを注記。
+- **後回し（B1.3では作らない）を明記**: Cloud Run サービス / Cloud Run Job（曜日別×3）/ Cloud Scheduler / Pub/Sub `book-writing` / Artifact Registry リポジトリ / Firebase App Hosting backend。
+- OAuth 本番リダイレクトURI 追記（B1.2）は backend デプロイ後（C2/B3）であることを注記。
 
 ---
 
-## チェックリスト（P1完了判定）
+## チェックリスト（B1.3完了判定）
 
 | 項目 | 確認 | 状態 |
 |---|---|---|
@@ -264,4 +264,4 @@ PY
 | **Vertex Gemini 疎通スモーク成功** | STEP D | ⬜ |
 | 台帳 `gcp-setup-log.md` 更新 | STEP E | ⬜ |
 
-> 全✅で **P1完了 → P2（ADK MiniLoop・実Vertex・H2）** へ。GitHubオーナー操作（App Hosting連携・Cloud Build接続）は P5/P6 で扱い、当面は CI/CD 方式B（Actions→`gcloud builds submit`）でオーナー依存を回避する。
+> 全✅で **B1.3完了 → C1.0.1（ADK MiniLoop・実Vertex）** へ。GitHubオーナー操作（App Hosting連携・Cloud Build接続）は C2/C5/B3 で扱い、当面は CI/CD 方式B（Actions→`gcloud builds submit`）でオーナー依存を回避する。

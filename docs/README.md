@@ -70,7 +70,7 @@ publishr/
 | `planning/roles-and-ops.md` | 役割分担の境界・分業原則・運用ルール | 役割確認 |
 | `planning/kickoff-checklist.md` | 着手ゲート（MTG・環境・残素材・未決決着） | 着手準備 |
 | `planning/open-issues.md` | 未確定/未決論点・MTG議題・決着ログ | MTG前・意思決定時 |
-| `planning/wbs.md` | 成果物分解（WP・担当・依存・週・DoD・マイルストーン） | 作業の全体把握・進捗管理 |
+| `planning/wbs.md` | **実装正本**（成果物分解＋WBS直列の実装順序＋ゲート＋検証） | エージェント実施・進捗管理の単一正本 |
 | `planning/master-schedule.md` | カレンダー（W→実日付・ハード期日6/30凍結/7/10提出） | 日程・締切管理 |
 
 ### infra/・ui/

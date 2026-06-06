@@ -1,38 +1,125 @@
-# Publishr WBS（Work Breakdown Structure・カテゴリ版・2026-06-05）
+# Publishr WBS（Work Breakdown Structure・実装正本・2026-06-07）
 
 > 📑 関連: [正本マップ](../README.md)／[kickoff-checklist.md](kickoff-checklist.md)（着手ゲート）／[roles-and-ops.md](roles-and-ops.md)（週次・役割）／[open-issues.md](open-issues.md)（未決論点）。
-> **目的**: MVPを「動くデモ動画＋再現可能リポジトリ」まで到達させる作業を、**成果物のカテゴリ単位（大分類A/B/C）**に分解し、各タスクに**タスク詳細（何をやるか）・担当・予定週（実日付）・依存・完了条件(DoD)・状態**を付ける。
-> **構造の方針**: **カテゴリを主役（レベル1）**にし、**時間（週）は各表の1列（属性）に格下げ**。章立て＝週ではなく「何をやるか」で並べる。時間軸での見え方は末尾「時間軸ビュー（参考）」に温存。
+> **本書の位置づけ（単一正本）**: **作業分解（A/B/C）＋実装順序（WBS IDの直列）＋ゲート＋検証**を1枚に統合した**エージェント実施の正本**。Claude Code / Cursor エージェントは**本書を読み込んで実施**する。MVPローカルスコープの骨格は [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)（ローカル一まわり）を補助参照。
+> **ゴール**: **7/10提出・動くデモ動画＋再現可能リポジトリ・機能凍結6/30**。実装順序もタスクIDも**すべて WBS（A/B/C0/C1…）で一本化**する（旧 Phase P0a〜P7 表記は廃止）。
+> **構造の方針**: **カテゴリを主役（レベル1）**にし、**時間（週）は各表の1列（属性）に格下げ**。着手順は冒頭「§エージェント実施ガイド」の**WBS直列**が正。時間軸での見え方は末尾「時間軸ビュー（参考）」に温存。
 > **前提**: 実働約5週間（W1〜W5）／体制＝一瀬1.0＋鉄田0.5〜1.0／設計・プロンプト・Eval素材・GCP環境は✅済（チェックリスト §0）。
-> **クリティカルパス**: B(基盤) → C1.0(ADK疎通) → **C1.1-C1.3＋C4のE2E縦通し（W2★最重要）** → C2/C5 → C6（録画）。
+> **クリティカルパス**: B(基盤) → ~~C1.0(ADK疎通)~~（✅） → **C1.1-C1.3＋C4のE2E縦通し（W2★最重要）** → C2/C5 → C6（録画）。
 
 > **🧑‍🤝‍🧑 担当の凡例（3パターン）**: **鉄田**（=あなた・フロント/プロンプト/Eval設計/デモ担当）／**一瀬**（=友人エンジニア・エージェント/基盤/DevOps担当）／**鉄田・一瀬**（2人で一緒にやる）。割り当ては [roles-and-ops.md](roles-and-ops.md) の役割分担表に準拠。
 > **🔑 権限オーナーの前提（MTG 2026-06-05で更新）**: **Google Cloud のオーナー権限＝鉄田**／**GitHub＝組織アカウント `cloud-dojo` を新規作成し現リポを `cloud-dojo/publishr` へ移管→鉄田にもオーナー権限を付与（✅2026-06-05完了）**。これにより**App Hosting の GitHub App 連携(B3.3)・Cloud Build↔GitHub 接続(方式A・G1-18)は鉄田が実施**できる（旧「GitHub系＝一瀬のみ」の所有者依存は解消）。コードを書く実装タスクは役割分担表どおり。※基盤Firebase部分（Firestore/GCS）の担当は未定＝鉄田が一瀬を補助する可能性あり（後決め）。
-> **📅 予定週の凡例（実日付・今日=6/5基準）**: 週は月曜はじまり。**W0=今週=6/1–6/7**（準備）／**W1=6/8–6/14**／**W2=6/15–6/21**（★E2E山場）／**W3=6/22–6/28**／**W4=6/29–7/5**／**W5=7/6–7/12**（7/10提出）。各表の「予定週」列に `W2（6/15–21）` の形で明記。
+> **📅 予定週の凡例（実日付・今日=6/7基準）**: 週は月曜はじまり。**W0=6/1–6/7**（準備・本日締め）／**W1=今週=6/8–6/14**／**W2=6/15–6/21**（★E2E山場）／**W3=6/22–6/28**／**W4=6/29–7/5**／**W5=7/6–7/12**（7/10提出）。各表の「予定週」列に `W2（6/15–21）` の形で明記。
 > **状態マーク**: ✅完了 ／ 🔜着手前（準備OK）／ ⏸MTG・他者待ち ／ 🟡進行中/mock実装済 ／ 🔴ブロック。
 
 ---
 
-## 🧭 現在地サマリ（2026-06-05時点）
+# エージェント実施ガイド（実装順序・ゲート・検証）
 
-> **いまどこ**: **canned/mock の骨格は前進・実装（実LLM・実Firestore・実escalate）はこれから**のフェーズ。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、さらに**フロント14ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**（新構想で正本確定／役割基本合意／ADK一旦これでいく／Drive Picker＝フォルダ単位／連携・データ詳細を確定／GitHub組織化で App Hosting・Cloud Build を鉄田が連携／Langfuse実装方式のみ先送り）。次の山場は C1.0「ADK疎通＝実escalate実証」(W1)→ C1.1-C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)。
+> **エージェントへの指示**: **①下の「実装順序」で今どの WBS ID か確認 → ②該当セクションの表を読む → ③ゲートを満たしてから次へ**。横の作り込みより縦串（観測→企画→棚→予約→執筆→読める）を優先。
+
+## 実装順序（WBS ID・上から順に着手）
+
+| 順 | WBS ID | ゲート | 目的（1行） | 主担当 | クラウド/課金 |
+|---|---|---|---|---|---|
+| 1 | **C0.1** | C0.1 | mock回帰復旧 | 鉄田 | なし |
+| 2 | **C0.2** | C0.2 | 実装シーム敷設（mock挙動不変） | 鉄田 | なし |
+| 3 | **B1.3** | — | GCP基盤 確認/構築＋ADC | 鉄田 | 基盤のみ・微小 |
+| 4 | **C1.0.1** | **C1.0.1★** | ADK MiniLoop 実escalate実証 | **一瀬** | LLM少 |
+| 5 | **C1.1–C1.6**＋**C3.x**＋B3.1 | — | モードA全STEP＋Firestore＋最小運用足場 | **一瀬** | LLM中 |
+| 6 | **C4.8/C4.9**＋C1観測本接続 | **M2★** | E2E縦通し（ブラウザ）＋最小Cloud Run | 鉄田・一瀬 | LLM中 |
+| 7 | **C2.x**＋**C1.7** | M3 | モードB執筆（段階）＋Scheduler自律 | **一瀬** | LLM大 |
+| 8 | **C5.3/5.6**＋**B3.2**＋**B4.1** | M4 | Evalゲート(GEAP)＋CI/CD＋IaC完成 | 一瀬・鉄田 | LLM中 |
+| 9 | **C6.x** | M5/M6 | デモ・提出物→7/10 | 鉄田・一瀬 | — |
+
+**直列の幹**: C0.1→C0.2→B1.3→C1.0.1→(C1.1–C1.6+C3)→(C4+E2E)→(C2+C1.7)→(C5+B3+B4)→C6。**並行可**: C4.8・C5.1・C6.1/6.7（鉄田）は C1.0.1/C1.1以降と並行。
+
+## 設計原則（全タスク共通・不変条件）
+
+1. **mock経路＝常時回帰の床**。`PUBLISHR_LLM=mock`／`DATA_SOURCE=mock`／`NEXT_PUBLIC_DATA_SOURCE=mock` でクラウド・課金ゼロ。`make verify`＋`make eval`＋`make pipeline`＋`make smoke` を常に緑。
+2. **縦に細く通す（W2 E2E死守）**。横の作り込みより「観測→企画→棚→予約→執筆→読める」の縦串を最優先。
+3. **最大リスク先行**: 実LLM escalate（**C1.0.1**）は **2026-06-06 通過済み**。次は W2 E2E（C1.1–C1.3＋C4）を死守。詰まれば STEP2（**C1.3**）のみ LangGraph へ（[adk-control-flow.md](../design/adk-control-flow.md) §8）。
+4. **撤退ライン**: ~~W1=C1.0.1~~（達成）／**W2=E2E(C4+C1.1–C1.3)**。通らなければ PatentSentinel へ退避（事前合意）。
+5. **運用リスク前倒し**: 最小 Cloud Run・最小 CI・Firestore rules 検証は C3/C4 で入れる。C5/B3/B4 の完成形は後半。
+6. **コード規律**: small-files（200–400行・最大800）、immutability、入力検証、秘密は Secret Manager/env。
+7. **コスト暴走はコード側で止める**: Budget通知は保険。主防御＝mock既定・dev実行縮小・`max_iterations`/冊数/ページ数/Imagen/timeout/推定cost上限・公開APIの認証/許可uid/連打防止。
+
+## ゲート（未達なら次の WBS ブロックへ進まない）
+
+| ゲート | 条件 | ブロックする先 | 状態 |
+|---|---|---|---|
+| **C0.1** | `make verify`＋`make eval`＋`make pipeline`＋`make smoke` 全緑。`eval_set.yaml`↔`eval_harness.py` 整合 | C0.2以降すべて | ✅**2026-06-06 完了** |
+| **C0.2** | v2 I/O・prompt loader・`PUBLISHR_LLM` dispatcher・コストガード。mock挙動差分ゼロ＋loader単体テスト緑 | C1.0.1以降 | ✅**2026-06-06 完了** |
+| **C1.0.1★** | MiniLoopが実Vertexで再実行可。score差し戻し→再提出→`escalate`脱出。Langfuse trace・成功JSON・`@pytest.mark.vertex` 最小テスト。devプロファイル固定 | C1.1–C1.6/C3 本格実装 | ✅**2026-06-06 完了**（H2実証・固定success JSONファイルのコミットは任意残） |
+| **C4前** | Cloud Run外部公開＋`PUBLISHR_LLM=vertex`＋`DATA_SOURCE=firestore` の前に: Firebase IDトークン検証・Firestore rulesデプロイ（**C3.1**）・OAuth `state` 検証・手動トリガー許可uid・レート制限 | C4.9 本番接続 | 🔜着手前 |
+
+## インフラ構築段階（WBSブロックごと）
+
+| WBSブロック | できるインフラ | 粒度 | 次への意味 |
+|---|---|---|---|
+| C0 | なし（ローカルmock） | `.env` 全mock | 常時回帰の床 |
+| B1.3 | GCP基盤の器 | Project/API/Firestore/GCS/SA/Secret/ADC確認 | C1.0.1でVertex呼べる |
+| C1.0.1 | Vertex/Langfuse疎通（✅H2完了） | ローカルCLIのみ。Cloud Run等は作らない | ADKランタイムリスク切り出し済み→C1.1へ |
+| C1+C3 | Firestore実データ層＋最小CI足場 | `DATA_SOURCE=firestore`・rules/index・Dockerfile雛形 | 実DBに棚データ |
+| C4 | API最小Cloud Run | `/health`・planning trigger・手動確認 | ローカル外でも縦串 |
+| C2+C1.7 | 本番寄り実行基盤 | API/worker/planning Job・Pub/Sub・Scheduler・App Hosting | 予約→執筆→自律棚更新 |
+| C5+B3+B4 | 完成形運用基盤 | Actions→Cloud Build→Cloud Run・GEAP・Terraform | pushから自動デプロイ |
+
+## ADK技術前提（google-adk 2.1.0 検証済）
+
+- `LoopAgent(max_iterations)` は `event.actions.escalate` でループ脱出＝スコア閾値差し戻しの脱出機構。
+- `LlmAgent` は `model/instruction(callable可)/output_schema/output_key/tools` を持ち、`output_schema`＋`google_search` が**共存可**。
+- ⚠️ `{{var}}` 注入はトップレベルのみ（`{{a.b}}` ネスト不可→`render.py` で自前展開）。
+- **結論: LangGraphフォールバックは不要**（STEP2は1モジュール隔離・差し替え口は残す）。
+
+## 検証チェックリスト（各ゲート）
+
+1. **C0.1**: `make verify`＋`make eval`＋`make pipeline`＋`make smoke` 緑
+2. **C0.2**: v2 schema・prompt loader・dispatcher 存在。mock挙動差分ゼロ。`prompts/loader` 全11本テスト緑
+3. **C1.0.1★**: MiniLoop→Langfuseで反復→escalate脱出。再実行CLI・vertex最小テスト（✅2026-06-06）
+4. **コストガード**: dev＝1〜2冊/短文/Imagen mock/1R。実LLMはiterations・timeout・推定cost上限でabort
+5. **C1+C3足場**: Firestore rules test・小さなMode A eval・最小CI・API最小デプロイ手順
+6. **M2（C4+E2E）★**: `PUBLISHR_LLM=vertex`＋`DATA_SOURCE=firestore` でブラウザ縦通し。API Cloud Runでplanning手動トリガー1回
+7. **M3（C2）**: 手動1冊→予約API→Pub/Sub worker→Scheduler自律
+8. **M4（C5+B3）**: push→GEAP Evalゲート（8件・本命≥70）→自動デプロイ
+
+## リスク・注意
+
+- **C0.1が最初の関門**。赤い間は他作業へ進まない。
+- **C1.0.1は 2026-06-06 通過済み**（grounding+schema共存・escalate脱出のランタイム実証）。次の関門は **W2 M2（C1.1–C1.3＋C4 E2E）**。詰まれば C1.3 のみ LangGraph。
+- **GCPコスト暴走**: mock既定・dev縮小・実LLM上限・公開API認証が主防御。Budget通知は補助。
+- **GCP齟齬**: B1.3は「無いものだけ作る」。台帳＝[gcp-setup-log.md](../infra/gcp-setup-log.md)。
+- **役割**: backend/ADK/基盤＝**一瀬**、フロント/プロンプト/Eval設計/デモ＝**鉄田**。App Hosting/Cloud Build GitHub連携＝**鉄田**（組織オーナー権限あり）。
+
+---
+
+## 🧭 現在地サマリ（2026-06-07時点）
+
+> **いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`＋`make smoke`）は緑（pytest **58 passed, 1 skipped**）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント14ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
 >
 > **✅ できている（土台）**
 > - 設計docs一式／完成プロンプト11本（`packages/prompts/`）／Eval Set 8件（`eval/eval_set.yaml`）
-> - GCP基盤（`publishr-498123`：Firestore/Storage/SA/Secret Manager/Firebase/予算アラート）
-> - **【6/4完了】GCP IAM 2人招待・OAuth同意画面(Production)・テストユーザー・OAuthクライアント`Publishr Web`発行・GitHub Secrets 計6本**（GCP_PROJECT_ID／GCP_SA_KEY／GOOGLE_OAUTH_CLIENT_ID／SECRET／LANGFUSE×2）
+> - GCP基盤（`publishr-498123`：Firestore/Storage/SA/Secret Manager/Firebase/予算アラート）— **2026-06-06に実態確認済**（[gcp-setup-log.md](../infra/gcp-setup-log.md)・B1.3）。Vertex Gemini 疎通スモーク成功（ADC・asia-northeast1）
+> - **【2026-06-04完了】GCP IAM 2人招待・OAuth同意画面(Production)・テストユーザー・OAuthクライアント`Publishr Web`発行・GitHub Secrets 計6本**（GCP_PROJECT_ID／GCP_SA_KEY／GOOGLE_OAUTH_CLIENT_ID／SECRET／LANGFUSE×2）※Secret Manager 側は Langfuse 3本のみ実在（OAuth 2本は gap・要登録 or GitHub Secrets 住み分け明記）
 > - GitHubリポ（**2026-06-05に組織アカウント `cloud-dojo` へ移管完了→`cloud-dojo/publishr`・鉄田もオーナー権限付与済**）／モノレポscaffold（agents・apps・packages・eval・docs）／計画docsをrepoへ統合
 >
-> **【6/4完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・A3.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・C6)へ置換✅
+> **【2026-06-06完了・C0】**
+> - **C0.1（mock回帰復旧）**: `make verify`（pytest 58 passed, 1 skipped）＋`make eval`（8件PASS）＋`make pipeline`＋`make smoke` が全緑。`eval/eval_set.yaml`（v2）と `scripts/eval_harness.py` の不整合を解消
+> - **C0.2（実装シーム敷設）**: v2 I/O schema（`packages/shared-schema/py/publishr_schema/agent_io.py`）・state keys・prompt loader/registry/render・LLM provider・`PUBLISHR_LLM` dispatcher・dev/prod実行プロファイル・実LLMコストガード＋単体テスト。mock経路の挙動差分ゼロ
 >
-> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・組織移管完了→鉄田が実施・W1) ④canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。
+> **【2026-06-06完了・C1.0.1（H2）】**
+> - **C1.0.1（ADK MiniLoop・実Vertex escalate実証）**: `agents/publishr_agents/vertex/miniloop.py` 新設。`Sequential[market_sub(Flash+google_search)→Loop(max3)[plan_owner→plan_leader→LoopBreakAgent]]`。score<閾値→`rejectionFeedback`再ループ／score≥閾値→`escalate`脱出／round3強制承認（prompt+code帯）。H2実証＝threshold70→R1 approve(93) escalate脱出／threshold101→R1 revise(98)→R2 approve。grounding実取得・ownerがsub参照・Langfuse trace送信（`observability.py`・SDK直・best-effort）。再実行CLI＝`scripts/run_miniloop.py`（`--threshold`で差し戻し誘発）・`@pytest.mark.vertex` 最小テスト（`agents/tests/test_miniloop_vertex.py`・既定skip＋offline build test）。prompt loader/render も ADK State 対応で修正（`load_section_system`・`render_template`公開）
+>
+> **【2026-06-04完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・A3.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・C6)へ置換✅
+>
+> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり・**PUBLISHR_LLM dispatcher 済**）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・組織移管完了→鉄田が実施・W1) ④canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。
 >
 > **【提出物・GEAP方針・2026-06-05】** ProtoPedia作品ページ草案一式（ストーリー約4,000字・画像5＋システム構成図・全フィールド記入シート）を作成＝対外 `publishr_other/Protopedia提出/`（WBS **C6.7/C6.8**・P-6/P-7）。**GEAP（旧Vertex AI）はプラスアルファで②Gen AI Evaluation Service を品質ゲートに採用方針**（動くコード済・I-21/**C5.3**）、④Agent Runtimeはストレッチ（Schedulerトリガー非対応・F-7）。
 >
 > **✅ 着手前ゲートはMTG 2026-06-05で全件クローズ（A5.1完了）**
-> - **友人MTG（2026-06-05実施・完了）**: ADK実現性(G1-1=一旦これでいくで合意)・役割分担(G1-2=基本合意／基盤Firebaseのみ担当未定)・**Drive Picker(G1-13=フォルダ単位・Picker前提で確定)**・Cloud Build接続(G1-18=方式A・組織化で確定)・OAuth公開ステータス(G1-19=Production維持)・通知方式(G1-15=FCM不要)を握った。Langfuse実装方式(G1-17)のみ先送り（今後検証）
+> - **友人MTG（2026-06-05実施・完了）**: ADK実現性(G1-1=一旦これでいくで合意)・役割分担(G1-2=基本合意／基盤Firebaseのみ担当未定)・**Drive Picker(G1-13=フォルダ単位・Picker前提で確定)**・Cloud Build接続(G1-18=方式A・組織化で確定)・OAuth公開ステータス(G1-19=Production維持)・通知方式(G1-15=FCM不要)を握った。Langfuse実装方式(G1-17)は全体設計は先送りだが、**MiniLoopは Langfuse SDK直で暫定実装済**（`observability.py`・C1.0.1）
 >   - **＋ 設計/データの確定（叩き台のまま即確定）**: 観測束ObservationBundleの保存先(I-19)／API CORS・ベースパス(G1-7)／手動トリガー認可(G1-6)／読書ログ集約(I-9)／予約の原子性・冪等(I-20) を**全て確定**。詳細は [open-issues.md](open-issues.md) と当日アジェンダ §3-4〜3-6
-> - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・B1.2／現状は仮の`localhost`のみ）
+> - **環境の積み残し**: OAuth本番リダイレクトURI追記（backendデプロイ後・B1.2／現状は仮の`localhost`のみ）／Secret Manager に OAuth クライアント値未登録（B1.3 gap）／**セキュリティ再確認（2026-06-06）**＝[security-data-handling.md](../design/security-data-handling.md) 新設・G1-21（Cloud Run公開前ゲート）方針確定
 > - **フロント本番ホスティング（B3.3・G1-7）**: ホスティング=Firebase App Hosting／フロント=Next.js(`apps/web`)で確定。鉄田準備(`apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。**連携ブロックは解消＝GitHub組織アカウント `cloud-dojo` への移管・鉄田オーナー権限は✅2026-06-05完了→鉄田が App Hosting の GitHub App 連携を実施（連携作業はW1）**
 > - **フロント本接続の前提（C4.9・一瀬から受領）**: フロントは mock 実装済→本接続には一瀬から ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**Cloud Run API 3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**の握り、が必要。受領後 `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続
 
@@ -47,14 +134,15 @@ Publishr MVP（カテゴリWBS）
 │   ├─ A3 プロンプト・判断基準設計
 │   ├─ A4 Evalセット・品質基準設計
 │   └─ A5 共有スキーマ正本確定／着手ゲート(友人MTG)
-├─ B. 環境・インフラ構築          … 動かす土台（🔜MTG後着手）
+├─ B. 環境・インフラ構築          … 動かす土台（GCP本体✅・B1.3確認済・CI/ホスティングはW1〜）
 │   ├─ B1 GCP基盤・認証（IAM/OAuth/Secrets）  ← Google Cloud系=鉄田
 │   ├─ B2 リポ・モノレポ・ローカル環境
 │   ├─ B3 CI/CD・ホスティング（Actions/Cloud Build/App Hosting）  ← 鉄田がGitHub連携を実施（組織移管・オーナー権限完了）
 │   └─ B4 IaC（Terraform）
 └─ C. 実装                   … コーディング本体
+    ├─ C0 ローカル基盤固め  … mock回帰(C0.1)＋実装シーム(C0.2)（✅2026-06-06完了）
     ├─ C1 エージェント・モードA（自律企画）★ ← STEPでレベル3展開（一瀬）
-    │   ├─ C1.0 ADK基盤・疎通(MiniLoop)
+    │   ├─ C1.0 ADK基盤・疎通(MiniLoop)（✅C1.0.1完了・2026-06-06）
     │   ├─ C1.1 STEP0 観測
     │   ├─ C1.2 STEP1 読者分析
     │   ├─ C1.3 STEP2 企画3階層（調査サブ→担当者→リーダー）
@@ -107,19 +195,23 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | A5.1 | 友人MTG（チェックリスト§1の全議題を握る） | 2人で役割分担・技術の実現性・未決事項・相互の権限状態を最終確認する打ち合わせ | 鉄田・一瀬 | W0（6/1–7） | — | マイルストーン・役割・G系(Picker/通知/Cloud Build方式/OAuth)合意／**設計・データ決定(観測束保存先I-19・CORS/ベースパスG1-7・トリガー認可G1-6・読書ログ集約I-9・予約原子性I-20)を全て確定**。Langfuse実装方式(G1-17)のみ先送り (旧WP0.1) | ✅**2026-06-05 実施・完了** |
-| A5.2 | 共有スキーマの正本確定＋packages/prompts投入 | Python/TS/JSONでデータの「型」定義を1か所に統一し、2人のコードで食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | A5.1 | 型ドリフト防止の単一ソース（G1-11）。prompts投入✅／**正本＝`packages/shared-schema`（`@publishr/shared-schema`）に置く方針をMTG 2026-06-05で確定。スキーマ内容の更新は鉄田が引き継ぎ** (旧WP0.4) | 🔜着手前（置き場所✅確定） |
+| A5.2 | 共有スキーマの正本確定＋packages/prompts投入 | Python/TS/JSONでデータの「型」定義を1か所に統一し、2人のコードで食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | A5.1 | 型ドリフト防止の単一ソース（G1-11）。prompts投入✅／正本＝`packages/shared-schema`（`@publishr/shared-schema`）に置く方針をMTG 2026-06-05で確定／**v2 I/Oモデル（`agent_io.py`）＋fixtures/models 肉付けを 2026-06-06 完了** (旧WP0.4) | ✅**2026-06-06 コア完了**（置き場所✅・v2 I/O✅／Firestore本形との完全同期はC3.xで継続） |
 
 ---
 
 # B. 環境・インフラ構築
 
-> 動かす土台。GCP本体は✅済。残りは**友人MTG（2026-06-05完了）後に着手**（CI/ホスティング/IaC）。App Hostingの所有者連携ブロックは組織化決定で解消。詳細は `docs/infra/*.md`。
+> 動かす土台。GCP本体は✅済。**B1.3（実態確認）は 2026-06-06 完了**（Vertex疎通OK・OAuth Secrets gap 残）。残りは CI/ホスティング/IaC（W1〜）。App Hostingの所有者連携ブロックは組織化決定で解消。詳細は `docs/infra/*.md`。
 > **担当の考え方**: B1（Google Cloudコンソール）＝**鉄田**（GCPオーナー）／B3（GitHub・App Hosting連携・Cloud Build接続）＝**鉄田**（GitHub組織 `cloud-dojo` への移管・オーナー権限取得は✅2026-06-05完了・MTG 2026-06-05決定）。
 
 ## B1. GCP基盤・認証（IAM/OAuth/Secrets）← Google Cloud系＝鉄田
+
+> **実装メモ（B1.3）**: まず実在確認（[p1-gcp-setup-runbook.md](../infra/p1-gcp-setup-runbook.md)）→無いものだけ作る。ADC＋`GOOGLE_GENAI_USE_VERTEXAI=TRUE`・`GOOGLE_CLOUD_PROJECT=publishr-498123`・`GOOGLE_CLOUD_REGION=asia-northeast1`。OAuth Secrets は Secret Manager か GitHub Secrets の住み分けを明記。台帳更新＝[gcp-setup-log.md](../infra/gcp-setup-log.md)。
+
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| B1.1 | GCP IAM 2人招待・OAuth同意画面（3スコープ・テストユーザー） | Google Cloud上で2人がアクセスできるよう権限付与し、Googleログイン画面（Drive/Calendar/Tasksの利用許可を取る画面）を設定 | 鉄田 | W0（6/1–7） | A5.1 | デモ垢で3ソース承認可（GCP本体は✅済） (旧WP0.2) | ✅**2026-06-04完了**（IAM 2人・同意画面Production・テストユーザー・クライアント`Publishr Web`・Secrets計6本） |
+| B1.1 | GCP IAM 2人招待・OAuth同意画面（3スコープ・テストユーザー） | Google Cloud上で2人がアクセスできるよう権限付与し、Googleログイン画面（Drive/Calendar/Tasksの利用許可を取る画面）を設定 | 鉄田 | W0（6/1–7） | A5.1 | デモ垢で3ソース承認可（GCP本体は✅済） (旧WP0.2) | ✅**2026-06-04完了**（IAM 2人・同意画面Production・テストユーザー・クライアント`Publishr Web`・GitHub Secrets計6本） |
+| B1.3 | **GCP基盤の実態確認＋Vertex疎通** | 既存GCP資源の実在を突き合わせ、無いものだけ作る。ADC設定＋Vertex Gemini最小呼び出しでC1.0.1の足場を確認 | 鉄田 | W0（6/1–7） | B1.1 | [gcp-setup-log.md](../infra/gcp-setup-log.md)／[p1-gcp-setup-runbook.md](../infra/p1-gcp-setup-runbook.md) STEP A 実行。プロジェクト・API・Firestore・GCS・SA・Langfuse Secrets・**Vertex Gemini疎通スモーク成功** (旧—) | ✅**2026-06-06 完了**（gap＝OAuth Secrets未登録・予算アラート/Auth Googleプロバイダはコンソール確認残） |
 | B1.2 | OAuth本番リダイレクトURI追記 | サーバー公開後、Googleログイン後の「戻り先URL」を本番用に1行追記する作業（`https://<backend URL>/api/auth/google/callback`） | 鉄田 | W2–W4（6/15–7/5） | backendデプロイ | 現状は仮 `http://localhost:8080/...` のみ。CLIENT_ID/SECRETは不変 (旧WP0.7) | 🔜backend待ち |
 
 ## B2. リポ・モノレポ・ローカル環境
@@ -144,18 +236,32 @@ Publishr MVP（カテゴリWBS）
 
 # C. 実装
 
-> コーディング本体。**C1 エージェント・モードAが最大リスク＆クリティカルパス**。STEP単位で内部分解する。
+> コーディング本体。**C0 は 2026-06-06 完了**。**C1.0.1（H2 MiniLoop）は 2026-06-06 完了**。次のクリティカルパスは **C1.1–C1.6＋C3.x（モードA全STEP＋Firestore）**。STEP単位で内部分解する。
+
+## C0. ローカル基盤固め
+
+> **🧭 実態（2026-06-07）**: mock経路を常時緑に保ち、実LLM差し替えの継ぎ目（シーム）を敷設。**C0.1/C0.2 完了済み→C1.0.1 も完了→C1.1 へ進行可**。
+
+| ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
+|---|---|---|---|---|---|---|---|
+| C0.1 | **mock回帰復旧** | `make verify`＋`make eval`＋`make pipeline`＋`make smoke` を全緑に戻す。`eval/eval_set.yaml`（v2）と `scripts/eval_harness.py` の不整合を解消 | 鉄田 | W0（6/1–7） | — | pytest 58 passed, 1 skipped・Eval 8件PASS・pipeline却下→再提出証跡・smoke E2E (旧—) | ✅**2026-06-06 完了** |
+| C0.2 | **実装シーム敷設** | v2 I/O schema・state keys・prompt loader/registry/render・LLM provider・`PUBLISHR_LLM` dispatcher・dev/prod実行プロファイル・実LLMコストガードを追加。**mock時の挙動差分ゼロ**を維持 | 鉄田 | W0（6/1–7） | C0.1 | `packages/shared-schema/.../agent_io.py`・`agents/publishr_agents/prompts/*`・`llm/provider.py`・`pipeline.py` dispatcher・単体テスト緑 (旧—) | ✅**2026-06-06 完了** |
 
 ## C1. エージェント・モードA（自律企画）★
 
-> Cloud Scheduler 週3回（土/水=本命・日=セレンディピティ）で起動し、観測→読者分析→企画→著者生成→編集→装丁を回して棚に5冊 draft で並べる。各STEPの内部タスクは共通パターン（①プロンプト結線 ②エージェント定義＋モデル割当＋I/Oスキーマ ③state配線 ④単体検証）。DoDは [agent-io-contract.md](../design/agent-io-contract.md) の各§を参照。担当は全て**一瀬**（ランタイム実装）。
+> Cloud Scheduler 週3回（土/水=本命・日=セレンディピティ）で起動し、観測→読者分析→企画→著者生成→編集→装丁を回して棚に5冊 draft で並べる。
+> **実装メモ（C1.1–C1.6）**: STEP2フル（`vertex/step2_planning.py`・調査サブ3体＋owner/leader Pro）／STEP1+STEP0（`ReaderAnalystAgent`＋`ObservationTool`・実Drive観測はC4）／STEP3+STEP4（`PersonaGeneratorAgent`＋`PreviewEditLoop×5`）／STEP5（`CoverParallel`・Imagenは`ENABLE_IMAGEN`フラグ）。`vertex/state_bridge.py` で `LeaderVerdict` 履歴→`RejectLogEntry`／`PipelineResult` に additive で `leader_verdicts` 追加（既存契約不変）。開発runは `dev` プロファイル（1〜2冊・短文・Imagen mock・編集1R）。**C1.0.1未達なら C1.1以降の本格実装へ進まない**。各STEPの内部タスクは共通パターン（①プロンプト結線 ②エージェント定義＋モデル割当＋I/Oスキーマ ③state配線 ④単体検証）。DoDは [agent-io-contract.md](../design/agent-io-contract.md) の各§を参照。担当は全て**一瀬**（ランタイム実装）。
 >
-> **🧭 実態（2026-06-05）**: ADK配線の骨格は **`agents/publishr_agents` に canned 出力で疎通済み**（`SequentialAgent`: observe→reader→`ParallelAgent`(企画3体)→選抜ゲート→著者アジェンダ→装丁／`InMemoryRunner`・`test_pipeline.py`あり）。**ただし①出力は決定的canned（実LLM未）②v2フローの簡略版**＝調査サブ×3 grounding(C1.3.1)・キャスティング5人2軸(C1.4)・プレビュー編集ループ(C1.5)は未・**③選抜ゲートは単発canned（実escalate/LoopAgent未）**。よって各STEPの「実装」は**実モデル＋v2 I/O＋実ループへの作り込みが本体**＝状態は原則 🔜（配線疎通分の C1.0 のみ 🟡）。
+> **🧭 実態（2026-06-07）**: **mock経路**＝`agents/publishr_agents` に canned 出力で疎通済み（`SequentialAgent`: observe→reader→`ParallelAgent`(企画3体)→選抜ゲート→著者アジェンダ→装丁／`InMemoryRunner`・`test_pipeline.py`あり）。**C0.2 で `PUBLISHR_LLM` dispatcher・prompt loader・v2 I/O schema の差し替え口は敷設済み**。**C1.0.1（H2）**＝`agents/publishr_agents/vertex/miniloop.py` で実Vertex MiniLoop（調査サブ1体＋owner/leader Loop＋escalate）を実証済み。**フルパイプラインは未**＝調査サブ×3(C1.3.1)・キャスティング5人2軸(C1.4)・プレビュー編集ループ(C1.5)・mock `build_pipeline` の選抜ゲート実escalate化はこれから。各STEPの「実装」は**実モデル＋v2 I/O＋実ループへの作り込みが本体**＝C1.1以降は原則 🔜（**C1.0.1ゲート通過済み→C1.1着手可**）。
 
 ### C1.0 ADK基盤・疎通(MiniLoop)
+
+> **着手条件**: C0.2＋B1.3 通過済み。**✅2026-06-06 完了（H2）**。
+> **実装メモ**: `LoopAgent(max_iter=3)` ＝ 調査サブ1(Flash+`google_search`) → owner1(Flash) → leader1(Pro) → `LoopBreakAgent`（custom BaseAgent）。leaderが `LeaderVerdict` を `output_key="leaderVerdict"` に出力 → `LoopBreakAgent` が `rejectionFeedback`/`approvedPlan` を state_delta へコピーし、`decision=="approve"` で `EventActions(escalate=True)`。round3は belt-and-suspenders（プロンプト帯＋コード帯で強制採用）。**利用クラウド＝Vertex Gemini＋Langfuseのみ**（Cloud Run/Firestore/Pub/Sub/Schedulerはまだ入れない）。再現性成果物＝`scripts/run_miniloop.py`・`observability.trace_miniloop`（Langfuse SDK直）・`@pytest.mark.vertex` 最小テスト（`PUBLISHR_RUN_VERTEX=1` で live 実行）。固定success JSONファイルのコミットは任意残。3日詰まったら C1.3 のみ LangGraph（**H2通過のため現時点では不要**）。
+
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.0.1 | ★**ADK疎通(MiniLoop)** | **ADK=GoogleのAIエージェント開発キット**。「疎通」＝まず最小構成で動かし、AIがダメ出し→やり直しのループ（escalate/最大反復）が本当に回るか実証する**最重要の技術検証**。ここがダメならLangGraphへ逃げる判断 | 一瀬 | **W1（6/8–14）** | B3.1 | 再ループ・脱出が動く（ADK §7） (旧WP1.1★・M1) | 🟡 配線疎通済(canned)／**実escalate未** |
+| C1.0.1 | ★**ADK疎通(MiniLoop)** | **ADK=GoogleのAIエージェント開発キット**。「疎通」＝最小構成で実Vertex動作し、score<閾値で再ループ→score≥閾値で`escalate`脱出を実証する**最重要技術検証** | 一瀬 | **W0–W1（6/1–14）** | C0.2,B1.3 | ①grounding実ソース取得 ②ownerがsub読む ③leaderがscore付verdict ④score<閾値で再ループ（rejectionFeedback反映）⑤score≥閾値でescalate脱出 ⑥round3強制採用。Langfuseに反復→脱出。再実行CLI・vertex最小テスト（ADK §7・**C1.0.1ゲート**） (旧WP1.1★・M1) | ✅**2026-06-06 完了**（H2実証・commit `edb6611`・`vertex/miniloop.py`＋`run_miniloop.py`＋`test_miniloop_vertex.py`） |
 
 ### C1.1 STEP0 観測
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -197,6 +303,8 @@ Publishr MVP（カテゴリWBS）
 
 ## C2. エージェント・モードB（後追い執筆）
 
+> **実装メモ（段階導入）**: 手動1冊（`mode_b/` BodyEditLoop・`scripts/run_body_once.py`・本文3〜5p・1R）→ 予約API接続(C2.1) → Pub/Sub worker(C2.2) → Scheduler自律(C1.7)。**大型生成物をstateに溜めない**（章本文はGCS・stateはref+summaryのみ）。同時5冊transactionはC2.2で入れる。
+>
 > **🧭 実態（2026-06-05）**: 予約フローの **mock が `apps/api` にある**（`reservation_service.reserve_now`＝`draft→reserved` の単純status遷移＋`ConflictError`／`advance`＝`reserved→writing→published` をタイマーで進める疑似ワーカー）。**ただし①同時5冊の Firestore transaction(I-20)・②Pub/Sub 実ワーカー・③本文編集ループ(編集長⇄著者・最高3R) は未**。C2.1 は mock 済み／C2.2・C2.3 は未着手。
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -206,6 +314,9 @@ Publishr MVP（カテゴリWBS）
 | C2.3 | 本文編集ループ（編集長⇄著者・最高3R・約100p） | 著者AIが約100ページ書き、編集長AIが採点→弱い章だけ書き直す（最大3回）。完成したら本文を保存 | 一瀬 | W3（6/22–28） | C1.5.1,C2.2 | published・editRounds記録（§7） (旧WP2.3) | 🔜着手前 |
 
 ## C3. データ/状態基盤（Firestore/GCS）
+
+> **実装メモ（C3.1/C3.4/C3.5）**: `RepositoryProtocol` に Firestore実装追加。`firestore-security-rules.md`/`firestore.indexes.json` デプロイ。`DATA_SOURCE=firestore` で plans/books/personas/observations 保存。`ownerUid` 規約。クライアント直書き可は `initialProfile`/`highlights`/`feedback`/`favoriteAuthors` 等に限定。rules unit/emulator test 追加。FastAPIに Firebase Admin SDK 共通依存（`/healthz` 以外は Bearer 検証・bodyの `userId` は信用しない）。
+
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | 一瀬 | W2（6/15–21） | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19＝MTG 2026-06-05で確定済を反映） (旧WP3.1) | 🔜着手前 |
@@ -215,6 +326,8 @@ Publishr MVP（カテゴリWBS）
 | C3.5 | **BFF（apps/api）の Firestore リポジトリ実装＋mock→firestore切替** | `apps/api` は `protocol.py`＋`mock_repository.py` のリポジトリパターンで実装済み。`RepositoryProtocol` の Firestore 実装を足し、mock から切替える（＝抜け漏れ補完・2026-06-05起票） | 一瀬 | W2–W3（6/15–28） | C3.1 | Firestore実装を追加し `DATA_SOURCE=firestore` で起動可（フロントC4.9・モードB C2.x の本接続前提）。mock側✅ | 🔜着手前（mock側✅） |
 
 ## C4. フロント（書店UI・14ルート）
+
+> **実装メモ（E2E・M2★）**: C4.9=Firebase Auth＋Firestore直購読/直書き・`NEXT_PUBLIC_DATA_SOURCE=firestore`。C4.1/C1.1.2=OAuth start/callback＋Drive Picker（OAuth間に合わなければfixture観測で縦通し優先）。手動トリガー `POST /api/trigger/planning`（許可uid・レート制限・実行中ロック）。C4.8=`map/` が `leader_verdicts` の却下→採用を描画＝**基準1の画**。最小Cloud Run疎通（APIのみ・本番完成ではない）。
 
 > **🧭 実態（2026-06-05・複数セッションで先行実装）**: `apps/web`(Next.js) へ移植が進み、**C4.1–C4.7 は mock データで code-complete（14ルートがビルド緑）**。Firebase Auth＋Firestoreプロバイダも実装済（mock時は休眠）。
 > **残作業は2本**：①**ローカルUI仕上げ（C4.8）＝レイアウト崩れ・行ずれの修正＝デプロイ前の主作業**／②**Firestore本接続（C4.9）＝一瀬の基盤待ち**。DoDの「Firestore直書き/購読」の✅判定は本接続(C4.9)後。担当は基本**鉄田**。
@@ -232,19 +345,25 @@ Publishr MVP（カテゴリWBS）
 | C4.9 | **Firestore本接続・Firebase Auth起動（mock→firestore切替）** | mockデータから本物のDB(Firestore)接続へ切替える。一瀬から設定値を受領後に作業 | 鉄田・一瀬 | W2–W3（6/15–28） | C3.1,B3.3,C2.1 | 一瀬から①Firebase設定値②ルールのデプロイ③API3本URL・CORS④`ownerUid`規約 を受領後、`NEXT_PUBLIC_DATA_SOURCE=firestore`へ切替 (旧WP4.9) | ⏸**一瀬待ち** |
 
 ## C5. 品質・評価・観測・運用
+
+> **実装メモ**: C5.3=自作 `eval_harness.py`（mock床）は残し、GEAP（`vertexai.evaluation`・region=`us-central1`）を併設。C5.6=2ループ＋grounding URL可視化。B3.2=lint→Eval Gate→Cloud Build→Cloud Run（方式A=GitHub App直結・鉄田）。B3.1で最小CI雛形を先に置く。
+
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C5.1 | W1 各プロンプト実テスト→調整 | 実際にAIへ指示文を流し、想定どおり出るか・悪い例を弾くかを確認して調整 | 鉄田・一瀬 | W1–W2（6/8–21） | C1.0.1 | Langfuseで出力確認 (旧WP5.3) | 🔜着手前 |
+| C5.1 | W1 各プロンプト実テスト→調整 | 実際にAIへ指示文を流し、想定どおり出るか・悪い例を弾くかを確認して調整 | 鉄田・一瀬 | W1–W2（6/8–21） | C1.0.1 | Langfuseで出力確認 (旧WP5.3) | 🟡MiniLoopで research_subs/plan_owner/plan_leader の実Vertex確認済（C1.0.1）／全11本の網羅は未 |
 | C5.2 | 良い/悪い例を eval fixture に兼用反映 | 良い例/悪い例を、AIの手本（few-shot）とテストの両方に使い回す | 鉄田 | W2（6/15–21） | C5.1,A4.1 | few-shot＋Eval両用 (旧WP5.4) | 🔜着手前 |
-| C5.3 | **Eval judgeゲート**をCIに組込 | AI品質が基準(70点)未満なら自動でデプロイを止める品質ゲートをCIに組み込む。**前提＝v2 Evalハーネス再構築**（旧 `scripts/eval_harness.py` は旧構想5観点ベースで要刷新） | 一瀬 | W4（6/29–7/5） | C5.x,**I-21** | failでデプロイ停止（MVP §9）。`eval/eval_set.yaml` を LLM-judge で採点・`cases`=ゲート(8件中7)/`borderlineCases`=診断で読む（**I-21・旧ハーネスは要v2再構築＝一瀬**）。**実装ルート＝Vertex AI Gen AI Evaluation Service（GEAP）が有力**（動くコード＝対外 `publishr_other/GEAP②_EvalService具体化.md`） (旧WP6.2) | 🔜着手前 |
+| C5.3 | **Eval judgeゲート**をCIに組込 | AI品質が基準(70点)未満なら自動でデプロイを止める品質ゲートをCIに組み込む | 一瀬 | W4（6/29–7/5） | C5.x,**I-21** | failでデプロイ停止（MVP §9）。`eval/eval_set.yaml` を LLM-judge で採点・`cases`=ゲート(8件中7)/`borderlineCases`=診断で読む（I-21）。**mock用 `scripts/eval_harness.py` は v2 整合済み（C0.1✅）**。CI本番ゲート＝Vertex AI Gen AI Evaluation Service（GEAP）を B3.2 と併設 (旧WP6.2) | 🟡mock Evalハーネス✅（2026-06-06）／GEAP CIゲートは🔜 |
 | C5.4 | judge再現性テスト（複数回採点・標準偏差確認） | 採点AIが毎回ブレない（同じ点を出す）か複数回試して信頼度を確認 | 鉄田・一瀬 | W2–W3（6/15–28） | C5.1,**I-21** | ゲート判定の信頼度確認（v2 Evalハーネス=I-21 が前提。境界ケース `eval_b1/b2` で閾値70近傍の判別を測る） (旧WP7.2) | 🔜着手前 |
 | C5.5 | 閾値・ルーブリックの運用調整 | 合格ライン(70点等)や採点基準を、実データを見ながら微調整 | 鉄田 | W4（6/29–7/5） | C5.4 | 実データで微調整（I-1/I-18） (旧WP7.3) | 🔜着手前 |
-| C5.6 | Langfuse計装（2ループ＋grounding取得URL） | AIの動き（やり直しループ・検索URL）を記録・可視化し、AIの必然性を見せられるようにする | 一瀬 | W4（6/29–7/5） | C1.3.3,C1.5.1,C2.3 | 必然性の証跡が可視化 (旧WP6.3) | 🔜着手前 |
+| C5.6 | Langfuse計装（2ループ＋grounding取得URL） | AIの動き（やり直しループ・検索URL）を記録・可視化し、AIの必然性を見せられるようにする | 一瀬 | W4（6/29–7/5） | C1.3.3,C1.5.1,C2.3 | 必然性の証跡が可視化 (旧WP6.3) | 🟡MiniLoop用 `observability.trace_miniloop`（Langfuse SDK直・best-effort）実装済（C1.0.1）／2ループ全体・grounding URL可視化は未 |
 | C5.7 | dev/prodフラグ運用 | 開発中は安く（ページ少・画像ダミー・冊数少）、本番だけフル、を切替える設定の運用 | 鉄田・一瀬 | W1〜（6/8〜） | B2.2 | dev既定で反復、本番のみprod (旧WP9.1) | 🔜着手前 |
-| C5.8 | コスト実測→コスト概算.md上書き | 実際のAI利用料を測り、予算1万円で足りるか確認して概算書を更新 | 鉄田・一瀬 | W1（6/8–14） | C1.0.1 | 予算¥10,000耐性確認 (旧WP9.2) | 🔜着手前 |
+| C5.8 | コスト実測→コスト概算.md上書き | 実際のAI利用料を測り、予算1万円で足りるか確認して概算書を更新 | 鉄田・一瀬 | W1（6/8–14） | C1.0.1 | 予算¥10,000耐性確認 (旧WP9.2) | 🟡MiniLoop初回実測あり（C1.0.1）／フルパイプライン実測は未 |
 | C5.9 | エラー/リトライ/冪等/タイムアウト方針 | 失敗時の再試行・二重実行防止・時間切れの最小ルールを決めて実装 | 一瀬 | W1–W3（6/8–28） | C1.x,C2.x | 最小方針を決め実装（I-20） (旧WP9.3) | 🔜着手前 |
 
 ## C6. デモ・提出物
+
+> **実装メモ**: デモデータ＝seed投入（佐倉美咲・部下7名）で録画再現性。必然性3証跡（却下→再提出を画に）必須。C6.7=実フロントスクショ5枚差替。C6.8=履歴なし新規リポ・docs全除外・実名/projectIDスクラブ。7/10厳守。
+
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | C6.1 | デモ動画台本（必然性3証跡を画に） | 審査用2.5分＋ピッチ内60秒の動画台本を作る。台本は完成、残りは録画 | 鉄田 | W1–W4（6/8–7/5） | — | 動画2本立て：①紹介2.5分／②デモ60秒。台本✅（`publishr_other/demo/動画台本/`）。**MTG 2026-06-05：①プロダクト紹介2.5分（ProtoPedia提出YouTube）を先に作る＝鉄田タスク継続／②60秒ピッチ内デモは最終選考通過後に作る想定で今は着手しない** (旧WP8.1) | 🟡台本✅・①録画優先／②保留 |
@@ -266,23 +385,25 @@ Publishr MVP（カテゴリWBS）
 | カテゴリ＼週 | W0<br>6/1–7 | W1<br>6/8–14 | W2⚡<br>6/15–21 | W3<br>6/22–28 | W4<br>6/29–7/5 | W5<br>7/6–12 |
 |---|---|---|---|---|---|---|
 | A 要件定義・設計 | A5.1 | A3.2/A5.2 | | | | |
-| B 環境・インフラ | B1.1/B2.1 | B2.2/B3.1/B3.3 | B1.2 | | B3.2/B4.1 | |
-| C1 エージェント(モードA) | | C1.0★ | C1.1-C1.3 | C1.4-C1.7 | | |
+| B 環境・インフラ | B1.1/B1.3/B2.1 | B2.2/B3.1/B3.3 | B1.2 | | B3.2/B4.1 | |
+| C0 ローカル基盤(H0) | **C0.1/C0.2✅** | | | | | |
+| C1 エージェント(モードA) | **C1.0.1✅** | C1.1-C1.3 | C1.4-C1.7 | | | |
 | C2 エージェント(モードB) | | | | C2.1-2.3 | | |
 | C3 データ基盤 | | | C3.1/3.4 | C3.2/3.3 | | |
 | C4 フロント | | | C4.1-4.3 | C4.4-4.6 | C4.7 | |
-| C5 品質・観測・運用 | | C5.1/5.7/5.8 | C5.2/5.4 | C5.9 | C5.3/5.5/5.6 | |
+| C5 品質・観測・運用 | C0.1(mock Eval)✅ | C5.1/5.7/5.8 | C5.2/5.4 | C5.9 | C5.3(GEAP)/5.5/5.6 | |
 | C6 デモ・提出 | | C6.1 | | | C6.4 | C6.2/6.3/6.5/6.6/**6.7/6.8** |
 
-## マイルストーン（実日付）
-| MS | 週・期日 | 判定 |
-|---|---|---|
-| M1 ADK疎通 | W1末（6/14頃） | C1.0★が動く（最大リスク解消） |
-| **M2 E2E縦通し** | **W2末（6/21頃）** | **Drive観測→企画→棚に並ぶ（C1.1-C1.3＋C4.2-4.3）＝全体の山場** |
-| M3 自律＋執筆 | W3末（6/28頃） | Scheduler起動＋予約→本文編集ループで読める（C1.7/C2.x/C4.4-4.6） |
-| 🔒 機能凍結 | 6/30 | 以後は品質向上・デモ磨きのみ |
-| M4 DevOps/L4 | W4末（7/5頃） | CIにEvalゲート＋Langfuse 2ループ可視化（C5.3/C5.6） |
-| M5 提出物完成 | W5（7/9頃） | 録画＋README（C6.3/C6.5） |
-| 🚩 M6 提出 | 7/10（厳守） | public化・最終提出（C6.6） |
+## マイルストーン（実日付・WBS対応）
+| MS | 主WBS | 週・期日 | 判定 |
+|---|---|---|---|
+| M0 | **C0.1/C0.2** | W0末（6/7頃） | mock回帰＋実装シーム完了（**2026-06-06 達成**） |
+| M1 | **C1.0.1** | W1末（6/14頃） | 実Vertex MiniLoop（**C1.0.1ゲート**・最大リスク解消）（**2026-06-06 達成・W0前倒し**） |
+| **M2** | **C1.1–C1.3＋C4** | **W2末（6/21頃）** | **Drive観測→企画→棚に並ぶ＝全体の山場・撤退判定点** |
+| M3 | **C1.7/C2** | W3末（6/28頃） | Scheduler起動＋予約→本文編集ループで読める |
+| 🔒 機能凍結 | — | 6/30 | 以後は品質向上・デモ磨きのみ |
+| M4 | **C5/B3** | W4末（7/5頃） | CIにEvalゲート＋Langfuse 2ループ可視化 |
+| M5 | **C6** | W5（7/9頃） | 録画＋README |
+| 🚩 M6 | **C6.6** | 7/10（厳守） | public化・最終提出 |
 
 > **遅延時の原則**: W2のM2を死守（横に作り込まず縦に細く通す）。詰まればSTEP2(C1.3)のみLangGraphへ（ADK §8）。Stretch（粒度選択/ES/ループB実装）はW5余力次第。
