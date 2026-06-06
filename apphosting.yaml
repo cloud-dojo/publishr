@@ -9,8 +9,6 @@
 # Firebase コンソール > App Hosting > 設定 > ルートディレクトリ = / (root)
 # =============================================================================
 
-rootDir: apps/web
-
 runConfig:
   # MVP はコスト最小。デモ前にウォームアップが必要なら minInstances を 1 に上げる。
   minInstances: 0
