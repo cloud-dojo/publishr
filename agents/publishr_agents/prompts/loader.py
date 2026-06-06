@@ -96,3 +96,27 @@ def load_prompt(name: str) -> PromptDoc:
         user_template=user_blocks[0] if user_blocks else None,
         good_example=good_blocks[0] if good_blocks else None,
     )
+
+
+@lru_cache
+def load_section_system(name: str, section_marker: str) -> str:
+    """複数サブを1ファイルに持つ .md（例 step2_research_subs）から、
+    `## ...<section_marker>...` 見出し配下の `**system**:` フェンスを1つ返す。"""
+    lines = _read_lines(name)
+    start = None
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s.startswith("##") and section_marker in s:
+            start = i + 1
+            break
+    if start is None:
+        raise ValueError(f"section '{section_marker}' not found in {name}.md")
+    end = len(lines)
+    for j in range(start, len(lines)):
+        if lines[j].strip().startswith("## "):
+            end = j
+            break
+    blocks = _collect_blocks(lines[start:end], _is_system_marker)
+    if not blocks:
+        raise ValueError(f"no **system** block under '{section_marker}' in {name}.md")
+    return blocks[0]
