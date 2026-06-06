@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -14,8 +15,12 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
+LOG_DIR = ROOT / ".dev-logs"
 API_BASE = "http://127.0.0.1:8000"
 WEB_PORTS = (3000, 3001, 3002)
+# Next.js 16 の dev サーバは localhost(=IPv6 ::1) に bind するため、IPv4/IPv6 両方を試す。
+# socket.create_connection に渡すのでブラケットなしの生ホスト表記にする。
+WEB_HOSTS = ("127.0.0.1", "::1")
 DEMO_USER_ID = "u_tadokoro"
 
 
@@ -44,16 +49,26 @@ def wait_for(name: str, url: str, timeout: float = 45.0) -> None:
     raise SmokeError(f"{name} did not become ready: {url}")
 
 
-def web_url(port: int) -> str:
-    return f"http://127.0.0.1:{port}"
+def web_url(host: str, port: int) -> str:
+    display_host = f"[{host}]" if ":" in host else host
+    return f"http://{display_host}:{port}"
+
+
+def port_is_open(host: str, port: int, timeout: float = 1.0) -> bool:
+    # 生存確認は TCP connect のみ。ルート `/` を GET すると Next dev(Turbopack)が
+    # 全グラフをオンデマンドコンパイルし、WSL2 ごとハングする原因になるため避ける。
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
 def find_web_url() -> str | None:
     for port in WEB_PORTS:
-        url = web_url(port)
-        status = http_status(url)
-        if status is not None and status < 500:
-            return url
+        for host in WEB_HOSTS:
+            if port_is_open(host, port):
+                return web_url(host, port)
     return None
 
 
@@ -68,26 +83,48 @@ def wait_for_web(timeout: float = 60.0) -> str:
     raise SmokeError("Web did not become ready on ports 3000-3002")
 
 
+def log_path_for(name: str) -> Path:
+    return LOG_DIR / f"{name.lower()}.log"
+
+
 def start(name: str, command: list[str], env: dict[str, str] | None = None) -> subprocess.Popen:
     print(f"Starting {name}: {' '.join(command)}")
-    return subprocess.Popen(
+    LOG_DIR.mkdir(exist_ok=True)
+    log_path = log_path_for(name)
+    log_file = log_path.open("w")
+    print(f"  {name} logs -> {log_path}")
+    process = subprocess.Popen(
         command,
         cwd=ROOT,
         env=env,
-        stdout=subprocess.DEVNULL,
+        stdout=log_file,
         stderr=subprocess.STDOUT,
         start_new_session=True,
     )
+    process.log_file = log_file  # type: ignore[attr-defined]
+    return process
+
+
+def tail(path: Path, lines: int = 20) -> str:
+    try:
+        rows = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return ""
+    return "\n".join(rows[-lines:])
 
 
 def stop(process: subprocess.Popen) -> None:
-    if process.poll() is not None:
-        return
-    os.killpg(process.pid, signal.SIGTERM)
+    log_file = getattr(process, "log_file", None)
     try:
-        process.wait(timeout=5)
-    except subprocess.TimeoutExpired:
-        os.killpg(process.pid, signal.SIGKILL)
+        if process.poll() is None:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+    finally:
+        if log_file is not None:
+            log_file.close()
 
 
 def request_json(method: str, path: str, payload: dict[str, Any] | None = None) -> Any:
@@ -174,10 +211,14 @@ def run_e2e_flow(web_base: str) -> None:
         raise SmokeError(f"feedback was not saved: {feedback}")
     print("Feedback ok: rating=5 wantsSequel=true")
 
-    web_status = http_status(web_base)
+    # Web の配信確認は public/ の静的アセットで行う。ルート `/` を GET すると
+    # Next dev(Turbopack)が全グラフをオンデマンドコンパイルし、WSL2 ごとハングする
+    # 原因になるため避ける（public 配下はコンパイル不要で即応答）。
+    web_probe = f"{web_base}/next.svg"
+    web_status = http_status(web_probe)
     if web_status is None or web_status >= 500:
-        raise SmokeError(f"web is not serving successfully: status={web_status}")
-    print(f"Web ok: {web_base} status={web_status}")
+        raise SmokeError(f"web is not serving successfully: status={web_status} ({web_probe})")
+    print(f"Web ok: {web_probe} status={web_status}")
 
 
 def main() -> int:
@@ -191,6 +232,11 @@ def main() -> int:
     except Exception as error:
         print("")
         print(f"Local E2E smoke failed: {error}", file=sys.stderr)
+        for name, _process in started:
+            log_tail = tail(log_path_for(name))
+            if log_tail:
+                print(f"\n--- {name} log tail ({log_path_for(name)}) ---", file=sys.stderr)
+                print(log_tail, file=sys.stderr)
         return 1
     finally:
         for _name, process in reversed(started):
