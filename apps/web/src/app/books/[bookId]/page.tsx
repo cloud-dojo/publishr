@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { BookCover } from "@/components/book/BookCover";
+import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
 import { useActions, useProvider } from "@/data/hooks";
 
@@ -83,10 +84,6 @@ export default function BookDetailPage() {
         </div>
 
         <div>
-          <div className="badge badge--new" style={{ alignSelf: "flex-start", marginBottom: 18 }}>
-            <span className="pulse" />
-            今朝、あなたのために入荷
-          </div>
           <div className="pitch-title">{book.title}</div>
           <div className="pitch-author">
             {persona?.name}
@@ -126,24 +123,8 @@ export default function BookDetailPage() {
                   アジェンダ<span className="accent">（目次）</span>
                 </div>
               </div>
-              <div className="right">
-                <div className="segment">
-                  <button className="on">フル版</button>
-                  <button>要約版</button>
-                  <button>ここだけ</button>
-                </div>
-              </div>
             </div>
-            {book.agenda.map((item) => (
-              <div key={item.no} className={`agenda-item ${item.locked ? "locked" : ""}`}>
-                <div className="ag-no">{item.no}</div>
-                <div>
-                  <div className="ag-t">{item.title}</div>
-                  <div className="ag-d">{item.desc}</div>
-                </div>
-                {item.note && <div className="ag-lock">{item.note}</div>}
-              </div>
-            ))}
+            <BookToc book={book} />
           </div>
 
           {prefaceParagraphs.length > 0 && (

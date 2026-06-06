@@ -52,3 +52,7 @@ docs/**/*.pdf
 coverage/
 htmlcov/
 .coverage
+
+# Claude Code 内部ファイル
+.agents/
+skills-lock.json

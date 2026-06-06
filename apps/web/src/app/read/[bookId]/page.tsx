@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import type { Granularity, ReadingAnnotation } from "@publishr/shared-schema";
+import type { Granularity, HighlightColor, ReadingAnnotation } from "@publishr/shared-schema";
 
 import { Topbar } from "@/components/shell/Topbar";
 import { applyGranularity, parseBook, splitChapter } from "@/data/bookText";
@@ -25,7 +25,63 @@ const FONT_STEPS = [
 ];
 const PAGE_GAP = 72;
 const BASE_FONT = 16;
-const SPREAD_MIN = 640; // クリップ幅がこれ以上なら二面見開き
+const SPREAD_MIN = 640;
+
+const HL_COLORS: { value: HighlightColor; label: string }[] = [
+  { value: "yellow", label: "黄" },
+  { value: "blue",   label: "青" },
+  { value: "pink",   label: "桃" },
+];
+
+// 段落内のハイライトをレンジ別に描画するヘルパー
+function renderParaContent(
+  text: string,
+  highlights: ReadingAnnotation[],
+  onMarkClick: (e: React.MouseEvent<HTMLElement>, annId: string) => void
+): React.ReactNode {
+  if (highlights.length === 0) return text;
+
+  // startOffset が未設定（旧形式）= 段落全体ハイライト
+  const legacy = highlights.find((a) => typeof a.startOffset !== "number");
+  if (legacy) {
+    return (
+      <mark
+        className={`hl hl-${legacy.color ?? "yellow"}`}
+        data-ann-id={legacy.id}
+        onClick={(e) => { e.stopPropagation(); onMarkClick(e, legacy.id); }}
+      >
+        {text}
+      </mark>
+    );
+  }
+
+  // ranged highlights: 重複を除外し startOffset 順にソート
+  const sorted = [...highlights]
+    .filter((a) => typeof a.startOffset === "number")
+    .sort((a, b) => (a.startOffset ?? 0) - (b.startOffset ?? 0));
+
+  const segments: React.ReactNode[] = [];
+  let pos = 0;
+  for (const ann of sorted) {
+    const start = Math.max(pos, ann.startOffset ?? 0);
+    const end = Math.min(ann.endOffset ?? text.length, text.length);
+    if (start >= end) continue;
+    if (pos < start) segments.push(text.slice(pos, start));
+    segments.push(
+      <mark
+        key={ann.id}
+        className={`hl hl-${ann.color ?? "yellow"}`}
+        data-ann-id={ann.id}
+        onClick={(e) => { e.stopPropagation(); onMarkClick(e, ann.id); }}
+      >
+        {text.slice(start, end)}
+      </mark>
+    );
+    pos = end;
+  }
+  if (pos < text.length) segments.push(text.slice(pos));
+  return <>{segments}</>;
+}
 
 export default function ReaderPage() {
   const params = useParams<{ bookId: string }>();
@@ -39,18 +95,22 @@ export default function ReaderPage() {
   const [colsPerView, setColsPerView] = useState(1);
   const [stride, setStride] = useState(1);
   const [turning, setTurning] = useState(false);
-  const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [reaction, setReaction] = useState<"good" | "bad" | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const [fontStep, setFontStep] = useState(1);
   const [chapterMarks, setChapterMarks] = useState<{ col: number; label: string }[]>([]);
   const [draftAnnotations, setDraftAnnotations] = useState<ReadingAnnotation[] | null>(null);
 
+  // ハイライトポップアップ: クリックしたハイライトの annId と表示座標
+  const [hlPopup, setHlPopup] = useState<{ annId: string; x: number; y: number } | null>(null);
+
   const viewportRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
   const flowRef = useRef<HTMLDivElement>(null);
   const spreadsRef = useRef(1);
+  const strideRef = useRef(1);
   const navigatedRef = useRef(false);
+  const jumpedRef = useRef(false);
 
   const recompute = useCallback(() => {
     const clip = clipRef.current;
@@ -69,6 +129,7 @@ export default function ReaderPage() {
     setSpreads(sp);
     spreadsRef.current = sp;
     setStride(n * colPitch);
+    strideRef.current = n * colPitch;
     setView((v) => Math.min(v, sp - 1));
     const openers = Array.from(flow.querySelectorAll<HTMLElement>(".rd-opener"));
     setChapterMarks(
@@ -76,12 +137,28 @@ export default function ReaderPage() {
     );
   }, []);
 
-  // 内容・フォント・章精度の変化で再ページ分割
   useLayoutEffect(() => {
     recompute();
+    // 目次/ハイライト一覧から ?ch=<章index> / ?pi=<段落index> 付きで来たら、その箇所のページへ一度だけ移動。
+    if (jumpedRef.current) return;
+    const flow = flowRef.current;
+    if (!flow) return;
+    const q = new URLSearchParams(window.location.search);
+    const piParam = q.get("pi");
+    const chParam = q.get("ch");
+    let el: HTMLElement | null = null;
+    if (piParam != null) {
+      el = flow.querySelector<HTMLElement>(`[data-pi="${CSS.escape(piParam)}"]`);
+    } else if (chParam != null) {
+      el = flow.querySelectorAll<HTMLElement>(".rd-opener")[Number(chParam)] ?? null;
+    }
+    if (el) {
+      const v = Math.max(0, Math.min(spreadsRef.current - 1, Math.floor(el.offsetLeft / strideRef.current)));
+      setView(v);
+      jumpedRef.current = true;
+    }
   }, [recompute, params.bookId, book?.body, book?.granularity, fontStep]);
 
-  // リサイズ追従
   useEffect(() => {
     const vp = viewportRef.current;
     if (!vp || typeof ResizeObserver === "undefined") return;
@@ -97,7 +174,6 @@ export default function ReaderPage() {
     window.setTimeout(() => setTurning(false), 170);
   }, []);
 
-  // キーボード ←/→
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") go(1);
@@ -107,7 +183,6 @@ export default function ReaderPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [go]);
 
-  // 進捗の保存（めくった後のみ）
   useEffect(() => {
     if (!book || !navigatedRef.current) return;
     const pct = Math.round((Math.min((view + 1) * colsPerView, totalCols) / totalCols) * 100);
@@ -116,6 +191,18 @@ export default function ReaderPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, totalCols, colsPerView]);
+
+  // ポップアップ外クリックで閉じる
+  useEffect(() => {
+    if (!hlPopup) return;
+    const handler = (e: MouseEvent) => {
+      const popup = document.querySelector(".hl-popup");
+      if (popup?.contains(e.target as Node)) return;
+      setHlPopup(null);
+    };
+    window.addEventListener("mousedown", handler);
+    return () => window.removeEventListener("mousedown", handler);
+  }, [hlPopup]);
 
   if (!book) {
     return (
@@ -139,44 +226,84 @@ export default function ReaderPage() {
   const currentChapter =
     [...chapterMarks].reverse().find((m) => m.col <= leftCol)?.label || book.subtitle || "";
 
-  const hasMark = (kind: ReadingAnnotation["kind"], pi: number) =>
-    annotations.some((a) => a.kind === kind && a.paragraphIndex === pi);
-  const paraText = (pi: number) => {
-    const b = allBlocks.find((x) => x.kind === "para" && x.pi === pi);
-    return b && b.kind === "para" ? b.text : "";
-  };
-
+  // --- annotation helpers ---
   const persist = (next: ReadingAnnotation[]) => {
     setDraftAnnotations(next);
     void updateReadingState(book.id, { granularity: book.granularity, annotations: next });
   };
-  const toggleHighlight = (pi: number, text: string) => {
-    setSelectedPara(pi);
-    const next = hasMark("highlight", pi)
-      ? annotations.filter((a) => !(a.kind === "highlight" && a.paragraphIndex === pi))
-      : [
-          ...annotations,
-          { id: `ann_${book.id}_h${pi}`, kind: "highlight", paragraphIndex: pi, text: text.slice(0, 48), note: null } as ReadingAnnotation,
-        ];
-    persist(next);
+
+  // 段落のハイライト一覧
+  const paraHighlights = (pi: number) =>
+    annotations.filter((a) => a.kind === "highlight" && a.paragraphIndex === pi);
+
+  // ドラッグ選択 → ハイライト生成
+  const onFlowMouseUp = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+
+    const range = sel.getRangeAt(0);
+    const selectedText = sel.toString().trim();
+    if (!selectedText) { sel.removeAllRanges(); return; }
+
+    // 選択開始位置の <p data-pi="..."> を探す
+    const findPara = (node: Node): HTMLElement | null => {
+      let curr: Node | null = node;
+      while (curr) {
+        if (curr instanceof HTMLElement && curr.tagName === "P" && curr.getAttribute("data-pi") !== null) {
+          return curr;
+        }
+        curr = curr.parentNode;
+      }
+      return null;
+    };
+
+    const startPara = findPara(range.startContainer);
+    if (!startPara) { sel.removeAllRanges(); return; }
+
+    const pi = parseInt(startPara.getAttribute("data-pi") ?? "-1", 10);
+    if (pi < 0) { sel.removeAllRanges(); return; }
+
+    // 段落先頭からの文字オフセットを計算
+    const preRange = document.createRange();
+    preRange.setStart(startPara, 0);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const startOffset = preRange.toString().length;
+    const endOffset = startOffset + selectedText.length;
+
+    const annId = `ann_${book.id}_h${pi}_${startOffset}_${Date.now()}`;
+    const newAnn: ReadingAnnotation = {
+      id: annId,
+      kind: "highlight",
+      paragraphIndex: pi,
+      text: selectedText.slice(0, 48),
+      note: null,
+      color: "yellow",
+      startOffset,
+      endOffset,
+    };
+
+    persist([...annotations, newAnn]);
+    sel.removeAllRanges();
   };
-  const addMark = (kind: ReadingAnnotation["kind"]) => {
-    const pi = selectedPara ?? 0;
-    if (hasMark(kind, pi)) {
-      persist(annotations.filter((a) => !(a.kind === kind && a.paragraphIndex === pi)));
-      return;
-    }
-    persist([
-      ...annotations,
-      {
-        id: `ann_${book.id}_${kind}${pi}`,
-        kind,
-        paragraphIndex: pi,
-        text: paraText(pi).slice(0, 48),
-        note: kind === "note" ? "ここ、次に活かす。" : kind === "bookmark" ? "あとで読み返す" : null,
-      },
-    ]);
+
+  // ハイライト → ポップアップ表示
+  const onMarkClick = (e: React.MouseEvent<HTMLElement>, annId: string) => {
+    setHlPopup({ annId, x: e.clientX, y: e.clientY });
   };
+
+  // 色変更
+  const changeHlColor = (annId: string, color: HighlightColor) => {
+    persist(annotations.map((a) => (a.id === annId ? { ...a, color } : a)));
+    setHlPopup(null);
+  };
+
+  // ハイライト削除
+  const deleteHighlight = (annId: string) => {
+    persist(annotations.filter((a) => a.id !== annId));
+    setHlPopup(null);
+  };
+
+  // フィードバック
   const setReactionFB = (value: string | null) => {
     void sendFeedback(book.id, { readingReaction: value });
   };
@@ -240,6 +367,34 @@ export default function ReaderPage() {
         </div>
       </header>
 
+      {/* ハイライト操作ポップアップ */}
+      {hlPopup && (
+        <div
+          className="hl-popup"
+          style={{ left: hlPopup.x, top: hlPopup.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {HL_COLORS.map(({ value, label }) => (
+            <button
+              key={value}
+              className={`hl-popup-swatch hl-popup-swatch--${value}`}
+              title={label}
+              onClick={() => changeHlColor(hlPopup.annId, value)}
+              aria-label={`色を${label}に変更`}
+            />
+          ))}
+          <div className="hl-popup-sep" />
+          <button
+            className="hl-popup-delete"
+            title="削除"
+            onClick={() => deleteHighlight(hlPopup.annId)}
+            aria-label="ハイライトを削除"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="reading">
         <div className="rd-stage">
           <button
@@ -269,6 +424,7 @@ export default function ReaderPage() {
                   transform: `translateX(-${view * stride}px)`,
                   fontSize: `${BASE_FONT * FONT_STEPS[fontStep].scale}px`,
                 }}
+                onMouseUp={onFlowMouseUp}
               >
                 {blocks.map((b, i) => {
                   if (b.kind === "chapter") {
@@ -281,18 +437,14 @@ export default function ReaderPage() {
                       </section>
                     );
                   }
+                  const pHighlights = paraHighlights(b.pi);
                   return (
                     <p
                       key={`p${b.pi}`}
                       data-pi={b.pi}
-                      className={`${b.lead ? "lead " : ""}${selectedPara === b.pi ? "sel" : ""}`}
-                      onClick={() => toggleHighlight(b.pi, b.text)}
+                      className={b.lead ? "lead" : ""}
                     >
-                      {hasMark("highlight", b.pi) ? (
-                        <mark className={`hl${hasMark("note", b.pi) ? " note" : ""}`}>{b.text}</mark>
-                      ) : (
-                        b.text
-                      )}
+                      {renderParaContent(b.text, pHighlights, onMarkClick)}
                     </p>
                   );
                 })}
@@ -324,30 +476,23 @@ export default function ReaderPage() {
         </div>
 
         <aside className="rail-tools">
-          <div className="tool-card panel">
-            <div className="tc-h">
-              <span className="k">✎</span> このページの操作
-            </div>
-            <div className="tool-actions">
-              <button
-                className={`icon-btn${selectedPara !== null && hasMark("highlight", selectedPara) ? " on" : ""}`}
-                type="button"
-                title="選択中の段落をハイライト"
-                onClick={() => selectedPara !== null && toggleHighlight(selectedPara, paraText(selectedPara))}
-              >
-                🖊
-              </button>
-              <button className="icon-btn" type="button" title="付箋" onClick={() => addMark("note")}>
-                🏷
-              </button>
-              <button className="icon-btn" type="button" title="栞" onClick={() => addMark("bookmark")}>
-                🔖
-              </button>
-            </div>
-            <div className="muted" style={{ fontSize: 11.5, marginTop: 10, lineHeight: 1.5 }}>
-              本文の段落をクリックすると、その段落にハイライトを引けます（もう一度で解除）。付箋・栞は選択中の段落に付きます。
-            </div>
-          </div>
+          <nav className="tool-card panel rd-nav-card">
+            <Link href={`/read/${book.id}/contents`} className="rd-navrow">
+              <span className="rd-navrow-ico">☰</span>
+              <span className="rd-navrow-label">目次</span>
+              <span className="rd-navrow-arrow">›</span>
+            </Link>
+            <Link href={`/read/${book.id}/highlights`} className="rd-navrow">
+              <span className="rd-navrow-ico">✎</span>
+              <span className="rd-navrow-label">ハイライト</span>
+              <span className="rd-navrow-arrow">›</span>
+            </Link>
+            <Link href={`/books/${book.id}`} className="rd-navrow">
+              <span className="rd-navrow-ico">◈</span>
+              <span className="rd-navrow-label">本の概要</span>
+              <span className="rd-navrow-arrow">›</span>
+            </Link>
+          </nav>
 
           <div className="tool-card panel">
             <div className="tc-h">

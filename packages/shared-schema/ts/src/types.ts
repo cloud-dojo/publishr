@@ -10,6 +10,7 @@ export type BookStatus = "draft" | "reserved" | "writing" | "published";
 export type Shelf = "arrivals" | "press" | "odd" | "library";
 export type Granularity = "full" | "summary" | "excerpt";
 export type AnnotationKind = "highlight" | "note" | "bookmark";
+export type HighlightColor = "yellow" | "blue" | "pink";
 export type Verdict = "採用" | "却下" | "保留";
 export type ThemeKind = "honmei" | "serendipity";
 export type Decision = "approve" | "revise";
@@ -181,6 +182,10 @@ export interface ReadingAnnotation {
   paragraphIndex: number;
   text: string;
   note?: string | null;
+  // ハイライト用（省略時は段落全体、後方互換）
+  color?: HighlightColor;
+  startOffset?: number;
+  endOffset?: number;
 }
 
 export interface Book {

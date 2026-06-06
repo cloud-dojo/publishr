@@ -44,6 +44,22 @@ export function splitChapter(heading: string): { no: string; title: string } {
   return { no: "", title: heading.trim() };
 }
 
+/** 本文（body）から実際の章一覧を導出する。index は reader の .rd-opener 並び順と一致。 */
+export function bookChapters(
+  body: string | null | undefined
+): { no: string; title: string; index: number }[] {
+  const out: { no: string; title: string; index: number }[] = [];
+  let index = 0;
+  for (const b of parseBook(body)) {
+    if (b.kind === "chapter") {
+      const { no, title } = splitChapter(b.text);
+      out.push({ no: no || `${index + 1}`, title: title || b.text, index });
+      index++;
+    }
+  }
+  return out;
+}
+
 /** 段落番号 pi が属する章名を返す（無ければ ""）。 */
 export function chapterForPara(body: string | null | undefined, pi: number): string {
   for (const b of parseBook(body)) {
