@@ -1,0 +1,44 @@
+# =============================================================================
+# Firebase App Hosting 設定（リポジトリルート版・モノレポ対応）
+# -----------------------------------------------------------------------------
+# モノレポ構成のため apphosting.yaml をリポジトリルートに置き、rootDir で
+# Next.js アプリのサブディレクトリを指定する。
+# これにより npm install がリポジトリルートで実行され、
+# package-lock.json と @publishr/shared-schema が正しく解決される。
+#
+# Firebase コンソール > App Hosting > 設定 > ルートディレクトリ = / (root)
+# =============================================================================
+
+rootDir: apps/web
+
+runConfig:
+  # MVP はコスト最小。デモ前にウォームアップが必要なら minInstances を 1 に上げる。
+  minInstances: 0
+  maxInstances: 2
+
+env:
+  # --- 当面は mock データで公開（フェーズ1）。Firestore 接続後に firestore へ切替 ---
+  - variable: NEXT_PUBLIC_DATA_SOURCE
+    value: mock
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # --- フェーズ4: Cloud Run API のベースURL（友人のデプロイ後に設定） ---
+  # - variable: NEXT_PUBLIC_API_URL
+  #   value: https://publishr-api-xxxxx.a.run.app
+  #   availability: [BUILD, RUNTIME]
+
+  # --- フェーズ3: Firebase クライアント設定（公開キー・コミット可） ---
+  # - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+  #   value: "AIza..."
+  #   availability: [BUILD, RUNTIME]
+  # - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+  #   value: publishr-498123.firebaseapp.com
+  #   availability: [BUILD, RUNTIME]
+  # - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  #   value: publishr-498123
+  #   availability: [BUILD, RUNTIME]
+  # - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+  #   value: "1:...:web:..."
+  #   availability: [BUILD, RUNTIME]
