@@ -125,6 +125,32 @@
 
 ---
 
+## 日次ログ（ざっくり・2026-06-06〜07）
+
+> W0（6/1–7）の締め2日。**鉄田＋エージェント作業**。クラウド課金は **C1.0.1 の MiniLoop 手動実行時のみ**（`PUBLISHR_LLM=vertex`）。mock床・放置中のローカル dev は課金なし。
+
+### 2026-06-06（土）
+
+| 領域 | やったこと | WBS |
+|---|---|---|
+| **C0** | **C0.2 完了** — v2 I/O schema・prompt loader/registry/render・`PUBLISHR_LLM` dispatcher・dev/prod実行プロファイル・コストガード。mock挙動差分ゼロ | C0.2 |
+| **B** | **B1.3 完了** — GCP runbook 追加→STEP A 実態確認→Vertex Gemini 疎通スモーク成功。台帳 `gcp-setup-log.md` 更新（gap＝OAuth Secrets 未登録は残） | B1.3 |
+| **設計/docs** | `security-data-handling.md` 新設。Cloud Run 公開前ゲート（G1-21）方針確定。旧 Phase 表記を WBS ID へ置換開始 | A2/B1 |
+| **C1** | **C1.0.1（H2）完了** — 実Vertex MiniLoop（調査サブ＋owner/leader Loop＋escalate）。`run_miniloop.py`・`observability.py`（Langfuse SDK）・`test_miniloop_vertex.py`。差し戻し→再提出→採用を実証（threshold 操作で両パターン確認） | C1.0.1 |
+| **検証** | mock床 全緑 — `make verify`（58 passed, 1 skipped）／`make eval`／`make pipeline`／`make smoke` | C0.1 |
+
+### 2026-06-07（日）
+
+| 領域 | やったこと | WBS |
+|---|---|---|
+| **docs** | **WBS 正本を 2026-06-07 版に更新** — C1.0.1 完了・M1 前倒し達成・次着手＝C1.1以降を明記。`docs-replicated-bonbon.md` を wbs への移管案内に整理。infra 台帳/runbook の Phase→WBS ID 統一 | 全体 |
+| **C0** | P0b 残りを補完 — `runtime.py`（コストガード）・`.env.example` 実行プロファイル項目・BFF `config.py` ＋単体テスト | C0.2 |
+| **運用** | ローカル dev サーバ（uvicorn/next）が数日分残存していることを確認。**GCP課金は発生していない**（`PUBLISHR_LLM=mock` 既定） | — |
+
+**W0の成果（2日で通したゲート）**: C0.1 → C0.2 → B1.3 → **C1.0.1★**（M1 前倒し）。**W1（6/8〜）の最初の山**＝C1.1 観測 ＋ B3.3 App Hosting 連携。
+
+---
+
 ## WBS 全体ツリー（カテゴリ主役）
 ```
 Publishr MVP（カテゴリWBS）
