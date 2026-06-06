@@ -40,6 +40,9 @@
 - API呼び出しは HTTPヘッダに **Firebase ID トークン**を載せる：`Authorization: Bearer <Firebase ID token>`。
 - バックは Firebase Admin SDK で**トークン検証 → `uid` 取得**。`uid` をサーバ側でユーザー識別に使う（**クライアントが渡す userId は信用しない**＝なりすまし防止）。
 - 失敗時：未検証トークン＝`401`、権限不一致＝`403`。
+- **Cloud Run を公開する前の必須条件**: `/healthz` 等の公開メタAPIを除き、全APIで上記トークン検証を `Depends` 等の共通依存に集約して通す。現在の `apps/api` のmock BFFはこの検証が未実装のため、未認証のままCloud Run公開・`PUBLISHR_LLM=vertex` 運用に進まない。
+- **CORSは認可ではない**。App Hostingドメインだけを許可しても、API単体へ直接リクエストされる前提でサーバ側認証・所有者チェック・コスト上限を必ず実装する。
+- **Vertex AIの防御線**: Vertexを直接公開するのではなく、Cloud Runのサービスアカウントだけに `roles/aiplatform.user` を付与する。アプリ側はFirebase `uid` 検証・許可uid・レート制限で、公開API経由の間接的なVertex濫用を防ぐ。
 
 ```
 共通エラー形式
@@ -161,17 +164,20 @@ await updateDoc(doc(db, "users", uid), { favoriteAuthors: arrayRemove(existingEn
 
 初回に観測3ソースへのアクセス同意を取り、リフレッシュトークンをサーバに保存する。スコープは `drive.file` / `calendar.readonly` / `tasks.readonly`（demo/README・テストモード）。
 
+> **セキュリティ前提**: OAuth連携APIはユーザーのGoogleデータと長期refresh tokenを扱うため、`GET /api/auth/google/start` も `callback` もFirebase `uid` と紐づけて処理する。`state` は短命・署名付き・uid紐付きにし、検証できないcallbackは `401/403` で中断する。refresh token・access token・認可コードはログに出さない。
+
 ### 4-1. `GET /api/auth/google/start`
 - Header: `Authorization: Bearer <Firebase ID token>`
-- 処理：Google OAuth同意画面へのリダイレクトURLを生成（`state`にCSRF対策トークン、`access_type=offline`でrefresh_token取得、対象3スコープを要求）。
+- 処理：Firebase IDトークン検証 → `uid` 取得 → Google OAuth同意画面へのリダイレクトURLを生成（`state`にCSRF対策トークン、`access_type=offline`でrefresh_token取得、対象3スコープを要求）。
 - Response（200）：`{ "authUrl": "https://accounts.google.com/o/oauth2/v2/auth?..." }`（フロントはこのURLへ遷移）。
 
 ### 4-2. `GET /api/auth/google/callback`
 - Googleからのリダイレクト受け口（`?code=...&state=...`）。
-- 処理：`state`検証 → 認可コードをトークンに交換 → **refresh_token を Secret Manager に保存**（G1-5＝Secret Managerで確定済・2026-06-03。生トークンを平文でFirestoreに置かない）→ `users/{uid}.connectedSources.{drive,calendar,tasks}.enabled=true` を更新。
+- 処理：`state`検証 → `uid` 復元 → 認可コードをトークンに交換 → **refresh_token を Secret Manager に保存**（G1-5＝Secret Managerで確定済・2026-06-03。生トークンを平文でFirestoreに置かない）→ `users/{uid}.connectedSources.{drive,calendar,tasks}.enabled=true` を更新。
 - Response：フロントの設定完了画面へリダイレクト。
 
 > **保存先＝Secret Manager で確定**（G1-5・`open-issues.md` 決着ログ／`infra/gcp-setup-log.md`）。MVPは個人＋テストモードのため当人のトークン1組で足りる。
+> **Driveの最小権限**: `drive.file` はアプリがDrive全体を走査できない前提で使う。観測対象はGoogle Pickerでユーザーが選んだフォルダ/ファイルIDに限定し、`connectedSources.drive.folderIds[]` はサーバ書き込み・本人readにする。
 
 ---
 

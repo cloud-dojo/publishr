@@ -39,7 +39,7 @@ publishr/
 ├─ scripts/                ← ローカル開発・Evalハーネス ★コード
 └─ docs/
    ├─ README.md            ← 本書（正本マップ）
-   ├─ design/              ← 設計仕様（10MD）
+   ├─ design/              ← 設計仕様（11MD）
    ├─ planning/            ← 役割分担/運用・着手チェックリスト・未決論点台帳・WBS・マスタースケジュール
    ├─ infra/               ← CICD設計・GCP環境構築ログ
    └─ ui/                  ← UI仕様書＋mockups/
@@ -49,7 +49,7 @@ publishr/
 
 ## ファイル一覧
 
-### design/（設計仕様・10MD）
+### design/（設計仕様・11MD）
 | ファイル | 役割 | いつ見るか |
 |---|---|---|
 | `design/concept-summary.md` | 構想（なぜ／価値／新規性／UX） | テーマの背景・ストーリー確認 |
@@ -60,6 +60,7 @@ publishr/
 | `design/adk-control-flow.md` | ADK制御フロー（エージェント木・編集ループ・state） | エージェント実装 |
 | `design/api-contract.md` | フロント⇔バック境界（認証・登録・予約・OAuth・トリガー） | フロント/API実装 |
 | `design/firestore-security-rules.md` | Firestoreルール（所有権・直書き範囲） | Firestore実装 |
+| `design/security-data-handling.md` | 保存対象・保存場所・インシデント予防策 | Cloud Run/Firestore/Vertex公開前 |
 | `design/cost-estimate.md` | LLM/Imagenコスト概算・上限ガード | 予算管理 |
 | `design/langfuse-tracing.md` | トレース設計（企画スコア・編集ループ・grounding） | Observability計装 |
 

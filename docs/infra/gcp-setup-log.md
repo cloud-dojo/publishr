@@ -152,3 +152,20 @@
 
 ### 後回し（P1では作らない・P3〜P6）
 - Cloud Run サービス / Cloud Run Job（曜日別×3）/ Cloud Scheduler / Pub/Sub `book-writing` / Artifact Registry リポジトリ / Firebase App Hosting backend / OAuth 本番リダイレクトURI 追記。
+
+## セキュリティ再確認（2026-06-06）
+
+> 目的: Google Tasks/Drive連携とVertex AIの公開境界を、P4以降のCloud Run公開前に再確認した結果。結論として、**GCP IAM上はVertex AIが誰でも直接叩ける状態ではない**。一方で、アプリAPI側の認証未実装のままCloud Run公開・Vertex接続に進むと、公開API経由で間接的にVertexコストを発生させるリスクがある。
+
+### ✅ 確認できたこと
+- Project IAMで `roles/aiplatform.user` は `publishr-runner@publishr-498123.iam.gserviceaccount.com` のみ。`allUsers` / `allAuthenticatedUsers` へのVertex権限付与は見えない。
+- `publishr-runner` のサービスアカウントキーは system-managed のみ（user-managed keyなし）。
+- `asia-northeast1` / `asia-east1` のCloud Run service、`asia-northeast1` のCloud Run Jobは未作成。現時点で公開Cloud Run APIは存在しない。
+- リポジトリ上は `.env` がgit管理外で、サービスアカウントJSONや秘密値ファイルは追跡されていない。
+
+### ⚠️ 要対応
+- `apps/api` の現行mock BFFはFirebase IDトークン検証が未実装。`/healthz` 以外のAPIをCloud Run公開する前に、共通依存で `Authorization: Bearer <Firebase ID token>` を検証し、サーバ側で `uid` を確定する。
+- `/pipeline/run` や将来の `/api/trigger/planning` は、bodyの `userId` を信用しない。トークン由来の `uid` と、デモ用許可uidリストで認可する。
+- OAuth `start/callback` は未実装。実装時は短命・署名付き・uid紐付き `state`、refresh tokenのSecret Manager保存、トークン/認可コードのログ出力禁止を必須にする。
+- `firestore.rules` 実ファイルは未作成。Firestore直読み/直書きを有効化する前に、`docs/design/firestore-security-rules.md` を実ファイル化・デプロイ・emulator testで検証する。
+- `publishr-ci-deployer` に user-managed key が1本ある。GitHub Secrets運用は可能だが、漏えい時の影響が大きいため、可能ならWorkload Identity Federationへ移行、難しければ短期ローテーション方針を置く。

@@ -23,6 +23,7 @@ venv/
 .env.*.local
 *.key.json
 service-account*.json
+local-cost-guard/
 
 # Docs 共有方針: design/ui/infra/planning + README を共有。ピッチ/demo台本/WBS は Drive 管理（repo外）
 .github/CODEOWNERS
