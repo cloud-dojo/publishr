@@ -54,6 +54,9 @@ coverage/
 htmlcov/
 .coverage
 
+# ローカル起動スクリプト(make smoke / make dev)の子プロセスログ
+.dev-logs/
+
 # Claude Code 内部ファイル
 .agents/
 skills-lock.json
