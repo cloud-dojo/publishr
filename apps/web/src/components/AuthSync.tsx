@@ -19,10 +19,10 @@ export function AuthSync() {
   useEffect(() => {
     // watchAuth は onAuthStateChanged のラッパー。unsubscribe 関数を返す。
     return watchAuth((user) => {
-      const provider = getProvider();
       // FirestoreProvider のみ setOwnerUid を持つ。他プロバイダは no-op。
-      if ("setOwnerUid" in provider && typeof (provider as any).setOwnerUid === "function") {
-        (provider as any).setOwnerUid(user?.uid ?? null);
+      const provider = getProvider() as { setOwnerUid?: (uid: string | null) => void };
+      if (typeof provider.setOwnerUid === "function") {
+        provider.setOwnerUid(user?.uid ?? null);
       }
     });
   }, []);

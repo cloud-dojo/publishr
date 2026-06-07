@@ -19,7 +19,27 @@ export function currentUid(): string {
 const LS = {
   profile: (uid: string) => `publishr.initialProfile.${uid}`,
   sources: (uid: string) => `publishr.connectedSources.${uid}`,
+  firstRun: (uid: string) => `publishr.firstRun.${uid}`,
 };
+
+// --- 初回体験ステータス（localStorage・uid別） ---
+// "generating": 登録直後、最初の本棚を生成中。 "ready": 初回入荷完了。
+// null: 未登録 or 既存ユーザー（通常表示）。Firestore ルールは users の
+// 任意フィールド書込を許さないため localStorage で持つ（デモ/初回導線用）。
+export type FirstRunStatus = "generating" | "ready";
+
+export function getFirstRunStatus(uidOverride?: string): FirstRunStatus | null {
+  if (typeof window === "undefined") return null;
+  const uid = uidOverride ?? currentUid();
+  const raw = window.localStorage.getItem(LS.firstRun(uid));
+  return raw === "generating" || raw === "ready" ? raw : null;
+}
+
+export function setFirstRunStatus(status: FirstRunStatus, uidOverride?: string): void {
+  if (typeof window === "undefined") return;
+  const uid = uidOverride ?? currentUid();
+  window.localStorage.setItem(LS.firstRun(uid), status);
+}
 
 // --- 初期プロフィール（localStorageキャッシュ＋Firestore） ---
 // localStorage に必ずキャッシュする（getInitialProfile が読む先＝アカウント反映の正）。

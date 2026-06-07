@@ -49,6 +49,12 @@ docs/**/*.pdf
 .vscode/
 .claude/
 
+# Firebase エミュレータのデバッグログ
+firebase-debug.log
+firestore-debug.log
+*-debug.log
+firebase-export-*/
+
 # Build / coverage
 coverage/
 htmlcov/

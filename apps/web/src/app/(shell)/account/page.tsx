@@ -308,6 +308,7 @@ export default function AccountPage() {
     tasks: false,
   });
   // uid 確定後（auth解決後）にそのユーザーの連携状態を読み込む。
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setConnected(getConnectedSources()), [uid]);
   const toggleSource = (key: ConnectSource) => {
     const next = !connected[key];
