@@ -119,6 +119,12 @@ class FirestoreRepository:
         doc = self._db.collection(self._PERSONAS).document(persona_id).get()
         return self._to_persona(doc) if doc.exists else None
 
+    def upsert_persona(self, persona: Persona) -> Persona:
+        """生成著者を personas コレクションへ保存（ownerUid なし・全員読める設計）。"""
+        data = persona.model_dump(by_alias=True, exclude_none=True)
+        self._db.collection(self._PERSONAS).document(persona.id).set(data)
+        return persona
+
     # ── users ──────────────────────────────────────────────────────────────
 
     def list_users(self) -> list[User]:

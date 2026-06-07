@@ -55,6 +55,10 @@ class MockRepository:
     def get_persona(self, persona_id: str) -> Optional[Persona]:
         return self._personas.get(persona_id)
 
+    def upsert_persona(self, persona: Persona) -> Persona:
+        self._personas[persona.id] = persona
+        return persona
+
     def list_users(self) -> list[User]:
         return list(self._users.values())
 
