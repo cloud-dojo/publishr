@@ -68,6 +68,19 @@ export function getConnectedSources(): Record<ConnectSource, boolean> {
   return raw ? { ...empty, ...(JSON.parse(raw) as Record<ConnectSource, boolean>) } : empty;
 }
 
+/**
+ * デモ用の連携トグル：localStorage のみに保存する（実OAuth未実装のMVP）。
+ * Firestore の connectedSources はサーバ（Admin）が書く前提でルール上クライアント
+ * 書き込みが禁止されているため、ここでは Firestore に触れない。
+ */
+export function setSourceConnectedLocal(source: ConnectSource, enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  const uid = currentUid();
+  const cur = getConnectedSources();
+  cur[source] = enabled;
+  window.localStorage.setItem(LS.sources(uid), JSON.stringify(cur));
+}
+
 // --- お気に入り著者（Firestore直書き・arrayUnion/Remove） ---
 export interface FavoriteAuthorEntry {
   personaId: string;

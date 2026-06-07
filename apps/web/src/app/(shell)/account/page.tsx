@@ -14,12 +14,18 @@ import {
   serendipityOptions,
   type InitialProfileInput,
 } from "@/data/profileOptions";
-import { getInitialProfile, saveInitialProfile } from "@/data/user-writes";
+import {
+  getConnectedSources,
+  getInitialProfile,
+  saveInitialProfile,
+  setSourceConnectedLocal,
+  type ConnectSource,
+} from "@/data/user-writes";
 
-const CONNECTED = [
-  { name: "Google Drive", icon: "📁" },
-  { name: "Google Calendar", icon: "📅" },
-  { name: "Google Tasks", icon: "✓" },
+const CONNECTED: { key: ConnectSource; name: string; icon: string }[] = [
+  { key: "drive", name: "Google Drive", icon: "📁" },
+  { key: "calendar", name: "Google Calendar", icon: "📅" },
+  { key: "tasks", name: "Google Tasks", icon: "✓" },
 ];
 
 const INDUSTRY = optionsFor("industry");
@@ -255,6 +261,20 @@ export default function AccountPage() {
   }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
+  // データ連携の状態（デモ・localStorage）。初期は全て未連携。
+  const [connected, setConnected] = useState<Record<ConnectSource, boolean>>({
+    drive: false,
+    calendar: false,
+    tasks: false,
+  });
+  // uid 確定後（auth解決後）にそのユーザーの連携状態を読み込む。
+  useEffect(() => setConnected(getConnectedSources()), [uid]);
+  const toggleSource = (key: ConnectSource) => {
+    const next = !connected[key];
+    setSourceConnectedLocal(key, next);
+    setConnected((c) => ({ ...c, [key]: next }));
+  };
+
   const onLogout = async () => {
     await signOutUser();
     router.push("/login");
@@ -309,13 +329,23 @@ export default function AccountPage() {
           </div>
         </div>
         <div className="acct-sources">
-          {CONNECTED.map((s) => (
-            <div key={s.name} className="acct-source panel">
-              <span className="as-icon">{s.icon}</span>
-              <span className="as-name">{s.name}</span>
-              <span className="as-state">✓ 連携済み（デモ）</span>
-            </div>
-          ))}
+          {CONNECTED.map((s) => {
+            const on = connected[s.key];
+            return (
+              <div key={s.key} className="acct-source panel">
+                <span className="as-icon">{s.icon}</span>
+                <span className="as-name">{s.name}</span>
+                {on && <span className="as-state">✓ 連携済み</span>}
+                <button
+                  type="button"
+                  className={`as-connect ${on ? "is-on" : ""}`}
+                  onClick={() => toggleSource(s.key)}
+                >
+                  {on ? "連携を解除" : "連携する"}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
 

@@ -604,6 +604,10 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .as-icon { font-size: 18px; }
 .as-name { font-size: 14px; color: var(--text-100); }
 .as-state { margin-left: auto; font-size: 12px; color: #8fc2a3; }
+.as-connect { margin-left: auto; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text-200); transition: all .25s; letter-spacing: .3px; }
+.as-connect:hover { border-color: var(--gold); color: var(--gold-bright); }
+.as-connect.is-on { margin-left: 0; border-color: transparent; color: var(--text-500); }
+.as-connect.is-on:hover { border-color: var(--line); color: var(--text-200); }
 
 /* アカウント: 編集フォーム */
 .acct-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
