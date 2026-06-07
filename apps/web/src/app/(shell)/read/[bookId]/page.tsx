@@ -318,11 +318,11 @@ export default function ReaderPage() {
     const selectedText = sel.toString().trim();
     if (!selectedText) { sel.removeAllRanges(); return; }
 
-    // 選択開始位置の <p data-pi="..."> を探す
+    // 選択開始位置の data-pi 付き要素を探す（段落 <p> だけでなく見出し <h2> も対象）
     const findPara = (node: Node): HTMLElement | null => {
       let curr: Node | null = node;
       while (curr) {
-        if (curr instanceof HTMLElement && curr.tagName === "P" && curr.getAttribute("data-pi") !== null) {
+        if (curr instanceof HTMLElement && curr.getAttribute("data-pi") !== null) {
           return curr;
         }
         curr = curr.parentNode;
@@ -506,7 +506,10 @@ export default function ReaderPage() {
                       <section key={`c${i}`} className="rd-opener" data-ch={b.text}>
                         {no && <div className="rd-opener-no">{no}</div>}
                         <div className="rd-opener-rule" />
-                        <h2 className="rd-opener-title">{title || b.text}</h2>
+                        {/* 見出しタイトルもハイライト可能にする（data-pi で段落と同じ仕組みに乗せる） */}
+                        <h2 className="rd-opener-title" data-pi={b.pi}>
+                          {renderParaContent(title || b.text, paraHighlights(b.pi), onMarkClick)}
+                        </h2>
                       </section>
                     );
                   }

@@ -2,8 +2,12 @@
 // 読書ページ（ページ分割・ハイライト）と /highlights（章名導出）で共用する。
 // 仕様：`## ` で始まる行＝章見出し、空行区切り＝段落。段落は本全体で通し番号 pi。
 
+// 見出し(chapter)のハイライト用 pi は、段落 pi(0,1,2…)と衝突しない別レンジを使う。
+// これにより段落の pi を据え置いたまま（既存ハイライト非破壊で）見出しも注釈可能にする。
+export const CHAPTER_PI_BASE = 1_000_000;
+
 export type ReaderBlock =
-  | { kind: "chapter"; text: string }
+  | { kind: "chapter"; text: string; pi: number }
   | { kind: "para"; text: string; pi: number; chapter: string; lead: boolean };
 
 export function parseBook(body: string | null | undefined, fallback = ""): ReaderBlock[] {
@@ -11,6 +15,7 @@ export function parseBook(body: string | null | undefined, fallback = ""): Reade
   const blocks: ReaderBlock[] = [];
   let chapter = "";
   let pi = 0;
+  let chapterOrd = 0;
   let firstPara = true;
   let buf: string[] = [];
   const flush = () => {
@@ -24,7 +29,7 @@ export function parseBook(body: string | null | undefined, fallback = ""): Reade
     if (line.startsWith("## ")) {
       flush();
       chapter = line.slice(3).trim();
-      blocks.push({ kind: "chapter", text: chapter });
+      blocks.push({ kind: "chapter", text: chapter, pi: CHAPTER_PI_BASE + chapterOrd++ });
       continue;
     }
     if (line.trim() === "") {
@@ -60,10 +65,11 @@ export function bookChapters(
   return out;
 }
 
-/** 段落番号 pi が属する章名を返す（無ければ ""）。 */
+/** pi が属する章名を返す（段落・見出しの両方に対応。無ければ ""）。 */
 export function chapterForPara(body: string | null | undefined, pi: number): string {
   for (const b of parseBook(body)) {
     if (b.kind === "para" && b.pi === pi) return b.chapter;
+    if (b.kind === "chapter" && b.pi === pi) return b.text; // 見出し自身のハイライト
   }
   return "";
 }
