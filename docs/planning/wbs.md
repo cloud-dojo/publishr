@@ -95,7 +95,7 @@
 
 ## 🧭 現在地サマリ（2026-06-07時点）
 
-> **いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`＋`make smoke`）は緑（pytest **58 passed, 1 skipped**）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント14ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
+> **いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`＋`make smoke`）は緑（pytest **58 passed, 1 skipped**）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント16ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
 >
 > **【2026-06-06 フロントUI仕上げ（C4.8）進行中】** 読書画面を中心に複数の UI 改修を実施：①**読書ページ再構成**＝ハイライト一覧ページ(`/read/[bookId]/highlights`)・目次ページ(`/read/[bookId]/contents`)を新規作成し読書ページサイドバーをナビ3リンク（目次・ハイライト・本の概要）に改修、`?pi`/`?ch` クエリパラメータによる本文ジャンプ機能を実装 ②**KindleライクなハイライトUX**＝ドラッグで範囲指定→自動ハイライト、クリックで色変更(黄/青/ピンク)＋削除ポップアップ（`ReadingAnnotation.startOffset/endOffset` で文字単位記録） ③**目次・本の概要の統一**＝`bookChapters(book.body)` で本文Markdownから実際の章を導出する`BookToc`共有コンポーネント新設（目次ページ・本の概要ページで共用）、本の概要ページからフル版/要約版/ここだけトグルと「今朝入荷」バッジを削除 ④**書庫サイドバー改善**＝ラベルを「最近読んだ本」に変更・published本のみ最大5件・著者名非表示 ⑤**書庫ページ表紙デザイン強化**＝`midnight/forest/slate/rust/wine/ink` 各バリアントに CSS `::before` 装飾（円弧・縦ライン・数字透かし等）を追加し書店ページ(`b1`〜`b10`)と同等の視覚的リッチさに統一。`tsc --noEmit`(typecheck)通過・全ルート200確認済。
 >
@@ -114,7 +114,7 @@
 >
 > **【2026-06-04完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・A3.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・C6)へ置換✅
 >
-> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **14ルートを mock で実装（ビルド緑・C4 code-complete）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり・**PUBLISHR_LLM dispatcher 済**）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ③App Hosting連携(B3.3・組織移管完了→鉄田が実施・W1) ④canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。
+> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **16ルートを mock で実装（ビルド緑・C4 code-complete・当初14＋C4.5で読書サブ2追加）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり・**PUBLISHR_LLM dispatcher 済**）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ~~③App Hosting連携(B3.3)~~ →✅2026-06-06完了 ③canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。公開URL=`publishr--publishr-498123.asia-east1.hosted.app`。
 >
 > **【提出物・GEAP方針・2026-06-05】** ProtoPedia作品ページ草案一式（ストーリー約4,000字・画像5＋システム構成図・全フィールド記入シート）を作成＝対外 `publishr_other/Protopedia提出/`（WBS **C6.7/C6.8**・P-6/P-7）。**GEAP（旧Vertex AI）はプラスアルファで②Gen AI Evaluation Service を品質ゲートに採用方針**（動くコード済・I-21/**C5.3**）、④Agent Runtimeはストレッチ（Schedulerトリガー非対応・F-7）。
 >
@@ -181,7 +181,7 @@ Publishr MVP（カテゴリWBS）
     │   └─ C1.7 自律トリガー(Scheduler)
     ├─ C2 エージェント・モードB（後追い執筆）（一瀬）
     ├─ C3 データ/状態基盤（Firestore/GCS）（**鉄田**へ巻取り・一瀬外れ）
-    ├─ C4 フロント（書店UI・14ルート）（鉄田）
+    ├─ C4 フロント（書店UI・16ルート）（鉄田）
     ├─ C5 品質・評価・観測・運用（Eval/Langfuse/コスト）
     └─ C6 デモ・提出物（鉄田）
 ```
@@ -354,11 +354,11 @@ Publishr MVP（カテゴリWBS）
 | C3.4 | 観測ログ保存先コレクション（`users/{uid}/observations/{YYYY-MM-DD}`） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | **鉄田** | W0（6/6完了・C3.1に内包） | C1.1.1 | STEP0が書込可＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（日付docID＝冪等・フル束インライン・サーバ書込/本人read／I-19＝MTG 2026-06-05で確定） (旧WP3.4) | ✅完了（C3.1に内包）firestore.rules の `match /users/{uid}/observations/{date}` で owner読み・書込み=false（サーバ専用）を宣言済み |
 | C3.5 | **BFF（apps/api）の Firestore リポジトリ実装＋mock→firestore切替** | `apps/api` は `protocol.py`＋`mock_repository.py` のリポジトリパターンで実装済み。`RepositoryProtocol` の Firestore 実装を足し、mock から切替える（＝抜け漏れ補完・2026-06-05起票） | **鉄田** | W0（6/6完了） | C3.1 | Firestore実装を追加し `DATA_SOURCE=firestore` で起動可（フロントC4.9・モードB C2.x の本接続前提）。mock側✅ | ✅**2026-06-06完了**（`firestore_repository.py` 実装・`firebase-admin>=6.5` 追加・`deps.py`でDATA_SOURCE切替・`uv run python -m pytest` 11件グリーン） |
 
-## C4. フロント（書店UI・14ルート）
+## C4. フロント（書店UI・16ルート）
 
 > **実装メモ（E2E・M2★）**: C4.9=Firebase Auth＋Firestore直購読/直書き・`NEXT_PUBLIC_DATA_SOURCE=firestore`。C4.1/C1.1.2=OAuth start/callback＋Drive Picker（OAuth間に合わなければfixture観測で縦通し優先）。手動トリガー `POST /api/trigger/planning`（許可uid・レート制限・実行中ロック）。C4.8=`map/` が `leader_verdicts` の却下→採用を描画＝**基準1の画**。最小Cloud Run疎通（APIのみ・本番完成ではない）。
 
-> **🧭 実態（2026-06-05・複数セッションで先行実装）**: `apps/web`(Next.js) へ移植が進み、**C4.1–C4.7 は mock データで code-complete（14ルートがビルド緑）**。Firebase Auth＋Firestoreプロバイダも実装済（mock時は休眠）。
+> **🧭 実態（2026-06-06・複数セッションで先行実装）**: `apps/web`(Next.js) へ移植が進み、**C4.1–C4.7 は mock データで code-complete（16ルートがビルド緑＝当初14＋C4.5で読書サブ2ページ追加）**。Firebase Auth＋Firestoreプロバイダも実装済（mock時は休眠）。
 > **残作業は2本**：①**ローカルUI仕上げ（C4.8）＝レイアウト崩れ・行ずれの修正＝デプロイ前の主作業**／②**Firestore本接続（C4.9）＝一瀬の基盤待ち**。DoDの「Firestore直書き/購読」の✅判定は本接続(C4.9)後。担当は基本**鉄田**。
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -380,7 +380,7 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | C5.1 | W1 各プロンプト実テスト→調整 | 実際にAIへ指示文を流し、想定どおり出るか・悪い例を弾くかを確認して調整 | 鉄田・一瀬 | W1–W2（6/8–21） | C1.0.1 | Langfuseで出力確認 (旧WP5.3) | 🟡MiniLoopで research_subs/plan_owner/plan_leader の実Vertex確認済（C1.0.1）／全11本の網羅は未 |
-| C5.2 | 良い/悪い例を eval fixture に兼用反映 | 良い例/悪い例を、AIの手本（few-shot）とテストの両方に使い回す | 鉄田 | W2（6/15–21） | C5.1,A4.1 | few-shot＋Eval両用 (旧WP5.4) | 🔜着手前 |
+| C5.2 | 良い/悪い例を eval fixture に兼用反映 | 良い例/悪い例を、AIの手本（few-shot）とテストの両方に使い回す | 鉄田 | W2（6/15–21） | C5.1,A4.1 | few-shot＋Eval両用 (旧WP5.4) | 🟡**兼用構造done（決定的・2026-06-07）**＝採点系4本(leader/editor×2/judge)の✅良い例/❌悪い例を `loader.py` が単一ソースから抽出→`eval_harness.check_fewshot_eval_alignment()` が「良い例=合格・悪い例=不合格・judge=eval_set帯と整合」を実LLM無しで回帰（test 2件追加グリーン）。残＝**実judge(LLM)実行での検証はC5.4/C1.0疎通待ち** |
 | C5.3 | **Eval judgeゲート**をCIに組込 | AI品質が基準(70点)未満なら自動でデプロイを止める品質ゲートをCIに組み込む | 一瀬 | W4（6/29–7/5） | C5.x,**I-21** | failでデプロイ停止（MVP §9）。`eval/eval_set.yaml` を LLM-judge で採点・`cases`=ゲート(8件中7)/`borderlineCases`=診断で読む（I-21）。**mock用 `scripts/eval_harness.py` は v2 整合済み（C0.1✅）**。CI本番ゲート＝Vertex AI Gen AI Evaluation Service（GEAP）を B3.2 と併設 (旧WP6.2) | 🟡mock Evalハーネス✅（2026-06-06）／GEAP CIゲートは🔜 |
 | C5.4 | judge再現性テスト（複数回採点・標準偏差確認） | 採点AIが毎回ブレない（同じ点を出す）か複数回試して信頼度を確認 | 鉄田・一瀬 | W2–W3（6/15–28） | C5.1,**I-21** | ゲート判定の信頼度確認（v2 Evalハーネス=I-21 が前提。境界ケース `eval_b1/b2` で閾値70近傍の判別を測る） (旧WP7.2) | 🔜着手前 |
 | C5.5 | 閾値・ルーブリックの運用調整 | 合格ライン(70点等)や採点基準を、実データを見ながら微調整 | 鉄田 | W4（6/29–7/5） | C5.4 | 実データで微調整（I-1/I-18） (旧WP7.3) | 🔜着手前 |

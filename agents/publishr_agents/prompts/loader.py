@@ -29,6 +29,7 @@ class PromptDoc:
     system: str
     user_template: Optional[str]
     good_example: Optional[str]
+    bad_example: Optional[str]
 
 
 def _read_lines(name: str) -> list[str]:
@@ -82,6 +83,11 @@ def _is_good_marker(line: str) -> bool:
     return s.startswith("#") and "✅" in s
 
 
+def _is_bad_marker(line: str) -> bool:
+    s = line.strip()
+    return s.startswith("#") and "❌" in s
+
+
 @lru_cache
 def load_prompt(name: str) -> PromptDoc:
     lines = _read_lines(name)
@@ -90,11 +96,13 @@ def load_prompt(name: str) -> PromptDoc:
         raise ValueError(f"no system prompt block found in {name}.md")
     user_blocks = _collect_blocks(lines, _is_user_marker)
     good_blocks = _collect_blocks(lines, _is_good_marker)
+    bad_blocks = _collect_blocks(lines, _is_bad_marker)
     return PromptDoc(
         name=name,
         system="\n\n".join(system_blocks),
         user_template=user_blocks[0] if user_blocks else None,
         good_example=good_blocks[0] if good_blocks else None,
+        bad_example=bad_blocks[0] if bad_blocks else None,
     )
 
 
