@@ -151,6 +151,8 @@
 | **運用** | ローカル dev サーバ（uvicorn/next）が数日分残存していることを確認。**GCP課金は発生していない**（`PUBLISHR_LLM=mock` 既定） | — |
 | **C4.8** | **UI仕上げ完了**（機能実装＋デザイン） — ①フィードバックチップ修正（ページ初期=非表示・タップで展開、`{reaction && ...}` 条件付きレンダリング）②ナビカードジャンプ修正（`.rail-tools`のsticky廃止、`navDelta:0`実測確認）③🔔通知ベル＋ドロップダウンパネル新設（`NotificationBell.tsx`・入荷/執筆完了/お気に入り作家の3種・未読バッジ・全既読・各通知→`/books/{bookId}`）④`AppNotification`型・BaseProvider通知API・MockProvider seedNotifications/reserve完了通知⑤`useNotifications`/`notifyFavoriteAuthor`フック⑥読了ページ・書籍概要ページTopbarにデフォルトベル統一。`NEXT_PUBLIC_DATA_SOURCE=mock` に復元（`.env.local`） | C4.8 |
 | **docs** | WBS 更新 — C4.8 ✅完了・日次ログ追記 | 全体 |
+| **C1.1** | **STEP0 観測ツール 実装（live検証残）** — `agents/publishr_agents/observe/`（純粋transform＋`FixtureObservationSource`既定＋`GoogleObservationSource`隔離・`PUBLISHR_OBSERVE`切替）。型付き`ObservationBundle`/`ConnectedSources`をschema(py/ts)へ。CLI`run_observe.py`＋`google_oauth_bootstrap.py`、`@pytest.mark.google`。±14日窓/4000字/Tasks絞り/folderIdスコープをtransform一元化。**masked回帰も修正**＝`91d3282`で消えた`u_tadokoro`をusers.jsonへ復元（canned pipeline緑化）＋test_fixtures整合。`make verify`(84 passed,2 skipped)/eval/pipeline/smoke 緑。残＝OAuth同意→実3ソースのlive検証。ブランチ`feat/c1.1-step0-observation` | C1.1 |
+| **C1.2** | **STEP1 読者分析 実装＋実Vertex live実証** — `agents/publishr_agents/reader/`（`deterministic.py`既定＋`vertex_agent.py`実Gemini Pro＋`__init__`=PUBLISHR_LLM dispatch）。step1プロンプト/registry/model_for(Pro)結線。CLI`run_reader.py`（STEP0→STEP1縦串）。**live実証**＝fixture観測→実Pro→3層ReaderProfile（佐藤健一/競合A社/田中健太まで踏込・evidence紐付き）。`make verify` pytest 95 passed,3 skipped・typecheck緑（web lintはmain既存1件のみ）。同ブランチ継続 | C1.2 |
 
 **W0の成果（2日で通したゲート）**: C0.1 → C0.2 → B1.3 → **C1.0.1★**（M1 前倒し）。**W1（6/8〜）の最初の山**＝C1.1 観測 ＋ B3.3 App Hosting 連携。
 
@@ -297,13 +299,13 @@ Publishr MVP（カテゴリWBS）
 ### C1.1 STEP0 観測
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.1.1 | 観測ツール実装（Drive/Calendar/Tasks ±14日） | ユーザーのDrive・カレンダー・ToDoを前後14日分読み取り、AIが状況把握する材料（生データ）を集めるツール | 一瀬 | W2（6/15–21） | B1.1,C1.0.1 | ObservationBundle生成（§2） (旧WP1.2) | 🔜着手前 |
-| C1.1.2 | Drive Pickerサーバ側連携 | Driveは全ファイルを見られない仕様のため、ユーザーが選んだフォルダだけ取得する画面連携をサーバー側で実装 | 一瀬 | W2（6/15–21） | C1.1.1 | 選択フォルダのみ取得＝`connectedSources.drive.folderIds[]` で保持（G1-13＝フォルダ単位・Google Picker前提で確定・MTG 2026-06-05） | 🔜着手前 |
+| C1.1.1 | 観測ツール実装（Drive/Calendar/Tasks ±14日） | ユーザーのDrive・カレンダー・ToDoを前後14日分読み取り、AIが状況把握する材料（生データ）を集めるツール | 一瀬 | W2（6/15–21） | B1.1,C1.0.1 | ObservationBundle生成（§2） (旧WP1.2) | 🟡**実装済・live検証残（2026-06-07）**＝`agents/publishr_agents/observe/`（transform純粋ロジック＋`FixtureObservationSource`＝既定オフライン決定的＋`GoogleObservationSource`＝実API隔離・`PUBLISHR_OBSERVE`で切替）。型付き`ObservationBundle`（§2）＋`ConnectedSources`をschemaに追加（py/ts）。CLI`scripts/run_observe.py`・`@pytest.mark.google`最小テスト。±14日窓/4000字トリム/Tasks未完了+直近完了をtransformに一元化。**残＝OAuth同意→実Drive/Calendar/Tasks取得のlive検証（鉄田のOAuth/Picker=C4.1と接続）** |
+| C1.1.2 | Drive Pickerサーバ側連携 | Driveは全ファイルを見られない仕様のため、ユーザーが選んだフォルダだけ取得する画面連携をサーバー側で実装 | 一瀬 | W2（6/15–21） | C1.1.1 | 選択フォルダのみ取得＝`connectedSources.drive.folderIds[]` で保持（G1-13＝フォルダ単位・Google Picker前提で確定・MTG 2026-06-05） | 🟡**サーバ側読取実装済（2026-06-07）**＝`connectedSources.drive.folderIds[]` を `User` schemaに追加し、fixture/google 両ソースで folderId 配下のみにスコープ（offline test で folderId スコープを検証）。`scripts/google_oauth_bootstrap.py` で OAuth トークン取得。**残＝Picker UI（C4.1=鉄田）からの folderIds 書込と疎通** |
 
 ### C1.2 STEP1 読者分析
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.2.1 | STEP1 読者分析エージェント（Pro・3層Profile）＋state配線 | 集めた材料から、ユーザー像を3層（①基本属性 ②今の仕事の状況 ③読書傾向）で分析するAIを実装 | 一瀬 | W2（6/15–21） | C1.1.1 | ReaderProfile{base/currentWork/readingBehavior}保存（§3） (旧WP1.3) | 🔜着手前 |
+| C1.2.1 | STEP1 読者分析エージェント（Pro・3層Profile）＋state配線 | 集めた材料から、ユーザー像を3層（①基本属性 ②今の仕事の状況 ③読書傾向）で分析するAIを実装 | 一瀬 | W2（6/15–21） | C1.1.1 | ReaderProfile{base/currentWork/readingBehavior}保存（§3） (旧WP1.3) | ✅**実装・実Vertex live実証済（2026-06-07）**＝`agents/publishr_agents/reader/`（`deterministic.py`＝既定オフライン・bundle→3層Profile抽出／`vertex_agent.py`＝実Gemini Pro LlmAgent・`output_schema=ReaderProfile3Layer`・miniloopパターン／`__init__`=PUBLISHR_LLM dispatch）。step1_reader_analystプロンプト・registry・model_for(Pro)既設を結線。CLI`scripts/run_reader.py`（STEP0→STEP1縦串）。test_reader（決定的10件）＋`@pytest.mark.vertex` gated。**live実証**＝fixture観測→実Pro→3層Profile（challenges/evidenceが観測の固有名に紐づく・佐藤健一/競合A社/田中健太まで踏込）。`users/{uid}.profile`永続化はC3/BFF結線時。残＝STEP2(C1.3)への結線 |
 
 ### C1.3 STEP2 企画3階層（★必然性の本丸）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
