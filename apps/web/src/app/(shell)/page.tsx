@@ -1,15 +1,20 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { Book } from "@publishr/shared-schema";
 
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
 import { useProvider } from "@/data/hooks";
+import { watchAuth } from "@/lib/firebase";
 import { ARRIVAL_WINDOW_DAYS, arrivalLabel, isWithinDays } from "@/lib/arrival";
 
 export default function HomePage() {
   const provider = useProvider();
+  // ログイン中の Firebase Auth ユーザー名を優先（サイドバー・アカウントページと一致）。
+  const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
+  useEffect(() => watchAuth((u) => setAuthDisplayName(u?.displayName ?? null)), []);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason;
 
@@ -35,7 +40,7 @@ export default function HomePage() {
       <Topbar
         greeting={
           <>
-            おはようございます、<b>{user?.name ?? "佐倉 美咲"}</b> さん。
+            おはようございます、<b>{authDisplayName ?? user?.name ?? "佐倉 美咲"}</b> さん。
           </>
         }
       />
