@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir \
     ./agents \
     ./apps/api
 
-EXPOSE 8000
+EXPOSE 8080
 
-# Cloud Run は PORT 環境変数でポートを渡す場合がある。uvicorn はデフォルト 8000。
-CMD ["uvicorn", "publishr_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Cloud Run は PORT 環境変数（既定 8080）でポートを指定する。sh 経由で展開する。
+CMD ["sh", "-c", "uvicorn publishr_api.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
