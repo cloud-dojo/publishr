@@ -5,7 +5,7 @@ import type { User } from "@publishr/shared-schema";
 import { useRouter } from "next/navigation";
 
 import { Topbar } from "@/components/shell/Topbar";
-import { DEMO_USER_ID } from "@/data/config";
+import { DEMO_USER_ID, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
 import { useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
@@ -321,10 +321,11 @@ export default function AccountPage() {
     router.push("/login");
   };
   const total = provider.listBooks().filter((b) => b.shelf === "library").length;
-  // ハイライト数：ログイン中は実注釈のみ集計、未ログイン（デモ）時はシードmock件数。
-  const highlightCount = uid
-    ? provider.listBooks().reduce((n, b) => n + (b.annotations?.length ?? 0), 0)
-    : MOCK_HIGHLIGHTS.length;
+  // ハイライト数：mockデモ時のみシード件数、本番（firestore/bff）は実注釈のみ集計。
+  const highlightCount =
+    dataSource === "mock"
+      ? MOCK_HIGHLIGHTS.length
+      : provider.listBooks().reduce((n, b) => n + (b.annotations?.length ?? 0), 0);
   // お気に入り作家数：お気に入りストア（localStorage＋Firestore）の実数。
   const favoriteCount = useFavorites().size;
 

@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Topbar } from "@/components/shell/Topbar";
+import { dataSource } from "@/data/config";
 import { useProvider } from "@/data/hooks";
-import { watchAuth } from "@/lib/firebase";
 import {
   annotationsToHighlights,
   highlightsGroupedByBook,
@@ -30,12 +30,10 @@ const KIND_LABEL: Record<HighlightKind, string> = {
 export default function HighlightsPage() {
   const provider = useProvider();
   const [tab, setTab] = useState<Tab>("all");
-  // ログイン中の実ユーザーにはシードmockを混ぜず、実注釈のみ表示する。
-  const [uid, setUid] = useState<string | null>(null);
-  useEffect(() => watchAuth((u) => setUid(u?.uid ?? null)), []);
 
-  // 読書ページで付けた注釈（book.annotations）。未ログイン（デモ）時のみシードmockも混ぜる。
-  const items = mergeHighlights(annotationsToHighlights(provider.listBooks()), !uid);
+  // 読書ページで付けた注釈（book.annotations）。シードmockは mock デモ時のみ混ぜる。
+  // firestore/bff（本番・実ユーザー）では、本がゼロなら何も出さない（実データのみ）。
+  const items = mergeHighlights(annotationsToHighlights(provider.listBooks()), dataSource === "mock");
   const visibleItems = items.filter((h) => h.kind !== "note");
   const count = (k: Tab) =>
     k === "all" ? visibleItems.length : visibleItems.filter((h) => h.kind === k).length;
