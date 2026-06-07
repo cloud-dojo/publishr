@@ -33,6 +33,7 @@ const INDUSTRY = optionsFor("industry");
 const JOBTYPE = optionsFor("jobType");
 const POSITION = optionsFor("position");
 const INTERESTS = optionsFor("recentInterests");
+const READING_GENRES = optionsFor("readingGenres");
 
 function Mini({ n, label }: { n: number; label: string }) {
   return (
@@ -49,6 +50,7 @@ type EditForm = {
   position: string;
   serendipity: string;
   recentInterests: string[];
+  readingGenres: string[];
 };
 
 function buildInitial(user: User): EditForm {
@@ -60,6 +62,7 @@ function buildInitial(user: User): EditForm {
       position: saved.position ?? "",
       serendipity: saved.serendipity ?? "バランス重視",
       recentInterests: saved.recentInterests ?? [],
+      readingGenres: saved.readingGenres ?? [],
     };
   }
   // 保存値が無ければ mock ユーザーから当たりを付ける。
@@ -72,6 +75,7 @@ function buildInitial(user: User): EditForm {
     position: "",
     serendipity: "バランス重視",
     recentInterests: prefillInterests,
+    readingGenres: [],
   };
 }
 
@@ -96,6 +100,16 @@ function ProfileEditor({ user }: { user: User }) {
     setSavedMsg(null);
   };
 
+  const toggleGenre = (opt: string) => {
+    setForm((f) => ({
+      ...f,
+      readingGenres: f.readingGenres.includes(opt)
+        ? f.readingGenres.filter((x) => x !== opt)
+        : [...f.readingGenres, opt],
+    }));
+    setSavedMsg(null);
+  };
+
   const onSave = async () => {
     setSaving(true);
     const prev = getInitialProfile();
@@ -104,7 +118,7 @@ function ProfileEditor({ user }: { user: User }) {
       jobType: form.jobType,
       position: form.position,
       recentInterests: form.recentInterests,
-      readingGenres: prev?.readingGenres ?? [],
+      readingGenres: form.readingGenres,
       serendipity: form.serendipity,
       skipped: false,
       createdAt: prev?.createdAt ?? new Date().toISOString(),
@@ -227,13 +241,38 @@ function ProfileEditor({ user }: { user: User }) {
         </div>
       </section>
 
-      {/* 保存ゾーン（登録情報・出会いの幅・関心の変更をまとめて反映） */}
+      {/* 好みの読み口・形態（初期設定で選んだ本のタイプ。ここで選び直せる） */}
+      <section className="page section">
+        <div className="section-head">
+          <div>
+            <div className="eyebrow">Your reading style</div>
+            <div className="section-title">好みの読み口・形態</div>
+            <div className="section-sub">
+              どんな読み口の本が好みですか。タップで選択・解除できます（{form.readingGenres.length}件選択中）。
+            </div>
+          </div>
+        </div>
+        <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
+          {READING_GENRES.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              className={`chip ${form.readingGenres.includes(opt) ? "on" : ""}`}
+              onClick={() => toggleGenre(opt)}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 保存ゾーン（登録情報・出会いの幅・関心・読み口の変更をまとめて反映） */}
       <section className="page section">
         <div className="acct-savebox">
           <div className="asb-text">
             <div className="asb-title">編集した内容を保存</div>
             <div className="asb-sub">
-              登録情報・新しい出会いの幅・いまの関心の変更を、まとめて反映します。
+              登録情報・新しい出会いの幅・いまの関心・好みの読み口の変更を、まとめて反映します。
             </div>
           </div>
           <div className="asb-action">
