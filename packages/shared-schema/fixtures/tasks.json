@@ -18,9 +18,9 @@
     { "id": "tsk_009", "title": "マネジメントや1on1のやり方に関する本を読む", "status": "needsAction", "due": null, "notes": "全然時間が取れない…積読3冊" },
     { "id": "tsk_010", "title": "役員会議に向けたQ&A想定問答作成", "status": "needsAction", "due": "2026-06-04", "notes": "" },
 
-    { "id": "tsk_011", "title": "新任マネージャー研修 事前課題提出", "status": "completed", "due": "2026-05-19", "notes": "" },
+    { "id": "tsk_011", "title": "新任マネージャー研修 事前課題提出", "status": "completed", "due": "2026-05-29", "notes": "" },
     { "id": "tsk_012", "title": "しずく天然水 競合A社新商品分析まとめ", "status": "completed", "due": "2026-05-12", "notes": "" },
-    { "id": "tsk_013", "title": "田中健太との1on1準備", "status": "completed", "due": "2026-05-13", "notes": "" },
+    { "id": "tsk_013", "title": "田中健太との1on1準備", "status": "completed", "due": "2026-05-30", "notes": "" },
     { "id": "tsk_014", "title": "上期目標のチームへの共有", "status": "completed", "due": "2026-05-08", "notes": "" },
     { "id": "tsk_015", "title": "予算申請稟議書の起案", "status": "completed", "due": "2026-05-15", "notes": "" }
   ]

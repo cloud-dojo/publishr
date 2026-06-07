@@ -12,6 +12,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+# STEP0 観測の実Google API連携（PUBLISHR_OBSERVE=google）。
+# オフライン既定では不要。make setup の --all-extras で開発/CIに入る。
+google = [
+    "google-api-python-client>=2.100",
+    "google-auth-oauthlib>=1.2",
+]
 
 [build-system]
 requires = ["hatchling"]

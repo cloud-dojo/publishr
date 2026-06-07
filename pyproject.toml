@@ -24,6 +24,7 @@ addopts = "-q"
 testpaths = ["packages", "agents", "apps/api"]
 markers = [
     "vertex: requires live Vertex AI credentials; skipped unless PUBLISHR_RUN_VERTEX=1",
+    "google: requires live Google OAuth token (Drive/Calendar/Tasks); skipped unless PUBLISHR_RUN_GOOGLE=1",
 ]
 pythonpath = ["packages/shared-schema/py", "agents", "apps/api"]
 filterwarnings = [

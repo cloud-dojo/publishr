@@ -14,9 +14,11 @@ from publishr_schema.loader import (
 
 def test_users_parse():
     users = load_users()
+    # users.json は2ペルソナ共存: u_sakura（STEP0観測/connectedSources）＋ u_tadokoro（canned pipeline）。
+    assert any(u.id == "u_sakura" for u in users)
     assert any(u.id == "u_tadokoro" for u in users)
-    tadokoro = next(u for u in users if u.id == "u_tadokoro")
-    assert tadokoro.profile.estimated_interests
+    sakura = next(u for u in users if u.id == "u_sakura")
+    assert sakura.profile.estimated_interests
 
 
 def test_personas_parse_ten():
