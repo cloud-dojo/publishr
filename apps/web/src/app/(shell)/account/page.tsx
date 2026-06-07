@@ -260,6 +260,10 @@ export default function AccountPage() {
     router.push("/login");
   };
   const total = provider.listBooks().filter((b) => b.shelf === "library").length;
+  // ハイライト数：ログイン中は実注釈のみ集計、未ログイン（デモ）時はシードmock件数。
+  const highlightCount = uid
+    ? provider.listBooks().reduce((n, b) => n + (b.annotations?.length ?? 0), 0)
+    : MOCK_HIGHLIGHTS.length;
 
   if (!user) {
     return (
@@ -290,7 +294,7 @@ export default function AccountPage() {
         </div>
         <div className="acct-stats">
           <Mini n={total} label="蔵書" />
-          <Mini n={MOCK_HIGHLIGHTS.length} label="ハイライト" />
+          <Mini n={highlightCount} label="ハイライト" />
           <Mini n={0} label="お気に入り作家" />
         </div>
       </header>

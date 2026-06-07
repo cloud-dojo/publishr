@@ -107,10 +107,15 @@ export function annotationsToHighlights(books: Book[]): MockHighlight[] {
   return out;
 }
 
-/** シードデータと読書ページ由来のハイライトを結合（同一idは後勝ちで重複排除）。 */
-export function mergeHighlights(live: MockHighlight[]): MockHighlight[] {
+/**
+ * 読書ページ由来のハイライトを結合（同一idは後勝ちで重複排除）。
+ * includeSeed=true（デモ/未ログイン時）はシードmockも混ぜる。
+ * ログイン中の実ユーザーには live（実注釈）のみを返す。
+ */
+export function mergeHighlights(live: MockHighlight[], includeSeed = true): MockHighlight[] {
   const byId = new Map<string, MockHighlight>();
-  for (const h of [...MOCK_HIGHLIGHTS, ...live]) byId.set(h.id, h);
+  const base = includeSeed ? [...MOCK_HIGHLIGHTS, ...live] : live;
+  for (const h of base) byId.set(h.id, h);
   return [...byId.values()];
 }
 
