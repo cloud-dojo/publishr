@@ -228,10 +228,6 @@ function ProfileEditor({ user }: { user: User }) {
             <div className="asb-sub">
               登録情報・新しい出会いの幅・いまの関心の変更を、まとめて反映します。
             </div>
-            <div className="asb-note">
-              ※ いまは保存先がデモ用（ローカル）です。フェーズ3で Firebase Auth＋Firestore
-              直書きに接続します。
-            </div>
           </div>
           <div className="asb-action">
             {savedMsg && <span className="acct-saved-msg">{savedMsg}</span>}
@@ -248,9 +244,15 @@ function ProfileEditor({ user }: { user: User }) {
 export default function AccountPage() {
   const provider = useProvider();
   const router = useRouter();
-  // Firebase Auth UID を優先、未ログイン or mock 時は DEMO_USER_ID にフォールバック
+  // Firebase Auth UID・email・displayName を取得。未ログイン or mock 時は DEMO_USER_ID にフォールバック
   const [uid, setUid] = useState<string | null>(null);
-  useEffect(() => watchAuth((u) => setUid(u?.uid ?? null)), []);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
+  useEffect(() => watchAuth((u) => {
+    setUid(u?.uid ?? null);
+    setAuthEmail(u?.email ?? null);
+    setAuthDisplayName(u?.displayName ?? null);
+  }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
   const onLogout = async () => {
@@ -270,15 +272,20 @@ export default function AccountPage() {
     );
   }
 
+  // Firestore の name/initial が空・文字化けの場合は Firebase Auth の displayName でフォールバック
+  const displayName = user.name || authDisplayName || "アカウント";
+  const displayInitial = user.initial || displayName[0] || "?";
+
   return (
     <>
       <Topbar greeting={<b>アカウント</b>} />
 
       <header className="acct-head page">
-        <span className="acct-avatar">{user.initial}</span>
+        <span className="acct-avatar">{displayInitial}</span>
         <div className="acct-headmeta">
           <span className="eyebrow">Your account</span>
-          <h1 className="acct-name">{user.name}</h1>
+          <h1 className="acct-name">{displayName}</h1>
+          {authEmail && <div className="acct-role">{authEmail}</div>}
         </div>
         <div className="acct-stats">
           <Mini n={total} label="蔵書" />
