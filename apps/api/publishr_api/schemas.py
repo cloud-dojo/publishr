@@ -35,3 +35,11 @@ class ReadingStateInput(_Camel):
 
 class PipelineRunInput(_Camel):
     user_id: str = "u_tadokoro"
+
+
+class ReserveInput(_Camel):
+    book_id: str
+
+
+class TriggerPlanningInput(_Camel):
+    user_id: str = "u_tadokoro"

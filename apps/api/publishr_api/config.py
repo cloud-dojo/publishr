@@ -34,7 +34,11 @@ class Settings(BaseSettings):
     reserve_to_writing_sec: float = 2.0
     writing_to_published_sec: float = 5.0
 
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://publishr--publishr-498123.asia-east1.hosted.app",
+    ]
 
     # FirestoreRepository のオーナーフィルタ用（MVP 単一ユーザー）。
     # 本番では per-request uid に差し替える（C4.9 Firebase Auth 接続後）。
