@@ -10,8 +10,11 @@ function createProvider(): BaseProvider {
   switch (dataSource) {
     case "mock":
       return new MockProvider();
-    // firestore 選択時のみ実体化（設定が無ければ FirestoreProvider が投げる）。
+    // firestore 選択時のみ実体化。
+    // SSR（window 未定義）では FirestoreProvider を作れないので MockProvider で代替。
+    // クライアント側の load() + setOwnerUid() で Firestore 購読が張り直される。
     case "firestore":
+      if (typeof window === "undefined") return new MockProvider();
       return new FirestoreProvider();
     default:
       return new BffProvider();
