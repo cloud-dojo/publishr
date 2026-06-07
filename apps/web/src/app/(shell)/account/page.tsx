@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { User } from "@publishr/shared-schema";
 
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
 import { useProvider } from "@/data/hooks";
+import { watchAuth } from "@/lib/firebase";
 import { MOCK_HIGHLIGHTS } from "@/data/mock-highlights";
 import {
   optionsFor,
@@ -245,7 +246,10 @@ function ProfileEditor({ user }: { user: User }) {
 
 export default function AccountPage() {
   const provider = useProvider();
-  const user = provider.getUser(DEMO_USER_ID);
+  // Firebase Auth UID を優先、未ログイン or mock 時は DEMO_USER_ID にフォールバック
+  const [uid, setUid] = useState<string | null>(null);
+  useEffect(() => watchAuth((u) => setUid(u?.uid ?? null)), []);
+  const user = provider.getUser(uid ?? DEMO_USER_ID);
   const total = provider.listBooks().filter((b) => b.shelf === "library").length;
 
   if (!user) {
