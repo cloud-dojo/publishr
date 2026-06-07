@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { isFirebaseConfigured } from "@/data/config";
-import { getInitialProfile } from "@/data/user-writes";
+import { getInitialProfile, hasCompletedOnboarding } from "@/data/user-writes";
 import { signInWithGoogle } from "@/lib/firebase";
 
 export default function LoginPage() {
@@ -18,9 +18,13 @@ export default function LoginPage() {
     try {
       if (isFirebaseConfigured) {
         const user = await signInWithGoogle();
-        // 初期プロフィール未設定なら登録へ。判定の本実装はフェーズ3接続時に Firestore 読取で行う。
-        if (user) router.push("/onboarding");
-        else setError("ログインに失敗しました。");
+        if (user) {
+          // 初期設定済みならトップ、未設定ならオンボーディングへ（Firestore優先で判定）。
+          const done = await hasCompletedOnboarding(user.uid);
+          router.push(done ? "/" : "/onboarding");
+        } else {
+          setError("ログインに失敗しました。");
+        }
       } else {
         // mock: 認証なしで体験フローへ。登録済みならトップ、未登録ならオンボーディング。
         router.push(getInitialProfile() ? "/" : "/onboarding");

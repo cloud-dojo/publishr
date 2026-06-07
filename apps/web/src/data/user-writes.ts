@@ -4,7 +4,7 @@
 // 画面遷移を確認できるようにする（フェーズ3の単独実装用フォールバック）。
 "use client";
 
-import { arrayRemove, arrayUnion, doc, setDoc, updateDoc } from "firebase/firestore";
+import { arrayRemove, arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 import { DEMO_USER_ID } from "./config";
 import type { InitialProfileInput } from "./profileOptions";
@@ -44,6 +44,30 @@ export function getInitialProfile(): InitialProfileInput | null {
   if (typeof window === "undefined") return null;
   const raw = window.localStorage.getItem(LS.profile(uid));
   return raw ? (JSON.parse(raw) as InitialProfileInput) : null;
+}
+
+/**
+ * 初期設定（オンボーディング）が済んでいるか。
+ * Firestore の users/{uid}.initialProfile を優先し、失敗時は localStorage で判定する。
+ * skipped も「フローを通った」とみなし済み扱い（再ログインで再度オンボーディングに送らない）。
+ */
+export async function hasCompletedOnboarding(uidOverride?: string): Promise<boolean> {
+  const uid = uidOverride ?? currentUid();
+  const db = getDb();
+  if (db) {
+    try {
+      const snap = await getDoc(doc(db, "users", uid));
+      const ip = snap.exists() ? snap.data().initialProfile : null;
+      if (ip) return true;
+    } catch (e) {
+      console.warn("initialProfile の Firestore 読取に失敗（localStorage で判定）", e);
+    }
+  }
+  // localStorage フォールバック（同一ブラウザでの再ログイン）。
+  if (typeof window !== "undefined") {
+    return window.localStorage.getItem(LS.profile(uid)) != null;
+  }
+  return false;
 }
 
 // --- 観測ソース接続状態 ---
