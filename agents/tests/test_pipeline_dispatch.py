@@ -10,7 +10,7 @@ from publishr_agents.pipeline import build_pipeline
 
 def test_mock_default_builds_existing_tree(monkeypatch):
     monkeypatch.delenv("PUBLISHR_LLM", raising=False)
-    root = build_pipeline("u_tadokoro")
+    root = build_pipeline("u_sakura")
     assert isinstance(root, SequentialAgent)
     assert root.name == "editorial_pipeline"
     # 現行の木と同一（observe→reader→planning_team→selection→author→cover）。
@@ -26,16 +26,16 @@ def test_mock_default_builds_existing_tree(monkeypatch):
 
 def test_mock_explicit(monkeypatch):
     monkeypatch.setenv("PUBLISHR_LLM", "mock")
-    assert isinstance(build_pipeline("u_tadokoro"), SequentialAgent)
+    assert isinstance(build_pipeline("u_sakura"), SequentialAgent)
 
 
 def test_vertex_not_implemented_yet(monkeypatch):
     monkeypatch.setenv("PUBLISHR_LLM", "vertex")
     with pytest.raises(NotImplementedError):
-        build_pipeline("u_tadokoro")
+        build_pipeline("u_sakura")
 
 
 def test_unknown_mode_raises(monkeypatch):
     monkeypatch.setenv("PUBLISHR_LLM", "bogus")
     with pytest.raises(ValueError):
-        build_pipeline("u_tadokoro")
+        build_pipeline("u_sakura")

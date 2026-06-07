@@ -14,9 +14,9 @@ from publishr_schema.loader import (
 
 def test_users_parse():
     users = load_users()
-    assert any(u.id == "u_tadokoro" for u in users)
-    tadokoro = next(u for u in users if u.id == "u_tadokoro")
-    assert tadokoro.profile.estimated_interests
+    assert any(u.id == "u_sakura" for u in users)
+    sakura = next(u for u in users if u.id == "u_sakura")
+    assert sakura.profile.estimated_interests
 
 
 def test_personas_parse_ten():
@@ -52,7 +52,7 @@ def test_books_referential_integrity():
 def test_keep_notes_parse():
     notes = load_keep_notes()
     assert len(notes) >= 5
-    assert all(n.user_id == "u_tadokoro" for n in notes)
+    assert all(n.user_id == "u_sakura" for n in notes)
 
 
 def test_camel_alias_roundtrip():

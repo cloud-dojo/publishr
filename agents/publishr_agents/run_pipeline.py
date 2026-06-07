@@ -1,7 +1,7 @@
 """CLI: 企画会議パイプラインをオフライン実行する。
 
-    python -m publishr_agents.run_pipeline --user u_tadokoro
-    python -m publishr_agents.run_pipeline --user u_tadokoro --json
+    python -m publishr_agents.run_pipeline --user u_sakura
+    python -m publishr_agents.run_pipeline --user u_sakura --json
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from .pipeline import run_pipeline
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Publishr 企画会議パイプライン")
-    parser.add_argument("--user", default="u_tadokoro", help="観測対象ユーザーID")
+    parser.add_argument("--user", default="u_sakura", help="観測対象ユーザーID")
     parser.add_argument("--json", action="store_true", help="結果をJSONで出力")
     args = parser.parse_args()
 

@@ -41,12 +41,14 @@ def aggregate_keep_notes(user_id: str) -> dict:
     signals: list[str] = []
     for n in notes:
         blob = f"{n.title} {n.text} {' '.join(n.labels)}"
-        if "管掌範囲" in blob:
-            signals.append("管掌範囲の拡大")
+        if "年上" in blob or "距離感" in blob:
+            signals.append("年上部下との距離感")
         if "1on1" in blob:
             signals.append("1on1の負荷増")
-        if "属人化" in blob or "標準化" in blob:
-            signals.append("属人化の懸念")
+        if "評価" in blob or "面談" in blob:
+            signals.append("評価面談への不安")
+        if "抱え" in blob or "任せ" in blob:
+            signals.append("抱え込み・権限委譲の必要")
         if "定量" in blob or "数字" in blob:
             signals.append("定量報告の要請")
     # 出現順を保ったまま重複除去
@@ -59,7 +61,7 @@ def build_reader_profile(user: User | None, observation: dict) -> dict:
     """STEP1読者分析: 観測から Reader Profile を確定。"""
     return {
         "role": user.profile.role if user else "（不明）",
-        "situation": "10名から30名規模への移行期。情報と意思決定が本人に集中し、現場が止まりはじめている局面。",
+        "situation": "2026年4月にマーケティング課長へ昇格。7名のチームを率いる新任マネージャー。年上の部下との距離感や初めての評価面談に向き合いつつ、判断を抱え込みがちな局面。",
         "interests": list(user.profile.estimated_interests) if user else [],
         "signals": observation.get("signals", []),
         "serendipityTolerance": user.profile.serendipity_tolerance if user else "中",
@@ -84,12 +86,12 @@ def normalize_candidates(candidates: list[dict]) -> list[PlanningCandidate]:
 def selection_reject_log(candidates: list[PlanningCandidate]) -> list[RejectLogEntry]:
     """STEP2選抜ゲート（対立①）: R1で全却下→再提出、R2で採否確定。"""
     round1_reasons = {
-        "practical": "方向性は良いが具体性が不足。30名の局面に寄せて再提出せよ。",
+        "practical": "方向性は良いが具体性が不足。新任マネージャー（7名）の局面に寄せて再提出せよ。",
         "framework": "一般論に寄りすぎ。既製書との差別化を出して再提出。",
         "contrarian": "逆張りの意図は買うが論拠が粗い。根拠を添えて再提出。",
     }
     round2 = {
-        "practical": ("採用", "局面に最も的中。30名移行期の『任せ方』に直結。"),
+        "practical": ("採用", "局面に最も的中。昇格直後の『任せ方』に直結。"),
         "framework": ("採用", "指示を減らす問いの設計が、現場の自走課題に接続している。"),
         "contrarian": ("保留", "視点は鋭いが時期尚早。次回の候補として保留。"),
     }

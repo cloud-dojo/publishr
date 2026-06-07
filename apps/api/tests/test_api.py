@@ -115,7 +115,7 @@ def test_reading_state_updates_granularity_and_annotations():
 
 
 def test_pipeline_run_returns_reject_log():
-    res = client.post("/pipeline/run", json={"userId": "u_tadokoro"})
+    res = client.post("/pipeline/run", json={"userId": "u_sakura"})
     assert res.status_code == 200
     data = res.json()
     assert len(data["books"]) >= 2
@@ -123,9 +123,9 @@ def test_pipeline_run_returns_reject_log():
     assert set(data["approvedPlanIds"]) == {p["id"] for p in data["plans"]}
     assert {b["planId"] for b in data["books"]} == set(data["approvedPlanIds"])
     assert data["observation"]["noteCount"] > 0
-    assert "管掌範囲の拡大" in data["observation"]["signals"]
-    assert "製造課長" in data["readerProfile"]["role"]
-    assert "30名規模" in data["readerProfile"]["situation"]
+    assert "年上部下との距離感" in data["observation"]["signals"]
+    assert "マーケティング課長" in data["readerProfile"]["role"]
+    assert "7名" in data["readerProfile"]["situation"]
     assert len(data["rejectLog"]) >= 6
     assert any(e["round"] == 1 and e["verdict"] == "却下" for e in data["rejectLog"])
     assert any(e["round"] == 2 and e["verdict"] == "採用" for e in data["rejectLog"])
