@@ -8,7 +8,7 @@ import { fixtures } from "@publishr/shared-schema";
 const NAV = [
   { href: "/", ico: "❖", label: "あなたの書店" },
   { href: "/library", ico: "▤", label: "わたしの書庫" },
-  { href: "/highlights", ico: "❏", label: "ハイライト・付箋" },
+  { href: "/highlights", ico: "❏", label: "ハイライト・ブックマーク" },
   { href: "/authors", ico: "✒", label: "作家たち" },
   { href: "/map", ico: "✦", label: "サイトマップ" },
 ];
@@ -34,6 +34,8 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <Link href="/" className="brand">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="brand-icon" src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
         <span className="mark">
           Publishr<span className="dot">.</span>
         </span>

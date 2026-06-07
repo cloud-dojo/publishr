@@ -35,9 +35,7 @@ export default function HomePage() {
       <Topbar
         greeting={
           <>
-            おはようございます、<b>{user?.name ?? "田所 誠"}</b> さん。
-            <br />
-            {arrival}、あなたのために <b>{interests.length}冊</b> の新刊が入荷しました。
+            おはようございます、<b>{user?.name ?? "佐倉 美咲"}</b> さん。
           </>
         }
       />
@@ -60,7 +58,7 @@ export default function HomePage() {
               今週の<span className="accent">入荷</span>
             </div>
             <div className="section-sub">
-              あなたの状況を観測し、専属の編集部が選び、書き下ろした一冊たちです。
+              あなたの仕事と関心を読み取り、専属の編集部が選び、書き下ろした一冊たちです。
             </div>
           </div>
         </div>
@@ -70,7 +68,7 @@ export default function HomePage() {
           <div className="group-title">
             いま、あなたの関心に <span className="group-count">{interests.length}冊</span>
           </div>
-          <div className="group-note">観測したいまの状況に、まっすぐ応える本。</div>
+          <div className="group-note">あなたのいまに、まっすぐ応える本。</div>
         </div>
         <div className="shelf-grid">
           {interests.map((b) => (
@@ -135,7 +133,7 @@ export default function HomePage() {
       <div className="mock-note">
         <span className="mn-ico">◈</span>
         <span>
-          ローカルMVP。本・著者・入荷理由はデモ用データで、観測ソースは Google Keep（モック）です。
+          ローカルMVP。本・著者・入荷理由はデモ用データで、情報ソースは Google Keep（モック）です。
         </span>
       </div>
     </>

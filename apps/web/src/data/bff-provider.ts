@@ -37,7 +37,7 @@ export class BffProvider extends BaseProvider {
       jget<Book[]>("/books"),
       jget<Plan[]>("/plans"),
       jget<Persona[]>("/personas"),
-      jget<User>("/users/u_tadokoro").catch(() => null),
+      jget<User>("/users/u_sakura").catch(() => null),
     ]);
     books.forEach((b) => this.books.set(b.id, b));
     plans.forEach((p) => this.plans.set(p.id, p));

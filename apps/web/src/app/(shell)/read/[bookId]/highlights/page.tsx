@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { Topbar } from "@/components/shell/Topbar";
 import { chapterForPara } from "@/data/bookText";
 import { useProvider } from "@/data/hooks";
 
@@ -15,7 +14,11 @@ export default function BookHighlightsPage() {
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: `/read/${params.bookId}`, label: "‹ 本にもどる" }} notify={false} icon="✎" />
+        <header className="topbar">
+          <div className="reader-top">
+            <Link href={`/read/${params.bookId}`} className="greeting">‹ 本にもどる</Link>
+          </div>
+        </header>
         <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
       </>
     );
@@ -31,9 +34,7 @@ export default function BookHighlightsPage() {
     <>
       <header className="topbar">
         <div className="reader-top">
-          <Link href={`/read/${book.id}`} className="greeting">
-            ‹ 本にもどる
-          </Link>
+          <Link href={`/read/${book.id}`} className="greeting">‹ 本にもどる</Link>
           <div className="rt-title">
             {book.title} <span>／ {persona?.name}</span>
           </div>
@@ -64,8 +65,7 @@ export default function BookHighlightsPage() {
                   className={`hl-card panel hl-card--${h.color ?? "yellow"}`}
                 >
                   <span className="hl-text">
-                    {h.text}
-                    {h.text.length >= 48 ? "…" : ""}
+                    {h.text}{h.text.length >= 48 ? "…" : ""}
                   </span>
                   {chapter && <span className="hl-meta">{chapter}</span>}
                 </Link>

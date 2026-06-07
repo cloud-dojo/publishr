@@ -106,12 +106,6 @@ export default function BookDetailPage() {
                   <b>{plan.coreMessage}</b>
                 </div>
               </div>
-              {plan.differentiator && (
-                <div className="frame-row">
-                  <div className="fr-key">既製本との違い</div>
-                  <div className="fr-val">{plan.differentiator}</div>
-                </div>
-              )}
             </div>
           )}
 

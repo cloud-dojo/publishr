@@ -8,7 +8,7 @@ import { setSourceConnected, type ConnectSource } from "@/data/user-writes";
 import { getFirebaseAuth } from "@/lib/firebase";
 
 const SOURCES: { key: ConnectSource; icon: string; name: string; desc: string }[] = [
-  { key: "drive", icon: "📁", name: "Google Drive", desc: "業務資料・関心フォルダのテキストを観測します。" },
+  { key: "drive", icon: "📁", name: "Google Drive", desc: "業務資料・関心フォルダのテキストを読み取ります。" },
   { key: "calendar", icon: "📅", name: "Google Calendar", desc: "スケジュール・役割の文脈を読み取ります。" },
   { key: "tasks", icon: "✓", name: "Google Tasks", desc: "タスク・優先度の文脈を読み取ります。" },
 ];
@@ -49,7 +49,7 @@ export default function ConnectPage() {
     <div className="auth-frame">
       <div className="auth-card panel">
         <span className="eyebrow">Connect your sources</span>
-        <h1 className="auth-title">あなたの仕事を、観測させてください。</h1>
+        <h1 className="auth-title">あなたの仕事を、読み取らせてください。</h1>
         <p className="auth-lead">
           以下の3つを読み取り、あなたにいま必要な一冊を企画します。読み取りは自動の企画にのみ使われます。
         </p>

@@ -16,7 +16,6 @@ export default function FinishPage() {
 
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
   const [following, setFollowing] = useState(false);
-  const [wantsSequel, setWantsSequel] = useState(book?.feedback.wantsSequel ?? false);
   const [impression, setImpression] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -34,11 +33,6 @@ export default function FinishPage() {
   const onRate = (n: number) => {
     setRating(n);
     void sendFeedback(book.id, { rating: n, readPercent: 100 });
-  };
-  const onSequel = () => {
-    const next = !wantsSequel;
-    setWantsSequel(next);
-    void sendFeedback(book.id, { wantsSequel: next });
   };
   const onSaveImpression = () => {
     // mock: 自由記入の感想をローカル保存（フェーズ3で Firestore 直書きに差し替え）。
@@ -77,13 +71,6 @@ export default function FinishPage() {
             >
               {following ? "♥ お気に入りの作家に登録済み" : `♡ ${persona?.name} をお気に入りに`}
             </button>
-            <button
-              type="button"
-              className={wantsSequel ? "btn btn--gold" : "btn btn--ghost"}
-              onClick={onSequel}
-            >
-              {wantsSequel ? "✦ 続編を希望中" : "続編を希望する"}
-            </button>
           </div>
         </div>
 
@@ -121,13 +108,13 @@ export default function FinishPage() {
           </div>
         </div>
 
-        {(following || wantsSequel) && persona && (
+        {following && persona && (
           <div className="sequel">
             <div style={{ fontSize: 26 }}>✦</div>
             <div style={{ flex: 1 }}>
-              <div className="sq-t">あなたの反応を受けて、{persona.name} が次の一冊を構想中です</div>
+              <div className="sq-t">お気に入りの作家が、次の一冊を考えはじめました</div>
               <div className="sq-d">
-                あなたの高評価と続編希望から、関連テーマの新刊を明朝の入荷候補に加えました。
+                あなたがお気に入り登録した {persona.name} は、次回作を検討しています。新しい一冊が入荷した際はご案内します。
               </div>
             </div>
           </div>

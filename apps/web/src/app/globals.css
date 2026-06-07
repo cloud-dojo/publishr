@@ -42,7 +42,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-gutter: stable; }
 
 body {
   font-family: var(--font-body);
@@ -75,8 +75,9 @@ a { color: inherit; text-decoration: none; }
 .sidebar::-webkit-scrollbar { width: 6px; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--ink-600); border-radius: 3px; }
 
-.brand { display: flex; align-items: baseline; gap: 9px; margin-bottom: 4px; }
-.brand .mark { font-family: var(--font-en); font-size: 30px; font-weight: 600; letter-spacing: .5px; color: var(--gold-bright); text-shadow: 0 0 22px var(--gold-glow); }
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.brand .brand-icon { width: 30px; height: 30px; display: block; flex: none; }
+.brand .mark { font-family: var(--font-en); font-size: 30px; font-weight: 600; letter-spacing: .5px; color: var(--gold-bright); text-shadow: 0 0 22px var(--gold-glow); line-height: 1; }
 .brand .mark .dot { color: var(--wine); }
 .brand-sub { font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; color: var(--text-500); margin: 2px 0 24px; padding-left: 2px; }
 
@@ -377,8 +378,6 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .hl-popup-sep { width: 1px; height: 16px; background: rgba(255,255,255,.15); margin: 0 2px; }
 .hl-popup-delete { background: none; border: none; color: rgba(255,255,255,.5); cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px; transition: color .15s, background .15s; }
 .hl-popup-delete:hover { color: #e07878; background: rgba(255,80,80,.12); }
-.sticky { position: relative; margin: 4px 0 22px; padding: 14px 16px; background: #f4e2a8; color: #4a3a12; border-radius: 3px; font-family: var(--font-body); font-size: 13px; line-height: 1.6; box-shadow: 2px 4px 12px rgba(0,0,0,.25); transform: rotate(-.5deg); border-left: 3px solid #c9a35f; max-width: 380px; }
-.sticky::before { content: "付箋"; position: absolute; top: -9px; left: 12px; font-size: 10px; letter-spacing: 2px; background: #c9a35f; color: #3a2c08; padding: 2px 8px; border-radius: 3px; }
 .rail-tools { position: sticky; top: var(--topbar-h); display: flex; flex-direction: column; gap: 18px; }
 .tool-card { padding: 18px; }
 .tool-card .tc-h { font-family: var(--font-display); font-size: 14px; color: var(--text-100); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
@@ -510,8 +509,13 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .hl-card--pink   { border-left-color: rgba(210,80,120,.9); }
 .hl-card:hover .hl-text { color: var(--gold-bright); }
 
-/* 読書ページ サイドバーのナビ（目次/ハイライト/本の概要） */
-.rd-nav-card { padding: 8px; }
+/* ブックマーク リボンボタン（Kindle風しおり） */
+.bk-ribbon { position: absolute; top: 2px; right: 20px; z-index: 10; background: none; border: none; cursor: pointer; padding: 2px 4px; font-size: 18px; line-height: 1; opacity: 0.25; transition: opacity .18s, transform .15s; }
+.bk-ribbon:hover { opacity: 0.75; transform: scale(1.15); }
+.bk-ribbon.on { opacity: 1; }
+
+/* 読書ページ サイドバーのナビ（目次/ハイライト/ブックマーク/本の概要） */
+.rd-nav-card { display: flex; flex-direction: column; padding: 8px; }
 .rd-navrow { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--radius-sm); color: var(--text-200); transition: background .18s, color .18s; }
 .rd-navrow:hover { background: var(--ink-750); color: var(--gold-bright); }
 .rd-navrow-ico { width: 18px; text-align: center; color: var(--gold); font-size: 14px; }
@@ -620,13 +624,19 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 }
 
 /* ===== 認証フロー (login / onboarding / connect) ===== */
-.auth-frame { min-height: 100vh; display: grid; place-items: center; padding: 48px 24px; }
-.auth-card { width: 100%; max-width: 460px; padding: 40px 44px; display: flex; flex-direction: column; gap: 14px; }
-.auth-brand { font-family: var(--font-en); font-size: 34px; color: var(--gold-bright); text-shadow: 0 0 22px var(--gold-glow); }
+.auth-frame {
+  min-height: 100vh; display: grid; place-items: center; padding: 48px 24px;
+  background: radial-gradient(ellipse 80% 55% at 50% 28%, rgba(201,163,95,0.09) 0%, transparent 68%);
+}
+.auth-card { width: 100%; max-width: 500px; padding: 52px 56px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0; }
+.auth-logo { width: 64px; height: 64px; display: block; margin-bottom: 18px; filter: drop-shadow(0 8px 22px rgba(0,0,0,0.5)); }
+.auth-brand { font-family: var(--font-en); font-size: 42px; color: var(--gold-bright); text-shadow: 0 0 32px var(--gold-glow), 0 0 6px rgba(230,200,134,0.3); letter-spacing: 3px; margin-bottom: 20px; line-height: 1; }
 .auth-brand .dot { color: var(--wine); }
+.auth-divider { width: 64px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin-bottom: 28px; flex-shrink: 0; }
+.auth-hero { font-family: var(--font-display); font-size: 22px; color: var(--text-100); line-height: 1.75; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 20px; }
 .auth-tagline { font-family: var(--font-display); color: var(--text-200); font-size: 14px; }
 .auth-title { font-family: var(--font-display); font-size: 26px; color: var(--text-100); font-weight: 800; line-height: 1.35; }
-.auth-lead { font-size: 13px; color: var(--text-300); line-height: 1.8; }
+.auth-lead { font-size: 13px; color: var(--text-300); line-height: 1.9; margin-bottom: 32px; }
 .auth-error { color: #e0899a; font-size: 13px; }
 .auth-note { color: var(--text-500); font-size: 11.5px; line-height: 1.6; margin-top: 4px; }
 
@@ -704,7 +714,8 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .gb-btn:hover { border-color: var(--gold); color: var(--text-100); }
 .gb-btn.on.good { background: rgba(63,93,79,.25); border-color: var(--forest); color: #a8d2ba; }
 .gb-btn.on.bad { background: rgba(140,59,77,.25); border-color: var(--wine); color: #e0a0ad; }
-.gb-reasons { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.gb-reasons { overflow: hidden; max-height: 0; margin-top: 0; padding-top: 0; border-top: none; transition: max-height 0.22s ease; }
+.gb-reasons--active { max-height: 300px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
 .gb-reasons-q { font-size: 12px; color: var(--text-300); margin-bottom: 10px; }
 .gb-other-note { margin-top: 10px; font-size: 12px; color: var(--text-300); line-height: 1.6; padding: 9px 11px; background: rgba(201,163,95,.07); border: 1px solid var(--line); border-radius: var(--radius-sm); }
 

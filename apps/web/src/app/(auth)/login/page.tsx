@@ -35,13 +35,29 @@ export default function LoginPage() {
   return (
     <div className="auth-frame">
       <div className="auth-card panel">
+        {/* ロゴ */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="auth-logo" src="/favicon.svg" alt="Publishr" width={64} height={64} />
+
+        {/* ブランド名 */}
         <div className="auth-brand">
           Publishr<span className="dot">.</span>
         </div>
-        <p className="auth-tagline">百万部のベストセラーより、あなたのための一冊。</p>
-        <p className="auth-lead">
-          あなたの仕事と関心を読み、編集部が自律的に企画します。まずはGoogleでログインしてください。
+
+        {/* 金色セパレーター */}
+        <div className="auth-divider" />
+
+        {/* キーフレーズ */}
+        <p className="auth-hero">
+          百万部のベストセラーより、<br />
+          あなたのための一冊。
         </p>
+
+        {/* サブコピー */}
+        <p className="auth-lead">
+          あなたの仕事と関心を読み、編集部が自律的に企画します。
+        </p>
+
         <button type="button" className="btn btn--gold btn--block" onClick={onLogin} disabled={busy}>
           {busy ? "サインイン中…" : "Googleでログイン"}
         </button>

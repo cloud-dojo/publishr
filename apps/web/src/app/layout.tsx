@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-import { Sidebar } from "@/components/shell/Sidebar";
-
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,12 +12,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
-      <body>
-        <div className="app">
-          <Sidebar />
-          <main className="main">{children}</main>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -100,6 +100,7 @@ export default function ReaderPage() {
   const [fontStep, setFontStep] = useState(1);
   const [chapterMarks, setChapterMarks] = useState<{ col: number; label: string }[]>([]);
   const [draftAnnotations, setDraftAnnotations] = useState<ReadingAnnotation[] | null>(null);
+  const [currentPi, setCurrentPi] = useState<number>(-1);
 
   // ハイライトポップアップ: クリックしたハイライトの annId と表示座標
   const [hlPopup, setHlPopup] = useState<{ annId: string; x: number; y: number } | null>(null);
@@ -111,6 +112,7 @@ export default function ReaderPage() {
   const strideRef = useRef(1);
   const navigatedRef = useRef(false);
   const jumpedRef = useRef(false);
+  const lastViewRef = useRef(0);
 
   const recompute = useCallback(() => {
     const clip = clipRef.current;
@@ -156,6 +158,16 @@ export default function ReaderPage() {
       const v = Math.max(0, Math.min(spreadsRef.current - 1, Math.floor(el.offsetLeft / strideRef.current)));
       setView(v);
       jumpedRef.current = true;
+    } else {
+      // ?ch / ?pi なし → 前回離脱位置から再開
+      const saved = localStorage.getItem(`read_view_${params.bookId}`);
+      if (saved) {
+        const v = Math.min(spreadsRef.current - 1, Math.max(0, parseInt(saved, 10)));
+        if (v > 0) {
+          setView(v);
+          jumpedRef.current = true;
+        }
+      }
     }
   }, [recompute, params.bookId, book?.body, book?.granularity, fontStep]);
 
@@ -204,6 +216,35 @@ export default function ReaderPage() {
     return () => window.removeEventListener("mousedown", handler);
   }, [hlPopup]);
 
+  // 現在 view を lastViewRef に記録（アンマウント時に localStorage へ保存するため）
+  useEffect(() => {
+    lastViewRef.current = view;
+  }, [view]);
+
+  // 離脱時に最終スプレッド番号を保存
+  useEffect(() => {
+    return () => {
+      if (lastViewRef.current > 0) {
+        localStorage.setItem(`read_view_${params.bookId}`, String(lastViewRef.current));
+      }
+    };
+  }, [params.bookId]);
+
+  // 現在スプレッドの最初の段落インデックスを追跡（ブックマーク用）
+  useLayoutEffect(() => {
+    const flow = flowRef.current;
+    if (!flow || stride === 0) return;
+    const leftEdge = view * stride;
+    const rightEdge = leftEdge + stride;
+    for (const p of Array.from(flow.querySelectorAll<HTMLElement>("p[data-pi]"))) {
+      if (p.offsetLeft >= leftEdge && p.offsetLeft < rightEdge) {
+        setCurrentPi(parseInt(p.getAttribute("data-pi") ?? "-1", 10));
+        return;
+      }
+    }
+    setCurrentPi(-1);
+  }, [view, stride]);
+
   if (!book) {
     return (
       <>
@@ -230,6 +271,38 @@ export default function ReaderPage() {
   const persist = (next: ReadingAnnotation[]) => {
     setDraftAnnotations(next);
     void updateReadingState(book.id, { granularity: book.granularity, annotations: next });
+  };
+
+  const isPageBookmarked = currentPi >= 0 && annotations.some(
+    (a) => a.kind === "bookmark" && a.paragraphIndex === currentPi
+  );
+
+  const toggleBookmark = () => {
+    const flow = flowRef.current;
+    if (!flow || stride === 0) return;
+    const leftEdge = view * stride;
+    const rightEdge = leftEdge + stride;
+    let pi = -1;
+    for (const p of Array.from(flow.querySelectorAll<HTMLElement>("p[data-pi]"))) {
+      if (p.offsetLeft >= leftEdge && p.offsetLeft < rightEdge) {
+        pi = parseInt(p.getAttribute("data-pi") ?? "-1", 10);
+        break;
+      }
+    }
+    if (pi < 0) return;
+    const existing = annotations.find((a) => a.kind === "bookmark" && a.paragraphIndex === pi);
+    if (existing) {
+      persist(annotations.filter((a) => a.id !== existing.id));
+    } else {
+      const el = flow.querySelector<HTMLElement>(`p[data-pi="${pi}"]`);
+      const text = (el?.textContent ?? "").trim().slice(0, 48);
+      persist([...annotations, {
+        id: `ann_${book.id}_bk${pi}_${Date.now()}`,
+        kind: "bookmark" as const,
+        paragraphIndex: pi,
+        text,
+      }]);
+    }
   };
 
   // 段落のハイライト一覧
@@ -462,6 +535,15 @@ export default function ReaderPage() {
                 {progressPct}%
               </span>
             </div>
+
+            <button
+              type="button"
+              className={`bk-ribbon${isPageBookmarked ? " on" : ""}`}
+              onClick={toggleBookmark}
+              title={isPageBookmarked ? "ブックマーク解除" : "このページをブックマーク"}
+            >
+              🔖
+            </button>
           </div>
 
           <button
@@ -485,6 +567,11 @@ export default function ReaderPage() {
             <Link href={`/read/${book.id}/highlights`} className="rd-navrow">
               <span className="rd-navrow-ico">✎</span>
               <span className="rd-navrow-label">ハイライト</span>
+              <span className="rd-navrow-arrow">›</span>
+            </Link>
+            <Link href={`/read/${book.id}/bookmarks`} className="rd-navrow">
+              <span className="rd-navrow-ico">⊡</span>
+              <span className="rd-navrow-label">ブックマーク</span>
               <span className="rd-navrow-arrow">›</span>
             </Link>
             <Link href={`/books/${book.id}`} className="rd-navrow">
@@ -516,35 +603,35 @@ export default function ReaderPage() {
               </button>
             </div>
 
-            {reaction && (
-              <div className="gb-reasons">
-                <div className="gb-reasons-q">
-                  {reaction === "good" ? "どこが良かったですか？" : "どこが気になりましたか？"}
-                </div>
-                <div className="fb-opts">
-                  {(reaction === "good" ? GOOD_REASONS : BAD_REASONS).map((r) => (
-                    <div
-                      key={r}
-                      className={`chip${reason === r ? " on" : ""}`}
-                      onClick={() => pickReason(r)}
-                    >
-                      {r}
-                    </div>
-                  ))}
-                  <div
-                    className={`chip${reason === "その他" ? " on" : ""}`}
-                    onClick={() => pickReason("その他")}
-                  >
-                    その他
-                  </div>
-                </div>
-                {reason === "その他" && (
-                  <div className="gb-other-note">
-                    詳しい感想は、下の「読み終えた → 感想を書く」からご記入ください。
-                  </div>
-                )}
+            {/* gb-reasons は常に DOM に存在させ max-height transition でスムーズに展開。
+                height が急変しないので上の目次ボックスが動かない。 */}
+            <div className={`gb-reasons${reaction ? " gb-reasons--active" : ""}`}>
+              <div className="gb-reasons-q">
+                {reaction === "good" ? "どこが良かったですか？" : "どこが気になりましたか？"}
               </div>
-            )}
+              <div className="fb-opts">
+                {(reaction === "good" ? GOOD_REASONS : BAD_REASONS).map((r) => (
+                  <div
+                    key={r}
+                    className={`chip${reason === r ? " on" : ""}`}
+                    onClick={() => pickReason(r)}
+                  >
+                    {r}
+                  </div>
+                ))}
+                <div
+                  className={`chip${reason === "その他" ? " on" : ""}`}
+                  onClick={() => pickReason("その他")}
+                >
+                  その他
+                </div>
+              </div>
+              {reason === "その他" && (
+                <div className="gb-other-note">
+                  詳しい感想は、下の「読み終えた → 感想を書く」からご記入ください。
+                </div>
+              )}
+            </div>
 
             <div className="muted" style={{ fontSize: 11, marginTop: 10, lineHeight: 1.5 }}>
               あなたの選択は次の入荷の企画に反映されます。

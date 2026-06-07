@@ -30,4 +30,4 @@ export const timing = {
   pollInterval: 1500,
 };
 
-export const DEMO_USER_ID = "u_tadokoro";
+export const DEMO_USER_ID = "u_sakura";

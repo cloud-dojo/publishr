@@ -18,7 +18,6 @@ type Tab = "all" | HighlightKind;
 const TABS: { key: Tab; label: string }[] = [
   { key: "all", label: "すべて" },
   { key: "highlight", label: "ハイライト" },
-  { key: "note", label: "付箋" },
   { key: "bookmark", label: "ブックマーク" },
 ];
 
@@ -34,10 +33,11 @@ export default function HighlightsPage() {
 
   // シード＋読書ページで付けた注釈（book.annotations）をマージ
   const items = mergeHighlights(annotationsToHighlights(provider.listBooks()));
+  const visibleItems = items.filter((h) => h.kind !== "note");
   const count = (k: Tab) =>
-    k === "all" ? items.length : items.filter((h) => h.kind === k).length;
-  const groups = highlightsGroupedByBook(items, tab);
-  const cloud = highlightTagCloud(items);
+    k === "all" ? visibleItems.length : visibleItems.filter((h) => h.kind === k).length;
+  const groups = highlightsGroupedByBook(visibleItems, tab);
+  const cloud = highlightTagCloud(visibleItems);
   const bookTitle = (id: string) => provider.getBook(id)?.title ?? id;
 
   return (
@@ -45,17 +45,17 @@ export default function HighlightsPage() {
       <Topbar
         greeting={
           <>
-            <b>ハイライトと付箋</b>　― あなたが線を引いた場所は、関心の地図になる。
+            <b>ハイライトとブックマーク</b>　― あなたが線を引いた場所は、関心の地図になる。
           </>
         }
       />
       <section className="page-hero">
         <div className="ph-eyebrow">Your marks &amp; margins</div>
         <h1>
-          ハイライトと<span className="accent">付箋</span>。
+          ハイライトと<span className="accent">ブックマーク</span>。
         </h1>
         <p>
-          あなたが線を引いた場所・付箋を貼った場所——これはあなたの関心の地図です。次に何を書くべきかを、Publishr
+          あなたが線を引いた場所・ブックマークした場所——これはあなたの関心の地図です。次に何を書くべきかを、Publishr
           はここから学びます。
         </p>
       </section>

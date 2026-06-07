@@ -1,9 +1,9 @@
 [
   {
     "id": "k_kansho",
-    "userId": "u_tadokoro",
+    "userId": "u_sakura",
     "title": "最近の所感",
-    "text": "管掌範囲が広がってきた。気づけば30人分の判断を自分が抱えている。全部に目を通すのが限界に近い。",
+    "text": "マネージャーになって2ヶ月。部下7名のチームを率いているが、正直、手探りが続いている。特に年上の佐藤さん（42歳）への指示の出し方で毎回悩む。プレイヤーの頃とは全然違う。",
     "labels": ["所感", "マネジメント"],
     "checklist": [],
     "pinned": true,
@@ -11,63 +11,63 @@
   },
   {
     "id": "k_1on1",
-    "userId": "u_tadokoro",
-    "title": "1on1メモ：田中さん",
-    "text": "今週も1on1が10件。準備と振り返りで毎週半日が消える。任せたいが、任せ方がわからない。",
+    "userId": "u_sakura",
+    "title": "1on1メモ：佐藤さん",
+    "text": "今週も佐藤さんとの1on1。彼はベテランで実力もある。でも何をどこまで任せていいのか、まだ距離感が掴めない。こちらが遠慮しているのか、彼が遠慮しているのか。もっと上手くやれているはずなのに。",
     "labels": ["1on1", "マネジメント"],
     "checklist": [],
     "pinned": false,
     "updatedAt": "2026-05-29"
   },
   {
-    "id": "k_soshikizu",
-    "userId": "u_tadokoro",
-    "title": "組織図（30名）",
-    "text": "3チーム体制。班長3名＋現場27名。班長への権限移譲ラインが曖昧なまま。",
-    "labels": ["組織", "体制"],
-    "checklist": [],
+    "id": "k_renewal",
+    "userId": "u_sakura",
+    "title": "しずく天然水 リニューアルメモ",
+    "text": "担当ブランドの2026春リニューアル。パッケージ刷新・ターゲット拡大の方向性を役員に報告する機会が近い。「本当にこれで合っているのか」確信が持てないまま進んでいる。",
+    "labels": ["ブランド戦略", "リニューアル"],
+    "checklist": [
+      { "text": "パッケージデザイン案の絞り込み", "checked": false },
+      { "text": "ターゲット拡大の根拠データ整理", "checked": false }
+    ],
     "pinned": false,
     "updatedAt": "2026-05-27"
   },
   {
-    "id": "k_zoin",
-    "userId": "u_tadokoro",
-    "title": "増員計画 来月+5名",
-    "text": "来月さらに5名増員。今のやり方のままでは確実に回らなくなる。属人化の解消が急務。",
-    "labels": ["採用", "計画"],
-    "checklist": [
-      { "text": "受け入れ体制の整備", "checked": false },
-      { "text": "業務の標準化", "checked": false }
-    ],
+    "id": "k_hyoka",
+    "userId": "u_sakura",
+    "title": "評価面談の準備",
+    "text": "来月、チームの上期評価面談。初めての経験。何を基準に伝えればいいのか正直まだわかっていない。部下に不公平に感じさせたくない。",
+    "labels": ["評価", "マネジメント"],
+    "checklist": [],
     "pinned": false,
     "updatedAt": "2026-05-26"
   },
   {
-    "id": "k_kaizen",
-    "userId": "u_tadokoro",
-    "title": "改善提案メモ",
-    "text": "現場からの改善提案が最近止まっている。指示待ちが増えた気がする。",
-    "labels": ["現場", "改善"],
-    "checklist": [],
-    "pinned": false,
-    "updatedAt": "2026-05-24"
-  },
-  {
-    "id": "k_keiei",
-    "userId": "u_tadokoro",
-    "title": "経営会議 報告フォーマット",
-    "text": "来期から定量報告が必須に。感覚ではなく数字で語る準備が要る。",
+    "id": "k_houkoku",
+    "userId": "u_sakura",
+    "title": "役員中間報告 6月末",
+    "text": "リニューアルの中間報告が役員会議に入っている。感覚じゃなく、数字で語れるようにしないといけない。マーケティングの成果をどう定量化するか。",
     "labels": ["報告", "経営会議"],
     "checklist": [],
     "pinned": false,
     "updatedAt": "2026-05-22"
   },
   {
-    "id": "k_shogi",
-    "userId": "u_tadokoro",
-    "title": "週末に将棋",
-    "text": "久しぶりに将棋。大局観って仕事の意思決定に似てるな、と思った。",
-    "labels": ["趣味"],
+    "id": "k_tsundoku",
+    "userId": "u_sakura",
+    "title": "積読が増えてきた",
+    "text": "本は買っているのに全然読めていない。忙しいのはわかるけど、このままでは何も吸収できない気がする。通勤時間をもっと使えればいいのに。",
+    "labels": ["読書", "所感"],
+    "checklist": [],
+    "pinned": false,
+    "updatedAt": "2026-05-20"
+  },
+  {
+    "id": "k_cacao",
+    "userId": "u_sakura",
+    "title": "週末 カカオ農園の記事読んだ",
+    "text": "偶然読んだカカオ農園のブランドストーリーの記事が面白かった。産地・製法・パッケージが一貫していることが消費者との信頼を作る。しずく天然水にも通じるものがある。",
+    "labels": ["趣味", "マーケティング"],
     "checklist": [],
     "pinned": false,
     "updatedAt": "2026-05-18"
