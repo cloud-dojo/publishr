@@ -56,7 +56,7 @@ function buildInitial(user: User): EditForm {
     };
   }
   // 保存値が無ければ mock ユーザーから当たりを付ける。
-  const prefillInterests = (user.profile.estimatedInterests ?? []).filter((i) =>
+  const prefillInterests = (user.profile?.estimatedInterests ?? []).filter((i) =>
     INTERESTS.includes(i)
   );
   return {
