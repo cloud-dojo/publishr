@@ -11,10 +11,15 @@ import {
   cannedBody,
 } from "./canned";
 import { timing } from "./config";
+import { buildFirstRunBooks } from "./firstRunCatalog";
+import type { InitialProfileInput } from "./profileOptions";
 import { BaseProvider } from "./provider";
 import { EXTRA_LIBRARY_BOOKS, SAMPLE_BODIES } from "./sampleLibrary";
 
+const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
 export class MockProvider extends BaseProvider {
+  private firstRunStarted = false;
   protected async load(): Promise<void> {
     // デモが常に新鮮になるよう、draft の入荷日時(createdAt)を実行時に直近7日内へ生成。
     // 旧「press棚の draft（もうすぐ）」概念は廃止し、関心(arrivals)の draft として扱う。
@@ -156,5 +161,28 @@ export class MockProvider extends BaseProvider {
     this.approvedPlanIds = CANNED_APPROVED_PLAN_IDS;
     this.debate = CANNED_DEBATE;
     this.notify();
+  }
+
+  /**
+   * 初回体験（mock）：新規ユーザーの「最初の本棚」を決定的に時間差入荷する。
+   * 既存のデモ本を一旦すべて消して空状態にし、本命10＋セレンディピティ5を
+   * 1冊ずつ入荷させる（onSnapshot 相当の notify で棚が埋まっていく）。
+   */
+  async runFirstRun(_userId: string, profile?: unknown): Promise<void> {
+    if (this.firstRunStarted) return;
+    this.firstRunStarted = true;
+    await this.ensureLoaded();
+
+    // 新規ユーザー状態：在庫・通知をクリアして空の書店から始める。
+    this.books.clear();
+    this.notifications = [];
+    this.notify();
+
+    const books = buildFirstRunBooks((profile as InitialProfileInput | null) ?? null);
+    for (const b of books) {
+      await delay(650);
+      this.books.set(b.id, { ...b, createdAt: new Date().toISOString() });
+      this.notify();
+    }
   }
 }

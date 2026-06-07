@@ -5,6 +5,9 @@
   "description": "Publishr — あなた専属の、AI出版社。(MVP / local)",
   "scripts": {
     "dev:web": "npm --prefix apps/web run dev",
+    "dev:mock": "npm --prefix apps/web run dev:mock",
+    "dev:emulator": "npm --prefix apps/web run dev:emulator",
+    "emulators": "firebase emulators:start --only auth,firestore",
     "build:web": "npm --prefix apps/web run build",
     "lint:web": "npm --prefix apps/web run lint"
   }

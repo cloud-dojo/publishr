@@ -21,7 +21,7 @@ WEB_PORTS = (3000, 3001, 3002)
 # Next.js 16 の dev サーバは localhost(=IPv6 ::1) に bind するため、IPv4/IPv6 両方を試す。
 # socket.create_connection に渡すのでブラケットなしの生ホスト表記にする。
 WEB_HOSTS = ("127.0.0.1", "::1")
-DEMO_USER_ID = "u_tadokoro"
+DEMO_USER_ID = "u_sakura"
 
 
 class SmokeError(RuntimeError):

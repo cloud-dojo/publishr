@@ -10,7 +10,7 @@ import {
   type ProfileStep,
   type ProfileStepKey,
 } from "@/data/profileOptions";
-import { saveInitialProfile } from "@/data/user-writes";
+import { saveInitialProfile, setFirstRunStatus } from "@/data/user-writes";
 
 // 「新しい出会いの幅」(serendipity) を初期設定の最後のステップとして追加する。
 // serendipity は initialProfile の独立フィールドだが、設問としてはここで確認する。
@@ -94,6 +94,8 @@ export default function OnboardingPage() {
     } finally {
       setSaving(false);
     }
+    // 初回体験を開始：トップは「生成中」状態で開き、最初の本棚を仕立てる。
+    setFirstRunStatus("generating");
     // 要望どおり登録後はトップ「あなたの書店」へ直接遷移する。
     router.push("/");
   };

@@ -95,9 +95,11 @@
 
 ## 🧭 現在地サマリ（2026-06-07時点）
 
-> **いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`＋`make smoke`）は緑（pytest **58 passed, 1 skipped**）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント16ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
+> **いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`）は緑（pytest **60 passed, 1 skipped**・**2026-06-07にペルソナ不整合の回帰=I-24を解消**。make smoke は Windows の OpenSSL/POSIX 環境問題で本機未実行）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント16ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
 >
 > **【2026-06-07 フロントUI仕上げ（C4.8）✅完了】** **2026-06-06実施**: 読書画面を中心に複数の UI 改修：①**読書ページ再構成**＝ハイライト一覧ページ(`/read/[bookId]/highlights`)・目次ページ(`/read/[bookId]/contents`)を新規作成し読書ページサイドバーをナビ3リンク（目次・ハイライト・本の概要）に改修、`?pi`/`?ch` クエリパラメータによる本文ジャンプ機能を実装 ②**KindleライクなハイライトUX**＝ドラッグで範囲指定→自動ハイライト、クリックで色変更(黄/青/ピンク)＋削除ポップアップ（`ReadingAnnotation.startOffset/endOffset` で文字単位記録） ③**目次・本の概要の統一**＝`bookChapters(book.body)` で本文Markdownから実際の章を導出する`BookToc`共有コンポーネント新設（目次ページ・本の概要ページで共用）、本の概要ページからフル版/要約版/ここだけトグルと「今朝入荷」バッジを削除 ④**書庫サイドバー改善**＝ラベルを「最近読んだ本」に変更・published本のみ最大5件・著者名非表示 ⑤**書庫ページ表紙デザイン強化**＝`midnight/forest/slate/rust/wine/ink` 各バリアントに CSS `::before` 装飾（円弧・縦ライン・数字透かし等）を追加し書店ページ(`b1`〜`b10`)と同等の視覚的リッチさに統一。**2026-06-07実施**: ①**フィードバックチップ修正**＝ページロード時に非表示・いいね/いまいちタップで展開（`{reaction && ...}` 条件付きレンダリング） ②**ナビカードジャンプ修正**＝`.rail-tools` の `position:sticky` を廃止しグリッド上端固定（`navDelta:0` を eval 実測で確認） ③**🔔通知ベル＋ドロップダウンパネル** 新設（`NotificationBell.tsx`）＝入荷/執筆完了/お気に入り作家の3種・未読バッジ・全既読ボタン・各通知から`/books/{bookId}`概要ページへリンク ④`AppNotification`型・`BaseProvider` 通知API（`pushNotification`/`markNotificationRead`/`markAllNotificationsRead`等）・`MockProvider` の `seedNotifications`（決定的シード3件）＋`reserve`完了時自動通知 ⑤`useNotifications`/`notifyFavoriteAuthor` フック ⑥読了ページ・書籍概要ページのTopbarをデフォルトベルに統一。**C4.8 機能実装＋デザイン・完了**（Firestore本接続後の全画面QA = C4.9 依存のみ残）。
+>
+> **【2026-06-07 セッション2＝フロント登録導線・初回体験・本番データ整備】** firestoreモード（本番）でアカウント検証中の不具合修正＋初回体験実装＋データ整理（実LLM/パイプライン非介入）。①**表示名をFirebase Authログインユーザーに統一**（トップ挨拶・サイドバー・アカウント）＋デモ残骸一掃（ハイライトseed非表示・統計実数化・データ連携を初期未連携トグル化）②**初期設定にserendipity追加＋アカウントに読み口表示/編集**（双方向整合）③**オンボーディング登録ボタンの固まり解消**＝`saveInitialProfile`のlocalStorageキャッシュ＋Firestore非throw化・登録後トップ`/`遷移・アカウント即反映 ④**ログイン時に初期設定済みならオンボーディングをスキップ**（`hasCompletedOnboarding`・Firestore優先）⑤**初回体験「空→生成中→15冊」をmockで実装**（`firstRunCatalog.ts`本命10＋セレンディピティ5・`runFirstRun`・生成中UI＋45秒安全タイムアウト＋手動スキップ・**firestore実生成はC1依存で未＝I-22**）⑥**Firestoreルールを本人のinitialProfile書込許可に緩和・再デプロイ**（旧「初回のみ」制約が登録を黙って失敗させていた・I-6）⑦**ローカルサンドボックス整備**（`dev:mock`/`dev:emulator`＋Firebaseエミュレータ＋Java・`docs/infra/local-sandbox.md`・B2.2前進）⑧**本番Firestoreテストデータ整理**（孤児book/レガシーuser削除・鉄田佐倉name修正）＋運用スクリプト4本（I-14前進）。⑨**デモペルソナを佐倉美咲に全面統一しtest-py(C0.1)を復旧**＝`91d3282`がusers.jsonだけ佐倉化→backend/テストが田所のまま赤だったのを keep_notes/canned.py/fixtures/tests/eval_harness 全面再オーサリング（`3e4b03b`・**60 passed,1 skipped**）。新規論点＝**I-22**（初回15冊の実生成未実装）・**I-24**（91d3282由来のtest-py赤＝✅解消）。なお当初起票の**I-23（lint赤）は誤認＝実際は緑**。コミット `25f57c6`〜`3e4b03b`。
 >
 > **✅ できている（土台）**
 > - 設計docs一式／完成プロンプト11本（`packages/prompts/`）／Eval Set 8件（`eval/eval_set.yaml`）
@@ -157,6 +159,20 @@
 | **C1.5** | **STEP4 プレビュー編集 実装＋実Vertex live実証（モードA縦串 完走）** — `agents/publishr_agents/preview/`（`deterministic.py`＝5冊BookDraft(7項目)＋編集長1R実演／`vertex_agent.py`＝author/editor Pro を Pythonで著者→編集長→1R改稿・`limit`／`__init__`=dispatch）。CLI`run_preview.py`（**STEP0→1→2→3→4 フル縦串＝棚5冊draft**・段階別LLM切替）。mock で5冊draft完走、live で STEP4 2冊（「7人の意思決定を、設計しなさい。」「あなたのいない会議室で」＝観測grounded・著者で作風差別化）。`make verify` pytest 127 passed,6 skipped・typecheck緑。code-review Approve。同ブランチ継続 | C1.5 |
 | **C1.4** | **STEP3 キャスティング 実装＋実Vertex live実証** — `agents/publishr_agents/casting/`（`deterministic.py`既定＝5著者を voiceStyle×format 2軸で分散・favorite 1枠／`vertex_agent.py`＝persona_generator Pro・output_schema=GeneratedPersonaSet／`__init__`=PUBLISHR_LLM dispatch）。CLI`run_casting.py`（STEP0→1→2→3 縦串）。live: 実Proで5著者2軸分散を確認（gated test・Pro1コール）。`make verify` pytest 117 passed,5 skipped・typecheck緑。code-review Approve（LOW2点反映）。同ブランチ継続 | C1.4 |
 | **C1.3** | **STEP2 企画3階層 実装＋実Vertex live実証（必然性の本丸）** — `agents/publishr_agents/planning/`（`deterministic.py`既定＝3サブ→owner→leaderループ reject→approve trace／`vertex_agent.py`＝`Sequential[Parallel[3サブ]→Loop[owner→leader→miniloop.LoopBreakAgent]]`・miniloop不変で再利用／`__init__`=PUBLISHR_LLM dispatch）。CLI`run_planning.py`（STEP0→1→2縦串・`--llm`/`--reader-llm`/`--theme`/`--threshold`）。**live実証2回**: ①threshold85→R1 approve(97) escalate脱出・観測grounded企画 ②threshold101→R1 revise(98)→R2 approve(102)＝差し戻し理由「失敗談で差別化」をR2が実反映＝reject→再提出の必然性。3サブB/Cは実Google検索grounding。`make verify` pytest 107 passed,4 skipped・typecheck緑。code-review Approve（M1 serendipityテーマ導出を修正反映）。同ブランチ継続 | C1.3 |
+
+### 2026-06-07（日・セッション2＝フロント登録導線・初回体験・本番データ整備）
+
+> firestoreモード（本番App Hosting）でアカウント（鉄田・佐倉）を作って検証中に発覚した不具合修正＋初回体験の実装＋本番テストデータ整理。**実LLM/実パイプラインは触らず**、フロント＋Firestoreデータ運用のみ（GCP課金なし）。コミット `25f57c6`〜`9cab2d7`・push済み・本番反映済み。
+
+| 領域 | やったこと | WBS |
+|---|---|---|
+| **C4（表示名/残骸）** | ①トップ挨拶・サイドバー・アカウントの**表示名をFirebase Authログインユーザーに統一**（fixtures固定→ログインユーザー）②デモ残骸一掃＝ハイライトseedをログイン時非表示・統計を実数化・お気に入りをuid別hydrate・注記バナー削除・データ連携を**初期未連携トグル**化 | C4.1/C4.8 |
+| **C4（プロフィール）** | ③初期設定に**「新しい出会いの幅」(serendipity)ステップ追加**＋アカウントに**「好みの読み口」(readingGenres)表示/編集**を追加（初期設定⇔アカウントの双方向整合） | C4.1 |
+| **C4（オンボーディング）** | ④**登録ボタンの固まり解消**＝`saveInitialProfile`をlocalStorageキャッシュ＋Firestore非throw化、`persist`をtry/catch化し登録後トップ`/`へ直接遷移・アカウント即反映 ⑤**ログイン時に初期設定済みならオンボーディングをスキップ**＝`hasCompletedOnboarding()`（Firestore優先・localStorageフォールバック） | C4.1 |
+| **C4（初回体験・Part B）** | ⑥**「空→生成中→15冊」初回体験をmockで実装**＝`firstRunCatalog.ts`（本命10＋セレンディピティ5）・`provider.runFirstRun`（mock=時間差入荷／firestore=既定runPipeline）・生成中UI（スケルトン＋スピナー＋進捗＋45秒安全タイムアウト＋手動スキップ）・`firstRunStatus`(localStorage)。**mockで15冊順次入荷→完成までフル動作を確認**。**firestoreの実15冊生成はC1依存で未**（I-22） | C4.2/C1依存 |
+| **C3.1** | ⑦Firestoreルールを**本人がinitialProfileを書ける**よう緩和（旧「初回のみ」制約が登録・プロフィール編集をpermission deniedで黙って失敗させていた）→再デプロイ | C3.1/I-6 |
+| **B2.2** | ⑧**ローカルサンドボックス整備**＝`dev:mock`（mock・認証なし）／`dev:emulator`＋`emulators`（Firebase Auth/Firestoreエミュレータ）・firebase.json/firebase.ts配線・Javaインストール・手順書`docs/infra/local-sandbox.md`。本番ビルドに頼らず高速反復可能に | B2.2 |
+| **C6.2/データ** | ⑨本番Firestoreのテストデータ整理＝孤児book(`b_kikitai`/`b_ringi`)・レガシーuser(`u_tadokoro`)削除、鉄田/佐倉の`name`修正 ⑩Firestore運用スクリプト4本（`inspect_firestore`/`cleanup_firestore`/`fix_user_name`/`patch_book_bodies`＝存在チェック追加で孤児再生成防止）整備 | C6.2/I-14 |
 
 **W0の成果（2日で通したゲート）**: C0.1 → C0.2 → B1.3 → **C1.0.1★**（M1 前倒し）。**W1（6/8〜）の最初の山**＝C1.1 観測 ＋ B3.3 App Hosting 連携。
 
@@ -255,7 +271,7 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | B2.1 | GitHubリポ作成・モノレポscaffold | ソースコードを置くGitHub倉庫を作り、フォルダ構成（apps/agents/packages/eval/docs）を用意 | 一瀬 | W0–W1（6/1–14） | A5.1 | 2人がpush可・ディレクトリ確定（infra/TerraformはB4で投入） (旧WP0.3) | ✅リポ作成・collaborator・scaffold済（**2026-06-05：組織アカウント `cloud-dojo` へ移管完了→`cloud-dojo/publishr`・鉄田にオーナー権限付与済**） |
-| B2.2 | ローカル環境統一（Python3.11/ADK SDK/Node） | 2人のPCで同じバージョンのツールを使うよう揃え、動作の食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | B2.1 | バージョン固定 (旧WP0.6) | 🔜着手前 |
+| B2.2 | ローカル環境統一（Python3.11/ADK SDK/Node） | 2人のPCで同じバージョンのツールを使うよう揃え、動作の食い違いを防ぐ | 鉄田・一瀬 | W1（6/8–14） | B2.1 | バージョン固定 (旧WP0.6) | 🟡**ローカルdev実行モード整備（2026-06-07）**＝`npm run dev:mock`（mock・認証なし）／`dev:emulator`＋`npm run emulators`（Firebase Auth/Firestoreエミュレータ・要Java＝OpenJDK 21導入済）・`firebase.json`にemulators・`firebase.ts`にconnect配線・手順書`docs/infra/local-sandbox.md`。**バージョン固定本体（Python/Node/ADK SDKの統一）は残** |
 
 ## B3. CI/CD・ホスティング（Actions/Cloud Build/App Hosting）← 鉄田がGitHub連携を実施（組織移管・オーナー権限完了）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -281,7 +297,7 @@ Publishr MVP（カテゴリWBS）
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C0.1 | **mock回帰復旧** | `make verify`＋`make eval`＋`make pipeline`＋`make smoke` を全緑に戻す。`eval/eval_set.yaml`（v2）と `scripts/eval_harness.py` の不整合を解消 | 鉄田 | W0（6/1–7） | — | pytest 58 passed, 1 skipped・Eval 8件PASS・pipeline却下→再提出証跡・smoke E2E (旧—) | ✅**2026-06-06 完了** |
+| C0.1 | **mock回帰復旧** | `make verify`＋`make eval`＋`make pipeline`＋`make smoke` を全緑に戻す。`eval/eval_set.yaml`（v2）と `scripts/eval_harness.py` の不整合を解消 | 鉄田 | W0（6/1–7） | — | pytest 60 passed, 1 skipped・Eval 8件PASS・pipeline却下→再提出証跡・smoke E2E (旧—) | ✅**2026-06-06 完了**／**2026-06-07 再緑化**（`91d3282`のペルソナ不整合でtest-py赤化→佐倉美咲へ全面再オーサリングで復旧・60 passed・`3e4b03b`・I-24。make smoke は本機=Windows OpenSSL/POSIX 環境問題で未実行） |
 | C0.2 | **実装シーム敷設** | v2 I/O schema・state keys・prompt loader/registry/render・LLM provider・`PUBLISHR_LLM` dispatcher・dev/prod実行プロファイル・実LLMコストガードを追加。**mock時の挙動差分ゼロ**を維持 | 鉄田 | W0（6/1–7） | C0.1 | `packages/shared-schema/.../agent_io.py`・`agents/publishr_agents/prompts/*`・`llm/provider.py`・`pipeline.py` dispatcher・単体テスト緑 (旧—) | ✅**2026-06-06 完了** |
 
 ## C1. エージェント・モードA（自律企画）★
@@ -356,7 +372,7 @@ Publishr MVP（カテゴリWBS）
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | **鉄田** | W0（6/1–7）→**6/6完了** | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19＝MTG 2026-06-05で確定済を反映） (旧WP3.1) | ✅**2026-06-06完了**（firebase.json・.firebaserc・firestore.rules・firestore.indexes.json 生成→`firebase deploy --only firestore:rules` 本番デプロイ済み） |
+| C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | **鉄田** | W0（6/1–7）→**6/6完了** | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19＝MTG 2026-06-05で確定済を反映） (旧WP3.1) | ✅**2026-06-06完了**（firebase.json・.firebaserc・firestore.rules・firestore.indexes.json 生成→`firebase deploy --only firestore:rules` 本番デプロイ済み）／**2026-06-07：`users/{uid}` update を『本人なら initialProfile/favoriteAuthors 変更可』に緩和し再デプロイ**（旧「initialProfileは初回のみ」制約が登録・プロフィール編集を黙ってpermission denied化していた・I-6） |
 | C3.2 | 複合インデックス列挙＋firestore.indexes.json | 一覧画面の検索が速く正しく動くよう、DBに索引を登録する（無いと実行時エラーになる） | **鉄田** | W2–W3（6/15–28） | C4.2,C4.7 | 実行時エラー回避（I-15） (旧WP3.2) | 🔜着手前（C4のクエリが固まり次第追記・firestore.indexes.json骨格は✅） |
 | C3.3 | GCS本文保護（署名付きURL or IAM） | 本文ファイルを他人が読めないよう、アクセス制限をかける | **鉄田** | W3（6/22–28） | C2.3 | 他者本文を読めない（I-10） (旧WP3.3) | 🔜着手前 |
 | C3.4 | 観測ログ保存先コレクション（`users/{uid}/observations/{YYYY-MM-DD}`） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | **鉄田** | W0（6/6完了・C3.1に内包） | C1.1.1 | STEP0が書込可＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（日付docID＝冪等・フル束インライン・サーバ書込/本人read／I-19＝MTG 2026-06-05で確定） (旧WP3.4) | ✅完了（C3.1に内包）firestore.rules の `match /users/{uid}/observations/{date}` で owner読み・書込み=false（サーバ専用）を宣言済み |
@@ -371,7 +387,7 @@ Publishr MVP（カテゴリWBS）
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C4.1 | 登録フォーム＋OAuth接続＋Drive Picker UI | ユーザー登録画面・Googleログイン・Driveファイル選択UIを作る | 鉄田 | W2（6/15–21） | A5.2,C1.1.1 | initialProfile直書き・3ソース接続（G1-13） (旧WP4.1) | 🔴**Google連携ページ未設計・未実装**（initialProfile登録画面のUIシェルは存在するが、**Google Drive/Calendar/Tasks との実連携機能＝OAuth接続フロー・Drive Picker実動作・接続状態表示は一切未着手**。機能設計（どのページでどのフローを踏むか・Picker UI仕様・接続状態の保存先）から取り組む必要あり。C1.1.1〔観測ツール〕・C1.1.2〔Drive Pickerサーバ側〕との接続設計も要整合） |
+| C4.1 | 登録フォーム＋OAuth接続＋Drive Picker UI | ユーザー登録画面・Googleログイン・Driveファイル選択UIを作る | 鉄田 | W2（6/15–21） | A5.2,C1.1.1 | initialProfile直書き・3ソース接続（G1-13） (旧WP4.1) | 🟡**initialProfile登録フローは実装/整備済み・OAuth/Drive Picker部分のみ🔴未**。**【2026-06-07完了分】** 登録ボタンの固まり解消（`saveInitialProfile`のlocalStorageキャッシュ＋Firestore非throw化・`persist`のtry/catch化）・登録後トップ`/`へ直接遷移・アカウント即反映・初期設定に「新しい出会いの幅」追加・ログイン時に初期設定済みならオンボーディングをスキップ（`hasCompletedOnboarding`）・初回体験「空→生成中→15冊」(mock)。**残る🔴＝Google Drive/Calendar/Tasks の実連携機能のみ**＝OAuth接続フロー・Drive Picker実動作・接続状態表示は未着手（データ連携トグルはlocalStorageのデモ実装・Firestore connectedSourcesはサーバ書込前提でクライアント未対応）。機能設計（Picker UI仕様・接続状態の保存先）から要対応。C1.1.1〔観測ツール〕・C1.1.2〔Drive Pickerサーバ側〕との接続設計も要整合 |
 | C4.2 | 書店トップ（入荷一覧・入荷理由） | 入荷した本が並ぶトップ画面と「なぜこの本が入荷したか」の理由表示 | 鉄田 | W2（6/15–21） | C3.1 | draft本＋入荷理由表示 (旧WP4.2) | ✅**UI code-complete**（Firestore接続はC4.9） |
 | C4.3 | 本詳細（BookDraft 7項目） | 本の詳細（タイトル/サブ/今あなたは/課題/核心/アジェンダ/序文）を見る画面 | 鉄田 | W2–W3（6/15–28） | C3.1,C1.5.1 | 7項目表示 (旧WP4.3) | ✅**UI code-complete**（Firestore接続はC4.9） |
 | C4.4 | 著者選択・予約UI（同時5冊ガード） | 著者を選んで本を予約する画面（同時5冊の上限を表示） | 鉄田 | W3（6/22–28） | C2.1 | reserve呼び出し・上限表示 (旧WP4.4) | ✅**UI code-complete**（mock reserve タイマー動作確認済。Firestore接続はC4.9） |

@@ -136,12 +136,14 @@ def _result(item_id: str, score: int | bool, detail: str) -> dict[str, Any]:
 def _signal_keywords(signals: list[str]) -> list[str]:
     keywords: list[str] = []
     for signal in signals:
-        if "管掌範囲" in signal:
-            keywords.append("管掌範囲")
+        if "年上" in signal:
+            keywords.append("年上")
         if "1on1" in signal:
             keywords.append("1on1")
-        if "属人化" in signal:
-            keywords.append("属人化")
+        if "評価" in signal or "面談" in signal:
+            keywords.append("評価")
+        if "抱え" in signal or "権限" in signal:
+            keywords.append("権限")
         if "定量" in signal:
             keywords.extend(["定量", "数字"])
     return list(dict.fromkeys(keywords))
@@ -163,7 +165,7 @@ def _has_persona_voice(book: Any, personas: dict[str, Any]) -> bool:
     return any(sig in text for sig in persona.persona.signature)
 
 
-def evaluate_pipeline(user_id: str = "u_tadokoro") -> list[dict[str, Any]]:
+def evaluate_pipeline(user_id: str = "u_sakura") -> list[dict[str, Any]]:
     pipeline = run_pipeline(user_id)
     personas = {p.id: p for p in load_personas()}
 
@@ -186,7 +188,7 @@ def evaluate_pipeline(user_id: str = "u_tadokoro") -> list[dict[str, Any]]:
         and bool(round2_verdicts - {"採用"})
     )
     voice_score = _score_from_count(len(voice_hits), len(pipeline.books))
-    stocking_score = 5 if ("30名" in reasons or "移行期" in reasons) and signal_hits else 1
+    stocking_score = 5 if ("7名" in reasons or "昇格" in reasons or "新任マネージャー" in reasons) and signal_hits else 1
 
     eval_set_ok, eval_set_detail = validate_eval_set()
 

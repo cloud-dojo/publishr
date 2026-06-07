@@ -1,7 +1,7 @@
 """Firestore シードスクリプト（fixtures → Firestore コレクション）。
 
 使い方:
-  python scripts/seed_firestore.py                      # ownerUid = "u_tadokoro"
+  python scripts/seed_firestore.py                      # ownerUid = "u_sakura"
   python scripts/seed_firestore.py --owner-uid <uid>   # Firebase Auth UID に合わせる
 
 実行前提:
@@ -95,8 +95,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Firestore にフィクスチャデータを投入する")
     parser.add_argument(
         "--owner-uid",
-        default="u_tadokoro",
-        help="books/plans の ownerUid および users のドキュメント ID（デフォルト: u_tadokoro）",
+        default="u_sakura",
+        help="books/plans の ownerUid および users のドキュメント ID（デフォルト: u_sakura）",
     )
     args = parser.parse_args()
 

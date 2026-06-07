@@ -25,7 +25,7 @@ def test_eval_set_v2_dataset_is_wellformed():
 
 
 def test_eval_harness_passes_for_mock_pipeline():
-    report = eval_harness.evaluate_pipeline("u_tadokoro")
+    report = eval_harness.evaluate_pipeline("u_sakura")
     ids = {r["id"] for r in report}
     # 決定的チェックの正本はコード内 DETERMINISTIC_THRESHOLDS。
     assert ids >= set(eval_harness.DETERMINISTIC_THRESHOLDS)

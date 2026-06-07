@@ -298,6 +298,22 @@ a { color: inherit; text-decoration: none; }
 .book-body .bm-author { font-size: 12px; color: var(--gold); }
 .book--row .why-bubble { margin-top: 8px; }
 
+/* --- 初回体験（生成中）：注記＋スピナー＋スケルトン --- */
+.firstrun-note { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; padding: 14px 18px; border-radius: var(--radius-sm); border: 1px dashed var(--gold); background: rgba(193,154,77,.06); color: var(--text-200); font-size: 13px; line-height: 1.6; }
+.fr-spinner { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--gold-bright); animation: fr-spin .8s linear infinite; }
+.fr-skip { flex: 0 0 auto; margin-left: auto; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text-200); transition: all .25s; }
+.fr-skip:hover { border-color: var(--gold); color: var(--gold-bright); }
+@keyframes fr-spin { to { transform: rotate(360deg); } }
+.book-skeleton { display: flex; flex-direction: row; align-items: flex-start; gap: 16px; padding: 16px; background: var(--ink-800); border: 1px solid var(--line); border-radius: var(--radius); }
+.bsk-cover { width: 128px; flex: 0 0 128px; height: 168px; border-radius: 6px; background: var(--ink-700); }
+.bsk-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.bsk-line { height: 16px; border-radius: 5px; background: var(--ink-700); }
+.bsk-line.short { width: 60%; }
+.bsk-bubble { height: 52px; border-radius: 8px; background: var(--ink-700); margin-top: 6px; }
+.book-skeleton .bsk-cover, .book-skeleton .bsk-line, .book-skeleton .bsk-bubble { position: relative; overflow: hidden; }
+.book-skeleton .bsk-cover::after, .book-skeleton .bsk-line::after, .book-skeleton .bsk-bubble::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent); animation: bsk-shimmer 1.4s ease-in-out infinite; }
+@keyframes bsk-shimmer { 100% { transform: translateX(100%); } }
+
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; font-family: var(--font-body); font-weight: 700; font-size: 14px; padding: 13px 26px; border-radius: 999px; cursor: pointer; border: 1px solid transparent; transition: all .25s; letter-spacing: .5px; }
 .btn--gold { background: linear-gradient(135deg, var(--gold-bright), var(--brass)); color: var(--ink-900); box-shadow: 0 10px 26px -10px var(--gold-glow); }
 .btn--gold:hover { transform: translateY(-2px); box-shadow: 0 16px 32px -10px var(--gold-glow); }

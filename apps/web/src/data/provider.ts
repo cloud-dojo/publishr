@@ -168,6 +168,18 @@ export abstract class BaseProvider {
   abstract sendFeedback(id: string, feedback: FeedbackInput): Promise<void>;
   abstract updateReadingState(id: string, state: ReadingStateInput): Promise<void>;
   abstract runPipeline(userId: string): Promise<void>;
+
+  /**
+   * 初回体験：登録直後に「最初の本棚」を仕立てる。
+   * 既定は本生成パイプラインのトリガー（firestore は Cloud Run、結果は購読で反映）。
+   * MockProvider は決定的な時間差入荷でこれを上書きする。
+   * profile は any にせず、UI層の初期プロフィール型を data/hooks 経由で渡す。
+   */
+  async runFirstRun(userId: string, profile?: unknown): Promise<void> {
+    void profile; // 既定はパイプライン起動のみ（profile は mock 実装で使用）
+    await this.runPipeline(userId);
+  }
+
   watchBook(id: string): void {
     void id;
   }

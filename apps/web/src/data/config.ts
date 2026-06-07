@@ -23,6 +23,11 @@ export const firebaseConfig = {
 export const isFirebaseConfigured: boolean =
   firebaseConfig.apiKey !== "" && firebaseConfig.projectId !== "";
 
+// ローカルの Firebase エミュレータ（Auth/Firestore）に接続するか。
+// dev:emulator スクリプトが NEXT_PUBLIC_USE_FIREBASE_EMULATOR=1 を立てる。
+export const useFirebaseEmulator: boolean =
+  process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === "1";
+
 // 予約→執筆→入荷 の体感タイマー（ミリ秒）。デモ用に再調整可能。
 export const timing = {
   reserveToWriting: 2200,

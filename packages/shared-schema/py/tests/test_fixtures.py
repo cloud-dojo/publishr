@@ -14,9 +14,8 @@ from publishr_schema.loader import (
 
 def test_users_parse():
     users = load_users()
-    # users.json は2ペルソナ共存: u_sakura（STEP0観測/connectedSources）＋ u_tadokoro（canned pipeline）。
+    # fixtures は佐倉美咲（u_sakura）に全面統一（main 3e4b03b）。connectedSources は C1.1 で追加。
     assert any(u.id == "u_sakura" for u in users)
-    assert any(u.id == "u_tadokoro" for u in users)
     sakura = next(u for u in users if u.id == "u_sakura")
     assert sakura.profile.estimated_interests
 
@@ -54,7 +53,7 @@ def test_books_referential_integrity():
 def test_keep_notes_parse():
     notes = load_keep_notes()
     assert len(notes) >= 5
-    assert all(n.user_id == "u_tadokoro" for n in notes)
+    assert all(n.user_id == "u_sakura" for n in notes)
 
 
 def test_camel_alias_roundtrip():
