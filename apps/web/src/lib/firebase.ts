@@ -7,6 +7,7 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
   GoogleAuthProvider,
+  connectAuthEmulator,
   getAuth,
   onAuthStateChanged,
   signInWithPopup,
@@ -14,9 +15,9 @@ import {
   type Auth,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
 
-import { firebaseConfig, isFirebaseConfigured } from "@/data/config";
+import { firebaseConfig, isFirebaseConfigured, useFirebaseEmulator } from "@/data/config";
 
 let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
@@ -35,14 +36,26 @@ export function getFirebaseApp(): FirebaseApp | null {
 export function getFirebaseAuth(): Auth | null {
   const app = getFirebaseApp();
   if (!app) return null;
-  if (!_auth) _auth = getAuth(app);
+  if (!_auth) {
+    _auth = getAuth(app);
+    if (useFirebaseEmulator) {
+      // ローカルAuthエミュレータへ接続（実Googleアカウント不要・偽ユーザーで検証）。
+      connectAuthEmulator(_auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    }
+  }
   return _auth;
 }
 
 export function getDb(): Firestore | null {
   const app = getFirebaseApp();
   if (!app) return null;
-  if (!_db) _db = getFirestore(app);
+  if (!_db) {
+    _db = getFirestore(app);
+    if (useFirebaseEmulator) {
+      // ローカルFirestoreエミュレータへ接続（本番データに触れずルール検証）。
+      connectFirestoreEmulator(_db, "127.0.0.1", 8080);
+    }
+  }
   return _db;
 }
 
