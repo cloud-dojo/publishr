@@ -10,6 +10,15 @@
       "serendipityTolerance": "中"
     },
     "initialProfile": null,
-    "favoriteAuthors": []
+    "favoriteAuthors": [],
+    "connectedSources": {
+      "drive": {
+        "enabled": true,
+        "folderIds": ["fld_work"],
+        "labels": [{ "folderId": "fld_work", "label": "業務" }]
+      },
+      "calendar": { "enabled": true, "calendarIds": ["primary"] },
+      "tasks": { "enabled": true }
+    }
   }
 ]

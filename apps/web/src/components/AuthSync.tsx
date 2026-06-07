@@ -15,13 +15,25 @@ import { useEffect } from "react";
 import { watchAuth } from "@/lib/firebase";
 import { getProvider } from "@/data";
 
+/** setOwnerUid を持つプロバイダ（実体は FirestoreProvider のみ）。 */
+type OwnerAwareProvider = { setOwnerUid: (uid: string | null) => void };
+
+function hasSetOwnerUid(provider: unknown): provider is OwnerAwareProvider {
+  return (
+    typeof provider === "object" &&
+    provider !== null &&
+    "setOwnerUid" in provider &&
+    typeof (provider as Record<string, unknown>).setOwnerUid === "function"
+  );
+}
+
 export function AuthSync() {
   useEffect(() => {
     // watchAuth は onAuthStateChanged のラッパー。unsubscribe 関数を返す。
     return watchAuth((user) => {
+      const provider = getProvider();
       // FirestoreProvider のみ setOwnerUid を持つ。他プロバイダは no-op。
-      const provider = getProvider() as { setOwnerUid?: (uid: string | null) => void };
-      if (typeof provider.setOwnerUid === "function") {
+      if (hasSetOwnerUid(provider)) {
         provider.setOwnerUid(user?.uid ?? null);
       }
     });

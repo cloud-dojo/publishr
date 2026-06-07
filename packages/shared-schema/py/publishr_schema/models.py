@@ -67,6 +67,38 @@ class InitialProfile(_Base):
     skipped: bool = False
 
 
+# ---------------------------------------------------------------------------
+# tech-architecture.md §3: connectedSources（観測ソース接続・3ソース）
+# Google Picker でフォルダ単位選択した folderIds[] をサーバ保持（G1-13）。
+# ---------------------------------------------------------------------------
+class DriveFolderLabel(_Base):
+    """Picker で選んだフォルダへの業務/趣味ラベル（folderLabel の由来）。"""
+    folder_id: str
+    label: str = ""  # "業務" | "趣味"
+
+
+class DriveConnection(_Base):
+    enabled: bool = True
+    folder_ids: list[str] = Field(default_factory=list)
+    labels: list[DriveFolderLabel] = Field(default_factory=list)
+
+
+class CalendarConnection(_Base):
+    enabled: bool = True
+    calendar_ids: list[str] = Field(default_factory=list)
+
+
+class TasksConnection(_Base):
+    enabled: bool = True
+
+
+class ConnectedSources(_Base):
+    """STEP0 観測の入力＝どのソース/フォルダを読むか。drive は folderIds 配下のみ。"""
+    drive: Optional[DriveConnection] = None
+    calendar: Optional[CalendarConnection] = None
+    tasks: Optional[TasksConnection] = None
+
+
 class User(_Base):
     id: str
     name: str
@@ -76,6 +108,8 @@ class User(_Base):
     initial_profile: Optional[InitialProfile] = None
     favorite_authors: list[dict[str, Any]] = Field(default_factory=list)
     # favorite_authors 各要素: {personaId, name, voiceStyle, format, savedAt}
+    # tech-architecture.md §3: 観測ソース接続（STEP0 の入力）
+    connected_sources: Optional[ConnectedSources] = None
 
 
 class PastBook(_Base):
@@ -258,14 +292,41 @@ class SimpleFeedback(_Base):
     wants_sequel: bool = False
 
 
+class DriveSource(_Base):
+    files: list[DriveFile] = Field(default_factory=list)
+
+
+class CalendarSource(_Base):
+    events: list[CalendarEvent] = Field(default_factory=list)
+
+
+class TasksSource(_Base):
+    items: list[TaskItem] = Field(default_factory=list)
+
+
+class ReadingFeedbackRef(_Base):
+    """readingFB.feedback 要素（§2）。ReadingLog と SimpleFeedback の集約形。"""
+    book_id: str
+    rating: int = 0
+    wants_sequel: bool = False
+    read_percent: float = 0.0
+    dropped: bool = False
+
+
+class ReadingFB(_Base):
+    highlights: list[ReadingHighlight] = Field(default_factory=list)
+    feedback: list[ReadingFeedbackRef] = Field(default_factory=list)
+
+
 class ObservationBundle(_Base):
-    """STEP0 非エージェントツールの出力。Drive/Calendar/Tasks を束ねる。"""
+    """STEP0 非エージェントツールの出力。Drive/Calendar/Tasks を束ねる（§2）。"""
     user_id: str
     collected_at: str
-    drive: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
-    calendar: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
-    tasks: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
-    reading_fb: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
+    drive: DriveSource = Field(default_factory=DriveSource)
+    calendar: CalendarSource = Field(default_factory=CalendarSource)
+    tasks: TasksSource = Field(default_factory=TasksSource)
+    # to_camel だと readingFb になるため、契約 §2 の readingFB に明示矯正
+    reading_fb: ReadingFB = Field(default_factory=ReadingFB, alias="readingFB")
 
 
 # ---------------------------------------------------------------------------

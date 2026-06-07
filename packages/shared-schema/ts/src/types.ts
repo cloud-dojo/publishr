@@ -49,6 +49,19 @@ export interface InitialProfile {
   skipped: boolean;
 }
 
+// tech-architecture.md §3: connectedSources（観測ソース接続・3ソース）
+// Google Picker でフォルダ単位選択した folderIds[] をサーバ保持（G1-13）。
+export interface DriveFolderLabel {
+  folderId: string;
+  label: string; // "業務" | "趣味"
+}
+
+export interface ConnectedSources {
+  drive?: { enabled: boolean; folderIds: string[]; labels?: DriveFolderLabel[] };
+  calendar?: { enabled: boolean; calendarIds?: string[] };
+  tasks?: { enabled: boolean };
+}
+
 export interface User {
   id: string;
   name: string;
@@ -57,6 +70,8 @@ export interface User {
   // api-contract.md §2-a / §3-a
   initialProfile?: InitialProfile | null;
   favoriteAuthors?: Array<{ personaId: string; name: string; voiceStyle: string; format: string; savedAt: string }>;
+  // tech-architecture.md §3: 観測ソース接続（STEP0 の入力・Picker=C4.1 が書込）
+  connectedSources?: ConnectedSources | null;
 }
 
 export interface PastBook {
