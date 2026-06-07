@@ -29,12 +29,12 @@
 | Cloud Run / Scheduler / Pub/Sub / Firestore / GCS | 一瀬 | 状態機械・自律トリガー・索引・本文保護。**※基盤Firebase部分（Firestore/GCS）の担当は未定＝鉄田が一瀬を補助する可能性あり・後決め（MTG 2026-06-05）** | C3/C1.7 |
 | Imagen表紙生成連携（STEP5） | 一瀬 | dev時はモック（コスト） | C1.6 |
 | Langfuse計装・CI/CD・Eval ゲート実装・Terraform | 一瀬 | L4の実装 | C5.6/B3/C5.3/B4 |
-| API 3本（reserve/OAuth/trigger） | 一瀬 | 境界は `API契約仕様.md`・予約同時5冊 | C2.1 |
+| API 3本（reserve/OAuth/trigger） | 一瀬 | 境界は `../design/api-contract.md`・予約同時5冊 | C2.1 |
 | 共有スキーマ（型の正本・`packages/shared-schema`） | 一瀬 | fixtures（personas等）は鉄田。B7/G1-11 | A5.2 |
 | コスト実測・監視（GCP/Langfuse） | 一瀬 | 方針・上限ガード設計は鉄田 | C5.8 |
-| 書店フロントUI（全画面・Picker UI含む） | 鉄田 | テンプレ＋Claude Code。`../UI仕様/UI仕様書.md` | C4 |
+| 書店フロントUI（全画面・Picker UI含む） | 鉄田 | テンプレ＋Claude Code。`../ui/ui-spec.md` | C4 |
 | ユーザー登録フォーム（initialProfile選択肢） | 鉄田 | G1-9。選択肢は鉄田確定 | C4.1/A3.2 |
-| お気に入り著者UI・ハイライト・FB（Firestore直書き） | 鉄田 | ルールは `Firestoreセキュリティルール.md` | C4.5/C4.6 |
+| お気に入り著者UI・ハイライト・FB（Firestore直書き） | 鉄田 | ルールは `../design/firestore-security-rules.md` | C4.5/C4.6 |
 | Eval Set設計・品質ゲート項目 | 鉄田 | ✅8件作成済。CI実装は一瀬 | A4/C5.3 |
 | デモ台本・録画・ピッチ図解・README | 鉄田 | 基準2・4の訴求 | C6 |
 | テーマ・スコープ管理・コスト概算（方針・ガード） | 鉄田 | 意思決定・予算 | C5.7/C5.8 |
