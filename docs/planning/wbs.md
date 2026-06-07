@@ -153,6 +153,7 @@
 | **docs** | WBS 更新 — C4.8 ✅完了・日次ログ追記 | 全体 |
 | **C1.1** | **STEP0 観測ツール 実装（live検証残）** — `agents/publishr_agents/observe/`（純粋transform＋`FixtureObservationSource`既定＋`GoogleObservationSource`隔離・`PUBLISHR_OBSERVE`切替）。型付き`ObservationBundle`/`ConnectedSources`をschema(py/ts)へ。CLI`run_observe.py`＋`google_oauth_bootstrap.py`、`@pytest.mark.google`。±14日窓/4000字/Tasks絞り/folderIdスコープをtransform一元化。**masked回帰も修正**＝`91d3282`で消えた`u_tadokoro`をusers.jsonへ復元（canned pipeline緑化）＋test_fixtures整合。`make verify`(84 passed,2 skipped)/eval/pipeline/smoke 緑。残＝OAuth同意→実3ソースのlive検証。ブランチ`feat/c1.1-step0-observation` | C1.1 |
 | **C1.2** | **STEP1 読者分析 実装＋実Vertex live実証** — `agents/publishr_agents/reader/`（`deterministic.py`既定＋`vertex_agent.py`実Gemini Pro＋`__init__`=PUBLISHR_LLM dispatch）。step1プロンプト/registry/model_for(Pro)結線。CLI`run_reader.py`（STEP0→STEP1縦串）。**live実証**＝fixture観測→実Pro→3層ReaderProfile（佐藤健一/競合A社/田中健太まで踏込・evidence紐付き）。`make verify` pytest 95 passed,3 skipped・typecheck緑（web lintはmain既存1件のみ）。同ブランチ継続 | C1.2 |
+| **C1.4** | **STEP3 キャスティング 実装＋実Vertex live実証** — `agents/publishr_agents/casting/`（`deterministic.py`既定＝5著者を voiceStyle×format 2軸で分散・favorite 1枠／`vertex_agent.py`＝persona_generator Pro・output_schema=GeneratedPersonaSet／`__init__`=PUBLISHR_LLM dispatch）。CLI`run_casting.py`（STEP0→1→2→3 縦串）。live: 実Proで5著者2軸分散を確認（gated test・Pro1コール）。`make verify` pytest 117 passed,5 skipped・typecheck緑。code-review Approve（LOW2点反映）。同ブランチ継続 | C1.4 |
 | **C1.3** | **STEP2 企画3階層 実装＋実Vertex live実証（必然性の本丸）** — `agents/publishr_agents/planning/`（`deterministic.py`既定＝3サブ→owner→leaderループ reject→approve trace／`vertex_agent.py`＝`Sequential[Parallel[3サブ]→Loop[owner→leader→miniloop.LoopBreakAgent]]`・miniloop不変で再利用／`__init__`=PUBLISHR_LLM dispatch）。CLI`run_planning.py`（STEP0→1→2縦串・`--llm`/`--reader-llm`/`--theme`/`--threshold`）。**live実証2回**: ①threshold85→R1 approve(97) escalate脱出・観測grounded企画 ②threshold101→R1 revise(98)→R2 approve(102)＝差し戻し理由「失敗談で差別化」をR2が実反映＝reject→再提出の必然性。3サブB/Cは実Google検索grounding。`make verify` pytest 107 passed,4 skipped・typecheck緑。code-review Approve（M1 serendipityテーマ導出を修正反映）。同ブランチ継続 | C1.3 |
 
 **W0の成果（2日で通したゲート）**: C0.1 → C0.2 → B1.3 → **C1.0.1★**（M1 前倒し）。**W1（6/8〜）の最初の山**＝C1.1 観測 ＋ B3.3 App Hosting 連携。
@@ -318,7 +319,7 @@ Publishr MVP（カテゴリWBS）
 ### C1.4 STEP3 キャスティング
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.4.1 | キャスティング編集者（架空著者5人・voiceStyle×format 2軸） | テーマに合う「架空の著者」5人を、文体×文章形式の2軸で毎回生成するAI（お気に入り著者を15%混ぜる） | 一瀬 | W2–W3（6/15–28） | C1.3.3 | GeneratedPersonaSet 5人（§5-3a） (旧WP1.5) | 🔜着手前 |
+| C1.4.1 | キャスティング編集者（架空著者5人・voiceStyle×format 2軸） | テーマに合う「架空の著者」5人を、文体×文章形式の2軸で毎回生成するAI（お気に入り著者を15%混ぜる） | 一瀬 | W2–W3（6/15–28） | C1.3.3 | GeneratedPersonaSet 5人（§5-3a） (旧WP1.5) | ✅**実装・live実証（2026-06-07）**＝`agents/publishr_agents/casting/`（`deterministic.py`＝5人2軸分散・favorite1枠／`vertex_agent.py`＝persona_generator Pro・output_schema=GeneratedPersonaSet／`__init__`=PUBLISHR_LLM dispatch）。step3プロンプト結線・CLI`run_casting.py`(STEP0→1→2→3縦串)・test_casting(決定的9件)＋gated。live: 実Proで5著者を2軸分散生成。code-review Approve（favorite注入の2軸保持を修正） |
 
 ### C1.5 STEP4 プレビュー編集
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
