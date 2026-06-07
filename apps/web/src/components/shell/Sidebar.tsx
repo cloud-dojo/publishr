@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { fixtures } from "@publishr/shared-schema";
+
+import { watchAuth } from "@/lib/firebase";
 
 const NAV = [
   { href: "/", ico: "❖", label: "あなたの書店" },
@@ -22,7 +25,14 @@ const SPINE: Record<string, string> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const reader = fixtures.users[0];
+  // ログイン中の Firebase Auth ユーザーを優先表示し、アカウントページと一致させる。
+  // 未ログイン（mock 等）時のみ fixtures のデモペルソナにフォールバック。
+  const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
+  useEffect(() => watchAuth((u) => setAuthDisplayName(u?.displayName ?? null)), []);
+
+  const persona = fixtures.users[0];
+  const readerName = authDisplayName || persona?.name || "ゲスト";
+  const readerInitial = readerName[0] ?? "読";
   const library = fixtures.books
     .filter((b) => b.shelf === "library" && b.status === "published")
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
@@ -68,8 +78,8 @@ export function Sidebar() {
 
       <div className="sidebar-foot">
         <Link href="/account" className="reader-chip">
-          <span className="reader-avatar">{reader?.initial ?? "読"}</span>
-          <span className="reader-name">{reader?.name ?? "ゲスト"}</span>
+          <span className="reader-avatar">{readerInitial}</span>
+          <span className="reader-name">{readerName}</span>
         </Link>
       </div>
     </aside>
