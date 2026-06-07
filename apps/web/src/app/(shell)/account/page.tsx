@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@publishr/shared-schema";
+import { useRouter } from "next/navigation";
 
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
 import { useProvider } from "@/data/hooks";
-import { watchAuth } from "@/lib/firebase";
+import { signOutUser, watchAuth } from "@/lib/firebase";
 import { MOCK_HIGHLIGHTS } from "@/data/mock-highlights";
 import {
   optionsFor,
@@ -246,10 +247,16 @@ function ProfileEditor({ user }: { user: User }) {
 
 export default function AccountPage() {
   const provider = useProvider();
+  const router = useRouter();
   // Firebase Auth UID を優先、未ログイン or mock 時は DEMO_USER_ID にフォールバック
   const [uid, setUid] = useState<string | null>(null);
   useEffect(() => watchAuth((u) => setUid(u?.uid ?? null)), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
+
+  const onLogout = async () => {
+    await signOutUser();
+    router.push("/login");
+  };
   const total = provider.listBooks().filter((b) => b.shelf === "library").length;
 
   if (!user) {
@@ -297,6 +304,21 @@ export default function AccountPage() {
               <span className="as-state">✓ 連携済み（デモ）</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ログアウト */}
+      <section className="page section">
+        <div className="acct-savebox">
+          <div className="asb-text">
+            <div className="asb-title">ログアウト</div>
+            <div className="asb-sub">このデバイスのセッションを終了します。</div>
+          </div>
+          <div className="asb-action">
+            <button type="button" className="btn" onClick={onLogout}>
+              ログアウト
+            </button>
+          </div>
         </div>
       </section>
     </>
