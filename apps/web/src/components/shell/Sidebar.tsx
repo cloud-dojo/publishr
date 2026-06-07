@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { fixtures } from "@publishr/shared-schema";
 
+import { useProvider } from "@/data/hooks";
 import { watchAuth } from "@/lib/firebase";
 
 const NAV = [
@@ -33,8 +34,12 @@ export function Sidebar() {
   const persona = fixtures.users[0];
   const readerName = authDisplayName || persona?.name || "ゲスト";
   const readerInitial = readerName[0] ?? "読";
-  const library = fixtures.books
-    .filter((b) => b.shelf === "library" && b.status === "published")
+
+  // 「最近読んだ本」はプロバイダ経由の実データ（ログイン時は Firestore、mock 時は fixtures）。
+  const provider = useProvider();
+  const library = provider
+    .booksByShelf("library")
+    .filter((b) => b.status === "published")
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
     .slice(0, 5);
 
