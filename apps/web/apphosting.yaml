@@ -33,15 +33,33 @@ env:
   #   availability: [BUILD, RUNTIME]
 
   # --- フェーズ3: Firebase クライアント設定（公開キー・コミット可） ---
-  # - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-  #   value: "AIza..."
-  #   availability: [BUILD, RUNTIME]
-  # - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-  #   value: publishr-498123.firebaseapp.com
-  #   availability: [BUILD, RUNTIME]
-  # - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-  #   value: publishr-498123
-  #   availability: [BUILD, RUNTIME]
-  # - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-  #   value: "1:...:web:..."
-  #   availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyDSK_sF3W81Hk6GVXYZuDpqCngi5VIjTzg"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: publishr-498123.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: publishr-498123
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: publishr-498123.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "355143691286"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:355143691286:web:f8859bd0d1b6338591d937"
+    availability:
+      - BUILD
+      - RUNTIME
