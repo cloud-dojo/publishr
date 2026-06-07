@@ -6,6 +6,9 @@
 
 import { useSyncExternalStore } from "react";
 
+import { watchAuth } from "@/lib/firebase";
+
+import { DEMO_USER_ID } from "./config";
 import {
   addFavoriteAuthor,
   currentUid,
@@ -14,7 +17,10 @@ import {
 } from "./user-writes";
 
 let favorites = new Set<string>();
-let hydrated = false;
+// どの uid 分を読み込んだか。null = 未読込。auth 変化でこれと異なる uid に
+// なったら読み直す（同一タブでのアカウント切替に追従）。
+let hydratedUid: string | null = null;
+let authWatched = false;
 const listeners = new Set<() => void>();
 const EMPTY: Set<string> = new Set();
 
@@ -31,18 +37,29 @@ function persist(): void {
   }
 }
 
-function hydrateOnce(): void {
-  if (hydrated || typeof window === "undefined") return;
-  hydrated = true;
-  const raw = window.localStorage.getItem(lsKey());
+/** 指定 uid のお気に入りを localStorage から読み直す（uid が変わった時のみ）。 */
+function hydrateFor(uid: string): void {
+  if (typeof window === "undefined" || uid === hydratedUid) return;
+  hydratedUid = uid;
+  let next = new Set<string>();
+  const raw = window.localStorage.getItem(`publishr.favoriteAuthors.${uid}`);
   if (raw) {
     try {
-      favorites = new Set(JSON.parse(raw) as string[]);
-      emit();
+      next = new Set(JSON.parse(raw) as string[]);
     } catch {
       /* ignore */
     }
   }
+  favorites = next;
+  emit();
+}
+
+/** 初回購読時に auth を監視し、ログイン状態に応じて該当ユーザー分へ切り替える。 */
+function ensureAuthWatch(): void {
+  if (authWatched || typeof window === "undefined") return;
+  authWatched = true;
+  hydrateFor(currentUid()); // まず現在の uid（未ログインなら DEMO）で読み込み
+  watchAuth((u) => hydrateFor(u?.uid ?? DEMO_USER_ID));
 }
 
 export function toggleFavorite(entry: FavoriteAuthorEntry): void {
@@ -59,7 +76,7 @@ export function toggleFavorite(entry: FavoriteAuthorEntry): void {
 
 function subscribe(cb: () => void): () => void {
   listeners.add(cb);
-  hydrateOnce();
+  ensureAuthWatch();
   return () => {
     listeners.delete(cb);
   };

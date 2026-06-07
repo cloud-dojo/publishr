@@ -135,12 +135,6 @@ export default function HomePage() {
         </section>
       )}
 
-      <div className="mock-note">
-        <span className="mn-ico">◈</span>
-        <span>
-          ローカルMVP。本・著者・入荷理由はデモ用データで、情報ソースは Google Keep（モック）です。
-        </span>
-      </div>
     </>
   );
 }

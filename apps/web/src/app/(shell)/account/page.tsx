@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID } from "@/data/config";
+import { useFavorites } from "@/data/favorites-store";
 import { useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
 import { MOCK_HIGHLIGHTS } from "@/data/mock-highlights";
@@ -284,6 +285,8 @@ export default function AccountPage() {
   const highlightCount = uid
     ? provider.listBooks().reduce((n, b) => n + (b.annotations?.length ?? 0), 0)
     : MOCK_HIGHLIGHTS.length;
+  // お気に入り作家数：お気に入りストア（localStorage＋Firestore）の実数。
+  const favoriteCount = useFavorites().size;
 
   if (!user) {
     return (
@@ -315,7 +318,7 @@ export default function AccountPage() {
         <div className="acct-stats">
           <Mini n={total} label="蔵書" />
           <Mini n={highlightCount} label="ハイライト" />
-          <Mini n={0} label="お気に入り作家" />
+          <Mini n={favoriteCount} label="お気に入り作家" />
         </div>
       </header>
 

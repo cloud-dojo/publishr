@@ -178,12 +178,6 @@ export default function WritingPage() {
         </div>
       )}
 
-      <div className="mock-note">
-        <span className="mn-ico">◈</span>
-        <span>
-          予約→執筆→入荷はローカルのタイマー（実エージェントはキャンド出力）。企画会議のログは実パイプラインの reject_log です。
-        </span>
-      </div>
     </>
   );
 }
