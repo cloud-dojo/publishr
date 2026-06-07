@@ -21,16 +21,21 @@ const LS = {
   sources: (uid: string) => `publishr.connectedSources.${uid}`,
 };
 
-// --- 初期プロフィール（初回create・ルールで保護） ---
+// --- 初期プロフィール（localStorageキャッシュ＋Firestore） ---
+// localStorage に必ずキャッシュする（getInitialProfile が読む先＝アカウント反映の正）。
+// Firestore 書き込みは失敗してもデモ導線を止めない安全網（ルール未反映・権限拒否でも継続）。
 export async function saveInitialProfile(profile: InitialProfileInput): Promise<void> {
   const uid = currentUid();
-  const db = getDb();
-  if (db) {
-    await setDoc(doc(db, "users", uid), { initialProfile: profile }, { merge: true });
-    return;
-  }
   if (typeof window !== "undefined") {
     window.localStorage.setItem(LS.profile(uid), JSON.stringify(profile));
+  }
+  const db = getDb();
+  if (db) {
+    try {
+      await setDoc(doc(db, "users", uid), { initialProfile: profile }, { merge: true });
+    } catch (e) {
+      console.warn("initialProfile の Firestore 保存に失敗（localStorage で継続）", e);
+    }
   }
 }
 

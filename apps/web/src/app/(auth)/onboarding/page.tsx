@@ -88,10 +88,14 @@ export default function OnboardingPage() {
     };
     try {
       await saveInitialProfile(profile);
-      router.push("/connect");
+    } catch (e) {
+      // saveInitialProfile は内部で握りつぶす想定だが、二重の安全網。遷移は止めない。
+      console.warn("初期プロフィール保存で例外（遷移は継続）", e);
     } finally {
       setSaving(false);
     }
+    // 要望どおり登録後はトップ「あなたの書店」へ直接遷移する。
+    router.push("/");
   };
 
   const onNext = () => {

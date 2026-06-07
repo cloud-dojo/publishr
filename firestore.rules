@@ -25,13 +25,11 @@ service cloud.firestore {
       allow create: if isOwner(uid)
                     && request.resource.data.keys().hasOnly(['initialProfile']);
 
-      // 更新：initialProfile（未設定時のみ）と favoriteAuthors のみ変更可
+      // 更新：本人なら initialProfile / favoriteAuthors を変更可。
+      // （オンボーディング登録・再設定・アカウントのプロフィール編集を通すため。
+      //   profile / connectedSources 等のサーバ専用フィールドは onlyChanged で保護。）
       allow update: if isOwner(uid)
-                    && onlyChanged(['initialProfile', 'favoriteAuthors'])
-                    // initialProfile を変えるのは、まだ存在しない初回のみ（確定後はサーバ経由）
-                    && (!('initialProfile' in resource.data)
-                        || !request.resource.data.diff(resource.data)
-                              .affectedKeys().hasAny(['initialProfile']));
+                    && onlyChanged(['initialProfile', 'favoriteAuthors']);
       allow delete: if false;
 
       // ── observations（観測束 ObservationBundle・サブコレクション・I-19）──
