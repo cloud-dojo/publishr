@@ -1,12 +1,12 @@
 [
   {
-    "id": "u_tadokoro",
-    "name": "田所 誠",
-    "initial": "田",
+    "id": "u_sakura",
+    "name": "佐倉 美咲",
+    "initial": "佐",
     "profile": {
-      "role": "製造業・製造課長／30名を統括",
-      "workTheme": "30名規模への移行・権限委譲",
-      "estimatedInterests": ["権限委譲", "属人化の解消", "意思決定", "1on1の負荷"],
+      "role": "食品メーカー・マーケティング課長／部下7名",
+      "workTheme": "2026/04昇格・年上部下との関係・チームマネジメント",
+      "estimatedInterests": ["権限委譲", "1on1", "チームビルディング", "意思決定", "キャリア"],
       "serendipityTolerance": "中"
     },
     "initialProfile": null,
