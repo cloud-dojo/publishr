@@ -361,7 +361,7 @@ Publishr MVP（カテゴリWBS）
 > **実装メモ（E2E・M2★）**: C4.9=Firebase Auth＋Firestore直購読/直書き・`NEXT_PUBLIC_DATA_SOURCE=firestore`。C4.1/C1.1.2=OAuth start/callback＋Drive Picker（OAuth間に合わなければfixture観測で縦通し優先）。手動トリガー `POST /api/trigger/planning`（許可uid・レート制限・実行中ロック）。C4.8=`map/` が `leader_verdicts` の却下→採用を描画＝**基準1の画**。最小Cloud Run疎通（APIのみ・本番完成ではない）。
 
 > **🧭 実態（2026-06-07更新）**: `apps/web`(Next.js) に **C4.2–C4.8 はUI code-complete（16ルートビルド緑・mock動作確認済）**。Firebase Auth＋Firestoreプロバイダも実装済（mock時は休眠）。**C4.1はUIシェルのみ**＝initialProfile登録画面はあるが、**Google Drive/Calendar/Tasks の実連携ページ（OAuth接続・Drive Picker実機能）は未設計・未実装**。
-> **残作業**: ①**Google連携ページ実装（C4.1）＝機能設計から要対応**／②**Firestore本接続（C4.9）＝一瀬待ち**。DoDの「Firestore直書き/購読」の✅判定は本接続(C4.9)後。担当は基本**鉄田**。
+> **残作業**: **Google連携ページ実装（C4.1）＝機能設計から要対応**（C4.9は✅2026-06-07完了済み）。担当は基本**鉄田**。
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
@@ -373,7 +373,7 @@ Publishr MVP（カテゴリWBS）
 | C4.6 | お気に入り著者保存 | 気に入った著者を保存する機能（次回企画に15%混ざる） | 鉄田 | W3（6/22–28） | C3.1 | arrayUnion保存 (旧WP4.6) | ✅**UI code-complete**（読了ページのお気に入りボタン＋favoriteAuthor通知連動済。Firestore接続はC4.9） |
 | C4.7 | わたしの書庫・通知バナー | 自分の本棚と、入荷/執筆完了のお知らせバナー（Firestore購読） | 鉄田 | W4（6/29–7/5） | C4.2 | 購読バナー（G1-15） (旧WP4.7) | ✅**UI code-complete**（サイドバー「最近読んだ本」・published本のみ最大5件・書庫表紙CSS強化。通知はNotificationBell実装済。Firestore購読接続はC4.9） |
 | C4.8 | **ローカルUI仕上げ（レイアウト/行ずれ修正・全画面QA）** | 画面のレイアウト崩れ・行ずれ・モックとの差分を実機で確認して直す。修正量が多めで**デプロイ前の山場** | 鉄田 | W2–W4（6/15–7/5） | C4.1-C4.7 | `npm run dev:web`で全画面確認・修正 (旧WP4.8) | ✅**2026-06-07 完了**（**2026-06-06実施分**: 読書ページサブページ分離・ジャンプ機能・BookToc共有コンポーネント・本の概要ページ整理・目次章番号折り返し修正・サイドバー最近読んだ本・書庫表紙CSS強化。**2026-06-07実施分**: ①フィードバックチップ条件付きレンダリング修正（ページロード時に非表示・いいね/いまいちタップで展開）②`.rail-tools`の`position:sticky`削除でナビカードのジャンプ解消③ベルアイコン(🔔)＋通知ドロップダウンパネル新設（`NotificationBell.tsx`）＝入荷/執筆完了/お気に入り作家の3種・未読バッジ・全既読ボタン・各通知から`/books/{bookId}`概要ページへリンク④`AppNotification`型・`pushNotification`/`markNotificationRead`/`markAllNotificationsRead`等をBaseProviderに実装⑤MockProviderにseedNotifications（3件・決定的シード）＋reserve完了時自動通知⑥`useNotifications()`・`notifyFavoriteAuthor()`フック⑦読了ページの「お気に入り登録」でfavoriteAuthor通知生成。**Firestore本接続後の全画面QAのみ残**（C4.9依存）） |
-| C4.9 | **Firestore本接続・Firebase Auth起動（mock→firestore切替）** | mockデータから本物のDB(Firestore)接続へ切替える。一瀬から設定値を受領後に作業 | 鉄田・一瀬 | W2–W3（6/15–28） | C3.1,B3.3,C2.1 | 一瀬から①Firebase設定値(`NEXT_PUBLIC_FIREBASE_*`)②~~ルールのデプロイ→✅C3.1完了済み~~③API3本URL・CORS④`ownerUid`規約 を受領後、`NEXT_PUBLIC_DATA_SOURCE=firestore`へ切替 (旧WP4.9) | ⏸**一瀬待ち**（②依存は解消。残①③④） |
+| C4.9 | **Firestore本接続・Firebase Auth起動（mock→firestore切替）** | mockデータから本物のDB(Firestore)接続へ切替える。一瀬から設定値を受領後に作業 | 鉄田・一瀬 | W2–W3（6/15–28） | C3.1,B3.3,C2.1 | 一瀬から①Firebase設定値(`NEXT_PUBLIC_FIREBASE_*`)②~~ルールのデプロイ→✅C3.1完了済み~~③API3本URL・CORS④`ownerUid`規約 を受領後、`NEXT_PUBLIC_DATA_SOURCE=firestore`へ切替 (旧WP4.9) | ✅**2026-06-07 完了**（別セッションにて実施。`NEXT_PUBLIC_DATA_SOURCE=firestore`・Firebase Auth起動・Firestore読み書き接続完了） |
 
 ## C5. 品質・評価・観測・運用
 
