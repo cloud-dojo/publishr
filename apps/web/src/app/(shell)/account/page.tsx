@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@publishr/shared-schema";
-import { fixtures } from "@publishr/shared-schema";
 import { useRouter } from "next/navigation";
 
 import { Topbar } from "@/components/shell/Topbar";
@@ -273,11 +272,10 @@ export default function AccountPage() {
     );
   }
 
-  // フォールバック優先順: Firestore → fixtures デモペルソナ → "アカウント"
-  // （Firebase Auth の実名（鉄田陽介など）ではなくデモペルソナで統一する）
-  const personaUser = fixtures.users[0];
-  const displayName = user.name || personaUser?.name || "アカウント";
-  const displayInitial = user.initial || personaUser?.initial || displayName[0] || "?";
+  // Firebase Auth の displayName を優先し、Firestore name をフォールバックにする。
+  // 名前とメールが同じソース（Firebase Auth）から来るため常に一致する。
+  const displayName = authDisplayName || user.name || "アカウント";
+  const displayInitial = displayName[0] || "?";
 
   return (
     <>
