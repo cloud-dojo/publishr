@@ -3,6 +3,7 @@
 import { useEffect, useReducer } from "react";
 
 import type {
+  AppNotification,
   Book,
   Observation,
   Persona,
@@ -80,6 +81,21 @@ export function useReaderAnalysis(): {
   };
 }
 
+export function useNotifications(): {
+  notifications: AppNotification[];
+  unread: number;
+  markRead: (id: string) => void;
+  markAllRead: () => void;
+} {
+  const provider = useProvider();
+  return {
+    notifications: provider.listNotifications(),
+    unread: provider.unreadNotificationCount(),
+    markRead: (id: string) => provider.markNotificationRead(id),
+    markAllRead: () => provider.markAllNotificationsRead(),
+  };
+}
+
 export function useActions() {
   const provider = getProvider();
   return {
@@ -87,5 +103,7 @@ export function useActions() {
     sendFeedback: provider.sendFeedback.bind(provider),
     updateReadingState: provider.updateReadingState.bind(provider),
     runPipeline: (userId: string) => provider.runPipeline(userId),
+    notifyFavoriteAuthor: (personaId: string, personaName: string, excludeBookId?: string) =>
+      provider.notifyFavoriteAuthor(personaId, personaName, excludeBookId),
   };
 }

@@ -8,7 +8,6 @@ import { useProvider } from "@/data/hooks";
 import {
   annotationsToHighlights,
   highlightsGroupedByBook,
-  highlightTagCloud,
   mergeHighlights,
   type HighlightKind,
 } from "@/data/mock-highlights";
@@ -37,7 +36,6 @@ export default function HighlightsPage() {
   const count = (k: Tab) =>
     k === "all" ? visibleItems.length : visibleItems.filter((h) => h.kind === k).length;
   const groups = highlightsGroupedByBook(visibleItems, tab);
-  const cloud = highlightTagCloud(visibleItems);
   const bookTitle = (id: string) => provider.getBook(id)?.title ?? id;
 
   return (
@@ -74,61 +72,35 @@ export default function HighlightsPage() {
           ))}
         </div>
 
-        <div className="hl-layout">
-          <div className="hl-list">
-            {groups.map((g) => (
-              <section key={g.bookId} className="hl-group">
-                <Link href={`/books/${g.bookId}`} className="hl-group-head">
-                  <span className="hl-group-title">{bookTitle(g.bookId)}</span>
-                  <span className="hl-group-count">{g.items.length}件</span>
-                </Link>
-                <div className="hl-items">
-                  {g.items.map((h) => (
-                    <Link
-                      key={h.id}
-                      href={`/read/${h.bookId}`}
-                      className={`hl-card panel ${h.kind === "note" ? "note" : ""}`}
-                    >
-                      <span className="hl-kind">{KIND_LABEL[h.kind]}</span>
-                      <span className="hl-text">{h.text}</span>
-                      {h.note && <span className="hl-note">📝 {h.note}</span>}
-                      <span className="hl-meta">
-                        {h.chapter}
-                        {h.tags.length > 0 && <span className="hl-tags"> ・ {h.tags.join(" / ")}</span>}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ))}
-            {groups.length === 0 && <div className="muted">該当するハイライトはありません。</div>}
-          </div>
-
-          <aside className="hl-side">
-            <div className="hl-side-card panel">
-              <h3 className="hl-side-title">あなたの関心の地図</h3>
-              <div className="hl-cloud">
-                {cloud.map((c) => (
-                  <span
-                    key={c.tag}
-                    className="hl-cloud-tag"
-                    style={{ fontSize: 12 + Math.min(c.count, 5) * 2 }}
-                  >
-                    {c.tag}
-                    <span className="hl-cloud-count">{c.count}</span>
+        {/* TODO(フェーズ3): ハイライトを読者分析AIのインプットとして使う。
+            - observe ステップで直近1ヶ月のハイライトを取得し、Drive/Gmail/Calendar と合わせてLLMへ渡す
+            - データはFirestore users/{uid}/highlights に保存し、createdAt DESC でフィルタ */}
+        {groups.map((g) => (
+          <section key={g.bookId} className="hl-group">
+            <Link href={`/books/${g.bookId}`} className="hl-group-head">
+              <span className="hl-group-title">{bookTitle(g.bookId)}</span>
+              <span className="hl-group-count">{g.items.length}件</span>
+            </Link>
+            <div className="hl-items">
+              {g.items.map((h) => (
+                <Link
+                  key={h.id}
+                  href={`/read/${h.bookId}`}
+                  className={`hl-card panel ${h.kind === "note" ? "note" : ""}`}
+                >
+                  <span className="hl-kind">{KIND_LABEL[h.kind]}</span>
+                  <span className="hl-text">{h.text}</span>
+                  {h.note && <span className="hl-note">📝 {h.note}</span>}
+                  <span className="hl-meta">
+                    {h.chapter}
+                    {h.tags.length > 0 && <span className="hl-tags"> ・ {h.tags.join(" / ")}</span>}
                   </span>
-                ))}
-              </div>
+                </Link>
+              ))}
             </div>
-            <div className="hl-side-card panel">
-              <h3 className="hl-side-title">この関心が、次の企画に</h3>
-              <p className="hl-side-note">
-                「{cloud[0]?.tag}」「{cloud[1]?.tag}
-                」へのマーキングが多いため、来週の企画はその方向に寄せています。
-              </p>
-            </div>
-          </aside>
-        </div>
+          </section>
+        ))}
+        {groups.length === 0 && <div className="muted">該当するハイライトはありません。</div>}
       </section>
     </>
   );

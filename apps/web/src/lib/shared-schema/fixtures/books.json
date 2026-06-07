@@ -476,14 +476,44 @@
     "coverUrl": null,
     "shelf": "library",
     "estimatedChapters": 6,
-    "estimatedMinutes": 95,
+    "estimatedMinutes": 180,
     "granularity": "full",
     "prefaceSample": "最初の100日で、その後の3年が決まる。焦らず、しかし手は止めない。",
     "agenda": [
       {
-        "no": "序",
+        "no": "第1章",
         "title": "100日という締切",
-        "desc": "なぜ最初が効くのか",
+        "desc": "なぜ最初が効くのか。土台を据える100日の意味",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "着任の作法",
+        "desc": "1on1・挨拶・観察。関係の器を最初の30日で作る",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "観察から仮説へ",
+        "desc": "数字に表れない情報を読む。仮説を立て、軽く検証する",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "最初の意思決定",
+        "desc": "何を断るか、何を決めるか。判断基準を組織に配布する",
+        "locked": false
+      },
+      {
+        "no": "第5章",
+        "title": "権限の設計図",
+        "desc": "三層モデルで委譲の線を引く。安全に失敗できる組織を作る",
+        "locked": false
+      },
+      {
+        "no": "第6章",
+        "title": "あなたが現場を離れる日",
+        "desc": "不在に耐える組織の強さが、リーダーの本当の成果だ",
         "locked": false
       }
     ],
@@ -514,14 +544,38 @@
     "coverUrl": null,
     "shelf": "library",
     "estimatedChapters": 5,
-    "estimatedMinutes": 70,
+    "estimatedMinutes": 150,
     "granularity": "full",
     "prefaceSample": "自走とは、放置ではない。問いと信頼で、現場は動き出す。",
     "agenda": [
       {
-        "no": "序",
+        "no": "第1章",
         "title": "自走と放置は違う",
-        "desc": "誤解をほどく",
+        "desc": "「任せる」と「放る」の違い。自走の前提を整える",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "基準を言語化する",
+        "desc": "共有された判断基準が、不在でも動く組織を作る",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "信頼の残高",
+        "desc": "信頼は口座。約束を守る積み重ねが残高になる",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "問いで動かす",
+        "desc": "指示は行動を生む。問いは思考を生む",
+        "locked": false
+      },
+      {
+        "no": "第5章",
+        "title": "あなたが黙っても回る",
+        "desc": "不在が事故にならない組織。自走の完成形",
         "locked": false
       }
     ],
@@ -551,15 +605,39 @@
     "coverVariant": "slate",
     "coverUrl": null,
     "shelf": "library",
-    "estimatedChapters": 4,
-    "estimatedMinutes": 55,
+    "estimatedChapters": 5,
+    "estimatedMinutes": 150,
     "granularity": "full",
     "prefaceSample": "その会議は、本当に必要か。問いひとつで、時間は半分になる。",
     "agenda": [
       {
-        "no": "序",
+        "no": "第1章",
         "title": "その会議、要りますか",
-        "desc": "問いから始める削減",
+        "desc": "見えないコストを可視化し、惰性の定例を棚卸しする",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "決める会議と考える会議",
+        "desc": "目的が違えば設計も違う。混ぜると両方が死ぬ",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "問いの立て方",
+        "desc": "アジェンダを「問い」に変えると議論が動き始める",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "沈黙とファシリテーション",
+        "desc": "発言量と貢献は比例しない。沈黙を活かす技術",
+        "locked": false
+      },
+      {
+        "no": "第5章",
+        "title": "会議を半分にする",
+        "desc": "削減した後に空いた時間で何をするか。それが本番だ",
         "locked": false
       }
     ],
@@ -589,15 +667,33 @@
     "coverVariant": "rust",
     "coverUrl": null,
     "shelf": "library",
-    "estimatedChapters": 5,
-    "estimatedMinutes": 60,
+    "estimatedChapters": 4,
+    "estimatedMinutes": 120,
     "granularity": "full",
     "prefaceSample": "読む時間がないのではない。読む一冊を、選べていないだけだ。",
     "agenda": [
       {
-        "no": "序",
+        "no": "第1章",
         "title": "積読の正体",
-        "desc": "選書という技術",
+        "desc": "積読は意志の問題ではなく、選書の問題だ",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "問いを増やす読書",
+        "desc": "答えを探すより、問いを増やす読み方へ",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "一冊の選び方",
+        "desc": "ベストセラーより「今の局面」に効く一冊を選ぶ",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "読書を仕事に還す",
+        "desc": "読んだだけでは変わらない。翌日の一歩が全てだ",
         "locked": false
       }
     ],

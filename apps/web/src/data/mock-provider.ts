@@ -41,6 +41,60 @@ export class MockProvider extends BaseProvider {
     this.candidates = CANNED_CANDIDATES;
     this.approvedPlanIds = CANNED_APPROVED_PLAN_IDS;
     this.debate = CANNED_DEBATE;
+    this.seedNotifications();
+  }
+
+  /** デモ初期表示用に、4種の通知を決定的にシードする（mock専用）。 */
+  private seedNotifications(): void {
+    const now = Date.now();
+    const all = [...this.books.values()];
+    const freshDraft = all.filter((b) => b.status === "draft");
+    const published = all.filter((b) => b.status === "published");
+    const arrivalCount = Math.min(3, Math.max(1, freshDraft.length));
+    // 書庫着の本（執筆完了済み＝published を優先）。
+    const lib = published[0] ?? all.find((b) => b.body) ?? all[0];
+    // お気に入り作家の「新しい一冊」＝ lib とは別の draft（新刊）を優先。
+    const favBook = freshDraft.find((b) => b.id !== lib?.id) ?? freshDraft[0] ?? all[0];
+    const favPersona = favBook ? this.personas.get(favBook.authorPersonaId) : undefined;
+    const favName = favPersona?.name ?? "あなたのお気に入りの作家";
+
+    // 新しい順に積みたいので、古い→新しい の順で push（listNotifications で再ソート）。
+    this.notifications = [
+      {
+        id: "ntf_seed_delivery",
+        kind: "delivery",
+        title: lib ? `『${lib.title}』が書庫に届きました` : "予約した本が書庫に届きました",
+        body: "執筆が完了しました。まずは本の概要をご覧いただけます。",
+        createdAt: new Date(now - 3 * 3_600_000).toISOString(),
+        read: true,
+        href: lib ? `/books/${lib.id}` : "/library",
+        bookId: lib?.id,
+      },
+      {
+        id: "ntf_seed_favorite",
+        kind: "favoriteAuthor",
+        title: favBook
+          ? `お気に入りの作家 ${favName} の新しい一冊が入荷しました`
+          : `お気に入りの作家 ${favName} が、次の一冊を構想中です`,
+        body: favBook
+          ? "どんな本を書いたのか、概要をご覧いただけます。"
+          : "新しい一冊が入荷した際に、ここでご案内します。",
+        createdAt: new Date(now - 40 * 60_000).toISOString(),
+        read: false,
+        href: favBook ? `/books/${favBook.id}` : "/authors",
+        bookId: favBook?.id,
+        personaId: favPersona?.id,
+      },
+      {
+        id: "ntf_seed_arrival",
+        kind: "arrival",
+        title: `今朝、あなたのために${arrivalCount}冊が入荷しました`,
+        body: "いま、あなたの関心にまっすぐ応える一冊たちです。",
+        createdAt: new Date(now - 3 * 60_000).toISOString(),
+        read: false,
+        href: "/",
+      },
+    ];
   }
 
   async reserve(id: string): Promise<void> {
@@ -64,6 +118,15 @@ export class MockProvider extends BaseProvider {
           body: b2.body ?? cannedBody(id),
         });
         this.notify();
+        // 執筆完了 → 書庫着 の通知（ライブ生成）。まず本の概要ページへ誘導する。
+        this.pushNotification({
+          kind: "delivery",
+          title: `『${b2.title}』が書き上がりました`,
+          body: "書庫に届きました。まずは本の概要をご覧いただけます。",
+          createdAt: new Date().toISOString(),
+          href: `/books/${id}`,
+          bookId: id,
+        });
       }, timing.writingToPublished);
     }, timing.reserveToWriting);
   }

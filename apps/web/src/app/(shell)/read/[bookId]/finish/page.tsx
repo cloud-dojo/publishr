@@ -11,7 +11,7 @@ import { useActions, useProvider } from "@/data/hooks";
 export default function FinishPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { sendFeedback } = useActions();
+  const { sendFeedback, notifyFavoriteAuthor } = useActions();
   const book = provider.getBook(params.bookId);
 
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
@@ -22,7 +22,7 @@ export default function FinishPage() {
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} notify={false} icon="♡" />
+        <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
         <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
       </>
     );
@@ -44,7 +44,7 @@ export default function FinishPage() {
 
   return (
     <>
-      <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} notify={false} icon="♡" />
+      <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
       <div className="page-hero">
         <div className="ph-eyebrow">You finished a book</div>
         <h1>
@@ -67,7 +67,11 @@ export default function FinishPage() {
             <button
               type="button"
               className={following ? "btn btn--gold" : "btn btn--ghost"}
-              onClick={() => setFollowing((v) => !v)}
+              onClick={() => {
+                const next = !following;
+                if (next && persona) notifyFavoriteAuthor(persona.id, persona.name, book.id);
+                setFollowing(next);
+              }}
             >
               {following ? "♥ お気に入りの作家に登録済み" : `♡ ${persona?.name} をお気に入りに`}
             </button>

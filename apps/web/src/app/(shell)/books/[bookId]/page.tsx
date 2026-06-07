@@ -20,7 +20,7 @@ export default function BookDetailPage() {
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} notify={false} icon="♡" />
+        <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
         <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
       </>
     );
@@ -38,7 +38,7 @@ export default function BookDetailPage() {
 
   return (
     <>
-      <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} notify={false} icon="♡" />
+      <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
       <div className="page-hero" style={{ paddingBottom: 0 }}>
         <div className="ph-eyebrow">Today&apos;s arrival · curated for you</div>
       </div>

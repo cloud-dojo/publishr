@@ -117,6 +117,30 @@ a { color: inherit; text-decoration: none; }
 .icon-btn:hover { color: var(--gold-bright); border-color: var(--gold); }
 .icon-btn .badge-dot { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; background: var(--wine); border-radius: 50%; box-shadow: 0 0 0 2px var(--ink-800); }
 
+/* ===== 通知ベル＋ドロップダウンパネル ===== */
+.ntf-wrap { position: relative; flex: none; }
+.icon-btn .badge-count { position: absolute; top: -3px; right: -3px; min-width: 17px; height: 17px; padding: 0 4px; display: grid; place-items: center; font-size: 10px; font-weight: 700; line-height: 1; color: #fff; background: var(--wine); border-radius: 999px; box-shadow: 0 0 0 2px var(--ink-900, #0a0b0f); }
+.ntf-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 360px; max-width: calc(100vw - 32px); background: var(--ink-800); border: 1px solid var(--line); border-radius: var(--radius-md, 12px); box-shadow: var(--shadow-deep); z-index: 60; overflow: hidden; animation: ntf-pop .14s ease; }
+@keyframes ntf-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.ntf-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line-soft, var(--line)); }
+.ntf-title { font-family: var(--font-display); font-size: 14px; color: var(--text-100); }
+.ntf-allread { background: none; border: none; color: var(--gold-bright); font-family: var(--font-body); font-size: 12px; cursor: pointer; padding: 2px 4px; }
+.ntf-allread:hover { text-decoration: underline; }
+.ntf-list { max-height: 60vh; overflow-y: auto; }
+.ntf-empty { padding: 28px 16px; text-align: center; color: var(--text-500); font-size: 13px; }
+.ntf-item { display: flex; gap: 11px; width: 100%; text-align: left; padding: 13px 16px; background: none; border: none; border-bottom: 1px solid var(--line-soft, var(--line)); cursor: pointer; transition: background .15s; }
+.ntf-item:last-child { border-bottom: none; }
+.ntf-item:hover { background: rgba(255,255,255,.03); }
+.ntf-item.unread { background: rgba(201,163,95,.06); border-left: 2px solid var(--gold); }
+.ntf-item.unread:hover { background: rgba(201,163,95,.1); }
+.ntf-ico { flex: none; width: 26px; height: 26px; display: grid; place-items: center; font-size: 14px; color: var(--gold-bright); }
+.ntf-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ntf-row1 { display: flex; align-items: baseline; gap: 8px; }
+.ntf-itemtitle { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-100); line-height: 1.45; }
+.ntf-item:not(.unread) .ntf-itemtitle { color: var(--text-300); }
+.ntf-time { flex: none; font-size: 10.5px; color: var(--text-500); }
+.ntf-desc { font-size: 11.5px; color: var(--text-500); line-height: 1.5; }
+
 .page { padding: 14px 44px 0; }
 
 /* Sections */
@@ -378,7 +402,10 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .hl-popup-sep { width: 1px; height: 16px; background: rgba(255,255,255,.15); margin: 0 2px; }
 .hl-popup-delete { background: none; border: none; color: rgba(255,255,255,.5); cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px; transition: color .15s, background .15s; }
 .hl-popup-delete:hover { color: #e07878; background: rgba(255,80,80,.12); }
-.rail-tools { position: sticky; top: var(--topbar-h); display: flex; flex-direction: column; gap: 18px; }
+/* sticky にすると、フィードバックのチップ展開で rail がビューポート高を超えた瞬間に
+   貼り付き基準が変わり目次カードが数px跳ねる。本文はページめくり式で縦スクロールしないため
+   sticky の利点がなく、通常フロー（grid 上端固定）にして跳ねを防ぐ。 */
+.rail-tools { display: flex; flex-direction: column; gap: 18px; }
 .tool-card { padding: 18px; }
 .tool-card .tc-h { font-family: var(--font-display); font-size: 14px; color: var(--text-100); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .tool-card .tc-h .k { color: var(--gold); }
@@ -714,8 +741,7 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .gb-btn:hover { border-color: var(--gold); color: var(--text-100); }
 .gb-btn.on.good { background: rgba(63,93,79,.25); border-color: var(--forest); color: #a8d2ba; }
 .gb-btn.on.bad { background: rgba(140,59,77,.25); border-color: var(--wine); color: #e0a0ad; }
-.gb-reasons { overflow: hidden; max-height: 0; margin-top: 0; padding-top: 0; border-top: none; transition: max-height 0.22s ease; }
-.gb-reasons--active { max-height: 300px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.gb-reasons { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
 .gb-reasons-q { font-size: 12px; color: var(--text-300); margin-bottom: 10px; }
 .gb-other-note { margin-top: 10px; font-size: 12px; color: var(--text-300); line-height: 1.6; padding: 9px 11px; background: rgba(201,163,95,.07); border: 1px solid var(--line); border-radius: var(--radius-sm); }
 

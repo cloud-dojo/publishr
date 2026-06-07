@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { NotificationBell } from "./NotificationBell";
+
 export function Topbar({
   greeting,
   back,
@@ -25,10 +27,11 @@ export function Topbar({
         <span>⌕</span>
         <input placeholder="作家・テーマで書庫を探す…" />
       </div>
-      <div className="icon-btn">
-        {icon}
-        {notify ? <span className="badge-dot" /> : null}
-      </div>
+      {notify ? (
+        <NotificationBell />
+      ) : (
+        <div className="icon-btn">{icon}</div>
+      )}
     </header>
   );
 }

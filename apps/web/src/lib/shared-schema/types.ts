@@ -251,6 +251,26 @@ export interface ReadingStateInput {
   annotations?: ReadingAnnotation[];
 }
 
+// ---------------------------------------------------------------------------
+// 通知（ベルアイコン）: 出版社→読者への接点。MVPは frontend/provider 内で完結。
+//   arrival       … 新刊入荷（runPipeline / 棚に draft 追加）
+//   delivery      … 予約本の執筆完了→書庫着（writing→published）
+//   favoriteAuthor… お気に入り作家の新作・次回作着手
+// ---------------------------------------------------------------------------
+export type NotificationKind = "arrival" | "delivery" | "favoriteAuthor";
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  createdAt: string; // ISO8601
+  read: boolean;
+  href?: string; // クリック遷移先
+  bookId?: string;
+  personaId?: string;
+}
+
 // ===========================================================================
 // 以下: agent-io-contract.md 由来の新規型（エージェント I/O 専用）
 // ===========================================================================

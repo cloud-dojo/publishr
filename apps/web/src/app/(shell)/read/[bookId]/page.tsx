@@ -603,35 +603,37 @@ export default function ReaderPage() {
               </button>
             </div>
 
-            {/* gb-reasons は常に DOM に存在させ max-height transition でスムーズに展開。
-                height が急変しないので上の目次ボックスが動かない。 */}
-            <div className={`gb-reasons${reaction ? " gb-reasons--active" : ""}`}>
-              <div className="gb-reasons-q">
-                {reaction === "good" ? "どこが良かったですか？" : "どこが気になりましたか？"}
-              </div>
-              <div className="fb-opts">
-                {(reaction === "good" ? GOOD_REASONS : BAD_REASONS).map((r) => (
+            {/* いいね/いまいちを押したときだけ理由チップを表示（一瞬で出現、アニメーションなし）。
+                feedback カードの下方向にのみ伸びるので、上の目次カードは動かない。 */}
+            {reaction && (
+              <div className="gb-reasons">
+                <div className="gb-reasons-q">
+                  {reaction === "good" ? "どこが良かったですか？" : "どこが気になりましたか？"}
+                </div>
+                <div className="fb-opts">
+                  {(reaction === "good" ? GOOD_REASONS : BAD_REASONS).map((r) => (
+                    <div
+                      key={r}
+                      className={`chip${reason === r ? " on" : ""}`}
+                      onClick={() => pickReason(r)}
+                    >
+                      {r}
+                    </div>
+                  ))}
                   <div
-                    key={r}
-                    className={`chip${reason === r ? " on" : ""}`}
-                    onClick={() => pickReason(r)}
+                    className={`chip${reason === "その他" ? " on" : ""}`}
+                    onClick={() => pickReason("その他")}
                   >
-                    {r}
+                    その他
                   </div>
-                ))}
-                <div
-                  className={`chip${reason === "その他" ? " on" : ""}`}
-                  onClick={() => pickReason("その他")}
-                >
-                  その他
                 </div>
+                {reason === "その他" && (
+                  <div className="gb-other-note">
+                    詳しい感想は、下の「読み終えた → 感想を書く」からご記入ください。
+                  </div>
+                )}
               </div>
-              {reason === "その他" && (
-                <div className="gb-other-note">
-                  詳しい感想は、下の「読み終えた → 感想を書く」からご記入ください。
-                </div>
-              )}
-            </div>
+            )}
 
             <div className="muted" style={{ fontSize: 11, marginTop: 10, lineHeight: 1.5 }}>
               あなたの選択は次の入荷の企画に反映されます。
