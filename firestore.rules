@@ -53,11 +53,14 @@ service cloud.firestore {
       // 新規作成・削除・全面更新はサーバのみ
       allow create, delete: if false;
 
-      // 既存bookの「フィードバックだけ」をクライアントが更新可
-      // status / title / bodyUrl / coverUrl / planId / ownerUid 等は変更不可
+      // 既存bookの読書系フィールドだけをクライアントが更新可：
+      //  - feedback（簡易FB・読了率）
+      //  - annotations（ハイライト/付箋/ブックマーク：読書ページで蓄積）
+      //  - granularity（フル/要約の表示粒度）
+      // status / title / bodyUrl / coverUrl / planId / ownerUid 等は変更不可。
       allow update: if isSignedIn()
                     && resource.data.ownerUid == request.auth.uid
-                    && onlyChanged(['feedback']);
+                    && onlyChanged(['feedback', 'annotations', 'granularity']);
 
       // ── ハイライト（サブコレクション）──
       match /highlights/{hid} {
