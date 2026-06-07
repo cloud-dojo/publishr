@@ -20,17 +20,19 @@ runConfig:
   maxInstances: 2
 
 env:
-  # --- 当面は mock データで公開（フェーズ1）。Firestore 接続後に firestore へ切替 ---
+  # --- C4.9 完了: Firestore 接続モード ---
   - variable: NEXT_PUBLIC_DATA_SOURCE
-    value: mock
+    value: firestore
     availability:
       - BUILD
       - RUNTIME
 
-  # --- フェーズ4: Cloud Run API のベースURL（友人のデプロイ後に設定） ---
-  # - variable: NEXT_PUBLIC_API_URL
-  #   value: https://publishr-api-xxxxx.a.run.app
-  #   availability: [BUILD, RUNTIME]
+  # --- C4.9: Cloud Run API の URL ---
+  - variable: NEXT_PUBLIC_API_URL
+    value: https://publishr-api-355143691286.asia-east1.run.app
+    availability:
+      - BUILD
+      - RUNTIME
 
   # --- フェーズ3: Firebase クライアント設定（公開キー・コミット可） ---
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
