@@ -352,7 +352,7 @@ Publishr MVP（カテゴリWBS）
 ### C1.7 自律トリガー(Scheduler)
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.7.1 | Cloud Scheduler 曜日別トリガー（土/水/日） | 毎週決まった曜日に自動で企画が走る仕組み（Cloud Scheduler）。デモでは手動起動も可 | 一瀬 | W3（6/22–28） | C1.3.3 | 自律起動で棚更新 (旧WP1.8) | 🔜着手前 |
+| C1.7.1 | Cloud Scheduler 曜日別トリガー（土/水/日） | 毎週決まった曜日に自動で企画が走る仕組み（Cloud Scheduler）。デモでは手動起動も可 | 一瀬 | W3（6/22–28） | C1.3.3 | 自律起動で棚更新 (旧WP1.8) | 🟡**ローカル/mock版 実装済（2026-06-07・課金ゼロ）**＝`agents/publishr_agents/scheduler.py`（曜日→themeKind 純粋判定: 水/土=honmei・日=serendipity・`next_run`決定的）＋`scripts/run_scheduler.py`（`--once`即実行／`--watch`ローカル常駐で次の起動曜日に自律起動・依存なし／全mock＝LLM課金ゼロ・クラウド未使用）。test_scheduler 7件。**残＝本番 Cloud Scheduler→Cloud Run trigger のデプロイ（B3.2/C4結線後・課金発生）＋「棚更新」のFirestore永続化**。cron: honmei`0 6 * * 3,6`／serendipity`0 6 * * 0` はdoc化のみ |
 
 ## C2. エージェント・モードB（後追い執筆）
 
