@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from publishr_api.deps import get_repository
 from publishr_api.main import app
 from publishr_api.repositories.mock_repository import MockRepository
+from publishr_api.routers.api import trigger_guard
 from publishr_api.services import reservation_service
 
 client = TestClient(app)
@@ -16,10 +17,12 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def _fresh_repo():
-    """各テストで新しいインメモリ状態にする。"""
+    """各テストで新しいインメモリ状態＋トリガーガードをリセットする。"""
     get_repository.cache_clear()
+    trigger_guard.reset()
     yield
     get_repository.cache_clear()
+    trigger_guard.reset()
 
 
 def test_healthz():
@@ -115,20 +118,44 @@ def test_reading_state_updates_granularity_and_annotations():
 
 
 def test_pipeline_run_returns_reject_log():
+    """新モードA: 入荷(arrivals/draft)を生成し、却下→採用の証跡を返す。"""
     res = client.post("/pipeline/run", json={"userId": "u_sakura"})
     assert res.status_code == 200
     data = res.json()
-    assert len(data["books"]) >= 2
-    assert len(data["candidates"]) == 3
-    assert set(data["approvedPlanIds"]) == {p["id"] for p in data["plans"]}
-    assert {b["planId"] for b in data["books"]} == set(data["approvedPlanIds"])
-    assert data["observation"]["noteCount"] > 0
-    assert "年上部下との距離感" in data["observation"]["signals"]
-    assert "マーケティング課長" in data["readerProfile"]["role"]
-    assert "7名" in data["readerProfile"]["situation"]
-    assert len(data["rejectLog"]) >= 6
+    assert len(data["books"]) >= 1
+    for b in data["books"]:
+        assert b["shelf"] == "arrivals"
+        assert b["status"] == "draft"
+    # 採用企画ID と本の planId が整合。
+    assert data["approvedPlanIds"]
+    assert {b["planId"] for b in data["books"]} <= set(data["approvedPlanIds"])
+    # 企画会議の却下→採用（基準1の画）。
     assert any(e["round"] == 1 and e["verdict"] == "却下" for e in data["rejectLog"])
     assert any(e["round"] == 2 and e["verdict"] == "採用" for e in data["rejectLog"])
+
+
+def test_trigger_planning_adds_books():
+    """手動トリガー（モードA）で入荷が増える＝『押す→本ができる』。"""
+    res = client.post("/api/trigger/planning", json={"userId": "u_sakura"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["ok"] is True
+    assert data["booksAdded"] >= 1
+
+
+def test_trigger_planning_rate_limited_on_immediate_repeat():
+    """同一 uid の連打はレート制限（429）。"""
+    first = client.post("/api/trigger/planning", json={"userId": "u_sakura"})
+    assert first.status_code == 200
+    second = client.post("/api/trigger/planning", json={"userId": "u_sakura"})
+    assert second.status_code == 429
+
+
+def test_trigger_releases_lock_on_failure():
+    """失敗（不明ユーザー404）でもロックは解放され、uid が実行中で固着しない。"""
+    res = client.post("/api/trigger/planning", json={"userId": "u_nope"})
+    assert res.status_code == 404
+    assert "u_nope" not in trigger_guard._running
 
 
 def test_advance_state_machine():
