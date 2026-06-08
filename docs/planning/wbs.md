@@ -174,6 +174,14 @@
 | **B2.2** | ⑧**ローカルサンドボックス整備**＝`dev:mock`（mock・認証なし）／`dev:emulator`＋`emulators`（Firebase Auth/Firestoreエミュレータ）・firebase.json/firebase.ts配線・Javaインストール・手順書`docs/infra/local-sandbox.md`。本番ビルドに頼らず高速反復可能に | B2.2 |
 | **C6.2/データ** | ⑨本番Firestoreのテストデータ整理＝孤児book(`b_kikitai`/`b_ringi`)・レガシーuser(`u_tadokoro`)削除、鉄田/佐倉の`name`修正 ⑩Firestore運用スクリプト4本（`inspect_firestore`/`cleanup_firestore`/`fix_user_name`/`patch_book_bodies`＝存在チェック追加で孤児再生成防止）整備 | C6.2/I-14 |
 
+### 2026-06-08（月・一瀬＝モードA全STEP実装〜画面結線）
+
+| 領域 | やったこと | WBS |
+|---|---|---|
+| **C1.1–C1.6** | **モードA企画パイプライン全STEP実装**（観測→読者→企画3階層→キャスティング→プレビュー→装丁）。各STEP＝決定的mock既定＋実Vertex隔離・TDD・code-review・live実証。`run_mode_a.py` で STEP0→5 縦串。実Imagen表紙2枚も生成。PR #1 で main マージ | C1.1〜C1.6 |
+| **C1.7** | **自律トリガー（曜日別・ローカル/mock・課金ゼロ）**。`scheduler.py`（水/土=本命・日=セレンディピティ）＋`run_scheduler.py`（--once/--watch）。PR #2 で main マージ | C1.7 |
+| **C4結線** | **モードA成果→Firestore→書店arrivals**。`persist_mapping.py`（v2出力→Book[arrivals/draft/ownerUid]＋Persona）・`upsert_persona`をRepositoryProtocol/mock/firestoreへ追加・`seed_arrivals.py`（mock生成→map→upsert・dry-run既定）。**共有Firestoreへ佐倉の入荷5冊＋著者を live投入**（mock＝LLM課金ゼロ・新規`arr_*`ID・非破壊）。書店トップに実5冊が並ぶ状態に。残＝Plan永続化(detail panel)・BFF trigger差替・本番Scheduler | C4.9系 |
+
 **W0の成果（2日で通したゲート）**: C0.1 → C0.2 → B1.3 → **C1.0.1★**（M1 前倒し）。**W1（6/8〜）の最初の山**＝C1.1 観測 ＋ B3.3 App Hosting 連携。
 
 ---
