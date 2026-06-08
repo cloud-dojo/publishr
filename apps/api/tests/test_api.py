@@ -31,6 +31,13 @@ def test_healthz():
     assert res.json()["status"] == "ok"
 
 
+def test_api_healthz():
+    """公開URL用 health（`/healthz` は run.app エッジ予約で届かないため）。"""
+    res = client.get("/api/healthz")
+    assert res.status_code == 200
+    assert res.json()["status"] == "ok"
+
+
 def test_cors_allows_next_dev_fallback_port():
     res = client.options(
         "/pipeline/run",

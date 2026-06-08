@@ -31,9 +31,21 @@ async def _conflict_handler(_request: Request, exc: ConflictError) -> JSONRespon
     return JSONResponse(status_code=409, content={"error": exc.message})
 
 
+def _health() -> dict:
+    return {"status": "ok", "dataSource": settings.data_source, "llm": settings.publishr_llm}
+
+
 @app.get("/healthz", tags=["meta"])
 def healthz() -> dict:
-    return {"status": "ok", "dataSource": settings.data_source, "llm": settings.publishr_llm}
+    # ローカル用。注意: `*.run.app` の Google エッジは `/healthz` を予約パスとして横取りし
+    # コンテナに届かない（公開URLでは 404）。Cloud Run/外形監視は `/api/healthz` を使う。
+    return _health()
+
+
+@app.get("/api/healthz", tags=["meta"])
+def api_healthz() -> dict:
+    """Cloud Run/公開URL から到達可能な health（`/healthz` はエッジ予約で届かないため）。"""
+    return _health()
 
 
 for _router in (books.router, plans.router, personas.router, users.router, pipeline.router, api.router):

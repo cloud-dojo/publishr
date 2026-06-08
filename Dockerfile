@@ -18,6 +18,10 @@ RUN pip install --no-cache-dir \
     ./agents \
     ./apps/api
 
+# publishr_schema.loader は repo レイアウト基準で fixtures を探す。pip install 後は
+# その相対パスが壊れるため、コンテナ内の COPY 先を明示する（これが無いと起動時 500）。
+ENV PUBLISHR_FIXTURES_DIR=/app/packages/shared-schema/fixtures
+
 EXPOSE 8080
 
 # Cloud Run は PORT 環境変数（既定 8080）でポートを指定する。sh 経由で展開する。
