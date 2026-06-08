@@ -200,6 +200,29 @@ pip install -r requirements.txt
 cd frontend && npm install && npm run dev
 ```
 
+#### WSL2 で書店UIをブラウザ確認する（固着回避）
+
+WSL2 では、`next dev`（Turbopack）の開発サーバに対して書店トップ `/` を**初めてブラウザで開いた瞬間**にオンデマンドコンパイルが走り、CPU/メモリを一気に消費して **WSL2 ごとフリーズする**ことがあります。ブラウザで実機確認したい時は、`dev` ではなく **production build**（`/` が静的プリレンダーになりコンパイル不要）で起動してください。
+
+```bash
+# 1) BFF（書店データのソース。firestore モードで起動）
+DATA_SOURCE=firestore GOOGLE_CLOUD_PROJECT=publishr-498123 \
+  uv run --directory apps/api uvicorn publishr_api.main:app --host 127.0.0.1 --port 8000
+
+# 2) Web を production ビルド（NEXT_PUBLIC_* は build 時に client bundle へ焼き込まれるため必ずビルド時に渡す）
+NEXT_PUBLIC_DATA_SOURCE=bff NEXT_PUBLIC_API_URL=http://localhost:8000 \
+  npm --prefix apps/web run build
+
+# 3) production サーバで配信（→ http://localhost:3000 を開く）
+NEXT_PUBLIC_DATA_SOURCE=bff NEXT_PUBLIC_API_URL=http://localhost:8000 \
+  npm --prefix apps/web run start
+```
+
+- production では `/`（書店トップ）が `○`=静的、動的ルート（`ƒ`、本詳細など）もビルド済みコードの実行のみなので、**回遊しても固まりません**（固着するのは `next dev` の初回 Turbopack コンパイルだけ）。
+- `apps/web/next.config.ts` の `output:"standalone"` により `next start` は `does not work with output: standalone` 警告を出しますが、`/`・JSチャンク共に 200 で配信でき**実害はありません**（standalone サーバへ切替不要）。
+- 入荷一覧はブラウザが client 側で BFF（`NEXT_PUBLIC_API_URL`/books）を叩いて描画します。`/healthz` が `{"dataSource":"firestore"}`、`/books` が5冊返ることを確認してから開くと確実です。
+- 固まらない代替として、デプロイ済み URL を開くのも可: `https://publishr--publishr-498123.asia-east1.hosted.app`
+
 ### Cloud Run デプロイ
 
 ```bash
