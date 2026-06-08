@@ -15,7 +15,7 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 
-from publishr_schema import PlanProposal, load_users
+from publishr_schema import load_users
 
 JST = timezone(timedelta(hours=9))
 DEMO_NOW = datetime(2026, 6, 3, 6, 0, tzinfo=JST)
@@ -48,23 +48,22 @@ def _build_source(source: str):
 
 
 def _run_mode_a(user, *, source, now, reader_llm, llm, preview_llm, cover_llm, enable_imagen, theme, threshold, limit):
-    from publishr_agents.casting import cast_personas
-    from publishr_agents.cover import design_covers
-    from publishr_agents.observe import collect_observation
-    from publishr_agents.planning import run_planning
-    from publishr_agents.preview import run_preview
-    from publishr_agents.reader import analyze_reader
+    from publishr_agents.mode_a import run_mode_a_pipeline
 
-    bundle = collect_observation(user, now=now, source=source)
-    profile = analyze_reader(bundle, user=user, llm=reader_llm)
-    planning = run_planning(profile, theme=theme, threshold=threshold, llm=llm)
-    plan = PlanProposal.model_validate(planning["approvedPlan"])
-    personas = cast_personas(
-        plan, reader_profile=profile, favorite_authors=list(user.favorite_authors or []), llm=llm
+    result = run_mode_a_pipeline(
+        user,
+        source=source,
+        now=now,
+        reader_llm=reader_llm,
+        llm=llm,
+        preview_llm=preview_llm,
+        cover_llm=cover_llm,
+        enable_imagen=enable_imagen,
+        theme=theme,
+        threshold=threshold,
+        limit=limit,
     )
-    books = run_preview(plan, personas.personas, reader_profile=profile, limit=limit, llm=preview_llm)
-    shelved = design_covers(books, personas.personas, llm=cover_llm, enable_imagen=enable_imagen)
-    return plan, shelved
+    return result.plan, result.shelved
 
 
 def main() -> int:

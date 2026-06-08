@@ -15,7 +15,7 @@ import argparse
 import os
 from datetime import datetime, timedelta, timezone
 
-from publishr_schema import PlanProposal, load_users
+from publishr_schema import load_users
 
 from publishr_agents.persist_mapping import map_mode_a_to_books, persist_arrivals
 
@@ -43,23 +43,24 @@ def _build_repo(apply: bool, owner_uid: str):
 
 
 def _generate(user, *, theme, theme_kind: str, llm: str, limit, threshold: int, enable_imagen: bool, now):
-    from publishr_agents.casting import cast_personas
-    from publishr_agents.cover import design_covers
-    from publishr_agents.observe import FixtureObservationSource, collect_observation
-    from publishr_agents.planning import run_planning
-    from publishr_agents.preview import run_preview
-    from publishr_agents.reader import analyze_reader
+    from publishr_agents.observe import FixtureObservationSource
+    from publishr_agents.mode_a import run_mode_a_pipeline
 
-    bundle = collect_observation(user, now=now, source=FixtureObservationSource())
-    profile = analyze_reader(bundle, user=user, llm=llm)
-    planning = run_planning(profile, theme=theme, theme_kind=theme_kind, threshold=threshold, llm=llm)
-    plan = PlanProposal.model_validate(planning["approvedPlan"])
-    persona_set = cast_personas(
-        plan, reader_profile=profile, favorite_authors=list(user.favorite_authors), llm=llm
+    result = run_mode_a_pipeline(
+        user,
+        source=FixtureObservationSource(),
+        now=now,
+        reader_llm=llm,
+        llm=llm,
+        preview_llm=llm,
+        cover_llm=llm,
+        enable_imagen=enable_imagen,
+        theme=theme,
+        theme_kind=theme_kind,
+        threshold=threshold,
+        limit=limit,
     )
-    books_v2 = run_preview(plan, persona_set.personas, reader_profile=profile, limit=limit, llm=llm)
-    shelved = design_covers(books_v2, persona_set.personas, llm=llm, enable_imagen=enable_imagen)
-    return plan, shelved, persona_set.personas
+    return result.plan, result.shelved, result.personas
 
 
 def main() -> int:

@@ -8,22 +8,37 @@ Bearer トークンは MVP ではオプション（存在すれば uid を検証
 
 from __future__ import annotations
 
+import logging
+import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from publishr_schema import Book
 
 from ..config import settings
 from ..deps import get_repository
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import ReserveInput, TriggerPlanningInput
-from ..services import pipeline_service, reservation_service
+from ..services import mode_a_service, reservation_service
+from ..services.trigger_guard import TriggerError, TriggerGuard
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["api"])
 
+# 手動トリガーのガード（C4前ゲート: 許可uid・レート制限・実行中ロック）。プロセス内で共有。
+trigger_guard = TriggerGuard(
+    min_interval_sec=settings.trigger_min_interval_sec,
+    allowed_uids=settings.allowed_trigger_uids,
+)
+
 
 def _uid_from_token(authorization: Optional[str] = Header(default=None)) -> str:
-    """Bearer トークンから uid を取得。失敗時は settings.demo_uid にフォールバック。"""
+    """Bearer トークンから uid を取得。失敗時は settings.demo_uid にフォールバック。
+
+    TODO(C4.9 実Auth接続): 本番ではトークンが提示されたのに不正なら 401 で fail-closed に
+    する（現状はデモ用に demo_uid へ無言フォールバック）。少なくとも失敗は記録する。
+    """
     if authorization and authorization.startswith("Bearer "):
         token = authorization[7:]
         try:
@@ -31,8 +46,8 @@ def _uid_from_token(authorization: Optional[str] = Header(default=None)) -> str:
 
             decoded = fb_auth.verify_id_token(token)
             return str(decoded["uid"])
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 — デモはフォールバック継続、ただし記録は残す
+            logger.warning("id-token verify failed: %s", type(exc).__name__)
     return settings.demo_uid
 
 
@@ -55,8 +70,22 @@ def api_trigger_planning(
     repo: RepositoryProtocol = Depends(get_repository),
     uid: str = Depends(_uid_from_token),
 ) -> dict:
-    """企画パイプラインを手動起動する（デモ用・許可 uid のみ）。
+    """企画パイプライン（モードA）を手動起動する（デモ用・許可 uid のみ・連打/多重防止）。
     フロント: firestore-provider.ts POST /api/trigger/planning { userId }"""
+    # user_id = どの fixture を観測入力にするか（身元ではない）。
     user_id = payload.user_id or uid or settings.demo_uid
-    result = pipeline_service.run(repo, user_id)
+    # 所有者は検証済み uid を優先。body 由来の user_id は mock/単一ユーザー時のみの最後の保険。
+    # TODO(C4.9): 本番では owner を検証済み uid のみから決める（body を信用しない）。
+    owner = uid or settings.demo_uid or user_id
+    key = uid or user_id or "anon"
+    try:
+        trigger_guard.acquire(key, now=time.monotonic())
+    except TriggerError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.message) from exc
+    try:
+        result = mode_a_service.run(repo, user_id, owner_uid=owner)
+    finally:
+        # 例外時もロックを解放（恒久 409 を防ぐ）。
+        trigger_guard.release(key, now=time.monotonic())
+    logger.info("trigger ok key=%s books=%d llm=%s", key, len(result.books), settings.publishr_llm)
     return {"ok": True, "booksAdded": len(result.books)}

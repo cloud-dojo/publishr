@@ -2,9 +2,11 @@
 
   uv run python -m scripts.run_observe --user u_sakura                 # 既定=fixture（オフライン決定的）
   uv run python -m scripts.run_observe --user u_sakura --source google # 実Google API（要OAuth・隔離）
+  uv run python -m scripts.run_observe --user u_sakura --source google --folder-id <実フォルダID>  # 実Driveも取得
 
 fixture は課金なし。google は実API（Drive/Calendar/Tasks の読取・LLM非使用＝課金は実質ゼロ）。
 google を使う前に `uv run python scripts/google_oauth_bootstrap.py` で同意を済ませる。
+`--folder-id`（繰り返し可）は接続元の Drive フォルダIDを一時上書きする（fixtures は変更しない・google検証用）。
 """
 
 from __future__ import annotations
@@ -46,12 +48,28 @@ def main() -> int:
     parser.add_argument("--user", default="u_sakura", help="対象ユーザーID（fixtures/users.json）")
     parser.add_argument("--source", default="fixture", choices=["fixture", "google"])
     parser.add_argument("--now", default=None, help="観測基準時刻 ISO8601（±14日窓の中心・省略時はデモアンカー/実時刻）")
+    parser.add_argument(
+        "--folder-id",
+        action="append",
+        default=None,
+        metavar="ID",
+        help="Drive の実フォルダIDで接続元を一時上書き（google検証用・繰り返し可・fixtures不変）",
+    )
     parser.add_argument("--json", action="store_true", help="ObservationBundle を JSON で出力")
     args = parser.parse_args()
 
     user = next((u for u in load_users() if u.id == args.user), None)
     if user is None:
         raise SystemExit(f"ユーザーが見つかりません: {args.user}")
+
+    # --folder-id は接続元の Drive フォルダIDを不変コピーで差し替える（committed fixtures は触らない）。
+    if args.folder_id:
+        cs = user.connected_sources
+        if cs is None or cs.drive is None:
+            raise SystemExit(f"{user.id} に Drive 接続元が無いため --folder-id を適用できません")
+        new_drive = cs.drive.model_copy(update={"folder_ids": list(args.folder_id), "enabled": True})
+        new_cs = cs.model_copy(update={"drive": new_drive})
+        user = user.model_copy(update={"connected_sources": new_cs})
 
     now = _resolve_now(args.now, args.source)
     source = _build_source(args.source)

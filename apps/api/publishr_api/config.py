@@ -44,5 +44,13 @@ class Settings(BaseSettings):
     # 本番では per-request uid に差し替える（C4.9 Firebase Auth 接続後）。
     demo_uid: str = ""
 
+    # 手動トリガー（POST /api/trigger/planning）のガード（C4前ゲート）。
+    # allowed_trigger_uids が空 = dev（全許可）。
+    # TODO(C4.9/本番): publishr_llm=vertex（実課金）かつ allowlist 空のままデプロイすると
+    # 誰でもトリガー＝LLM課金/DoS。本番は許可 uid を必須にし、日次コスト上限も併用する。
+    allowed_trigger_uids: list[str] = []
+    # 同一 uid の連打を防ぐ最小間隔（秒）。mock は高速だが暴発防止に効かせる。
+    trigger_min_interval_sec: float = 5.0
+
 
 settings = Settings()

@@ -19,18 +19,23 @@ import argparse
 import os
 from pathlib import Path
 
-from publishr_agents.observe.google_source import SCOPES, token_path
+from publishr_agents.observe.google_source import resolve_scopes, token_path
+
+# Google は未検証アプリで restricted スコープ（drive.readonly）を黙って付与から落とすことがある。
+# その際 oauthlib は「scope changed」を既定で例外化してトークン保存前に落ちるため、縮小（要求⊇付与）
+# を許容して同意を通す。実際に使うソースは observe 側の resolve_scopes() で制御する。
+os.environ.setdefault("OAUTHLIB_RELAX_TOKEN_SCOPE", "1")
 
 DEFAULT_CLIENT_SECRETS = ".secrets/client_secret.json"
 
 
-def _flow(client_secrets: str):
+def _flow(client_secrets: str, scopes: list[str]):
     from google_auth_oauthlib.flow import InstalledAppFlow
 
     path = Path(client_secrets)
     if path.exists():
         print(f"client secrets: {path}")
-        return InstalledAppFlow.from_client_secrets_file(str(path), SCOPES)
+        return InstalledAppFlow.from_client_secrets_file(str(path), scopes)
 
     client_id = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
     client_secret = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
@@ -45,7 +50,7 @@ def _flow(client_secrets: str):
                 "redirect_uris": ["http://localhost"],
             }
         }
-        return InstalledAppFlow.from_client_config(config, SCOPES)
+        return InstalledAppFlow.from_client_config(config, scopes)
 
     raise SystemExit(
         f"OAuth クライアント秘密が見つかりません。\n"
@@ -63,8 +68,9 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=0, help="ローカル受け口ポート（0=自動）")
     args = parser.parse_args()
 
-    flow = _flow(args.client_secrets)
-    print(f"スコープ: {SCOPES}")
+    scopes = resolve_scopes()
+    flow = _flow(args.client_secrets, scopes)
+    print(f"スコープ: {scopes}")
     print("ブラウザで同意してください（デモ用 Google アカウントでログイン）…")
     creds = flow.run_local_server(port=args.port, prompt="consent")
 
