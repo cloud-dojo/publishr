@@ -23,11 +23,32 @@ from .transform import DEFAULT_WINDOW_DAYS, build_observation_bundle, folder_lab
 logger = logging.getLogger(__name__)
 
 # tech-architecture.md §3: 3ソース・同一 OAuth・読み取り専用スコープ
-SCOPES = [
-    "https://www.googleapis.com/auth/drive.readonly",
-    "https://www.googleapis.com/auth/calendar.readonly",
-    "https://www.googleapis.com/auth/tasks.readonly",
-]
+ALL_SCOPES = {
+    "drive": "https://www.googleapis.com/auth/drive.readonly",
+    "calendar": "https://www.googleapis.com/auth/calendar.readonly",
+    "tasks": "https://www.googleapis.com/auth/tasks.readonly",
+}
+
+
+def resolve_scopes() -> list[str]:
+    """要求する OAuth スコープ。既定は3ソース全部。
+
+    `PUBLISHR_GOOGLE_SCOPES=calendar,tasks` のように絞れる（`drive.readonly` は Google の
+    restricted スコープで verification 要求が出るため、デモ検証では外せるようにする）。
+    bootstrap と observe で同じ値を使うこと（同意トークンと要求スコープを一致させる）。
+    """
+    raw = os.environ.get("PUBLISHR_GOOGLE_SCOPES")
+    if not raw:
+        return list(ALL_SCOPES.values())
+    keys = [k.strip() for k in raw.split(",") if k.strip()]
+    unknown = [k for k in keys if k not in ALL_SCOPES]
+    if unknown:
+        raise SystemExit(f"未知のスコープキー: {unknown}（有効: {list(ALL_SCOPES)}）")
+    return [ALL_SCOPES[k] for k in keys]
+
+
+# 後方互換（既定=全ソース）。実際の要求は resolve_scopes() を使う。
+SCOPES = list(ALL_SCOPES.values())
 
 DEFAULT_TOKEN_PATH = ".secrets/google_token.json"
 
@@ -47,7 +68,7 @@ def load_credentials():
             f"Google トークンがありません: {path}。"
             " 先に `uv run python scripts/google_oauth_bootstrap.py` で OAuth 同意を済ませてください。"
         )
-    creds = Credentials.from_authorized_user_file(str(path), SCOPES)
+    creds = Credentials.from_authorized_user_file(str(path), resolve_scopes())
     if not creds.valid and creds.refresh_token:
         creds.refresh(Request())
         path.write_text(creds.to_json(), encoding="utf-8")
@@ -87,16 +108,25 @@ class GoogleObservationSource:
         from googleapiclient.discovery import build
 
         creds = self._creds or load_credentials()
-        drive = build("drive", "v3", credentials=creds, cache_discovery=False)
-        calendar = build("calendar", "v3", credentials=creds, cache_discovery=False)
-        tasks = build("tasks", "v1", credentials=creds, cache_discovery=False)
+        # 付与スコープに無いソースは取得しない（例: drive を外した同意で drive API を叩くと 403）。
+        granted = set(resolve_scopes())
+        use_drive = ALL_SCOPES["drive"] in granted
+        use_calendar = ALL_SCOPES["calendar"] in granted
+        use_tasks = ALL_SCOPES["tasks"] in granted
 
         cs = user.connected_sources
-        drive_files = self._fetch_drive(drive, cs) if cs and cs.drive and cs.drive.enabled else []
-        calendar_events = (
-            self._fetch_calendar(calendar, cs, now) if cs and cs.calendar and cs.calendar.enabled else []
-        )
-        tasks_items = self._fetch_tasks(tasks) if cs and cs.tasks and cs.tasks.enabled else []
+        drive_files = []
+        if use_drive and cs and cs.drive and cs.drive.enabled:
+            drive = build("drive", "v3", credentials=creds, cache_discovery=False)
+            drive_files = self._fetch_drive(drive, cs)
+        calendar_events = []
+        if use_calendar and cs and cs.calendar and cs.calendar.enabled:
+            calendar = build("calendar", "v3", credentials=creds, cache_discovery=False)
+            calendar_events = self._fetch_calendar(calendar, cs, now)
+        tasks_items = []
+        if use_tasks and cs and cs.tasks and cs.tasks.enabled:
+            tasks = build("tasks", "v1", credentials=creds, cache_discovery=False)
+            tasks_items = self._fetch_tasks(tasks)
 
         # readingFB は STEP0 では空（§2）。集約は I-9（Firestore/BFF）で別途。
         return build_observation_bundle(
