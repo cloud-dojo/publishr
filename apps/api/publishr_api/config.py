@@ -30,6 +30,11 @@ class Settings(BaseSettings):
         validation_alias="PUBLISHR_MAX_ESTIMATED_COST_JPY",
     )
 
+    # 同時に予約できる本の上限（reserved+writing の合計・I-16）。モードBコストの天井。
+    max_concurrent_reservations: int = Field(
+        default=5, validation_alias="PUBLISHR_MAX_CONCURRENT_RESERVATIONS"
+    )
+
     # 予約後の状態遷移タイマー（秒）。デモ用に短く。
     reserve_to_writing_sec: float = 2.0
     writing_to_published_sec: float = 5.0
