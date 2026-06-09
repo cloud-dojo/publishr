@@ -54,3 +54,15 @@ def test_process_write_job_skips_non_reserved():
 def test_process_write_job_missing_book_returns_none():
     repo = MockRepository()
     assert reservation_service.process_write_job(repo, "nope") is None
+
+
+def test_process_write_job_uses_mode_b_and_records_edit_rounds():
+    """worker は mode_b（編集長⇄著者ループ）で本文を生成し editRounds を記録する。"""
+    repo = MockRepository()
+    bid = _a_draft_id(repo)
+    reservation_service.reserve_now(repo, bid)
+    book = reservation_service.process_write_job(repo, bid)
+    assert book is not None
+    assert book.status == "published"
+    assert book.edit_round >= 2  # 編集ループを通った証跡（既存 Book.edit_round に記録）
+    assert book.body.count("## ") >= 3  # 複数章の本文（mode_b 形式）

@@ -91,3 +91,16 @@ def test_modeb_vertex_live():
     assert 1 <= len(result.chapters) <= 5
     assert result.body
     assert result.body_verdict
+
+
+def test_body_loop_up_to_three_rounds():
+    """最高3R: 初稿→2回改稿で3ラウンド到達し承認（編集長⇄著者の差し戻しが複数回）。"""
+    book = _book()
+    persona = _persona(book.author_persona_id)
+    result = write_body_loop(book, persona=persona, rounds=3, llm="mock")
+    assert result.edit_rounds == 3
+    assert len(result.verdicts) == 3
+    assert result.verdicts[0]["decision"] == "revise"
+    assert result.verdicts[1]["decision"] == "revise"
+    assert result.body_verdict["decision"] == "approve"
+    assert result.revised_chapters

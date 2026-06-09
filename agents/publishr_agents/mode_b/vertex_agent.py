@@ -161,20 +161,33 @@ async def run_body_loop_vertex_async(
     if v is not None:
         verdicts.append(v.model_dump(by_alias=True))
 
-    # 編集長が revise なら弱章のみ改稿→再採点（手動スライスは1回）。
-    # NOTE: 弱章が複数の場合、各章に同じ v.editor_feedback を渡し prev_summary=None で改稿する
-    # （章ごとの個別フィードバック・継続文脈は未対応）。フル3R/章別フィードバックは C2.3。
-    if v is not None and rounds >= 1 and v.decision == "revise" and v.weak_chapters:
-        for ch_no in v.weak_chapters:
+    # 編集長が revise の間、弱章のみ改稿→再採点を最高 rounds 回（§6-2「最高3R」）。
+    # NOTE: 弱章が複数の場合、各章に同じ editor_feedback を渡し prev_summary=None で改稿する
+    # （章ごとの個別フィードバック・継続文脈は未対応・将来拡張）。
+    current = v
+    revises = 0
+    while (
+        current is not None
+        and current.decision == "revise"
+        and current.weak_chapters
+        and revises < rounds
+    ):
+        for ch_no in current.weak_chapters:
             idx = ch_no - 1
             if 0 <= idx < len(sel):
-                text = await _write(sel[idx], v.editor_feedback, None)
+                text = await _write(sel[idx], current.editor_feedback, None)
                 chapters[idx] = {"no": sel[idx].no, "title": sel[idx].title, "text": text}
-        revised = list(v.weak_chapters)
-        edit_rounds = 2
-        v2 = await _run_verdict(editor, {"body": _body(chapters), "readerProfile": profile_dump, "persona": persona_dump})
-        if v2 is not None:
-            verdicts.append(v2.model_dump(by_alias=True))
+                if ch_no not in revised:
+                    revised.append(ch_no)
+        revises += 1
+        edit_rounds = 1 + revises
+        current = await _run_verdict(
+            editor, {"body": _body(chapters), "readerProfile": profile_dump, "persona": persona_dump}
+        )
+        if current is not None:
+            verdicts.append(current.model_dump(by_alias=True))
+        else:
+            break
 
     return BodyResult(
         book_id=book.id,
