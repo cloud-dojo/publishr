@@ -144,12 +144,12 @@
 | **M2** | **最小Cloud Run疎通**（BFF mock）→ **firestoreモード切替**（実SA `publishr-runner`）。Cloud Run trigger→実Firestoreの佐倉arrivals書込（`booksAdded=5`・owner佐倉・却下→採用）を確認＝**M2縦通し達成**。デプロイ済WebはFirestore直読みで反映 | M2★ |
 | **検証** | `make verify` 170 passed,7 skipped。PR#4 main マージ（origin/main=afd3c96） | — |
 
-**🔁 鉄田への依頼（M2完全クローズの最後の1ピース＝ブラウザのトリガーボタン配線）**
-- 目的: デプロイ済Web（App Hosting）の「連携/生成」ボタンから **Cloud Run BFF のトリガー**を叩けるようにする（今は curl で疎通確認済み・ボタンは未配線）。
-- 設定: `apphosting.yaml` に **`NEXT_PUBLIC_API_URL=https://publishr-api-24ru3hr7fq-an.a.run.app`** を注入して再ビルド（`apps/web/src/data/config.ts:9` が読む変数。既定 `http://localhost:8000` のままだと本番でトリガーが飛ばない）。
-- 契約: `POST {API_URL}/api/trigger/planning` body `{ "userId": "u_sakura" }` ＋ Firebase IDトークンを `Authorization: Bearer`。返り `{ ok, booksAdded }`。
-- CORS: BFF側で App Hosting本番ドメイン（`https://publishr--publishr-498123.asia-east1.hosted.app`）許可済み＝**追加作業なし**。
-- 確認: ボタン→200/`booksAdded≥1`→書店トップに入荷反映。連打は `429`。
+**✅ ブラウザボタン配線（一瀬で自己完結・2026-06-09）**
+- 発見: `apps/web/apphosting.yaml`（App Hosting が読む方）に既に `NEXT_PUBLIC_DATA_SOURCE=firestore`＋`NEXT_PUBLIC_API_URL` が設定済みだったが、**URL が死んでた asia-east1（404）**を指していた。BFF 実体は asia-northeast1。
+- 修正: `apphosting.yaml` の `NEXT_PUBLIC_API_URL` を **`https://publishr-api-355143691286.asia-northeast1.run.app`** に修正（`apps/web/src/data/config.ts:9` が読む変数）。live branch=main へ push → App Hosting 自動再ビルド。鉄田のセットアップ作業は不要だった（env1行の修正＝通常のリポジトリ変更）。
+- UI導線: `page.tsx:67 runFirstRun → firestore-provider.ts:134 runPipeline → POST /api/trigger/planning`。
+- 契約: `POST {API_URL}/api/trigger/planning` body `{ "userId": "u_sakura" }` ＋ Firebase IDトークンを `Authorization: Bearer`。返り `{ ok, booksAdded }`。CORS は App Hosting本番ドメイン許可済み。
+- 確認: 再ビルド後、佐倉ログインで初回生成導線→Cloud Run BFF→入荷反映。連打は `429`。
 - 一瀬判断待ち2点（任意）: ①入荷テーマ＝現在トリガー出力「役員中間報告…」。以前の「新任マネージャー…」見出しに戻すなら `DATA_SOURCE=firestore uv run python -m scripts.seed_arrivals --owner-uid WW1j4mkYC0VzuzDdQ0OQ4Ff8zFd2 --theme "新任マネージャーの任せ方・権限委譲（年上の実力者部下を含む）" --apply`。②録画時のみ Cloud Run を `PUBLISHR_LLM=vertex` に（実LLM生成・課金）。
 - 本番ハードニング（トークンfail-closed・owner厳格化・vertex時allowlist必須・マルチインスタンスrate limit）は **C4.9 / G1-21** に集約。
 
