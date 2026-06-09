@@ -9,7 +9,7 @@ from ..deps import get_repository
 from ..errors import NotFoundError
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import FeedbackInput, ReadingStateInput
-from ..services import feedback_service, reading_service, reservation_service
+from ..services import feedback_service, reading_service, reservation_service, write_queue
 
 router = APIRouter(prefix="/books", tags=["books"])
 
@@ -36,7 +36,7 @@ async def reserve_book(
     book_id: str, repo: RepositoryProtocol = Depends(get_repository)
 ) -> Book:
     book = reservation_service.reserve_now(repo, book_id)
-    reservation_service.schedule_advance(repo, book_id)
+    write_queue.enqueue(repo, book_id)
     return book
 
 

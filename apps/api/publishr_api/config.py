@@ -35,6 +35,13 @@ class Settings(BaseSettings):
         default=5, validation_alias="PUBLISHR_MAX_CONCURRENT_RESERVATIONS"
     )
 
+    # 執筆ジョブのキュー: mock = in-process（既定・課金ゼロ）/ pubsub = Cloud Pub/Sub（C2.2）。
+    queue: str = Field(default="mock", validation_alias="QUEUE")
+    pubsub_topic: str = Field(default="publishr-writing", validation_alias="PUBSUB_TOPIC")
+    # Pub/Sub push の OIDC 検証用（worker endpoint の audience＝自URL・許可する push SA email）。
+    pubsub_push_audience: str = Field(default="", validation_alias="PUBSUB_PUSH_AUDIENCE")
+    pubsub_push_sa: str = Field(default="", validation_alias="PUBSUB_PUSH_SA")
+
     # 予約後の状態遷移タイマー（秒）。デモ用に短く。
     reserve_to_writing_sec: float = 2.0
     writing_to_published_sec: float = 5.0

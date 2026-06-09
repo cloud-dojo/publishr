@@ -19,7 +19,7 @@ from ..config import settings
 from ..deps import get_repository
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import ReserveInput, TriggerPlanningInput
-from ..services import mode_a_service, reservation_service
+from ..services import mode_a_service, reservation_service, write_queue
 from ..services.trigger_guard import TriggerError, TriggerGuard
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ async def api_reserve(
     """本を予約する（draft → reserved → writing → published タイマー起動）。
     フロント: firestore-provider.ts POST /api/reserve { bookId }"""
     book = reservation_service.reserve_now(repo, payload.book_id)
-    reservation_service.schedule_advance(repo, payload.book_id)
+    write_queue.enqueue(repo, payload.book_id)
     return book
 
 

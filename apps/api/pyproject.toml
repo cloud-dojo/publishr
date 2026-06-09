@@ -11,6 +11,7 @@ dependencies = [
     "publishr-schema",
     "publishr-agents",
     "firebase-admin>=6.5",
+    "google-cloud-pubsub>=2.21",
 ]
 
 [project.optional-dependencies]

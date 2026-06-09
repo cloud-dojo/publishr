@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from .config import settings
 from .errors import ConflictError, NotFoundError
-from .routers import api, books, personas, pipeline, plans, users
+from .routers import api, books, personas, pipeline, plans, users, worker
 
 app = FastAPI(title="Publishr BFF", version="0.0.0")
 
@@ -48,5 +48,13 @@ def api_healthz() -> dict:
     return _health()
 
 
-for _router in (books.router, plans.router, personas.router, users.router, pipeline.router, api.router):
+for _router in (
+    books.router,
+    plans.router,
+    personas.router,
+    users.router,
+    pipeline.router,
+    api.router,
+    worker.router,
+):
     app.include_router(_router)
