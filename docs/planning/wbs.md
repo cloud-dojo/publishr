@@ -93,9 +93,11 @@
 
 ---
 
-## 🧭 現在地サマリ（2026-06-07時点）
+## 🧭 現在地サマリ（最新: 2026-06-09）
 
-> **いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`）は緑（pytest **60 passed, 1 skipped**・**2026-06-07にペルソナ不整合の回帰=I-24を解消**。make smoke は Windows の OpenSSL/POSIX 環境問題で本機未実行）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント16ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
+> **いまどこ（2026-06-09・実日付はW1だが進捗はM3核まで＝計画より約2-3週 前倒し）**: **M0/M1/M2★/M3核 まで完了**。モードA（観測→企画→キャスティング→プレビュー→装丁→入荷）＋モードB（予約→Pub/Sub→worker→本文編集ループ 最高3R→published）が **ローカル完走＋クラウド（Cloud Run/Firestore/Pub/Sub）疎通済み**で main 入り。3つの必然性ループ（調査grounding・企画リーダー差し戻し・編集長本文差し戻し）が揃った。`make verify` **186 passed, 8 skipped**。直近マージ＝PR#1〜#9（task#7 Google live観測L1・BFFトリガー実モードA化・最小Cloud Run疎通→firestore縦通し・モードB手動1冊・C2.1予約上限・C2.2 Pub/Subワーカー・C2.3最高3R＋worker結線）。**残＝① C1.7 Scheduler本番化（M3最後・自律入荷のクラウドデプロイ）② M4＝Evalゲート(GEAP)/Langfuse計装/CI-CD/IaC（一瀬主体）③ M5/M6＝デモ録画・ProtoPedia・公開リポ・最終提出7/10（鉄田主体）**。**C4.1 Google連携ページ（UIのOAuth/Drive Picker）は依然🔴未（鉄田）**＝connect はモックトグルのみ・Picker/BFF OAuth endpoint 無し（観測用OAuthはCLI task#7 L1=calendar+tasks のみ実動）。別軸ハードニング＝C4前セキュリティ/I-20予約原子性transaction/mode_b vertex live/約100p+GCS保存(C3.3)。
+
+> **【履歴 2026-06-07】いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`）は緑（pytest **60 passed, 1 skipped**・**2026-06-07にペルソナ不整合の回帰=I-24を解消**。make smoke は Windows の OpenSSL/POSIX 環境問題で本機未実行）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント16ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
 >
 > **【2026-06-07 フロントUI仕上げ（C4.8）✅完了】** **2026-06-06実施**: 読書画面を中心に複数の UI 改修：①**読書ページ再構成**＝ハイライト一覧ページ(`/read/[bookId]/highlights`)・目次ページ(`/read/[bookId]/contents`)を新規作成し読書ページサイドバーをナビ3リンク（目次・ハイライト・本の概要）に改修、`?pi`/`?ch` クエリパラメータによる本文ジャンプ機能を実装 ②**KindleライクなハイライトUX**＝ドラッグで範囲指定→自動ハイライト、クリックで色変更(黄/青/ピンク)＋削除ポップアップ（`ReadingAnnotation.startOffset/endOffset` で文字単位記録） ③**目次・本の概要の統一**＝`bookChapters(book.body)` で本文Markdownから実際の章を導出する`BookToc`共有コンポーネント新設（目次ページ・本の概要ページで共用）、本の概要ページからフル版/要約版/ここだけトグルと「今朝入荷」バッジを削除 ④**書庫サイドバー改善**＝ラベルを「最近読んだ本」に変更・published本のみ最大5件・著者名非表示 ⑤**書庫ページ表紙デザイン強化**＝`midnight/forest/slate/rust/wine/ink` 各バリアントに CSS `::before` 装飾（円弧・縦ライン・数字透かし等）を追加し書店ページ(`b1`〜`b10`)と同等の視覚的リッチさに統一。**2026-06-07実施**: ①**フィードバックチップ修正**＝ページロード時に非表示・いいね/いまいちタップで展開（`{reaction && ...}` 条件付きレンダリング） ②**ナビカードジャンプ修正**＝`.rail-tools` の `position:sticky` を廃止しグリッド上端固定（`navDelta:0` を eval 実測で確認） ③**🔔通知ベル＋ドロップダウンパネル** 新設（`NotificationBell.tsx`）＝入荷/執筆完了/お気に入り作家の3種・未読バッジ・全既読ボタン・各通知から`/books/{bookId}`概要ページへリンク ④`AppNotification`型・`BaseProvider` 通知API（`pushNotification`/`markNotificationRead`/`markAllNotificationsRead`等）・`MockProvider` の `seedNotifications`（決定的シード3件）＋`reserve`完了時自動通知 ⑤`useNotifications`/`notifyFavoriteAuthor` フック ⑥読了ページ・書籍概要ページのTopbarをデフォルトベルに統一。**C4.8 機能実装＋デザイン・完了**（Firestore本接続後の全画面QA = C4.9 依存のみ残）。
 >
@@ -389,9 +391,9 @@ Publishr MVP（カテゴリWBS）
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C2.1 | 予約API `POST /reserve`（同時5冊チェック＋Pub/Sub発行） | ユーザーが本を「予約」したら執筆を始める窓口。同時に5冊までの制限を入れる | 一瀬 | W3（6/22–28） | C3.1 | API契約 §3・I-16／予約の原子性＝Firestore transaction で count確認→条件付き遷移（I-20） (旧WP2.1) | 🟡 mock実装済（`reserve_now`単純版・5冊transaction/Pub-Sub未） |
-| C2.2 | Pub/Sub → 執筆ワーカー起動 | 予約を受けて、裏側で執筆処理を起動する仕組み（メッセージ連携）。二重起動を防ぐ | 一瀬 | W3（6/22–28） | C2.1 | 冪等ガード（I-20） (旧WP2.2) | 🔜着手前 |
-| C2.3 | 本文編集ループ（編集長⇄著者・最高3R・約100p） | 著者AIが約100ページ書き、編集長AIが採点→弱い章だけ書き直す（最大3回）。完成したら本文を保存 | 一瀬 | W3（6/22–28） | C1.5.1,C2.2 | published・editRounds記録（§7） (旧WP2.3) | 🔜着手前 |
+| C2.1 | 予約API `POST /reserve`（同時5冊チェック＋Pub/Sub発行） | ユーザーが本を「予約」したら執筆を始める窓口。同時に5冊までの制限を入れる | 一瀬 | ~~W3~~→**W1完了** | C3.1 | API契約 §3・I-16／予約の原子性＝Firestore transaction で count確認→条件付き遷移（I-20） (旧WP2.1) | ✅**2026-06-09・PR#7**（同時最大5冊ガード＝reserved+writing<cap・満杯はConflictError(409)・`config.max_concurrent_reservations=5`）。**残＝並行原子性 Firestore transaction(I-20) はハードニングで未** |
+| C2.2 | Pub/Sub → 執筆ワーカー起動 | 予約を受けて、裏側で執筆処理を起動する仕組み（メッセージ連携）。二重起動を防ぐ | 一瀬 | ~~W3~~→**W1完了** | C2.1 | 冪等ガード（I-20） (旧WP2.2) | ✅**2026-06-09・PR#8・live検証済**（`QUEUE=mock\|pubsub` シーム・`write_queue`／冪等worker `process_write_job`／`pubsub_queue`＋`/api/worker/write`(push OIDC検証)。実Cloud Pub/Sub: topic `publishr-writing`・push sub・SA `publishr-pubsub-push`・予約→publish→push→worker→published を実機確認） |
+| C2.3 | 本文編集ループ（編集長⇄著者・最高3R・約100p） | 著者AIが約100ページ書き、編集長AIが採点→弱い章だけ書き直す（最大3回）。完成したら本文を保存 | 一瀬 | ~~W3~~→**W1完了** | C1.5.1,C2.2 | published・editRounds記録（§7） (旧WP2.3) | ✅**2026-06-09・PR#6/#9**（モードB `mode_b/`＝編集長⇄著者・**最高3R**・弱章のみ改稿。worker の本文生成を write_body→mode_b に差替・editRounds を `Book.edit_round` 記録。**残＝約100p化＋GCS本文保存(C3.3)・mode_b vertex live は別軸**） |
 
 ## C3. データ/状態基盤（Firestore/GCS）
 
@@ -414,7 +416,7 @@ Publishr MVP（カテゴリWBS）
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C4.1 | 登録フォーム＋OAuth接続＋Drive Picker UI | ユーザー登録画面・Googleログイン・Driveファイル選択UIを作る | 鉄田 | W2（6/15–21） | A5.2,C1.1.1 | initialProfile直書き・3ソース接続（G1-13） (旧WP4.1) | 🟡**initialProfile登録フローは実装/整備済み・OAuth/Drive Picker部分のみ🔴未**。**【2026-06-07完了分】** 登録ボタンの固まり解消（`saveInitialProfile`のlocalStorageキャッシュ＋Firestore非throw化・`persist`のtry/catch化）・登録後トップ`/`へ直接遷移・アカウント即反映・初期設定に「新しい出会いの幅」追加・ログイン時に初期設定済みならオンボーディングをスキップ（`hasCompletedOnboarding`）・初回体験「空→生成中→15冊」(mock)。**残る🔴＝Google Drive/Calendar/Tasks の実連携機能のみ**＝OAuth接続フロー・Drive Picker実動作・接続状態表示は未着手（データ連携トグルはlocalStorageのデモ実装・Firestore connectedSourcesはサーバ書込前提でクライアント未対応）。機能設計（Picker UI仕様・接続状態の保存先）から要対応。C1.1.1〔観測ツール〕・C1.1.2〔Drive Pickerサーバ側〕との接続設計も要整合 |
+| C4.1 | 登録フォーム＋OAuth接続＋Drive Picker UI | ユーザー登録画面・Googleログイン・Driveファイル選択UIを作る | 鉄田 | W2（6/15–21） | A5.2,C1.1.1 | initialProfile直書き・3ソース接続（G1-13） (旧WP4.1) | 🟡**initialProfile登録フローは実装/整備済み・OAuth/Drive Picker部分のみ🔴未**。**【2026-06-07完了分】** 登録ボタンの固まり解消（`saveInitialProfile`のlocalStorageキャッシュ＋Firestore非throw化・`persist`のtry/catch化）・登録後トップ`/`へ直接遷移・アカウント即反映・初期設定に「新しい出会いの幅」追加・ログイン時に初期設定済みならオンボーディングをスキップ（`hasCompletedOnboarding`）・初回体験「空→生成中→15冊」(mock)。**残る🔴＝Google Drive/Calendar/Tasks の実連携機能のみ**＝OAuth接続フロー・Drive Picker実動作・接続状態表示は未着手（データ連携トグルはlocalStorageのデモ実装・Firestore connectedSourcesはサーバ書込前提でクライアント未対応）。機能設計（Picker UI仕様・接続状態の保存先）から要対応。C1.1.1〔観測ツール〕・C1.1.2〔Drive Pickerサーバ側〕との接続設計も要整合。**【2026-06-09 コード再確認＝依然🔴未】**: `apps/web/src/app/(auth)/connect/page.tsx` は **モックトグルのみ**（`onConnect` は `isFirebaseConfigured` 時に `GET /api/auth/google/start`→authUrl遷移 を試みる設計だが **BFFにそのendpointは無い**ため localStorage フラグに縮退）。**Drive Picker 未実装**（`google.picker`/`gapi`/`developerKey` 痕跡ゼロ）。**BFFに OAuth endpoint 無し**（`/api/auth/google/start`・`/callback`）。※観測用Google OAuthは**CLI(`scripts/google_oauth_bootstrap.py`・task#7 L1=calendar+tasks)では実動**するが、UIボタン→実OAuth(L2)とは別物で未着手。本番化は C4前ゲート（state/IDトークン検証/許可uid/レート制限）込みで対応 |
 | C4.2 | 書店トップ（入荷一覧・入荷理由） | 入荷した本が並ぶトップ画面と「なぜこの本が入荷したか」の理由表示 | 鉄田 | W2（6/15–21） | C3.1 | draft本＋入荷理由表示 (旧WP4.2) | ✅**UI code-complete**（Firestore接続はC4.9） |
 | C4.3 | 本詳細（BookDraft 7項目） | 本の詳細（タイトル/サブ/今あなたは/課題/核心/アジェンダ/序文）を見る画面 | 鉄田 | W2–W3（6/15–28） | C3.1,C1.5.1 | 7項目表示 (旧WP4.3) | ✅**UI code-complete**（Firestore接続はC4.9） |
 | C4.4 | 著者選択・予約UI（同時5冊ガード） | 著者を選んで本を予約する画面（同時5冊の上限を表示） | 鉄田 | W3（6/22–28） | C2.1 | reserve呼び出し・上限表示 (旧WP4.4) | ✅**UI code-complete**（mock reserve タイマー動作確認済。Firestore接続はC4.9） |
@@ -467,8 +469,8 @@ Publishr MVP（カテゴリWBS）
 | A 要件定義・設計 | A5.1 | A3.2/A5.2 | | | | |
 | B 環境・インフラ | B1.1/B1.3/B2.1 | B2.2/B3.1/B3.3 | B1.2 | | B3.2/B4.1 | |
 | C0 ローカル基盤(H0) | **C0.1/C0.2✅** | | | | | |
-| C1 エージェント(モードA) | **C1.0.1✅** | C1.1-C1.3 | C1.4-C1.7 | | | |
-| C2 エージェント(モードB) | | | | C2.1-2.3 | | |
+| C1 エージェント(モードA) | **C1.0.1✅** | **C1.1-C1.3✅** | **C1.4-C1.7✅**※ | | | |
+| C2 エージェント(モードB) | | **✅C2.1-2.3（前倒し・6/9）** | | ~~C2.1-2.3~~ | | |
 | C3 データ基盤（鉄田） | **✅C3.1/3.4/3.5**（6/6完了） | | C3.2 | C3.3 | | |
 | C4 フロント | | | C4.1-4.3 | C4.4-4.6 | C4.7 | |
 | C5 品質・観測・運用 | C0.1(mock Eval)✅ | C5.1/5.7/5.8 | C5.2/5.4 | C5.9 | C5.3(GEAP)/5.5/5.6 | |
@@ -479,8 +481,8 @@ Publishr MVP（カテゴリWBS）
 |---|---|---|---|
 | M0 | **C0.1/C0.2** | W0末（6/7頃） | mock回帰＋実装シーム完了（**2026-06-06 達成**） |
 | M1 | **C1.0.1** | W1末（6/14頃） | 実Vertex MiniLoop（**C1.0.1ゲート**・最大リスク解消）（**2026-06-06 達成・W0前倒し**） |
-| **M2** | **C1.1–C1.3＋C4** | **W2末（6/21頃）** | **Drive観測→企画→棚に並ぶ＝全体の山場・撤退判定点** |
-| M3 | **C1.7/C2** | W3末（6/28頃） | Scheduler起動＋予約→本文編集ループで読める |
+| **M2** | **C1.1–C1.3＋C4** | **W2末（6/21頃）** | ✅**2026-06-09 達成（前倒し）**: 観測→企画→棚に並ぶ＝山場/撤退判定点クリア（PR#4・Cloud Run/Firestore縦通し・トリガー実モードA） |
+| M3 | **C1.7/C2** | W3末（6/28頃） | 🟡**核✅（2026-06-09・前倒し）**: C2.1-2.3＝予約→Pub/Sub→本文編集ループ(最高3R)→published（PR#6-9）。**残＝C1.7 Scheduler本番デプロイのみ** |
 | 🔒 機能凍結 | — | 6/30 | 以後は品質向上・デモ磨きのみ |
 | M4 | **C5/B3** | W4末（7/5頃） | CIにEvalゲート＋Langfuse 2ループ可視化 |
 | M5 | **C6** | W5（7/9頃） | 録画＋README |
