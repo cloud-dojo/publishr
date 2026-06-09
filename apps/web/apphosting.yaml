@@ -27,9 +27,10 @@ env:
       - BUILD
       - RUNTIME
 
-  # --- C4.9: Cloud Run API の URL ---
+  # --- C4.9 / M2: Cloud Run BFF の URL（2026-06-09 修正） ---
+  # 旧値 asia-east1 は実体なし（404）。BFF は Firestore と同居の asia-northeast1 にデプロイ済み。
   - variable: NEXT_PUBLIC_API_URL
-    value: https://publishr-api-355143691286.asia-east1.run.app
+    value: https://publishr-api-355143691286.asia-northeast1.run.app
     availability:
       - BUILD
       - RUNTIME
