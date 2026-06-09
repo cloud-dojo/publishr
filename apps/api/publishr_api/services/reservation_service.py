@@ -68,3 +68,23 @@ async def advance(
 def schedule_advance(repo: RepositoryProtocol, book_id: str) -> None:
     """イベントループ上に状態遷移タスクを登録（async エンドポイントから呼ぶ）。"""
     asyncio.create_task(advance(repo, book_id))
+
+
+def process_write_job(repo: RepositoryProtocol, book_id: str) -> Optional[Book]:
+    """執筆ジョブを **冪等** に処理する（Pub/Sub worker / 再配信の共通入口）。
+
+    予約済み(reserved)→writing→published＋本文 を即時（タイマー無し）で進める。二重配信されても
+    published/その他状態は再処理しない（I-20）。本文生成器の差し替え（mode_b）は別軸（C2.3）。
+    """
+    book = repo.get_book(book_id)
+    if book is None:
+        return None
+    if book.status not in ("reserved", "writing"):
+        return book  # 既に処理済み or 予約外 → skip（冪等）
+    if book.status == "reserved":
+        book = repo.upsert_book(book.model_copy(update={"status": "writing"}))
+    body = write_body(book)
+    fb = book.feedback.model_copy(update={"read_percent": 0})
+    return repo.upsert_book(
+        book.model_copy(update={"status": "published", "body": body, "feedback": fb})
+    )
