@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-from publishr_agents import write_body
 from publishr_schema import Book
 
 from ..config import settings
@@ -23,6 +22,21 @@ _ACTIVE_STATUSES = ("reserved", "writing")
 def _active_count(repo: RepositoryProtocol) -> int:
     """同時進行中（reserved+writing）の冊数。firestore では owner スコープで数える。"""
     return sum(len(repo.list_books(status=s)) for s in _ACTIVE_STATUSES)
+
+
+def _generate_body(repo: RepositoryProtocol, book: Book) -> tuple[str, int]:
+    """モードB 本文編集ループ（編集長⇄著者・最高3R）で本文を生成。(body, edit_round)。
+
+    LLM は settings.publishr_llm（既定 mock＝決定的・課金ゼロ）。著者ペルソナは repo から引く
+    （firestore の生成著者・fixtures の既定著者どちらも・無ければ mode_b 側で汎用著者に縮退）。
+    """
+    from publishr_agents.mode_b import write_body_loop  # noqa: PLC0415
+
+    persona = repo.get_persona(book.author_persona_id)
+    result = write_body_loop(
+        book, persona=persona, rounds=settings.body_edit_rounds, llm=settings.publishr_llm
+    )
+    return result.body, result.edit_rounds
 
 
 def reserve_now(repo: RepositoryProtocol, book_id: str) -> Book:
@@ -60,9 +74,13 @@ async def advance(
     book = repo.get_book(book_id)
     if book is None or book.status != "writing":
         return
-    body = write_body(book)
+    body, edit_round = _generate_body(repo, book)
     fb = book.feedback.model_copy(update={"read_percent": 0})
-    repo.upsert_book(book.model_copy(update={"status": "published", "body": body, "feedback": fb}))
+    repo.upsert_book(
+        book.model_copy(
+            update={"status": "published", "body": body, "edit_round": edit_round, "feedback": fb}
+        )
+    )
 
 
 def schedule_advance(repo: RepositoryProtocol, book_id: str) -> None:
@@ -83,8 +101,10 @@ def process_write_job(repo: RepositoryProtocol, book_id: str) -> Optional[Book]:
         return book  # 既に処理済み or 予約外 → skip（冪等）
     if book.status == "reserved":
         book = repo.upsert_book(book.model_copy(update={"status": "writing"}))
-    body = write_body(book)
+    body, edit_round = _generate_body(repo, book)
     fb = book.feedback.model_copy(update={"read_percent": 0})
     return repo.upsert_book(
-        book.model_copy(update={"status": "published", "body": body, "feedback": fb})
+        book.model_copy(
+            update={"status": "published", "body": body, "edit_round": edit_round, "feedback": fb}
+        )
     )

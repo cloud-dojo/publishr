@@ -44,6 +44,32 @@ def _weak_index(n: int) -> int:
     return 3 if n >= 3 else max(n, 1)
 
 
+# 本文採点の決定的キャンド（index 0=初稿/R1・1=1回改稿後/R2・2=2回改稿後/R3）。
+# 閾値78未満は差し戻し→改稿で hook(掴み)/actionability(実践性)が持ち上がり R3 で承認する物語。
+_THRESHOLD = 78
+_ROUND_SCORES: list[tuple[int, BodyScoreBreakdown]] = [
+    (64, BodyScoreBreakdown(coherence=16, hook=11, relevance=15, persona_consistency=14, actionability=8)),
+    (72, BodyScoreBreakdown(coherence=16, hook=14, relevance=16, persona_consistency=14, actionability=12)),
+    (80, BodyScoreBreakdown(coherence=17, hook=16, relevance=16, persona_consistency=15, actionability=16)),
+]
+
+
+def _verdict(idx: int, *, weak: int, approve: bool) -> BodyVerdict:
+    score, breakdown = _ROUND_SCORES[min(idx, len(_ROUND_SCORES) - 1)]
+    return BodyVerdict(
+        score=score,
+        score_breakdown=breakdown,
+        decision="approve" if approve else "revise",
+        weak_chapters=[] if approve else [weak],
+        editor_feedback=None
+        if approve
+        else (
+            f"第{weak}章の掴み(hook)と実践性(actionability)が弱い。"
+            "手順を具体化し、行動に落ちる形へ書き直して再提出。"
+        ),
+    )
+
+
 def run_body_loop_deterministic(
     book: Book,
     *,
@@ -62,29 +88,15 @@ def run_body_loop_deterministic(
 
     weak = _weak_index(n)
     verdicts: list[dict[str, Any]] = []
-
-    # スコアは決定的なキャンド: 64=承認閾値(70)未満で差し戻し、80=改稿後に承認。
-    # 弱い軸は hook(掴み)11→16・actionability(実践性)8→16 が持ち上がる物語。
-    # round1: 弱章ありで差し戻し（編集長が著者を採点）。
-    v1 = BodyVerdict(
-        score=64,
-        score_breakdown=BodyScoreBreakdown(
-            coherence=16, hook=11, relevance=15, persona_consistency=14, actionability=8
-        ),
-        decision="revise",
-        weak_chapters=[weak],
-        editor_feedback=(
-            f"第{weak}章の掴み(hook)と実践性(actionability)が弱い。"
-            "手順を具体化し、行動に落ちる形へ書き直して再提出。"
-        ),
-    )
-    verdicts.append(v1.model_dump(by_alias=True))
-
     revised_chapters: list[int] = []
-    edit_rounds = 1
 
-    if rounds >= 1 and n >= 1:
-        # 弱章のみ改稿（他章は不変＝全文再生成しない）。
+    # 初稿(R1)を採点。閾値未満なら弱章のみ改稿→再採点を最高 rounds 回（編集長⇄著者の差し戻し）。
+    approve = _ROUND_SCORES[0][0] >= _THRESHOLD
+    verdicts.append(_verdict(0, weak=weak, approve=approve).model_dump(by_alias=True))
+    edit_rounds = 1
+    revises = 0
+    while not approve and revises < rounds and n >= 1:
+        # 弱章のみ改稿（他章は不変＝全文再生成しない＝コスト抑制）。
         i = weak - 1
         no, title, desc = sel[i]
         chapters[i] = {
@@ -92,18 +104,14 @@ def run_body_loop_deterministic(
             "title": title,
             "text": _author_text(persona, no, title, desc, revised=True),
         }
-        revised_chapters = [weak]
-        edit_rounds = 2
-        v2 = BodyVerdict(
-            score=80,
-            score_breakdown=BodyScoreBreakdown(
-                coherence=17, hook=16, relevance=16, persona_consistency=15, actionability=16
-            ),
-            decision="approve",
-            weak_chapters=[],
-            editor_feedback=None,
-        )
-        verdicts.append(v2.model_dump(by_alias=True))
+        if weak not in revised_chapters:
+            revised_chapters.append(weak)
+        revises += 1
+        edit_rounds = 1 + revises
+        idx = min(revises, len(_ROUND_SCORES) - 1)
+        forced = revises >= rounds  # 改稿予算を使い切ったら強制承認（最高Rで打ち切り）
+        approve = _ROUND_SCORES[idx][0] >= _THRESHOLD or forced
+        verdicts.append(_verdict(idx, weak=weak, approve=approve).model_dump(by_alias=True))
 
     body = "\n\n".join(ch["text"] for ch in chapters)
     return BodyResult(

@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     max_body_pages: int = Field(default=5, validation_alias="PUBLISHR_MAX_BODY_PAGES")
     enable_imagen: bool = False
     editor_rounds: int = Field(default=1, validation_alias="PUBLISHR_EDITOR_ROUNDS")
+    # モードB本文編集ループの最高改稿ラウンド数（§6-2「最高3R」）。worker が mode_b に渡す。
+    body_edit_rounds: int = Field(default=3, validation_alias="PUBLISHR_BODY_EDIT_ROUNDS")
     timeout_seconds: int = Field(default=45, validation_alias="PUBLISHR_TIMEOUT_SECONDS")
     max_estimated_cost_jpy: float = Field(
         default=100.0,
