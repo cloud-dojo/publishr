@@ -17,12 +17,26 @@ from ..errors import ConflictError, NotFoundError
 from ..repositories.protocol import RepositoryProtocol
 
 
+_ACTIVE_STATUSES = ("reserved", "writing")
+
+
+def _active_count(repo: RepositoryProtocol) -> int:
+    """同時進行中（reserved+writing）の冊数。firestore では owner スコープで数える。"""
+    return sum(len(repo.list_books(status=s)) for s in _ACTIVE_STATUSES)
+
+
 def reserve_now(repo: RepositoryProtocol, book_id: str) -> Book:
     book = repo.get_book(book_id)
     if book is None:
         raise NotFoundError(f"book {book_id} が見つかりません")
     if book.status != "draft":
         raise ConflictError(f"予約できません（現在の状態: {book.status}）")
+    # 同時最大5冊（I-16）。モードBの実行コストを天井留めする。
+    # NOTE(I-20): mock/単一プロセスでは「数えて→予約」で十分。本番の並行予約の原子性は
+    # Firestore transaction（count確認→条件付き遷移）で別途担保する（firestore ハードニング）。
+    cap = settings.max_concurrent_reservations
+    if _active_count(repo) >= cap:
+        raise ConflictError(f"同時に予約できるのは最大{cap}冊までです（予約中の本を読み終えてから）")
     return repo.upsert_book(book.model_copy(update={"status": "reserved"}))
 
 
