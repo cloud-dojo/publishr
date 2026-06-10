@@ -1,0 +1,13 @@
+# cp terraform.tfvars.example terraform.tfvars して値を確認・調整する。
+# 既定値（variables.tf）はハッカソンの publishr-498123 環境に合わせてある。
+# 別プロジェクトで再現する場合は最低限 project_id / project_number を変える。
+
+project_id     = "publishr-498123"
+project_number = "355143691286"
+region         = "asia-northeast1"
+
+# デモ垢（佐倉 美咲 / publishr.hackathon）。別環境では各自の uid に。
+demo_uid = "5JLLGOc3rpXiGN9KXmsISBNAKty2"
+
+# 初期イメージ（以後は gcloud run deploy --source / CI が更新＝terraform は ignore）
+# image = "asia-northeast1-docker.pkg.dev/publishr-498123/cloud-run-source-deploy/publishr-api:latest"
