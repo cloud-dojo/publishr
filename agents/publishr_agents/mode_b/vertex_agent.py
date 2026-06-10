@@ -23,6 +23,7 @@ from publishr_schema import Book, Persona  # noqa: E402
 from publishr_schema.agent_io import BodyVerdict  # noqa: E402
 
 from ..llm.provider import model_for  # noqa: E402
+from ..llm.resilience import RetryPolicy, run_with_retry_async  # noqa: E402
 from ..prompts import render  # noqa: E402
 
 _APP = "publishr_modeb"
@@ -30,6 +31,17 @@ _BODY_VERDICT_KEY = "bodyVerdict"
 _DEFAULT_MAX_CHAPTERS = 5
 
 logger = logging.getLogger(__name__)
+
+
+def _on_retry(attempt: int, err: BaseException, delay: float) -> None:
+    """transient な Vertex エラーのリトライをログに残す（C5.9）。"""
+    logger.warning(
+        "vertex transient error (retry %d in %.1fs): %s: %s",
+        attempt,
+        delay,
+        type(err).__name__,
+        err,
+    )
 
 
 def _max_chapters() -> int:
@@ -105,27 +117,44 @@ def _norm_verdict(raw: Any) -> Optional[BodyVerdict]:
 
 
 async def _run_text(agent: LlmAgent, init_state: dict[str, Any]) -> str:
-    runner = InMemoryRunner(agent=agent, app_name=_APP)
-    session = await runner.session_service.create_session(app_name=_APP, user_id="modeb", state=init_state)
-    message = types.Content(role="user", parts=[types.Part(text="本文を書いてください")])
-    text = ""
-    async for event in runner.run_async(user_id="modeb", session_id=session.id, new_message=message):
-        content = getattr(event, "content", None)
-        if content and content.parts:
-            for part in content.parts:
-                if getattr(part, "text", None):
-                    text = part.text
-    return text.strip()
+    # transient(タイムアウト/503/429)のみ指数バックオフでリトライ。各試行は新規runner/session（C5.9）。
+    async def _once() -> str:
+        runner = InMemoryRunner(agent=agent, app_name=_APP)
+        session = await runner.session_service.create_session(
+            app_name=_APP, user_id="modeb", state=init_state
+        )
+        message = types.Content(role="user", parts=[types.Part(text="本文を書いてください")])
+        text = ""
+        async for event in runner.run_async(
+            user_id="modeb", session_id=session.id, new_message=message
+        ):
+            content = getattr(event, "content", None)
+            if content and content.parts:
+                for part in content.parts:
+                    if getattr(part, "text", None):
+                        text = part.text
+        return text.strip()
+
+    return await run_with_retry_async(_once, policy=RetryPolicy.from_env(), on_retry=_on_retry)
 
 
 async def _run_verdict(agent: LlmAgent, init_state: dict[str, Any]) -> Optional[BodyVerdict]:
-    runner = InMemoryRunner(agent=agent, app_name=_APP)
-    session = await runner.session_service.create_session(app_name=_APP, user_id="modeb", state=init_state)
-    message = types.Content(role="user", parts=[types.Part(text="本文を採点してください")])
-    async for _event in runner.run_async(user_id="modeb", session_id=session.id, new_message=message):
-        pass
-    final = await runner.session_service.get_session(app_name=_APP, user_id="modeb", session_id=session.id)
-    return _norm_verdict(final.state.get(_BODY_VERDICT_KEY) if final else None)
+    async def _once() -> Optional[BodyVerdict]:
+        runner = InMemoryRunner(agent=agent, app_name=_APP)
+        session = await runner.session_service.create_session(
+            app_name=_APP, user_id="modeb", state=init_state
+        )
+        message = types.Content(role="user", parts=[types.Part(text="本文を採点してください")])
+        async for _event in runner.run_async(
+            user_id="modeb", session_id=session.id, new_message=message
+        ):
+            pass
+        final = await runner.session_service.get_session(
+            app_name=_APP, user_id="modeb", session_id=session.id
+        )
+        return _norm_verdict(final.state.get(_BODY_VERDICT_KEY) if final else None)
+
+    return await run_with_retry_async(_once, policy=RetryPolicy.from_env(), on_retry=_on_retry)
 
 
 async def run_body_loop_vertex_async(
