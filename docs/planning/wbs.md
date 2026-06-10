@@ -95,7 +95,7 @@
 
 ## 🧭 現在地サマリ（最新: 2026-06-09）
 
-> **いまどこ（2026-06-09・実日付はW1だが進捗はM3核まで＝計画より約2-3週 前倒し）**: **M0/M1/M2★/M3核 まで完了**。モードA（観測→企画→キャスティング→プレビュー→装丁→入荷）＋モードB（予約→Pub/Sub→worker→本文編集ループ 最高3R→published）が **ローカル完走＋クラウド（Cloud Run/Firestore/Pub/Sub）疎通済み**で main 入り。3つの必然性ループ（調査grounding・企画リーダー差し戻し・編集長本文差し戻し）が揃った。`make verify` **186 passed, 8 skipped**。直近マージ＝PR#1〜#9（task#7 Google live観測L1・BFFトリガー実モードA化・最小Cloud Run疎通→firestore縦通し・モードB手動1冊・C2.1予約上限・C2.2 Pub/Subワーカー・C2.3最高3R＋worker結線）。**残＝① C1.7 Scheduler本番化（M3最後・自律入荷のクラウドデプロイ）② M4＝Evalゲート(GEAP)/Langfuse計装/CI-CD/IaC（一瀬主体）③ M5/M6＝デモ録画・ProtoPedia・公開リポ・最終提出7/10（鉄田主体）**。**C4.1 Google連携ページ（UIのOAuth/Drive Picker）は依然🔴未（鉄田）**＝connect はモックトグルのみ・Picker/BFF OAuth endpoint 無し（観測用OAuthはCLI task#7 L1=calendar+tasks のみ実動）。別軸ハードニング＝C4前セキュリティ/I-20予約原子性transaction/mode_b vertex live/約100p+GCS保存(C3.3)。
+> **いまどこ（2026-06-10・実日付はW1だが進捗はM3完了＋M4着手＝計画より約3週 前倒し）**: **M0/M1/M2★/M3 完了**。モードA（観測→企画→キャスティング→プレビュー→装丁→入荷）＋モードB（予約→Pub/Sub→worker→本文編集ループ 最高3R→published）＋**C1.7 Scheduler本番（自律入荷）**が **ローカル完走＋クラウド（Cloud Run/Firestore/Pub/Sub/Scheduler）疎通済み**で main 入り。3つの必然性ループ（調査grounding・企画リーダー差し戻し・編集長本文差し戻し）が揃った。`make verify` **186 passed, 8 skipped**。直近マージ＝PR#1〜#13（…C2.3最高3R＋worker結線・PR#12 実生成フル本+表紙画像表示・**PR#13 B4.1 Terraform IaC**）。**M4着手済＝B4.1 IaC完了**。**残＝① M4＝C5.3 Evalゲート(GEAP)/C5.6 Langfuse計装/C5.9 エラー方針/B3.1-3.2 CI-CD（一瀬主体）② M5/M6＝デモ録画・ProtoPedia・公開リポ・最終提出7/10（鉄田主体）③ C1.7 serendipity(日)差別化の小follow-up**。**C4.1 Google連携ページ（UIのOAuth/Drive Picker）は依然🔴未（鉄田）**＝connect はモックトグルのみ・Picker/BFF OAuth endpoint 無し（観測用OAuthはCLI task#7 L1=calendar+tasks のみ実動）。**運用メモ: デモ垢＝佐倉 美咲(5JLL…/publishr.hackathon)・Cloud Run DEMO_UID も5JLLに更新済**（旧記録の「佐倉=WW1j」は誤り＝WW1jは鉄田垢）。別軸ハードニング＝C4前セキュリティ(C4.9)/I-20予約原子性transaction/mode_b vertex live/約100p+GCS保存(C3.3)。
 
 > **【履歴 2026-06-07】いまどこ**: **C0.1/C0.2/B1.3/C1.0.1 完了→次は C1.1–C1.6＋C3.x＋B3.1（W1）**。mock/canned の回帰床（`make verify`＋`make eval`＋`make pipeline`）は緑（pytest **60 passed, 1 skipped**・**2026-06-07にペルソナ不整合の回帰=I-24を解消**。make smoke は Windows の OpenSSL/POSIX 環境問題で本機未実行）。**C1.0.1（H2 MiniLoop）**＝実Vertexで `market_sub(Flash+google_search)→Loop[max3](owner→leader→LoopBreakAgent)` の escalate 脱出を実証済み（threshold70→R1 approve／threshold101→R1 revise→R2 approve）。再実行CLI＝`scripts/run_miniloop.py`・Langfuse計装＝`observability.py`（SDK直・best-effort）・`@pytest.mark.vertex` 最小テストあり。設計・プロンプト・Eval・GCP基盤・OAuth認証が整い、**フロント16ルート(mock)＋ADK配線骨格(`agents/`・canned出力)＋BFF mock API(`apps/api`)** まで先行実装済み。**友人MTG（2026-06-05）完了＝着手前ゲートを全件クローズ**。次の山場は **C1.1–C1.3「E2E縦通し＝実モデル＋v2 I/O」(W2)**。W1並行＝**B3.3 App Hosting連携（鉄田）**・**C5.1 プロンプト実テスト**。**実装順序は本書 §エージェント実施ガイド の WBS 直列表に従う**。
 >
@@ -312,7 +312,7 @@ Publishr MVP（カテゴリWBS）
 ## B4. IaC（Terraform）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| B4.1 | Terraform IaC（Cloud Run/Scheduler/Pub-Sub/IAM/indexes） | クラウド設定を手作業でなくコードで管理し、誰でも同じ環境を再現できるようにする | 一瀬 | W4（6/29–7/5） | 各基盤 | コア資源をコード化 (旧WP6.4) | 🔜着手前 |
+| B4.1 | Terraform IaC（Cloud Run/Scheduler/Pub-Sub/IAM/indexes） | クラウド設定を手作業でなくコードで管理し、誰でも同じ環境を再現できるようにする | 一瀬 | W4（6/29–7/5） | 各基盤 | コア資源をコード化 (旧WP6.4) | ✅**実装済（2026-06-10・PR#13・前倒し）**＝`infra/terraform/`（Cloud Run/Pub-Sub topic+push sub/Scheduler/SA×2/Artifact Registry/IAM×6＝16リソース）。imageは gcloud/CI 管理(`ignore_changes`)・URL自己参照はlocalsで回避・mock既定。README に既存環境の`terraform import`手順＋C4.9セキュリティ注記。**残＝`terraform validate/apply`を terraform入り環境/CIで（ローカル未インストール）／Firestore index は`firestore.indexes.json`(firebase)側のまま** |
 
 ---
 
@@ -381,7 +381,7 @@ Publishr MVP（カテゴリWBS）
 ### C1.7 自律トリガー(Scheduler)
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.7.1 | Cloud Scheduler 曜日別トリガー（土/水/日） | 毎週決まった曜日に自動で企画が走る仕組み（Cloud Scheduler）。デモでは手動起動も可 | 一瀬 | W3（6/22–28） | C1.3.3 | 自律起動で棚更新 (旧WP1.8) | 🟡**ローカル/mock版 実装済（2026-06-07・課金ゼロ）**＝`agents/publishr_agents/scheduler.py`（曜日→themeKind 純粋判定: 水/土=honmei・日=serendipity・`next_run`決定的）＋`scripts/run_scheduler.py`（`--once`即実行／`--watch`ローカル常駐で次の起動曜日に自律起動・依存なし／全mock＝LLM課金ゼロ・クラウド未使用）。test_scheduler 7件。**残＝本番 Cloud Scheduler→Cloud Run trigger のデプロイ（B3.2/C4結線後・課金発生）＋「棚更新」のFirestore永続化**。cron: honmei`0 6 * * 3,6`／serendipity`0 6 * * 0` はdoc化のみ |
+| C1.7.1 | Cloud Scheduler 曜日別トリガー（土/水/日） | 毎週決まった曜日に自動で企画が走る仕組み（Cloud Scheduler）。デモでは手動起動も可 | 一瀬 | W3（6/22–28） | C1.3.3 | 自律起動で棚更新 (旧WP1.8) | ✅**本番デプロイ済（2026-06-10）**＝Cloud Scheduler `publishr-honmei`（`0 6 * * 3,6`・Asia/Tokyo・OIDC=publishr-pubsub-push SA・audience=trigger URL）→ `POST /api/trigger/planning` → モードA(mock)→佐倉(5JLL)Firestore自律入荷。手動実行(`gcloud scheduler jobs run publishr-honmei`)で arr_p* 即更新（created更新）を実機確認＝**Scheduler→Cloud Run→自律入荷が本番成立**。IaC正本化はB4.1(`infra/terraform`)。ローカル/mock版（`scheduler.py`曜日→themeKind純粋判定＋`run_scheduler.py --once/--watch`・test_scheduler 7件）も維持。**残（小）＝serendipity(日)差別化＝trigger に themeKind param 追加＋日曜ジョブ（cron `0 6 * * 0`・TF/docにコメント用意済）。「棚更新」のFirestore永続化は入荷upsertで達成済** |
 
 ## C2. エージェント・モードB（後追い執筆）
 
@@ -482,7 +482,7 @@ Publishr MVP（カテゴリWBS）
 | M0 | **C0.1/C0.2** | W0末（6/7頃） | mock回帰＋実装シーム完了（**2026-06-06 達成**） |
 | M1 | **C1.0.1** | W1末（6/14頃） | 実Vertex MiniLoop（**C1.0.1ゲート**・最大リスク解消）（**2026-06-06 達成・W0前倒し**） |
 | **M2** | **C1.1–C1.3＋C4** | **W2末（6/21頃）** | ✅**2026-06-09 達成（前倒し）**: 観測→企画→棚に並ぶ＝山場/撤退判定点クリア（PR#4・Cloud Run/Firestore縦通し・トリガー実モードA） |
-| M3 | **C1.7/C2** | W3末（6/28頃） | 🟡**核✅（2026-06-09・前倒し）**: C2.1-2.3＝予約→Pub/Sub→本文編集ループ(最高3R)→published（PR#6-9）。**残＝C1.7 Scheduler本番デプロイのみ** |
+| M3 | **C1.7/C2** | W3末（6/28頃） | ✅**完了（2026-06-10・前倒し）**: C2.1-2.3＝予約→Pub/Sub→本文編集ループ(最高3R)→published（PR#6-9）＋**C1.7 Scheduler本番**（`publishr-honmei`・水/土6:00 JST・OIDC→Cloud Run trigger→佐倉Firestore自律入荷・実機検証済）。**残＝serendipity(日)差別化の小follow-upのみ** |
 | 🔒 機能凍結 | — | 6/30 | 以後は品質向上・デモ磨きのみ |
 | M4 | **C5/B3** | W4末（7/5頃） | CIにEvalゲート＋Langfuse 2ループ可視化 |
 | M5 | **C6** | W5（7/9頃） | 録画＋README |
