@@ -1,0 +1,39 @@
+name: CI
+
+# B3.1 CI ＋ C5.3 Eval品質ゲート。すべて mock 既定＝オフライン・$0（GCP/LLMキー不要）。
+# eval-gate は cases 7/8 未満で exit 1 ＝ AI品質が基準割れならマージ/デプロイを止める（MVP §9・I-21）。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv (Python 3.12)
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install deps
+        run: make setup
+
+      - name: Verify (pytest + web lint/typecheck)
+        run: make verify
+
+      - name: Eval consistency (offline harness)
+        run: make eval
+
+      - name: Eval judge gate (cases 7/8・基準割れで停止)
+        run: make eval-gate
