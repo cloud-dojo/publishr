@@ -75,7 +75,7 @@ export default function WritingPage() {
 
       <div className="stage">
         <div className={`writing-book ${isPublished ? "done" : "active"}`}>
-          <BookCover variant={book.coverVariant} title={book.title} author={persona?.name} titleSize={22} />
+          <BookCover variant={book.coverVariant} coverUrl={book.coverUrl} title={book.title} author={persona?.name} titleSize={22} />
           <div className={`pen-line ${isPublished ? "done" : "active"}`}>
             <i />
           </div>

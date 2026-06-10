@@ -40,6 +40,7 @@ export function BookCard({
       <Link className="book book--row reveal" href={hrefFor(book)}>
         <BookCover
           variant={book.coverVariant}
+          coverUrl={book.coverUrl}
           title={book.title}
           subtitle={book.subtitle}
           author={authorName}

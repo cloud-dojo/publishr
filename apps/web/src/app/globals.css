@@ -169,6 +169,10 @@ a { color: inherit; text-decoration: none; }
 .cover .c-author { font-family: var(--font-display); font-size: 12px; margin-top: 14px; color: rgba(255,255,255,.9); position: relative; z-index: 4; border-top: 1px solid rgba(255,255,255,.22); padding-top: 9px; display: inline-block; }
 .cover .c-rule { width: 34px; height: 2px; background: rgba(255,255,255,.6); margin: 12px 0 0; position: relative; z-index: 4; }
 
+/* 実画像（Imagen 等）の表紙: 画像をカバー全面に敷く（CSS装丁の代わり）。 */
+.cover--image { padding: 0; background: #0c0d10; }
+.cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; z-index: 1; }
+
 .cover--b1,.cover--b2,.cover--b3,.cover--b4,.cover--b5,.cover--b6,.cover--b7,.cover--b8,.cover--b9,.cover--b10 { position: relative; isolation: isolate; }
 .cover--b1 { background: linear-gradient(160deg, #0e1e42 0%, #07102a 100%); }
 .cover--b1::before { content: "30"; position: absolute; right: -8px; bottom: 10px; font-family: var(--font-en); font-size: 130px; font-weight: 700; line-height: 1; color: rgba(255,255,255,.055); z-index: 1; pointer-events: none; }

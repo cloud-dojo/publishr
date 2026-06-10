@@ -47,6 +47,7 @@ export default function BookDetailPage() {
         <div className="detail-cover-col">
           <BookCover
             variant={book.coverVariant}
+            coverUrl={book.coverUrl}
             title={book.title}
             subtitle={book.subtitle}
             author={persona?.name}
