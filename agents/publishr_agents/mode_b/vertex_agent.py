@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import warnings
 from typing import Any, Optional
 
@@ -26,9 +27,24 @@ from ..prompts import render  # noqa: E402
 
 _APP = "publishr_modeb"
 _BODY_VERDICT_KEY = "bodyVerdict"
-_MAX_CHAPTERS = 5
+_DEFAULT_MAX_CHAPTERS = 5
 
 logger = logging.getLogger(__name__)
+
+
+def _max_chapters() -> int:
+    """採用章数の上限。既定5（mock/テスト互換）。本番100pは PUBLISHR_BODY_MAX_CHAPTERS で増やす。"""
+    try:
+        return max(1, int(os.environ.get("PUBLISHR_BODY_MAX_CHAPTERS", str(_DEFAULT_MAX_CHAPTERS))))
+    except ValueError:
+        return _DEFAULT_MAX_CHAPTERS
+
+
+def _target_chars_hint() -> str:
+    """各章の目標文字数ヒント（PUBLISHR_BODY_CHARS_PER_CHAPTER・本番100p用）。未設定なら空。"""
+    n = os.environ.get("PUBLISHR_BODY_CHARS_PER_CHAPTER", "").strip()
+    return f"この章を **{n}字程度** でしっかり執筆する（具体例・手順・小見出しを使い、水増しせず密度高く）。" if n else ""
+
 
 _AUTHOR_INPUTS = """# 本(agenda/coreMessage/title)
 {{bookDraft}}
@@ -42,6 +58,8 @@ _AUTHOR_INPUTS = """# 本(agenda/coreMessage/title)
 {{prevChapterSummary}}
 # 編集長フィードバック（改稿時のみ・無ければ無視）
 {{editorFeedback}}
+# 目標分量（指定があればその文字数程度で・無ければ無視）
+{{targetChars}}
 対象章の本文（Markdown・`## 見出し` から）だけを出力せよ。"""
 
 _EDITOR_INPUTS = """# 本文（全章結合）
@@ -123,7 +141,8 @@ async def run_body_loop_vertex_async(
     editor = build_editor_agent()
     persona_dump = persona.model_dump(by_alias=True) if persona else None
     profile_dump = reader_profile.model_dump(by_alias=True) if reader_profile else None
-    sel = list((book.agenda or [])[:_MAX_CHAPTERS])
+    sel = list((book.agenda or [])[:_max_chapters()])
+    target_chars = _target_chars_hint()
     book_dump = {
         "title": book.title,
         "coreMessage": book.core_message,
@@ -140,6 +159,7 @@ async def run_body_loop_vertex_async(
                 "targetChapter": target.model_dump(by_alias=True),
                 "prevChapterSummary": prev_summary,
                 "editorFeedback": feedback,
+                "targetChars": target_chars,
             },
         )
 

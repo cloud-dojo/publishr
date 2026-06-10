@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 export function BookCover({
   variant,
+  coverUrl,
   title,
   subtitle,
   author,
@@ -9,12 +10,23 @@ export function BookCover({
   badge,
 }: {
   variant: string;
+  coverUrl?: string | null;
   title: string;
   subtitle?: string | null;
   author?: string | null;
   titleSize?: number;
   badge?: ReactNode;
 }) {
+  // coverUrl（実Imagen等の表紙画像）があれば画像を表示。無ければ CSS バリアントの装丁。
+  if (coverUrl) {
+    return (
+      <div className="cover cover--image">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={coverUrl} alt={title} className="cover-img" />
+        {badge ? <div className="cover-badge">{badge}</div> : null}
+      </div>
+    );
+  }
   const titleStyle: CSSProperties | undefined = titleSize
     ? { fontSize: `${titleSize}px` }
     : undefined;
