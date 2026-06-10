@@ -52,6 +52,19 @@ def main() -> int:
         if v.get("editorFeedback"):
             print(f"      feedback: {v['editorFeedback']}")
     print(f"改稿した章（弱章のみ）: {result.revised_chapters}")
+
+    # C5.6: 編集長⇄著者の差し戻しループ（対立②）を Langfuse に best-effort 計装（キー無なら no-op）。
+    from publishr_agents.observability import trace_pipeline
+
+    status = trace_pipeline(
+        {
+            "theme": book.title,
+            "approved": result.body_verdict.get("decision") == "approve",
+            "editing_rounds": [{"round": i, **v} for i, v in enumerate(result.verdicts, 1)],
+        }
+    )
+    print(f"Langfuse(editing_loop): {status}")
+
     print("\n--- 本文（先頭2章プレビュー） ---")
     for ch in result.chapters[:2]:
         print(ch["text"])
