@@ -21,6 +21,7 @@ setup-py:
 
 setup-web:
 	npm install
+	npm --prefix apps/web install
 
 api:
 	uv run uvicorn publishr_api.main:app --reload --port 8000
