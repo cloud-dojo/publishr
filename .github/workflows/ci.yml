@@ -1,13 +1,16 @@
 name: CI
 
-# B3.1 CI ＋ C5.3 Eval品質ゲート。すべて mock 既定＝オフライン・$0（GCP/LLMキー不要）。
-# eval-gate は cases 7/8 未満で exit 1 ＝ AI品質が基準割れならマージ/デプロイを止める（MVP §9・I-21）。
+# B3.1 CI ＋ C5.3 Eval品質ゲート ＋ B3.2 自動デプロイ。
+# verify は mock 既定＝オフライン・$0（GCP/LLMキー不要）。eval-gate は cases 7/8 未満で exit 1
+# ＝ AI品質が基準割れならマージ/デプロイを止める（MVP §9・I-21）。
+# deploy は main push 時のみ・verify 通過後に Cloud Run へ（WIF keyless・B3.2）。
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch: {}
 
 jobs:
   verify:
@@ -37,3 +40,33 @@ jobs:
 
       - name: Eval judge gate (cases 7/8・基準割れで停止)
         run: make eval-gate
+
+  # B3.2: main マージ（または手動 dispatch）で verify 通過後に BFF を Cloud Run へ自動デプロイ。
+  # 認証は WIF keyless（鍵JSON不要）。env/SA は既存リビジョンから保持される。
+  deploy:
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: publishr-498123
+          workload_identity_provider: projects/355143691286/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: publishr-ci-deployer@publishr-498123.iam.gserviceaccount.com
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy BFF to Cloud Run
+        run: |
+          gcloud run deploy publishr-api \
+            --source . \
+            --region asia-northeast1 \
+            --service-account publishr-runner@publishr-498123.iam.gserviceaccount.com \
+            --quiet

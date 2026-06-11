@@ -18,6 +18,8 @@ resource "google_project_service" "apis" {
     "firestore.googleapis.com",
     "aiplatform.googleapis.com",
     "iam.googleapis.com",
+    "sts.googleapis.com",            # WIF（B3.2 CI/CD 認証）
+    "iamcredentials.googleapis.com", # WIF トークン発行
   ])
   service            = each.value
   disable_on_destroy = false
