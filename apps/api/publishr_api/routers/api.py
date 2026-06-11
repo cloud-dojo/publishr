@@ -33,12 +33,8 @@ trigger_guard = TriggerGuard(
 )
 
 
-def _uid_from_token(authorization: Optional[str] = Header(default=None)) -> str:
-    """Bearer トークンから uid を取得。失敗時は settings.demo_uid にフォールバック。
-
-    TODO(C4.9 実Auth接続): 本番ではトークンが提示されたのに不正なら 401 で fail-closed に
-    する（現状はデモ用に demo_uid へ無言フォールバック）。少なくとも失敗は記録する。
-    """
+def _verify_uid(authorization: Optional[str]) -> Optional[str]:
+    """Bearer の Firebase IDトークンを検証して uid を返す。無/不正なら None（記録のみ）。"""
     if authorization and authorization.startswith("Bearer "):
         token = authorization[7:]
         try:
@@ -46,8 +42,28 @@ def _uid_from_token(authorization: Optional[str] = Header(default=None)) -> str:
 
             decoded = fb_auth.verify_id_token(token)
             return str(decoded["uid"])
-        except Exception as exc:  # noqa: BLE001 — デモはフォールバック継続、ただし記録は残す
+        except Exception as exc:  # noqa: BLE001 — 失敗は記録のみ（呼び出し側が方針を決める）
             logger.warning("id-token verify failed: %s", type(exc).__name__)
+    return None
+
+
+def _uid_from_token(authorization: Optional[str] = Header(default=None)) -> str:
+    """Bearer から uid。無/不正は settings.demo_uid（非課金/閲覧系のデモ用フォールバック）。"""
+    return _verify_uid(authorization) or settings.demo_uid
+
+
+def require_reserve_uid(authorization: Optional[str] = Header(default=None)) -> str:
+    """課金アクション（予約→実Vertex執筆）用の uid 解決。
+
+    `settings.require_reserve_auth` が True のとき、有効な Firebase IDトークンを必須にし、
+    無/不正なら 401（＝完全な外部はブロック・ログイン済みなら誰でも可・allowlist無し）。
+    False（既定/ローカルmock）では従来どおり demo_uid にフォールバック。
+    """
+    uid = _verify_uid(authorization)
+    if uid:
+        return uid
+    if settings.require_reserve_auth:
+        raise HTTPException(status_code=401, detail="ログインが必要です（執筆依頼は認証ユーザーのみ）")
     return settings.demo_uid
 
 
@@ -55,7 +71,7 @@ def _uid_from_token(authorization: Optional[str] = Header(default=None)) -> str:
 async def api_reserve(
     payload: ReserveInput,
     repo: RepositoryProtocol = Depends(get_repository),
-    _uid: str = Depends(_uid_from_token),
+    _uid: str = Depends(require_reserve_uid),
 ) -> Book:
     """本を予約する（draft → reserved → writing → published タイマー起動）。
     フロント: firestore-provider.ts POST /api/reserve { bookId }"""

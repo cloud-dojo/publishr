@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     # 本番では per-request uid に差し替える（C4.9 Firebase Auth 接続後）。
     demo_uid: str = ""
 
+    # 課金アクション（予約→実Vertex執筆）を認証ユーザー限定にする fail-closed フラグ。
+    # True=有効な Firebase IDトークン必須・無/不正は401（完全な外部をブロック）。
+    # 実課金デプロイ（PUBLISHR_LLM=vertex）では True 推奨。既定 False（ローカル/mockは匿名可）。
+    require_reserve_auth: bool = Field(default=False, validation_alias="PUBLISHR_REQUIRE_RESERVE_AUTH")
+
     # 手動トリガー（POST /api/trigger/planning）のガード（C4前ゲート）。
     # allowed_trigger_uids が空 = dev（全許可）。
     # TODO(C4.9/本番): publishr_llm=vertex（実課金）かつ allowlist 空のままデプロイすると
