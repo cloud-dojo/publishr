@@ -9,6 +9,7 @@ WORKDIR /app
 # モノレポ内の依存パッケージをコピー
 COPY packages/shared-schema/py       packages/shared-schema/py
 COPY packages/shared-schema/fixtures packages/shared-schema/fixtures
+COPY packages/prompts                 packages/prompts
 COPY agents                           agents
 COPY apps/api                         apps/api
 
@@ -21,6 +22,8 @@ RUN pip install --no-cache-dir \
 # publishr_schema.loader は repo レイアウト基準で fixtures を探す。pip install 後は
 # その相対パスが壊れるため、コンテナ内の COPY 先を明示する（これが無いと起動時 500）。
 ENV PUBLISHR_FIXTURES_DIR=/app/packages/shared-schema/fixtures
+# mode_b 実Vertex 等は packages/prompts/*.md を読む（pip install 後は相対パスが壊れるため明示）。
+ENV PUBLISHR_PROMPTS_DIR=/app/packages/prompts
 
 EXPOSE 8080
 
