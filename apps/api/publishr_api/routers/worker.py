@@ -16,6 +16,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
 
 from ..config import settings
 from ..deps import get_repository
@@ -74,5 +75,7 @@ async def worker_write(
     if not book_id:
         logger.warning("worker: bad/empty message, acking")
         return Response(status_code=204)  # ack（再配信ループ防止）
-    reservation_service.process_write_job(repo, book_id)  # 冪等
+    # threadpool で実行＝同期 process_write_job が内部で asyncio.run（vertex本文生成）を呼んでも
+    # 実行中イベントループとネストしない（C2.2/実Vertex対応）。mock経路はそのまま高速。
+    await run_in_threadpool(reservation_service.process_write_job, repo, book_id)  # 冪等
     return Response(status_code=204)
