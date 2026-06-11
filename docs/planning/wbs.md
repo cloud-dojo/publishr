@@ -416,7 +416,7 @@ Publishr MVP（カテゴリWBS）
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C4.1 | 登録フォーム＋OAuth接続＋Drive Picker UI | ユーザー登録画面・Googleログイン・Driveファイル選択UIを作る | 鉄田 | W2（6/15–21） | A5.2,C1.1.1 | initialProfile直書き・3ソース接続（G1-13） (旧WP4.1) | 🟡**initialProfile登録フローは実装/整備済み・OAuth/Drive Picker部分のみ🔴未**。**【2026-06-07完了分】** 登録ボタンの固まり解消（`saveInitialProfile`のlocalStorageキャッシュ＋Firestore非throw化・`persist`のtry/catch化）・登録後トップ`/`へ直接遷移・アカウント即反映・初期設定に「新しい出会いの幅」追加・ログイン時に初期設定済みならオンボーディングをスキップ（`hasCompletedOnboarding`）・初回体験「空→生成中→15冊」(mock)。**残る🔴＝Google Drive/Calendar/Tasks の実連携機能のみ**＝OAuth接続フロー・Drive Picker実動作・接続状態表示は未着手（データ連携トグルはlocalStorageのデモ実装・Firestore connectedSourcesはサーバ書込前提でクライアント未対応）。機能設計（Picker UI仕様・接続状態の保存先）から要対応。C1.1.1〔観測ツール〕・C1.1.2〔Drive Pickerサーバ側〕との接続設計も要整合。**【2026-06-09 コード再確認＝依然🔴未】**: `apps/web/src/app/(auth)/connect/page.tsx` は **モックトグルのみ**（`onConnect` は `isFirebaseConfigured` 時に `GET /api/auth/google/start`→authUrl遷移 を試みる設計だが **BFFにそのendpointは無い**ため localStorage フラグに縮退）。**Drive Picker 未実装**（`google.picker`/`gapi`/`developerKey` 痕跡ゼロ）。**BFFに OAuth endpoint 無し**（`/api/auth/google/start`・`/callback`）。※観測用Google OAuthは**CLI(`scripts/google_oauth_bootstrap.py`・task#7 L1=calendar+tasks)では実動**するが、UIボタン→実OAuth(L2)とは別物で未着手。本番化は C4前ゲート（state/IDトークン検証/許可uid/レート制限）込みで対応 |
+| C4.1 | 登録フォーム＋OAuth接続＋Drive Picker UI | ユーザー登録画面・Googleログイン・Driveファイル選択UIを作る | 一瀬 | W2（6/15–21） | A5.2,C1.1.1 | initialProfile直書き・3ソース接続（G1-13） (旧WP4.1) | 🟡**initialProfile登録フローは実装/整備済み・OAuth/Drive Picker部分のみ🔴未**。**【2026-06-07完了分】** 登録ボタンの固まり解消（`saveInitialProfile`のlocalStorageキャッシュ＋Firestore非throw化・`persist`のtry/catch化）・登録後トップ`/`へ直接遷移・アカウント即反映・初期設定に「新しい出会いの幅」追加・ログイン時に初期設定済みならオンボーディングをスキップ（`hasCompletedOnboarding`）・初回体験「空→生成中→15冊」(mock)。**残る🔴＝Google Drive/Calendar/Tasks の実連携機能のみ**＝OAuth接続フロー・Drive Picker実動作・接続状態表示は未着手（データ連携トグルはlocalStorageのデモ実装・Firestore connectedSourcesはサーバ書込前提でクライアント未対応）。機能設計（Picker UI仕様・接続状態の保存先）から要対応。C1.1.1〔観測ツール〕・C1.1.2〔Drive Pickerサーバ側〕との接続設計も要整合。**【2026-06-09 コード再確認＝依然🔴未】**: `apps/web/src/app/(auth)/connect/page.tsx` は **モックトグルのみ**（`onConnect` は `isFirebaseConfigured` 時に `GET /api/auth/google/start`→authUrl遷移 を試みる設計だが **BFFにそのendpointは無い**ため localStorage フラグに縮退）。**Drive Picker 未実装**（`google.picker`/`gapi`/`developerKey` 痕跡ゼロ）。**BFFに OAuth endpoint 無し**（`/api/auth/google/start`・`/callback`）。※観測用Google OAuthは**CLI(`scripts/google_oauth_bootstrap.py`・task#7 L1=calendar+tasks)では実動**するが、UIボタン→実OAuth(L2)とは別物で未着手。本番化は C4前ゲート（state/IDトークン検証/許可uid/レート制限）込みで対応 |
 | C4.2 | 書店トップ（入荷一覧・入荷理由） | 入荷した本が並ぶトップ画面と「なぜこの本が入荷したか」の理由表示 | 鉄田 | W2（6/15–21） | C3.1 | draft本＋入荷理由表示 (旧WP4.2) | ✅**UI code-complete**（Firestore接続はC4.9） |
 | C4.3 | 本詳細（BookDraft 7項目） | 本の詳細（タイトル/サブ/今あなたは/課題/核心/アジェンダ/序文）を見る画面 | 鉄田 | W2–W3（6/15–28） | C3.1,C1.5.1 | 7項目表示 (旧WP4.3) | ✅**UI code-complete**（Firestore接続はC4.9） |
 | C4.4 | 著者選択・予約UI（同時5冊ガード） | 著者を選んで本を予約する画面（同時5冊の上限を表示） | 鉄田 | W3（6/22–28） | C2.1 | reserve呼び出し・上限表示 (旧WP4.4) | ✅**UI code-complete**（mock reserve タイマー動作確認済。Firestore接続はC4.9） |
@@ -435,8 +435,8 @@ Publishr MVP（カテゴリWBS）
 | C5.1 | W1 各プロンプト実テスト→調整 | 実際にAIへ指示文を流し、想定どおり出るか・悪い例を弾くかを確認して調整 | 鉄田・一瀬 | W1–W2（6/8–21） | C1.0.1 | Langfuseで出力確認 (旧WP5.3) | 🟡MiniLoopで research_subs/plan_owner/plan_leader の実Vertex確認済（C1.0.1）／全11本の網羅は未 |
 | C5.2 | 良い/悪い例を eval fixture に兼用反映 | 良い例/悪い例を、AIの手本（few-shot）とテストの両方に使い回す | 鉄田 | W2（6/15–21） | C5.1,A4.1 | few-shot＋Eval両用 (旧WP5.4) | 🟡**兼用構造done（決定的・2026-06-07）**＝採点系4本(leader/editor×2/judge)の✅良い例/❌悪い例を `loader.py` が単一ソースから抽出→`eval_harness.check_fewshot_eval_alignment()` が「良い例=合格・悪い例=不合格・judge=eval_set帯と整合」を実LLM無しで回帰（test 2件追加グリーン）。残＝**実judge(LLM)実行での検証はC5.4/C1.0疎通待ち** |
 | C5.3 | **Eval judgeゲート**をCIに組込 | AI品質が基準(70点)未満なら自動でデプロイを止める品質ゲートをCIに組み込む | 一瀬 | W4（6/29–7/5） | C5.x,**I-21** | failでデプロイ停止（MVP §9）。`eval/eval_set.yaml` を LLM-judge で採点・`cases`=ゲート(8件中7)/`borderlineCases`=診断で読む（I-21）。**mock用 `scripts/eval_harness.py` は v2 整合済み（C0.1✅）**。CI本番ゲート＝Vertex AI Gen AI Evaluation Service（GEAP）を B3.2 と併設 (旧WP6.2) | ✅**実装済（2026-06-10・PR#15）**＝`scripts/eval_gate.py`＝cases(8)をjudge採点→expectedBand内なら正答→ceil(87.5%)=**7/8で通過・未満は exit 1**（基準割れでデプロイ停止）。borderline(2)は診断専用でゲート外(I-21)。mock judge(4観点×0-25・決定的・$0・教養越境は中レンジclamp)で**8/8正答を実測**。`make eval-gate`＋**`.github/workflows/ci.yml`**(B3.1: setup→verify→eval→eval-gate・CI実機green)。test_eval_gate 7件。**残＝vertex判定(GEAP本番ゲート・B3.2併設・課金)はoffline未配線(NotImplemented)** |
-| C5.4 | judge再現性テスト（複数回採点・標準偏差確認） | 採点AIが毎回ブレない（同じ点を出す）か複数回試して信頼度を確認 | 鉄田・一瀬 | W2–W3（6/15–28） | C5.1,**I-21** | ゲート判定の信頼度確認（v2 Evalハーネス=I-21 が前提。境界ケース `eval_b1/b2` で閾値70近傍の判別を測る） (旧WP7.2) | 🔜着手前 |
-| C5.5 | 閾値・ルーブリックの運用調整 | 合格ライン(70点等)や採点基準を、実データを見ながら微調整 | 鉄田 | W4（6/29–7/5） | C5.4 | 実データで微調整（I-1/I-18） (旧WP7.3) | 🔜着手前 |
+| C5.4 | judge再現性テスト（複数回採点・標準偏差確認） | 採点AIが毎回ブレない（同じ点を出す）か複数回試して信頼度を確認 | 一瀬 | W2–W3（6/15–28） | C5.1,**I-21** | ゲート判定の信頼度確認（v2 Evalハーネス=I-21 が前提。境界ケース `eval_b1/b2` で閾値70近傍の判別を測る） (旧WP7.2) | 🔜着手前 |
+| C5.5 | 閾値・ルーブリックの運用調整 | 合格ライン(70点等)や採点基準を、実データを見ながら微調整 | 一瀬 | W4（6/29–7/5） | C5.4 | 実データで微調整（I-1/I-18） (旧WP7.3) | 🔜着手前 |
 | C5.6 | Langfuse計装（2ループ＋grounding取得URL） | AIの動き（やり直しループ・検索URL）を記録・可視化し、AIの必然性を見せられるようにする | 一瀬 | W4（6/29–7/5） | C1.3.3,C1.5.1,C2.3 | 必然性の証跡が可視化 (旧WP6.3) | ✅**実装済（2026-06-10・PR#15）**＝`observability.trace_pipeline`＝企画リーダー差し戻し(対立①)・編集長本文(対立②)の**2ループ＋grounding URL**を1トレースで可視化（部分payload可・キー無/未導入はno-op・$0）。`grounding_urls_from_events`でADKイベントから検索URL(web.uri)抽出。`run_body_once`に編集ループ計装結線。MiniLoop用`trace_miniloop`も維持。test_observability 5件。**残＝実Langfuseキーでのlive送信確認（best-effort・任意）** |
 | C5.7 | dev/prodフラグ運用 | 開発中は安く（ページ少・画像ダミー・冊数少）、本番だけフル、を切替える設定の運用 | 鉄田・一瀬 | W1〜（6/8〜） | B2.2 | dev既定で反復、本番のみprod (旧WP9.1) | 🔜着手前 |
 | C5.8 | コスト実測→コスト概算.md上書き | 実際のAI利用料を測り、予算1万円で足りるか確認して概算書を更新 | 鉄田・一瀬 | W1（6/8–14） | C1.0.1 | 予算¥10,000耐性確認 (旧WP9.2) | 🟡MiniLoop初回実測あり（C1.0.1）／フルパイプライン実測は未 |
@@ -444,7 +444,7 @@ Publishr MVP（カテゴリWBS）
 
 ## C6. デモ・提出物
 
-> **実装メモ**: デモデータ＝seed投入（佐倉美咲・部下7名）で録画再現性。必然性3証跡（却下→再提出を画に）必須。C6.7=実フロントスクショ5枚差替。C6.8=履歴なし新規リポ・docs全除外・実名/projectIDスクラブ。7/10厳守。
+> **実装メモ**: デモデータ＝seed投入（佐倉美咲・部下7名）で録画再現性。必然性3証跡（却下→再提出を画に）必須。C6.7=実フロントスクショ5枚差替。7/10厳守。（公開クリーンリポ／図マスク版＝旧C6.8は2026-06-11にWBS外へ切り出し・別途作成）
 
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
@@ -453,9 +453,8 @@ Publishr MVP（カテゴリWBS）
 | C6.3 | デモ録画（予約→入荷を撮る） | 予約→入荷の流れを録画・編集して提出用の動画にする | 鉄田 | W5（7/6–12） | C6.1,C6.2 | 提出動画 (旧WP8.3) | 🔜着手前 |
 | C6.4 | ピッチ図解（自律アーキ・必然性） | 自律アーキ・AIの必然性・将来構想を説明するスライドを作る | 鉄田 | W4–W5（6/29–7/12） | — | スライド (旧WP8.4) | 🔜着手前 |
 | C6.5 | README仕上げ（再現可能性） | 他人が再現できるよう、起動手順・構成図を整える | 鉄田 | W5（7/6–12） | 全体 | 起動手順・構成図 (旧WP8.5) | 🔜着手前 |
-| C6.6 | **ProtoPedia提出・リポジトリpublic化（最終提出）** | ProtoPediaに作品ページを公開し、公開リポを添えて7/10締切までに最終提出する | 鉄田・一瀬 | W5（7/6–12） | C6.3,C6.5,C6.7,C6.8 | ProtoPedia作品ページ公開＋クリーンリポ公開＋7/10締切（P-3） (旧WP8.6) | 🔜着手前 |
+| C6.6 | **ProtoPedia提出・リポジトリpublic化（最終提出）** | ProtoPediaに作品ページを公開し、公開リポを添えて7/10締切までに最終提出する | 鉄田・一瀬 | W5（7/6–12） | C6.3,C6.5,C6.7 | ProtoPedia作品ページ公開＋7/10締切（P-3）。※公開クリーンリポ／図マスク版は WBS 外（別途作成・旧C6.8を2026-06-11に切り出し） (旧WP8.6) | 🔜着手前 |
 | C6.7 | **ProtoPedia作品ページ作成（ストーリー/画像5/システム構成/動画/各フィールド）** | 提出先ProtoPediaの作品ページを作る。草案一式は作成済＝あとは実フロントのスクショと各URL差し替え | 鉄田 | W5（7/6–12） | C6.3 | 草案＝`publishr_other/Protopedia提出/`（ストーリーv2・画像プラン・記入シート）。体験画像①②③は**実フロントのスクショ（佐倉/7名）**に差替（P-7）／動画＝YouTube限定公開／必須技術＝GEAP明記（P-6） | 🟡草案✅・本番化残 |
-| C6.8 | **公開クリーンリポ＋図のクリーン公開版** | 内部（計画・戦略・実名・ID）を除いた公開リポを用意し、提出図④⑤・システム構成図の内部値（閾値70/週15冊/100p/内部コード名）をマスクした公開版を作る | 鉄田・一瀬 | W5（7/6–12） | C6.5 | **線引き＆手順＆判断は確定✅（`publishr_other/Protopedia提出/公開リポ線引き.md`・2026-06-05）**：prompts公開／MIT／**docs全除外**（設計docも戦略・実名で危険＝旧「コード＋設計のみ」を更新）／mockupドロップ／**履歴なし新規リポ**（履歴に一瀬の個人Gmail・「担当実名」commitが露出）／スクラブ箇所特定（実名×3・projectID・デモ垢）。✅シークレット漏洩なし（GOCSPX未コミット）。残＝実コピー作成・push（実行はチーム）。図のマスク版＝`画像プラン.md` 保留中（P-7） | 🟡**線引き確定✅・実行残** |
 
 ---
 
@@ -474,7 +473,7 @@ Publishr MVP（カテゴリWBS）
 | C3 データ基盤（鉄田） | **✅C3.1/3.4/3.5**（6/6完了） | | C3.2 | C3.3 | | |
 | C4 フロント | | | C4.1-4.3 | C4.4-4.6 | C4.7 | |
 | C5 品質・観測・運用 | C0.1(mock Eval)✅ | C5.1/5.7/5.8 | C5.2/5.4 | C5.9 | C5.3(GEAP)/5.5/5.6 | |
-| C6 デモ・提出 | | C6.1 | | | C6.4 | C6.2/6.3/6.5/6.6/**6.7/6.8** |
+| C6 デモ・提出 | | C6.1 | | | C6.4 | C6.2/6.3/6.5/6.6/**6.7** |
 
 ## マイルストーン（実日付・WBS対応）
 | MS | 主WBS | 週・期日 | 判定 |
