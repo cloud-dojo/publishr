@@ -16,6 +16,7 @@ WORKDIR /app
 # モノレポ内の依存パッケージをコピー（apps/api が参照するもの）
 COPY packages/shared-schema/py      packages/shared-schema/py
 COPY packages/shared-schema/fixtures packages/shared-schema/fixtures
+COPY packages/prompts                packages/prompts
 COPY agents                          agents
 COPY apps/api                        apps/api
 
