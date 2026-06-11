@@ -85,6 +85,43 @@ def test_reserve_then_conflict():
     assert client.post(f"/books/{bid}/reserve").status_code == 409
 
 
+def _a_draft_id() -> str:
+    return client.get("/books", params={"status": "draft"}).json()[0]["id"]
+
+
+def test_reserve_blocked_for_external_when_auth_required(monkeypatch):
+    """require_reserve_auth=True かつ トークン無 → 401（完全な外部はブロック）。"""
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "require_reserve_auth", True)
+    res = client.post("/api/reserve", json={"bookId": _a_draft_id()})
+    assert res.status_code == 401
+    # /books/{id}/reserve（レガシー経路）も同様に塞がる
+    assert client.post(f"/books/{_a_draft_id()}/reserve").status_code == 401
+
+
+def test_reserve_allowed_for_logged_in_when_auth_required(monkeypatch):
+    """require_reserve_auth=True でも 有効トークン（ログイン済み）なら誰でも予約可。"""
+    from publishr_api import config
+    from publishr_api.routers import api as api_mod
+
+    monkeypatch.setattr(config.settings, "require_reserve_auth", True)
+    monkeypatch.setattr(api_mod, "_verify_uid", lambda _auth: "u_loggedin")
+    res = client.post(
+        "/api/reserve",
+        json={"bookId": _a_draft_id()},
+        headers={"Authorization": "Bearer valid"},
+    )
+    assert res.status_code == 200
+    assert res.json()["status"] == "reserved"
+
+
+def test_reserve_anonymous_ok_when_auth_not_required():
+    """既定（require_reserve_auth=False）では従来どおり匿名でも予約可（mock/$0）。"""
+    res = client.post("/api/reserve", json={"bookId": _a_draft_id()})
+    assert res.status_code == 200
+
+
 def test_feedback_updates():
     published = client.get("/books", params={"status": "published"}).json()[0]
     bid = published["id"]

@@ -10,6 +10,7 @@ from ..errors import NotFoundError
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import FeedbackInput, ReadingStateInput
 from ..services import feedback_service, reading_service, reservation_service, write_queue
+from .api import require_reserve_uid
 
 router = APIRouter(prefix="/books", tags=["books"])
 
@@ -33,7 +34,9 @@ def get_book(book_id: str, repo: RepositoryProtocol = Depends(get_repository)) -
 
 @router.post("/{book_id}/reserve", response_model=Book)
 async def reserve_book(
-    book_id: str, repo: RepositoryProtocol = Depends(get_repository)
+    book_id: str,
+    repo: RepositoryProtocol = Depends(get_repository),
+    _uid: str = Depends(require_reserve_uid),  # fail-closed: 課金時は認証必須
 ) -> Book:
     book = reservation_service.reserve_now(repo, book_id)
     write_queue.enqueue(repo, book_id)
