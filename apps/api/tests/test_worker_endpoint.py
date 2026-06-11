@@ -58,3 +58,21 @@ def test_worker_write_idempotent_on_duplicate_push():
 def test_worker_write_bad_message_acks():
     assert client.post("/api/worker/write", json={"message": {}}).status_code == 204
     assert client.post("/api/worker/write", json={}).status_code == 204
+
+
+def test_worker_runs_blocking_asyncio_job_without_nested_loop(monkeypatch):
+    """process_write_job が内部で asyncio.run（実Vertex本文生成）を呼んでも、async worker の
+    実行中ループとネストせず 204 を返す（threadpool 実行）。直接呼ぶと RuntimeError になる回帰を防ぐ。"""
+    import asyncio
+
+    called = {"ok": False}
+
+    def fake_job(repo, book_id):  # vertex 経路の run_body_loop_vertex と同じ asyncio.run 状況を再現
+        asyncio.run(asyncio.sleep(0))
+        called["ok"] = True
+        return None
+
+    monkeypatch.setattr(reservation_service, "process_write_job", fake_job)
+    res = client.post("/api/worker/write", json=_push("b_any"))
+    assert res.status_code == 204
+    assert called["ok"] is True
