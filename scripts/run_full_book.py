@@ -47,6 +47,26 @@ def _upsert_web_fixture(book_dict: dict) -> None:
     _WEB_FIXTURES.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _upsert_firestore(book_dict: dict, persona, owner_uid: str) -> None:
+    """生成本＋著者を **ライブFirestore** に upsert（live demo 用・owner スコープ）。
+
+    本は owner_uid 所有で books/{id} に、著者は global の personas/{id} に置く（web は personas を
+    owner 非依存で読む）。表紙PNGは apps/web/public/covers/ にあり App Hosting が配信する。
+    """
+    import firebase_admin  # noqa: PLC0415
+    from firebase_admin import firestore  # noqa: PLC0415
+
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app()
+    db = firestore.client()
+    doc = dict(book_dict)
+    doc["ownerUid"] = owner_uid
+    db.collection("books").document(doc["id"]).set(doc)
+    if persona is not None:
+        db.collection("personas").document(persona.id).set(persona.model_dump(by_alias=True))
+    print(f"✅ Firestore upsert: books/{doc['id']} owner={owner_uid} / personas/{persona.id if persona else '-'}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="本番相当の1冊（実Vertex本文＋実Imagen表紙）を生成・閲覧反映")
     parser.add_argument("--src-book", default="b_makasekata", help="元本ID（agenda/persona/planを使う）")
@@ -55,6 +75,11 @@ def main() -> int:
     parser.add_argument("--chars", type=int, default=6000, help="各章の目標文字数（PUBLISHR_BODY_CHARS_PER_CHAPTER）")
     parser.add_argument("--rounds", type=int, default=1, help="最高改稿ラウンド（編集長⇄著者）")
     parser.add_argument("--no-imagen", action="store_true", help="表紙Imagenをスキップ（本文のみ）")
+    parser.add_argument(
+        "--firestore-owner",
+        default=None,
+        help="指定時、生成本をライブFirestoreのこのownerUidにもupsert（live demo用・要ADC）",
+    )
     args = parser.parse_args()
 
     _ensure_vertex_env()
@@ -109,6 +134,8 @@ def main() -> int:
         }
     )
     _upsert_web_fixture(base)
+    if args.firestore_owner:
+        _upsert_firestore(base, persona, args.firestore_owner)
     total_sec = time.monotonic() - t0
     print(f"\n✅ web mock fixtures に {args.dst_id} を反映（body {len(body)}字・cover={cover_url}）")
     print(f"⏱ 計時: 本文 {body_sec:.0f}秒 ＋ 表紙 {cover_sec:.0f}秒 ＝ 合計 {total_sec:.0f}秒", flush=True)
