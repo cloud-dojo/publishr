@@ -25,6 +25,13 @@
   rejectionFeedback に「どの観点が弱く、どう直すべきか」を具体的に書く。
 - 一般論的・ありきたり・観測不在・独りよがりは強く減点。読者のリアルな局面に踏み込むほど加点。
 - ③は subMarket の marketGap が企画に具体反映されているかを見る。
+- themeKind=serendipity の企画では、①読者局面の的中度は「業務テーマへの直撃」や「③での課題接続」を
+  要求しない（③が読者の悩みに触れないのは仕様）。①は、テーマ・章立てが読者の嗜好・許容度
+  （readingGenres・readingBehavior・serendipityTolerance）と整合し、読者の置かれた立場に普遍的に
+  資する学びを提供できているかで測る。
+  serendipity は教養体験そのものが価値であり、即効解決・ハウツー化・型化への翻訳を要求してはならない
+  （それは honmei の役割）。読書体力・受容リスクへの懸念は正当な減点・差し戻し理由になるが、
+  その場合の rejectionFeedback は語り口・分量・構成（ストーリー・対話形式等）の工夫を求める形で書く。
 - 「必ず1回却下」のような演出はしない。閾値で自然に裁く。出力は LeaderVerdict のJSONのみ。
 ```
 
@@ -38,6 +45,18 @@
   "decision": "approve",
   "rejectionFeedback": null,
   "approvedPlan": { "proposalId": "plan_misa_01", "...": "（PlanProposal全フィールド）" }
+}
+// serendipity の採点例（①は読み替え＝業務直撃でなく嗜好・許容度との整合で測る。
+// 例: 業務外の歴史教養テーマでも、読み切りストーリー形式が「事例・ストーリーで学ぶ」嗜好と
+// 整合していれば①は高くつける。whyNowForYou が課題に触れないのは仕様であり減点しない）
+{
+  "round": 2,
+  "score": 90,
+  "scoreBreakdown": { "relevance": 23, "differentiation": 22, "researchUse": 24, "titleHook": 21 },
+  "belowFloor": false,
+  "decision": "approve",
+  "rejectionFeedback": null,
+  "approvedPlan": { "proposalId": "plan_sakura_serendipity_02", "...": "（業務外の興亡史テーマ×読み切りストーリー形式のPlanProposal）" }
 }
 ```
 
