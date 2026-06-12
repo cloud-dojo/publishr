@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from .config import settings
 from .errors import ConflictError, NotFoundError
 from .routers import api, auth, books, personas, pipeline, plans, users, worker
+from .services.rate_limit import RateLimitError
 
 app = FastAPI(title="Publishr BFF", version="0.0.0")
 
@@ -29,6 +30,11 @@ async def _not_found_handler(_request: Request, exc: NotFoundError) -> JSONRespo
 @app.exception_handler(ConflictError)
 async def _conflict_handler(_request: Request, exc: ConflictError) -> JSONResponse:
     return JSONResponse(status_code=409, content={"error": exc.message})
+
+
+@app.exception_handler(RateLimitError)
+async def _rate_limit_handler(_request: Request, exc: RateLimitError) -> JSONResponse:
+    return JSONResponse(status_code=exc.status, content={"error": exc.message})
 
 
 def _health() -> dict:

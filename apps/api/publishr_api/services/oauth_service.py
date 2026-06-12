@@ -12,6 +12,8 @@ import base64
 import hashlib
 import hmac
 import json
+import secrets
+import threading
 from dataclasses import dataclass, field
 from urllib.parse import urlencode
 
@@ -62,10 +64,10 @@ def sign_state(uid: str, *, secret: str, now: float, nonce: str = "") -> str:
     return f"{body}.{_b64url_encode(sig)}"
 
 
-def verify_state(
+def verify_state_payload(
     state: str, *, secret: str, now: float, max_age_sec: int = DEFAULT_STATE_TTL_SEC
-) -> str:
-    """state を検証して uid を返す。署名不一致・期限切れ・形式不正は StateError。"""
+) -> dict:
+    """state を検証して `{uid, iat, nonce}` を返す。署名不一致・期限切れ・形式不正は StateError。"""
     try:
         body, sig_b64 = state.split(".", 1)
     except ValueError as exc:
@@ -89,7 +91,43 @@ def verify_state(
         raise StateError("state の有効期限が切れています")
     if iat - now > _CLOCK_SKEW_SEC:
         raise StateError("state の発行時刻が不正です")
-    return uid
+    return {"uid": uid, "iat": iat, "nonce": str(payload.get("nonce", ""))}
+
+
+def verify_state(
+    state: str, *, secret: str, now: float, max_age_sec: int = DEFAULT_STATE_TTL_SEC
+) -> str:
+    """state を検証して uid を返す（後方互換）。nonce も要るときは verify_state_payload。"""
+    return verify_state_payload(state, secret=secret, now=now, max_age_sec=max_age_sec)["uid"]
+
+
+class NonceStore:
+    """OAuth state の nonce を単回化する（replay 防止・C4.9）。インメモリ・スレッド安全。
+
+    `consume(nonce)` は初回 True、2回目以降は False（=replay）。nonce 無しも False（単回化
+    できないため拒否）。`ttl_sec` 経過分は掃除して肥大を防ぐ（state TTL と同じ）。
+    注意: 1プロセス内のみ。マルチインスタンスでは共有ストアが要る（C4.9残・PKCE/cookie束縛も別途）。
+    """
+
+    def __init__(self, *, ttl_sec: float = DEFAULT_STATE_TTL_SEC) -> None:
+        self._ttl = float(ttl_sec)
+        self._lock = threading.Lock()
+        self._used: dict[str, float] = {}
+
+    def consume(self, nonce: str, *, now: float) -> bool:
+        if not nonce:
+            return False
+        with self._lock:
+            for n in [n for n, t in self._used.items() if now - t > self._ttl]:
+                del self._used[n]
+            if nonce in self._used:
+                return False
+            self._used[nonce] = now
+            return True
+
+    def reset(self) -> None:
+        with self._lock:
+            self._used.clear()
 
 
 def build_auth_url(
@@ -100,9 +138,14 @@ def build_auth_url(
     secret: str,
     now: float,
     scopes: list[str] | None = None,
-    nonce: str = "",
+    nonce: str | None = None,
 ) -> tuple[str, str]:
-    """Google 同意画面 URL と署名 state を作る（refresh_token 取得のため offline）。"""
+    """Google 同意画面 URL と署名 state を作る（refresh_token 取得のため offline）。
+
+    nonce 未指定なら毎回ランダム生成（callback で単回化＝replay 防止・C4.9）。
+    """
+    if nonce is None:
+        nonce = secrets.token_urlsafe(16)
     state = sign_state(uid, secret=secret, now=now, nonce=nonce)
     params = {
         "client_id": client_id,

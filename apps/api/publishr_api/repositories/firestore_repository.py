@@ -96,6 +96,44 @@ class FirestoreRepository:
         self._db.collection(self._BOOKS).document(book.id).set(data)
         return book
 
+    def reserve_book_atomic(
+        self, book_id: str, *, owner_uid: str = "", max_concurrent: int = 5
+    ) -> Book:
+        """Firestore transaction で「count確認 → 条件付き draft→reserved」を原子化（I-20）。
+
+        owner の reserved+writing 件数を txn 内で数え、cap 未満かつ draft のときだけ遷移する。
+        レースで6冊目が通る/同一draftが二重に reserved になるのを防ぐ。ownerUid+status の
+        複合インデックスを要求された場合はエラーURLに従い firestore.indexes.json へ追加（C3.2）。
+        """
+        from firebase_admin import firestore as fb_firestore  # noqa: PLC0415
+
+        from ..errors import ConflictError, NotFoundError  # noqa: PLC0415
+
+        owner = owner_uid or self._owner_uid
+        book_ref = self._db.collection(self._BOOKS).document(book_id)
+
+        @fb_firestore.transactional
+        def _txn(txn) -> Book:
+            snap = book_ref.get(transaction=txn)
+            if not snap.exists:
+                raise NotFoundError(f"book {book_id} が見つかりません")
+            data = self._raw(snap)
+            if data.get("status") != "draft":
+                raise ConflictError(f"予約できません（現在の状態: {data.get('status')}）")
+            q = self._db.collection(self._BOOKS).where("status", "in", ["reserved", "writing"])
+            if owner:
+                q = q.where("ownerUid", "==", owner)
+            active = sum(1 for _ in q.stream(transaction=txn))
+            if active >= max_concurrent:
+                raise ConflictError(
+                    f"同時に予約できるのは最大{max_concurrent}冊までです（予約中の本を読み終えてから）"
+                )
+            txn.update(book_ref, {"status": "reserved"})
+            data["status"] = "reserved"
+            return Book.model_validate(data)
+
+        return _txn(self._db.transaction())
+
     # ── plans ──────────────────────────────────────────────────────────────
 
     def list_plans(self) -> list[Plan]:
