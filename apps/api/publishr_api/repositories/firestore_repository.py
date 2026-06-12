@@ -139,6 +139,15 @@ class FirestoreRepository:
         doc = self._db.collection(self._USERS).document(user_id).get()
         return self._to_user(doc) if doc.exists else None
 
+    def upsert_user(self, user: User) -> User:
+        """connectedSources 等を更新。merge=True で既存フィールド（profile 等）を保持する。
+
+        OAuth callback / Drive Picker のサーバ書込で使う（生トークンは Firestore に置かない）。
+        """
+        data = user.model_dump(by_alias=True, exclude_none=True)
+        self._db.collection(self._USERS).document(user.id).set(data, merge=True)
+        return user
+
     # ── private helpers ────────────────────────────────────────────────────
 
     @staticmethod

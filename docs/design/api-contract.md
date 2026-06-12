@@ -174,10 +174,21 @@ await updateDoc(doc(db, "users", uid), { favoriteAuthors: arrayRemove(existingEn
 ### 4-2. `GET /api/auth/google/callback`
 - Googleからのリダイレクト受け口（`?code=...&state=...`）。
 - 処理：`state`検証 → `uid` 復元 → 認可コードをトークンに交換 → **refresh_token を Secret Manager に保存**（G1-5＝Secret Managerで確定済・2026-06-03。生トークンを平文でFirestoreに置かない）→ `users/{uid}.connectedSources.{drive,calendar,tasks}.enabled=true` を更新。
-- Response：フロントの設定完了画面へリダイレクト。
+- Response：フロントの設定完了画面（`{webApp}/connect?connected=1`）へ `302` リダイレクト。
+- 失敗：`state` 検証不能 → `403`／code 交換失敗 → `400`／OAuth 未設定（`PUBLISHR_OAUTH_STATE_SECRET`・`GOOGLE_OAUTH_CLIENT_ID` 空）→ `503`。code・トークンはログに出さない。
 
 > **保存先＝Secret Manager で確定**（G1-5・`open-issues.md` 決着ログ／`infra/gcp-setup-log.md`）。MVPは個人＋テストモードのため当人のトークン1組で足りる。
+> **【実装メモ 2026-06-12・一瀬】** `/start`・`/callback` は BFF（`apps/api` `routers/auth.py`）に実装済み。state＝HMAC署名・uid紐付き・既定10分。トークン保存は `oauth_token_store`＝`file`（既定・`.secrets/oauth_tokens/{uid}.json`・observe 共有）/`secret_manager`（本番・G1-5）で切替。要 env: `GOOGLE_OAUTH_CLIENT_ID`/`SECRET`・`PUBLISHR_OAUTH_STATE_SECRET`・`PUBLISHR_OAUTH_REDIRECT_URI`・`PUBLISHR_WEB_APP_URL`。スコープは観測（`resolve_scopes()`・`PUBLISHR_GOOGLE_SCOPES`）と一致＝保存トークンを観測がそのまま使える。
 > **Driveの最小権限**: `drive.file` はアプリがDrive全体を走査できない前提で使う。観測対象はGoogle Pickerでユーザーが選んだフォルダ/ファイルIDに限定し、`connectedSources.drive.folderIds[]` はサーバ書き込み・本人readにする。
+
+### 4-3. `POST /api/connect/drive-folders`（Drive Picker サーバ書込・C1.1.2）
+- Header: `Authorization: Bearer <Firebase ID token>`（本人のみ・サーバ書込）。
+- Body（camelCase）：`{ "folderIds": ["<Picker で選んだフォルダID>"], "labels": [{ "folderId": "...", "label": "業務" }]? }`
+- 処理：uid 検証 → `users/{uid}.connectedSources.drive.folderIds[]`（＋任意 `labels[]`）をサーバ保存。folderId にクォート/バックスラッシュ混入は `400`（observe の Drive クエリ `q=` 保護）。
+- Response（200）：`{ "ok": true, "connectedSources": { "drive": { "enabled", "folderIds", "labels" }, ... } }`
+- **鉄田の Picker UI への握り**：Picker で選択 → このエンドポイントへ `folderIds` を POST（Firestore 直書きでなくサーバ書込＝§4-1 注記）。接続状態（`enabled`/`folderIds`）はフロントが `users/{uid}` を read して表示。`/api/auth/google/start` は `{ "authUrl" }` を返すので `window.location` で遷移。drive-folders は本人のみ（mock以外は uid 必須）・件数上限50・folderId 不正文字は400。
+
+> **【残ハードニング・C4.9/G1-21】** 実トークン本番化の前に: ①**state リプレイ/ブラウザ束縛**＝現状は HMAC署名＋短命TTLのみ（同一 uid の正規 /start が直近にあったことは保証するが、開始ブラウザとの束縛は無い）。nonce クッキー or PKCE（要サーバ側 code_verifier 保持）で round-trip を束縛する。②**レート制限**＝`/start`・`/callback`・`/drive-folders` は未制限（callback は Google token 交換＋Secret Manager version 追加のコスト）。③**drive スコープ**＝実装既定は `drive.readonly`（フォルダ列挙に必要・restricted）。本文の `drive.file`（最小権限）はフォルダ列挙と非互換のため、デモは `PUBLISHR_GOOGLE_SCOPES` で drive を外す運用（calendar+tasks）。
 
 ---
 

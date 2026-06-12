@@ -31,15 +31,21 @@ def _resolve_now(now_arg: str | None, source: str) -> datetime:
     return datetime.now(JST) if source == "google" else DEMO_NOW
 
 
-def _build_source(source: str):
+def _build_source(source: str, uid: str | None = None):
     if source == "fixture":
         from publishr_agents.observe import FixtureObservationSource
 
         return FixtureObservationSource()
     if source == "google":
-        from publishr_agents.observe.google_source import GoogleObservationSource
+        from publishr_agents.observe.google_source import (
+            GoogleObservationSource,
+            load_credentials_for_uid,
+        )
 
-        return GoogleObservationSource()
+        # --uid 指定時は Web OAuth（callback が token_store に保存）の per-uid トークンを使う。
+        # 未指定なら CLI ブートストラップの単一ファイル（load_credentials）にフォールバック。
+        creds = load_credentials_for_uid(uid) if uid else None
+        return GoogleObservationSource(credentials=creds)
     raise SystemExit(f"unknown --source={source!r}（fixture|google）")
 
 
@@ -47,6 +53,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="C1.1 STEP0 観測ツール 実行")
     parser.add_argument("--user", default="u_sakura", help="対象ユーザーID（fixtures/users.json）")
     parser.add_argument("--source", default="fixture", choices=["fixture", "google"])
+    parser.add_argument(
+        "--uid",
+        default=None,
+        help="Web OAuth の per-uid 保存トークンで取得（callback 経由・--source google 時）",
+    )
     parser.add_argument("--now", default=None, help="観測基準時刻 ISO8601（±14日窓の中心・省略時はデモアンカー/実時刻）")
     parser.add_argument(
         "--folder-id",
@@ -72,7 +83,7 @@ def main() -> int:
         user = user.model_copy(update={"connected_sources": new_cs})
 
     now = _resolve_now(args.now, args.source)
-    source = _build_source(args.source)
+    source = _build_source(args.source, args.uid)
 
     from publishr_agents.observe import collect_observation
 
