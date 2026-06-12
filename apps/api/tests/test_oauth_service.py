@@ -52,6 +52,33 @@ def test_verify_rejects_future_iat():
         oauth_service.verify_state(state, secret=SECRET, now=10_000.0 - 5_000)
 
 
+def test_build_auth_url_generates_random_single_use_nonce():
+    """nonce 未指定なら毎回ランダム＝state が変わる（callback で単回化する前提・C4.9）。"""
+    url1, s1 = oauth_service.build_auth_url(
+        "u_sakura", client_id="c", redirect_uri="r", secret=SECRET, now=1000.0
+    )
+    _url2, s2 = oauth_service.build_auth_url(
+        "u_sakura", client_id="c", redirect_uri="r", secret=SECRET, now=1000.0
+    )
+    assert s1 != s2  # nonce が違うので state も違う
+    p = oauth_service.verify_state_payload(s1, secret=SECRET, now=1001.0)
+    assert p["uid"] == "u_sakura" and p["nonce"]  # nonce が入っている
+
+
+def test_verify_state_payload_returns_uid_and_nonce():
+    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=1000.0, nonce="abc")
+    p = oauth_service.verify_state_payload(state, secret=SECRET, now=1005.0)
+    assert p == {"uid": "u_sakura", "iat": 1000, "nonce": "abc"}
+
+
+def test_nonce_store_single_use():
+    store = oauth_service.NonceStore()
+    assert store.consume("n1", now=100.0) is True
+    assert store.consume("n1", now=101.0) is False  # 2回目＝replay
+    assert store.consume("", now=102.0) is False  # nonce 無しは拒否
+    assert store.consume("n2", now=103.0) is True  # 別 nonce は可
+
+
 def test_build_auth_url_contains_required_params():
     url, state = oauth_service.build_auth_url(
         "u_sakura",

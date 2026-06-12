@@ -75,7 +75,7 @@ async def api_reserve(
 ) -> Book:
     """本を予約する（draft → reserved → writing → published タイマー起動）。
     フロント: firestore-provider.ts POST /api/reserve { bookId }"""
-    book = reservation_service.reserve_now(repo, payload.book_id)
+    book = reservation_service.reserve_now(repo, payload.book_id, owner_uid=_uid)
     write_queue.enqueue(repo, payload.book_id)
     return book
 

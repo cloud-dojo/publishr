@@ -38,7 +38,7 @@ async def reserve_book(
     repo: RepositoryProtocol = Depends(get_repository),
     _uid: str = Depends(require_reserve_uid),  # fail-closed: 課金時は認証必須
 ) -> Book:
-    book = reservation_service.reserve_now(repo, book_id)
+    book = reservation_service.reserve_now(repo, book_id, owner_uid=_uid)
     write_queue.enqueue(repo, book_id)
     return book
 

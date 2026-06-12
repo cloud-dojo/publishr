@@ -30,12 +30,16 @@ from ..deps import get_repository
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import DriveFoldersInput
 from ..services import oauth_service
+from ..services.rate_limit import auth_limiter
 from ..services.token_store import get_token_store
 from .api import _verify_uid  # 既存の Firebase IDトークン検証を再利用
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["auth"])
+
+# OAuth state の nonce 単回化（replay 防止・C4.9）。プロセス内で共有。テストは reset()。
+nonce_store = oauth_service.NonceStore()
 
 
 def _oauth_ready() -> bool:
@@ -53,6 +57,7 @@ def google_start(authorization: Optional[str] = Header(default=None)) -> dict:
     uid = _verify_uid(authorization)
     if not uid:
         raise HTTPException(status_code=401, detail="ログインが必要です（Google 連携には認証が必要）")
+    auth_limiter.hit(f"oauth_start:{uid}", now=time.time())  # C4.9 連打制限（→429）
     auth_url, _state = oauth_service.build_auth_url(
         uid,
         client_id=settings.google_oauth_client_id,
@@ -100,13 +105,18 @@ def google_callback(
     if not _oauth_ready():
         raise HTTPException(status_code=503, detail="OAuth 連携は未設定です")
     try:
-        uid = oauth_service.verify_state(
+        payload = oauth_service.verify_state_payload(
             state, secret=settings.oauth_state_secret, now=time.time()
         )
     except oauth_service.StateError as exc:
         # 生 state はログに出さない（理由種別のみ）。
         logger.warning("oauth callback rejected: %s", type(exc).__name__)
         raise HTTPException(status_code=403, detail="state 検証に失敗しました") from exc
+    # nonce 単回化（同じ callback の再生＝replay を弾く・C4.9）。
+    if not nonce_store.consume(payload["nonce"], now=time.time()):
+        logger.warning("oauth callback rejected: nonce replay/missing")
+        raise HTTPException(status_code=403, detail="state 検証に失敗しました")
+    uid = payload["uid"]
     try:
         result = oauth_service.exchange_code(
             code,
@@ -155,6 +165,7 @@ def set_drive_folders(
 ) -> dict:
     """Picker で選んだフォルダIDを connectedSources.drive.folderIds[] にサーバ保存する。"""
     uid = _resolve_connect_uid(authorization)
+    auth_limiter.hit(f"drive_folders:{uid}", now=time.time())  # C4.9 連打制限（→429）
     user = repo.get_user(uid)
     if user is None:
         raise HTTPException(status_code=404, detail="ユーザーが見つかりません")

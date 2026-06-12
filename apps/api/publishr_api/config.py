@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     allowed_trigger_uids: list[str] = []
     # 同一 uid の連打を防ぐ最小間隔（秒）。mock は高速だが暴発防止に効かせる。
     trigger_min_interval_sec: float = 5.0
+    # OAuth start / Drive フォルダ書込のレート制限（C4.9・同一 uid の最小間隔・秒）。
+    auth_min_interval_sec: float = Field(
+        default=3.0, validation_alias="PUBLISHR_AUTH_MIN_INTERVAL_SEC"
+    )
 
     # ── Google OAuth 連携（Drive/Calendar/Tasks・api-contract.md §4）─────────────
     # OAuth クライアント（GCP コンソール発行・Web アプリ）。空なら start は 503。

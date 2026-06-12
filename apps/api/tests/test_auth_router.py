@@ -31,8 +31,12 @@ def _fresh(monkeypatch):
         config.settings, "oauth_redirect_uri", "https://api.example/api/auth/google/callback"
     )
     monkeypatch.setattr(config.settings, "web_app_url", "https://web.example")
+    auth_mod.auth_limiter.reset()
+    auth_mod.nonce_store.reset()
     yield
     get_repository.cache_clear()
+    auth_mod.auth_limiter.reset()
+    auth_mod.nonce_store.reset()
 
 
 # ── start ────────────────────────────────────────────────────────────────────
@@ -55,6 +59,14 @@ def test_start_returns_auth_url(monkeypatch):
     url = res.json()["authUrl"]
     assert url.startswith("https://accounts.google.com/o/oauth2/v2/auth?")
     assert "access_type=offline" in url
+
+
+def test_start_rate_limited_on_rapid_repeat(monkeypatch):
+    """同一 uid の /start 連打は 429（C4.9）。"""
+    monkeypatch.setattr(auth_mod, "_verify_uid", lambda _a: "u_sakura")
+    h = {"Authorization": "Bearer x"}
+    assert client.get("/api/auth/google/start", headers=h).status_code == 200
+    assert client.get("/api/auth/google/start", headers=h).status_code == 429
 
 
 # ── callback ───────────────────────────────────────────────────────────────────
@@ -99,7 +111,7 @@ def test_callback_success_updates_user_and_redirects(monkeypatch):
             token_json='{"refresh_token":"r"}', granted_scopes=granted
         ),
     )
-    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=time.time())
+    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=time.time(), nonce="n_cb")
     res = client.get(
         "/api/auth/google/callback",
         params={"code": "authcode", "state": state},
@@ -139,7 +151,7 @@ def test_callback_preserves_existing_folder_ids(monkeypatch):
             token_json="{}", granted_scopes=[ALL_SCOPES["calendar"]]
         ),
     )
-    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=time.time())
+    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=time.time(), nonce="n_cb")
     res = client.get(
         "/api/auth/google/callback",
         params={"code": "c", "state": state},
@@ -157,13 +169,32 @@ def test_callback_400_on_exchange_failure(monkeypatch):
 
     monkeypatch.setattr(auth_mod, "get_token_store", lambda: _NullStore())
     monkeypatch.setattr(oauth_service, "exchange_code", _boom)
-    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=time.time())
+    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=time.time(), nonce="n_cb")
     res = client.get(
         "/api/auth/google/callback",
         params={"code": "c", "state": state},
         follow_redirects=False,
     )
     assert res.status_code == 400
+
+
+def test_callback_replay_rejected(monkeypatch):
+    """同じ state(nonce) の callback 再生は2回目を 403（C4.9 単回化）。"""
+    from publishr_agents.observe.google_source import ALL_SCOPES
+
+    monkeypatch.setattr(auth_mod, "get_token_store", lambda: _NullStore())
+    monkeypatch.setattr(
+        oauth_service,
+        "exchange_code",
+        lambda code, **kw: oauth_service.TokenExchangeResult(
+            token_json="{}", granted_scopes=[ALL_SCOPES["calendar"]]
+        ),
+    )
+    state = oauth_service.sign_state("u_sakura", secret=SECRET, now=time.time(), nonce="n_replay")
+    p = {"code": "c", "state": state}
+    assert client.get("/api/auth/google/callback", params=p, follow_redirects=False).status_code == 302
+    # 再生（同じ nonce）→ 単回化で 403。
+    assert client.get("/api/auth/google/callback", params=p, follow_redirects=False).status_code == 403
 
 
 # ── drive-folders（C1.1.2 Picker サーバ書込）─────────────────────────────────────
