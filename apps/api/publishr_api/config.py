@@ -71,5 +71,29 @@ class Settings(BaseSettings):
     # 同一 uid の連打を防ぐ最小間隔（秒）。mock は高速だが暴発防止に効かせる。
     trigger_min_interval_sec: float = 5.0
 
+    # ── Google OAuth 連携（Drive/Calendar/Tasks・api-contract.md §4）─────────────
+    # OAuth クライアント（GCP コンソール発行・Web アプリ）。空なら start は 503。
+    google_oauth_client_id: str = Field(default="", validation_alias="GOOGLE_OAUTH_CLIENT_ID")
+    google_oauth_client_secret: str = Field(
+        default="", validation_alias="GOOGLE_OAUTH_CLIENT_SECRET"
+    )
+    # Google 同意後の戻り先（このBFFの `/api/auth/google/callback`）。本番は実URLを設定。
+    oauth_redirect_uri: str = Field(
+        default="http://localhost:8000/api/auth/google/callback",
+        validation_alias="PUBLISHR_OAUTH_REDIRECT_URI",
+    )
+    # state（CSRF/uid 紐付け）の HMAC 署名鍵。空なら OAuth 連携は無効（start/callback は 503）。
+    oauth_state_secret: str = Field(default="", validation_alias="PUBLISHR_OAUTH_STATE_SECRET")
+    # callback 完了後にフロントを戻す先（`/connect?connected=1`）。
+    web_app_url: str = Field(
+        default="http://localhost:3000", validation_alias="PUBLISHR_WEB_APP_URL"
+    )
+    # refresh token 保存先: file（既定・.secrets）/ secret_manager（本番・G1-5）。
+    oauth_token_store: str = Field(default="file", validation_alias="PUBLISHR_OAUTH_TOKEN_STORE")
+    # secret_manager 利用時の GCP プロジェクト。
+    secret_manager_project: str = Field(
+        default="", validation_alias="PUBLISHR_SECRET_MANAGER_PROJECT"
+    )
+
 
 settings = Settings()

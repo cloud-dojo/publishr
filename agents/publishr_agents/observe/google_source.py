@@ -51,10 +51,52 @@ def resolve_scopes() -> list[str]:
 SCOPES = list(ALL_SCOPES.values())
 
 DEFAULT_TOKEN_PATH = ".secrets/google_token.json"
+DEFAULT_TOKEN_DIR = ".secrets/oauth_tokens"
 
 
 def token_path() -> Path:
     return Path(os.environ.get("PUBLISHR_GOOGLE_TOKEN", DEFAULT_TOKEN_PATH))
+
+
+def token_dir() -> Path:
+    """Web OAuth 経路の per-uid トークン保存ディレクトリ（gitignore 済 .secrets 配下）。
+
+    BFF の callback（token_store）が書き、observe（load_credentials_for_uid）が読む共有パス。
+    CLI ブートストラップの単一ファイル（token_path）とは別管理。
+    """
+    return Path(os.environ.get("PUBLISHR_GOOGLE_TOKEN_DIR", DEFAULT_TOKEN_DIR))
+
+
+def per_uid_token_path(uid: str) -> Path:
+    """uid ごとのトークンJSONパス。uid をサニタイズしてディレクトリ脱出を防ぐ。"""
+    safe = "".join(c if (c.isalnum() or c in "-_") else "_" for c in uid)
+    return token_dir() / f"{safe}.json"
+
+
+def load_credentials_for_uid(uid: str):
+    """Web OAuth で保存した per-uid トークンから資格情報を読み、期限切れなら refresh する。
+
+    callback（token_store）が `per_uid_token_path(uid)` に書いたトークンを使う。CLI 単一ファイル
+    経路（load_credentials）とは別。未配置は FileNotFoundError（パス検査が先＝google extra 非依存）。
+    """
+    path = per_uid_token_path(uid)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"uid={uid} の Google トークンがありません: {path}。"
+            " 先に UI の『Googleアカウントで連携する』→ /api/auth/google/callback を通してください。"
+        )
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+
+    creds = Credentials.from_authorized_user_file(str(path), resolve_scopes())
+    if not creds.valid and creds.refresh_token:
+        creds.refresh(Request())
+        path.write_text(creds.to_json(), encoding="utf-8")
+        try:
+            path.chmod(0o600)  # refresh 書き戻しでも本人のみ読める権限を維持
+        except OSError:
+            pass
+    return creds
 
 
 def load_credentials():

@@ -64,3 +64,8 @@ class MockRepository:
 
     def get_user(self, user_id: str) -> Optional[User]:
         return self._users.get(user_id)
+
+    def upsert_user(self, user: User) -> User:
+        """connectedSources 等の更新（イミュータブル差し替え）。"""
+        self._users[user.id] = user
+        return user
