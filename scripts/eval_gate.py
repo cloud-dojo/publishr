@@ -8,16 +8,19 @@ judge backend:
   - mock（既定・CI常用）: 決定的ルーブリック採点（4観点×0-25・$0・オフライン）。
     判定根拠は readerProfile への踏み込み(relevance)/固有局面の差別化(differentiation)/
     観測grounding(researchUse)/タイトルのエッジ(titleHook)。`kind`/`expectedBand` は読まない。
-  - vertex（PUBLISHR_LLM=vertex 相当）: 実 LLM-judge（GEAP）＝本番ゲート。B3.2 と併設・課金。
-    offline からは未配線（live ゲート作業）。
+  - vertex: 実 Gemini Pro judge（eval_judge.md ルーブリック・readerProfile＋plan を採点）。
+    **課金**。`GOOGLE_GENAI_USE_VERTEXAI=TRUE`＋`GOOGLE_CLOUD_PROJECT/LOCATION`（ADC）が要る。
+    C5.4 再現性・C5.5 閾値微調整はこの backend で実データを測る。GEAP（vertexai.evaluation）は
+    本番ゲート寄せの別案として温存。
 
-  uv run python -m scripts.eval_gate            # mock ゲート（$0）
-  uv run python -m scripts.eval_gate --backend vertex   # 実judge（GEAP・live）
+  uv run python -m scripts.eval_gate            # mock ゲート（$0・CI常用）
+  uv run python -m scripts.eval_gate --backend vertex   # 実judge（Gemini Pro・課金）
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 from pathlib import Path
@@ -103,11 +106,115 @@ def judge_plan_mock(plan: dict[str, Any]) -> dict[str, int]:
     }
 
 
-def judge_plan(plan: dict[str, Any], *, backend: str = "mock") -> dict[str, int]:
+def _normalize_judge_json(data: dict[str, Any]) -> dict[str, int]:
+    """judge の JSON（`{score, scoreBreakdown:{4観点}, ...}`）を mock 互換 dict に整える。
+
+    各観点 0-25 / total 0-100 にクランプ。score 欠落時は4観点の合計で埋める。run_gate は
+    total のみ使うが、breakdown 表示・再現性ハーネスのため全キーを返す。
+    """
+    bd = data.get("scoreBreakdown") or {}
+
+    def _axis(key: str) -> int:
+        try:
+            return max(0, min(25, int(bd.get(key, 0))))
+        except (TypeError, ValueError):
+            return 0
+
+    relevance = _axis("relevance")
+    differentiation = _axis("differentiation")
+    research = _axis("researchUse")
+    title = _axis("titleHook")
+    raw = relevance + differentiation + research + title
+    try:
+        total = int(data.get("score", raw))
+    except (TypeError, ValueError):
+        total = raw
+    total = max(0, min(100, total))
+    return {
+        "relevance": relevance,
+        "differentiation": differentiation,
+        "researchUse": research,
+        "titleHook": title,
+        "raw": raw,
+        # 実judgeはルーブリックで中レンジ評価する＝mockのようなコード側clampはしない。
+        "serendipity": False,
+        "total": total,
+    }
+
+
+def _loads_judge_response(text: Optional[str]) -> dict[str, Any]:
+    """実judgeの応答テキストを JSON 化する。
+
+    `resp.text` は None になりうる（finish_reason=SAFETY/MAX_TOKENS 等で text part 無し）ので
+    明確に失敗させる。response_mime_type=json でも稀に ```json フェンスが付くので剥がす。
+    """
+    if not text or not isinstance(text, str):
+        raise ValueError("judge 応答が空です（SAFETY/MAX_TOKENS 等で本文なしの可能性）")
+    s = text.strip()
+    if s.startswith("```"):
+        s = s[3:]
+        if s[:4].lower() == "json":
+            s = s[4:]
+        if s.endswith("```"):
+            s = s[:-3]
+        s = s.strip()
+    return json.loads(s)
+
+
+def judge_plan_vertex(
+    plan: dict[str, Any], *, reader_profile: Optional[dict[str, Any]] = None
+) -> dict[str, int]:
+    """実 Gemini Pro で企画を採点する（eval_judge.md ルーブリック・4観点×0-25）。
+
+    **GCP課金**。`GOOGLE_GENAI_USE_VERTEXAI=TRUE` ＋ `GOOGLE_CLOUD_PROJECT/LOCATION`
+    （既定 publishr-498123 / asia-northeast1）が要る。judge は readerProfile＋plan を読むので
+    （eval_judge.md I/O）reader_profile を渡す。temperature は `PUBLISHR_JUDGE_TEMPERATURE`
+    （既定0.0＝最も再現的・C5.4 はこれを上げて実ブレを測る）。mock 互換 dict を返す。
+    """
+    from google import genai  # noqa: PLC0415 — vertex 経路のみ遅延 import（mock床を汚さない）
+    from google.genai import types  # noqa: PLC0415
+
+    from publishr_agents.llm.provider import model_for  # noqa: PLC0415
+    from publishr_agents.prompts.loader import load_prompt  # noqa: PLC0415
+
+    os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "TRUE")
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "publishr-498123")
+    location = os.environ.get("GOOGLE_CLOUD_LOCATION", "asia-northeast1")
+    model = model_for("eval_judge")  # role→モデルの単一正本（PUBLISHR_MODEL_PRO で上書き可）
+    temperature = float(os.environ.get("PUBLISHR_JUDGE_TEMPERATURE", "0.0"))
+
+    doc = load_prompt("eval_judge")
+    system = doc.system
+    if doc.good_example:  # few-shot 校正アンカー（registry: eval_judge は fewshot 常時ON）
+        system += "\n\n# 採点例（校正アンカー）\n" + doc.good_example
+
+    parts: list[str] = []
+    if reader_profile is not None:
+        parts.append("読者プロファイル:\n" + json.dumps(reader_profile, ensure_ascii=False, indent=2))
+    parts.append("採点対象の企画(PlanProposal):\n" + json.dumps(plan, ensure_ascii=False, indent=2))
+    parts.append("上記を4観点（各0〜25）で採点し、指定のJSONのみを返してください。")
+
+    client = genai.Client(vertexai=True, project=project, location=location)
+    resp = client.models.generate_content(
+        model=model,
+        contents="\n\n".join(parts),
+        config=types.GenerateContentConfig(
+            system_instruction=system,
+            temperature=temperature,
+            response_mime_type="application/json",
+        ),
+    )
+    return _normalize_judge_json(_loads_judge_response(resp.text))
+
+
+def judge_plan(
+    plan: dict[str, Any],
+    *,
+    backend: str = "mock",
+    reader_profile: Optional[dict[str, Any]] = None,
+) -> dict[str, int]:
     if backend == "vertex":
-        raise NotImplementedError(
-            "GEAP/vertex judge は live ゲート作業（B3.2 併設・課金）。offline は backend=mock を使う。"
-        )
+        return judge_plan_vertex(plan, reader_profile=reader_profile)
     return judge_plan_mock(plan)
 
 
@@ -118,10 +225,11 @@ def load_eval_set(path: Path = EVAL_SET) -> dict[str, Any]:
 
 def run_gate(eval_set: dict[str, Any], *, backend: str = "mock") -> dict[str, Any]:
     """cases を採点し、expectedBand 内なら正答。ceil(87.5%) 正答で通過。borderline は診断専用。"""
+    reader_profile = eval_set.get("readerProfile")
     cases = eval_set.get("cases", [])
     results: list[dict[str, Any]] = []
     for c in cases:
-        scored = judge_plan(c["plan"], backend=backend)
+        scored = judge_plan(c["plan"], backend=backend, reader_profile=reader_profile)
         lo, hi = c["expectedBand"]
         results.append(
             {
@@ -136,7 +244,7 @@ def run_gate(eval_set: dict[str, Any], *, backend: str = "mock") -> dict[str, An
 
     diagnostics: list[dict[str, Any]] = []
     for c in eval_set.get("borderlineCases", []):
-        scored = judge_plan(c["plan"], backend=backend)
+        scored = judge_plan(c["plan"], backend=backend, reader_profile=reader_profile)
         lo, hi = c["expectedBand"]
         diagnostics.append(
             {

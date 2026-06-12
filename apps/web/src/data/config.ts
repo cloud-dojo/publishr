@@ -23,6 +23,19 @@ export const firebaseConfig = {
 export const isFirebaseConfigured: boolean =
   firebaseConfig.apiKey !== "" && firebaseConfig.projectId !== "";
 
+// Google Picker（Drive フォルダ選択 UI・C4.1）の公開設定。
+// すべて公開値（クライアント側・GCP コンソールで origin/referrer を制限する）。
+// apphosting.yaml / .env.local の NEXT_PUBLIC_GOOGLE_* で投入する:
+//   NEXT_PUBLIC_GOOGLE_CLIENT_ID … OAuth 2.0 クライアントID（Web アプリ）
+//   NEXT_PUBLIC_GOOGLE_API_KEY   … API キー（Picker の developerKey・要 Picker API 有効化）
+//   NEXT_PUBLIC_GOOGLE_APP_ID    … GCP プロジェクト番号（任意）
+export const googleClientId: string = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
+export const googleApiKey: string = process.env.NEXT_PUBLIC_GOOGLE_API_KEY ?? "";
+export const googleAppId: string = process.env.NEXT_PUBLIC_GOOGLE_APP_ID ?? "";
+
+// Picker を出せる構成か（client_id ＋ API キーが揃っているか）。未設定なら UI は隠す。
+export const isPickerConfigured: boolean = googleClientId !== "" && googleApiKey !== "";
+
 // ローカルの Firebase エミュレータ（Auth/Firestore）に接続するか。
 // dev:emulator スクリプトが NEXT_PUBLIC_USE_FIREBASE_EMULATOR=1 を立てる。
 export const useFirebaseEmulator: boolean =

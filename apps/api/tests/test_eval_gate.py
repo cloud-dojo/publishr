@@ -11,8 +11,6 @@ import copy
 import importlib.util
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[3]
 SPEC = importlib.util.spec_from_file_location("eval_gate", ROOT / "scripts" / "eval_gate.py")
 assert SPEC and SPEC.loader
@@ -71,9 +69,70 @@ def test_serendipity_clamped_to_midrange():
     assert 30 <= b["total"] <= 60
 
 
-def test_vertex_backend_not_wired_offline():
-    with pytest.raises(NotImplementedError):
-        eval_gate.judge_plan({"tentativeTitle": "x"}, backend="vertex")
+def test_normalize_judge_json_maps_breakdown():
+    """実judgeのJSON（score＋scoreBreakdown）を mock 互換 dict に整える。"""
+    out = eval_gate._normalize_judge_json(
+        {
+            "score": 84,
+            "scoreBreakdown": {
+                "relevance": 24,
+                "differentiation": 21,
+                "researchUse": 20,
+                "titleHook": 19,
+            },
+        }
+    )
+    assert out["total"] == 84
+    assert out["relevance"] == 24 and out["titleHook"] == 19
+    assert out["raw"] == 84
+    assert out["serendipity"] is False
+
+
+def test_normalize_judge_json_clamps_and_falls_back():
+    """観点は0-25にクランプ、score欠落時は4観点合計で埋める。"""
+    out = eval_gate._normalize_judge_json({"scoreBreakdown": {"relevance": 99}})
+    assert out["relevance"] == 25  # 0-25 にクランプ
+    assert out["total"] == out["raw"] == 25  # score 欠落→合計で代替
+
+
+def test_loads_judge_response_strips_fences():
+    """response_mime_type=json でも稀に付く ```json フェンスを剥がして parse できる。"""
+    fenced = '```json\n{"score": 71, "scoreBreakdown": {"relevance": 18}}\n```'
+    out = eval_gate._loads_judge_response(fenced)
+    assert out["score"] == 71
+    assert eval_gate._loads_judge_response('{"score": 50}')["score"] == 50
+
+
+def test_loads_judge_response_rejects_empty():
+    """resp.text が None/空（SAFETY/MAX_TOKENS 等）は明確に失敗させる。"""
+    import pytest as _pytest
+
+    for bad in (None, "", "   "):
+        with _pytest.raises(ValueError):
+            eval_gate._loads_judge_response(bad)
+
+
+def test_vertex_backend_dispatches_to_vertex_judge(monkeypatch):
+    """backend=vertex は judge_plan_vertex に委譲し reader_profile を渡す（実呼び出しはしない）。"""
+    seen: dict[str, object] = {}
+
+    def _fake_vertex(plan, *, reader_profile=None):
+        seen["plan"] = plan
+        seen["reader_profile"] = reader_profile
+        return {
+            "relevance": 0,
+            "differentiation": 0,
+            "researchUse": 0,
+            "titleHook": 0,
+            "raw": 0,
+            "serendipity": False,
+            "total": 77,
+        }
+
+    monkeypatch.setattr(eval_gate, "judge_plan_vertex", _fake_vertex)
+    out = eval_gate.judge_plan({"tentativeTitle": "x"}, backend="vertex", reader_profile={"r": 1})
+    assert out["total"] == 77
+    assert seen["reader_profile"] == {"r": 1}
 
 
 def test_main_returns_zero_on_pass():
