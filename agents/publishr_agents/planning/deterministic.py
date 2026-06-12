@@ -44,8 +44,14 @@ def derive_theme(profile: ReaderProfile3Layer, theme_kind: str = "honmei") -> st
 
 
 def _serendipity_theme(profile: ReaderProfile3Layer) -> str:
-    """関心の"隣"へずらした off-axis テーマ（橋渡し理由は owner が書く）。"""
-    return "意思決定とリーダーシップを古典・歴史から問い直す（教養としての一冊）"
+    """関心の"隣"へずらした off-axis テーマ（距離2設計・2026-06-12検証で確定）。
+
+    設計原則: テーマ文字列に読者の challenges 語彙（リーダーシップ/意思決定/マネジメント等の
+    能力名詞）を含めず、主語を素材側（歴史・人物・出来事）に置く。局面との接点は
+    サブA（同型対応）と owner（章立ての内部材料）が後段で架けるため、テーマが先回りしない。
+    読者ごとの個人化（関心グラフからの導出）はハッカソン後スコープ。
+    """
+    return "国や組織は、なぜ栄え、なぜ滅びるのか——興亡の歴史に学ぶ（教養としての一冊）"
 
 
 def _niche(profile: ReaderProfile3Layer) -> str:
