@@ -1,7 +1,7 @@
 """決定的なオフライン観測ソース。
 
-`packages/shared-schema/fixtures/{drive,calendar,tasks}.json`（佐倉美咲のキュレーション
-済みサンプル）から ObservationBundle を組み立てる。実Google APIを叩かず、開発・CI・
+`packages/shared-schema/fixtures/personas/{userId}/{drive,calendar,tasks}.json`
+から ObservationBundle を組み立てる。実Google APIを叩かず、開発・CI・
 Eval・デモ再現性のための既定ソース。
 """
 
@@ -24,8 +24,8 @@ from publishr_schema import (
 from .transform import build_observation_bundle, folder_label_map
 
 
-def _load(name: str) -> dict:
-    path: Path = fixtures_dir() / name
+def _load_persona(user_id: str, name: str) -> dict:
+    path: Path = fixtures_dir() / "personas" / user_id / name
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
@@ -42,7 +42,7 @@ class FixtureObservationSource:
             folder_ids = set(cs.drive.folder_ids)
             label_of = folder_label_map(cs)
 
-        drive_raw = _load("drive.json").get("files", [])
+        drive_raw = _load_persona(user.id, "drive.json").get("files", [])
         drive_files = [
             DriveFile(
                 file_id=f["id"],
@@ -56,7 +56,7 @@ class FixtureObservationSource:
             if f.get("folderId") in folder_ids
         ]
 
-        cal_raw = _load("calendar.json").get("events", [])
+        cal_raw = _load_persona(user.id, "calendar.json").get("events", [])
         calendar_events = [
             CalendarEvent(
                 title=e.get("summary", ""),
@@ -68,7 +68,7 @@ class FixtureObservationSource:
             for e in cal_raw
         ]
 
-        tasks_raw = _load("tasks.json").get("tasks", [])
+        tasks_raw = _load_persona(user.id, "tasks.json").get("tasks", [])
         tasks_items = [
             TaskItem(
                 title=t.get("title", ""),

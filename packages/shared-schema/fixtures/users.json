@@ -20,5 +20,27 @@
       "calendar": { "enabled": true, "calendarIds": ["primary"] },
       "tasks": { "enabled": true }
     }
+  },
+  {
+    "id": "u_mita",
+    "name": "三田 裕樹",
+    "initial": "三",
+    "profile": {
+      "role": "IT系SaaS企業・プロダクト本部長／PM2名・エンジニア8名",
+      "workTheme": "レガシー移行Phase 2・A社更新交渉・競合AI対抗",
+      "estimatedInterests": ["プロダクト戦略", "顧客成功", "技術経営", "組織設計", "採用"],
+      "serendipityTolerance": "中"
+    },
+    "initialProfile": null,
+    "favoriteAuthors": [],
+    "connectedSources": {
+      "drive": {
+        "enabled": true,
+        "folderIds": ["fld_work"],
+        "labels": [{ "folderId": "fld_work", "label": "業務" }]
+      },
+      "calendar": { "enabled": true, "calendarIds": ["primary"] },
+      "tasks": { "enabled": true }
+    }
   }
 ]

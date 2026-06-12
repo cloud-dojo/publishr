@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "description": "Publishr デモ用 Calendar fixture。三田裕樹の直近1ヶ月(2026-06-01〜06-30)。STEP0 ObservationBundle の calendar.events に対応。ビジネスイベントのみ・個人メモなし。",
+    "persona": "三田裕樹（46歳・IT系SaaS企業 プロダクト本部長・従業員200名）",
+    "source": "STEP1再現性検証用（2026-06-12作成）",
+    "scope": "calendar.readonly",
+    "timeZone": "Asia/Tokyo",
+    "fieldNote": "summary=タイトル（STEP0でtitleにマップ）。attendeesCount/recurringはObservationBundleシグナル。"
+  },
+  "events": [
+    { "id": "cal_001", "summary": "エンジニアリング全体会議", "start": "2026-06-01T10:00:00+09:00", "end": "2026-06-01T11:00:00+09:00", "attendeesCount": 12, "recurring": true, "description": "" },
+    { "id": "cal_002", "summary": "A社 カスタマーサクセス定例", "start": "2026-06-01T14:00:00+09:00", "end": "2026-06-01T15:00:00+09:00", "attendeesCount": 4, "recurring": true, "description": "" },
+    { "id": "cal_003", "summary": "A社 QBR（Quarterly Business Review）", "start": "2026-06-01T16:00:00+09:00", "end": "2026-06-01T17:30:00+09:00", "attendeesCount": 5, "recurring": false, "description": "" },
+
+    { "id": "cal_004", "summary": "Phase 2 アーキレビュー", "start": "2026-06-05T10:00:00+09:00", "end": "2026-06-05T12:00:00+09:00", "attendeesCount": 6, "recurring": false, "description": "" },
+    { "id": "cal_005", "summary": "採用面接（バックエンドエンジニア候補）", "start": "2026-06-05T15:00:00+09:00", "end": "2026-06-05T16:00:00+09:00", "attendeesCount": 3, "recurring": false, "description": "" },
+
+    { "id": "cal_006", "summary": "エンジニアリング全体会議", "start": "2026-06-08T10:00:00+09:00", "end": "2026-06-08T11:00:00+09:00", "attendeesCount": 12, "recurring": true, "description": "" },
+    { "id": "cal_007", "summary": "予算進捗レビュー（月次定例）", "start": "2026-06-09T14:00:00+09:00", "end": "2026-06-09T15:00:00+09:00", "attendeesCount": 4, "recurring": true, "description": "" },
+
+    { "id": "cal_008", "summary": "取締役会報告", "start": "2026-06-10T10:00:00+09:00", "end": "2026-06-10T12:00:00+09:00", "attendeesCount": 10, "recurring": true, "description": "" },
+    { "id": "cal_009", "summary": "採用面接（フルスタックエンジニア候補）", "start": "2026-06-10T15:00:00+09:00", "end": "2026-06-10T16:00:00+09:00", "attendeesCount": 3, "recurring": false, "description": "" },
+
+    { "id": "cal_010", "summary": "Phase 2 挽回計画レビュー（山田PM）", "start": "2026-06-12T10:00:00+09:00", "end": "2026-06-12T11:30:00+09:00", "attendeesCount": 3, "recurring": false, "description": "" },
+
+    { "id": "cal_011", "summary": "エンジニアリング全体会議", "start": "2026-06-15T10:00:00+09:00", "end": "2026-06-15T11:00:00+09:00", "attendeesCount": 12, "recurring": true, "description": "" },
+    { "id": "cal_012", "summary": "A社 カスタマーサクセス定例", "start": "2026-06-15T14:00:00+09:00", "end": "2026-06-15T15:00:00+09:00", "attendeesCount": 4, "recurring": true, "description": "" },
+    { "id": "cal_013", "summary": "採用面接（バックエンドエンジニア候補 2次）", "start": "2026-06-17T15:00:00+09:00", "end": "2026-06-17T16:00:00+09:00", "attendeesCount": 3, "recurring": false, "description": "" },
+
+    { "id": "cal_014", "summary": "A社 更新提案書 最終版提出 期日", "start": "2026-06-20T00:00:00+09:00", "end": "2026-06-20T00:00:00+09:00", "attendeesCount": 1, "recurring": false, "description": "期日タスク" },
+    { "id": "cal_015", "summary": "エンジニアリング全体会議", "start": "2026-06-22T10:00:00+09:00", "end": "2026-06-22T11:00:00+09:00", "attendeesCount": 12, "recurring": true, "description": "" },
+
+    { "id": "cal_016", "summary": "A社 更新交渉 最終MTG", "start": "2026-06-25T14:00:00+09:00", "end": "2026-06-25T16:00:00+09:00", "attendeesCount": 6, "recurring": false, "description": "" },
+
+    { "id": "cal_017", "summary": "予算進捗レビュー（月次定例）", "start": "2026-06-30T14:00:00+09:00", "end": "2026-06-30T15:00:00+09:00", "attendeesCount": 4, "recurring": true, "description": "" }
+  ]
+}
