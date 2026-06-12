@@ -36,9 +36,18 @@ def _all_cases(eval_set: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def score_runs(plan: dict[str, Any], *, backend: str, runs: int) -> list[int]:
-    """同一企画を runs 回採点したスコアの列を返す。"""
-    return [judge_plan(plan, backend=backend)["total"] for _ in range(runs)]
+def score_runs(
+    plan: dict[str, Any],
+    *,
+    backend: str,
+    runs: int,
+    reader_profile: dict[str, Any] | None = None,
+) -> list[int]:
+    """同一企画を runs 回採点したスコアの列を返す（実judgeは readerProfile も渡す）。"""
+    return [
+        judge_plan(plan, backend=backend, reader_profile=reader_profile)["total"]
+        for _ in range(runs)
+    ]
 
 
 def summarize(scores: list[int], band: list[int] | tuple[int, int]) -> dict[str, Any]:
@@ -70,9 +79,12 @@ def summarize(scores: list[int], band: list[int] | tuple[int, int]) -> dict[str,
 def run_reproducibility(
     eval_set: dict[str, Any], *, backend: str = "mock", runs: int = 5
 ) -> list[dict[str, Any]]:
+    reader_profile = eval_set.get("readerProfile")
     rows: list[dict[str, Any]] = []
     for c in _all_cases(eval_set):
-        scores = score_runs(c["plan"], backend=backend, runs=runs)
+        scores = score_runs(
+            c["plan"], backend=backend, runs=runs, reader_profile=reader_profile
+        )
         stats = summarize(scores, c["expectedBand"])
         rows.append(
             {

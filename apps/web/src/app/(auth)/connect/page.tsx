@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { apiUrl, isFirebaseConfigured } from "@/data/config";
+import { apiUrl, isFirebaseConfigured, isPickerConfigured } from "@/data/config";
 import { setSourceConnected, type ConnectSource } from "@/data/user-writes";
 import { getFirebaseAuth } from "@/lib/firebase";
+import { pickDriveFolders, type PickedFolder } from "@/lib/googlePicker";
 
 const SOURCES: { key: ConnectSource; icon: string; name: string; desc: string }[] = [
   { key: "drive", icon: "📁", name: "Google Drive", desc: "業務資料・関心フォルダのテキストを読み取ります。" },
@@ -20,6 +21,9 @@ export default function ConnectPage() {
     calendar: false,
     tasks: false,
   });
+  const [folders, setFolders] = useState<PickedFolder[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const onConnect = async () => {
     if (isFirebaseConfigured) {
@@ -41,6 +45,36 @@ export default function ConnectPage() {
       setSourceConnected("tasks", true),
     ]);
     setConnected({ drive: true, calendar: true, tasks: true });
+  };
+
+  // Drive Picker: フォルダ選択 → サーバ保存（POST /api/connect/drive-folders・C1.1.2）。
+  const onPickFolders = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const picked = await pickDriveFolders();
+      if (picked.length === 0) return; // キャンセル
+      const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+      const res = await fetch(`${apiUrl}/api/connect/drive-folders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          folderIds: picked.map((f) => f.folderId),
+          labels: picked.map((f) => ({ folderId: f.folderId, label: "" })),
+        }),
+      });
+      if (!res.ok) throw new Error(`フォルダ保存に失敗しました (${res.status})`);
+      setFolders(picked);
+      await setSourceConnected("drive", true);
+      setConnected((c) => ({ ...c, drive: true }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "フォルダ選択に失敗しました");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const allConnected = connected.drive && connected.calendar && connected.tasks;
@@ -72,6 +106,35 @@ export default function ConnectPage() {
         <button type="button" className="btn btn--gold btn--block" onClick={onConnect}>
           {allConnected ? "再連携する" : "Googleアカウントで連携する"}
         </button>
+
+        {isPickerConfigured && (
+          <div className="connect-picker">
+            <button
+              type="button"
+              className="btn btn--ghost btn--block"
+              onClick={onPickFolders}
+              disabled={busy}
+            >
+              {busy ? "選択中…" : folders.length ? "Driveフォルダを選び直す" : "Driveの対象フォルダを選ぶ"}
+            </button>
+            {folders.length > 0 && (
+              <ul className="connect-list" aria-label="選択したフォルダ">
+                {folders.map((f) => (
+                  <li key={f.folderId} className="connect-item">
+                    <span className="ci-icon">🗂️</span>
+                    <span className="ci-meta">
+                      <span className="ci-name">{f.name}</span>
+                    </span>
+                    <span className="ci-state on">対象</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {error && <p className="auth-note">⚠ {error}</p>}
+
         <button type="button" className="btn btn--ghost btn--block" onClick={() => router.push("/")}>
           {allConnected ? "書店へ進む →" : "あとで連携する"}
         </button>

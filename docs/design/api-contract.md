@@ -188,6 +188,8 @@ await updateDoc(doc(db, "users", uid), { favoriteAuthors: arrayRemove(existingEn
 - Response（200）：`{ "ok": true, "connectedSources": { "drive": { "enabled", "folderIds", "labels" }, ... } }`
 - **鉄田の Picker UI への握り**：Picker で選択 → このエンドポイントへ `folderIds` を POST（Firestore 直書きでなくサーバ書込＝§4-1 注記）。接続状態（`enabled`/`folderIds`）はフロントが `users/{uid}` を read して表示。`/api/auth/google/start` は `{ "authUrl" }` を返すので `window.location` で遷移。drive-folders は本人のみ（mock以外は uid 必須）・件数上限50・folderId 不正文字は400。
 
+> **【Picker UI 実装済・2026-06-12】** フロントに実装済み（`apps/web/src/lib/googlePicker.ts`＝GIS でブラウザ用 access token→`google.picker` でフォルダ選択→このendpointへPOST、`(auth)/connect/page.tsx` 統合、型は `src/types/google-picker.d.ts`）。`isPickerConfigured` が真のときだけ UI を出す。**要 env（公開値・GCPコンソール）**: `NEXT_PUBLIC_GOOGLE_CLIENT_ID`（OAuth Web クライアント）・`NEXT_PUBLIC_GOOGLE_API_KEY`（Picker の developerKey・**Picker API 有効化**）・`NEXT_PUBLIC_GOOGLE_APP_ID`（プロジェクト番号・任意）。Picker は `drive.readonly`（observe と一致）。**残＝GCPで Picker API 有効化＋キー発行＋ `apphosting.yaml` 投入＋ブラウザ実機 QA**。
+
 > **【残ハードニング・C4.9/G1-21】** 実トークン本番化の前に: ①**state リプレイ/ブラウザ束縛**＝現状は HMAC署名＋短命TTLのみ（同一 uid の正規 /start が直近にあったことは保証するが、開始ブラウザとの束縛は無い）。nonce クッキー or PKCE（要サーバ側 code_verifier 保持）で round-trip を束縛する。②**レート制限**＝`/start`・`/callback`・`/drive-folders` は未制限（callback は Google token 交換＋Secret Manager version 追加のコスト）。③**drive スコープ**＝実装既定は `drive.readonly`（フォルダ列挙に必要・restricted）。本文の `drive.file`（最小権限）はフォルダ列挙と非互換のため、デモは `PUBLISHR_GOOGLE_SCOPES` で drive を外す運用（calendar+tasks）。
 
 ---
