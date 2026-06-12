@@ -1,8 +1,9 @@
 """C5.3 Eval judge ゲートのテスト（決定的・$0）。
 
 mock judge が eval_set.yaml の cases を expectedBand 通りに採点（高関連≥70/ずれ≤40/
-セレンディピティ30-60）し、8件中7件規則でゲート通過/停止を判定すること、borderline は
-診断専用でゲート計算外であることを検証する。正本: docs/planning/wbs.md C5.3 / I-21。
+セレンディピティ≥70※①を嗜好整合に読み替え・2026-06-12に旧中レンジ30-60を廃止）し、
+8件中7件規則でゲート通過/停止を判定すること、borderline は診断専用でゲート計算外で
+あることを検証する。正本: docs/planning/wbs.md C5.3 / I-21。
 """
 
 from __future__ import annotations
@@ -36,7 +37,7 @@ def test_judge_bands_each_kind_on_real_set():
     for r in by_kind["low_relevance"]:
         assert r["score"] <= 40, r
     for r in by_kind["serendipity"]:
-        assert 30 <= r["score"] <= 60, r
+        assert r["score"] >= 70, r  # ①読み替え（嗜好整合）で本命と同じ閾値70
 
 
 def test_gate_fails_when_below_required():
@@ -56,17 +57,33 @@ def test_borderline_is_diagnostic_not_in_gate():
     assert rep["total"] == 8  # borderline は分母に含めない
 
 
-def test_serendipity_clamped_to_midrange():
-    """教養/越境シグナルのある企画は raw が高くても中レンジに収まる（rubric）。"""
+def test_serendipity_with_fit_passes_threshold():
+    """①読み替え: 嗜好整合（読み切り/ストーリー形式）と素材反映のあるserendipityは70以上。"""
     plan = {
-        "tentativeTitle": "ブランドと宗教の構造",  # 宗教=serendipity
-        "diffFromMarket": "教養から捉え直す越境型",
-        "whyNowForYou": "中期戦略メモ(drive/07)に基づく",
-        "coreMessage": "信仰とブランドの相似",
+        "tentativeTitle": "もしあなたが千年共和国の元首なら？——興亡の歴史ショート・ストーリー",
+        "readerSituation": "新任2ヶ月で7名のチームとブランドの方向性を預かる",
+        "whyNowForYou": "歴史上の組織が分岐点で何をし、なぜ栄え滅びたかを読み切りストーリーで追体験できるから",
+        "coreMessage": "盛衰は権限の配分と意思決定で決まるという視座を獲得する",
+        "diffFromMarket": "学術的大著と格言集に二極化した市場の隙間（marketGap）を読み切りの疑似体験で埋める教養",
+        "keyInsights": ["包括的制度と収奪的制度"],
+        "agendaOutline": ["ローマの分岐点", "ヴェネツィアの黄昏"],
     }
     b = eval_gate.judge_plan_mock(plan)
     assert b["serendipity"] is True
-    assert 30 <= b["total"] <= 60
+    assert b["total"] >= 70
+
+
+def test_serendipity_without_fit_stays_below_threshold():
+    """①読み替えでも判別力は保つ: 嗜好整合シグナルのない雑なserendipityは70未満。"""
+    plan = {
+        "tentativeTitle": "宗教の通史",
+        "diffFromMarket": "教養から捉え直す",
+        "whyNowForYou": "",
+        "coreMessage": "信仰について",
+    }
+    b = eval_gate.judge_plan_mock(plan)
+    assert b["serendipity"] is True
+    assert b["total"] < 70
 
 
 def test_normalize_judge_json_maps_breakdown():

@@ -99,15 +99,17 @@ def validate_eval_set(path: Path = EVAL_SET) -> tuple[bool, str]:
             continue
         if not case.get("plan"):
             problems.append(f"{cid}: missing plan")
-        # 帯の意味：高関連は下限>=70、ずれは上限<=40、セレンディピティは中レンジに収める。
+        # 帯の意味：高関連は下限>=70、ずれは上限<=40。
+        # セレンディピティも下限>=70（①relevanceを「嗜好・許容度との整合」に読み替えた同一閾値。
+        # 旧設計の中レンジ[30,60]は2026-06-12に廃止＝leaderと同じモノサシに統一）。
         kind = case.get("kind")
         lo, hi = band
         if kind == "high_relevance" and lo < 70:
             problems.append(f"{cid}: high_relevance lower band {lo} < 70")
         if kind == "low_relevance" and hi > 40:
             problems.append(f"{cid}: low_relevance upper band {hi} > 40")
-        if kind == "serendipity" and (lo < 20 or hi > 70):
-            problems.append(f"{cid}: serendipity band {band} outside [20,70]")
+        if kind == "serendipity" and lo < 70:
+            problems.append(f"{cid}: serendipity lower band {lo} < 70")
 
     ok = not problems
     detail = "8 cases well-formed" if ok else "; ".join(problems)

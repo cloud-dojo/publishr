@@ -4,7 +4,7 @@
 > I/O正本: `エージェントIO契約.md` §8／`MVPスコープ.md` §9。実データ＝`eval/eval_set.yaml`（8件＋境界2件）。fixtures＝`packages/shared-schema/fixtures/`。
 
 ## I/O
-- **入力**: Eval Set 1件＝`{ id, readerProfile, plan, expectedBand, kind }`（expectedBand: high≥70 / low≤40 / serendipity 30〜60）
+- **入力**: Eval Set 1件＝`{ id, readerProfile, plan, expectedBand, kind }`（expectedBand: high≥70 / low≤40 / serendipity≥70※①読み替え）
 - **出力**: `{ id, score, scoreBreakdown, reason }`
 
 ## 4観点ルーブリック（企画リーダーと共通・各0〜25）
@@ -16,13 +16,18 @@
 ①読者局面の的中度 ②既製ビジネス書との差別化 ③調査（実トレンド）の反映度 ④タイトルの惹き。
 4観点の合計を総合スコア（0〜100）とする。
 - 一般論的（最大公約数的）なら減点。読者のリアルな状況に踏み込むほど加点（課題§2-1①と直結）。
+- themeKind=serendipity の企画では、①読者局面の的中度は「業務テーマへの直撃」や「whyNowForYouでの
+  課題接続」を要求しない（課題に触れないのは仕様）。①は、テーマ・章立てが読者の嗜好・許容度
+  （readingGenres・readingBehavior・serendipityTolerance）と整合し、読者の置かれた立場に普遍的に
+  資する学びを提供できているかで測る。即効解決・ハウツー化を要求しない。
 - 企画リーダーと同一基準で採点する（モノサシを1つに統一）。
 出力は { "id", "score", "scoreBreakdown": {relevance,differentiation,researchUse,titleHook}, "reason" } のJSONのみ（reasonは1〜2文）。
 ```
 
 ## ゲート判定（CI・MVPスコープ §9-4）
 - 本命企画：**総合 < 70 でデプロイ停止**（1観点でも10点未満なら警告）。
-- セレンディピティ：中レンジ（30〜60目安）のレンジ外なら警告（停止しない）。
+- セレンディピティ：①読み替えの同一ルーブリックで**総合 < 70 なら警告（停止しない）**。
+  ※旧設計の中レンジ（30〜60）は2026-06-12廃止。leaderと同じモノサシ（読み替え①＋閾値70）に統一。
 - **8件中7件パス（87.5%）で通過**。
 
 ## ✅ 採点例（佐倉美咲・Eval Set 3カテゴリ）
@@ -37,10 +42,10 @@
   "scoreBreakdown": { "relevance": 7, "differentiation": 9, "researchUse": 8, "titleHook": 9 },
   "reason": "「新入社員のビジネスマナー入門」は課長の佐倉さんの局面と無関係。一般論で観測反映なし。期待帯low内で正しく落下。" }
 
-// セレンディピティ適正（中レンジ・期待 30〜60）
-{ "id": "eval_07", "score": 48,
-  "scoreBreakdown": { "relevance": 12, "differentiation": 14, "researchUse": 11, "titleHook": 11 },
-  "reason": "「リーダーのための東洋哲学入門」は直近の困りごとから一歩遠いが、関心の隣接として刺さりうる。中レンジで適正。" }
+// セレンディピティ適正（①読み替え・期待 high≥70）
+{ "id": "eval_07", "score": 88,
+  "scoreBreakdown": { "relevance": 22, "differentiation": 22, "researchUse": 23, "titleHook": 21 },
+  "reason": "業務外の興亡史テーマだが、①読み替え＝嗜好（事例・ストーリーで学ぶ/要点絞り）と読み切りストーリー形式が整合し、課題非言及の棚書きwhyNowForYouも仕様通り。読み替え①で高得点・正しく通過。" }
 ```
 
 ## ❌ judgeの悪い挙動 ＋ NG理由

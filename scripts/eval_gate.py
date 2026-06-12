@@ -8,6 +8,8 @@ judge backend:
   - mock（既定・CI常用）: 決定的ルーブリック採点（4観点×0-25・$0・オフライン）。
     判定根拠は readerProfile への踏み込み(relevance)/固有局面の差別化(differentiation)/
     観測grounding(researchUse)/タイトルのエッジ(titleHook)。`kind`/`expectedBand` は読まない。
+    serendipity（教養/越境シグナルで内容検知）は①③④を読み替えて採点（嗜好整合・素材反映・
+    問いかけ型フック）。閾値はhonmeiと同じ70（旧中レンジclamp[35,58]は2026-06-12廃止）。
   - vertex: 実 Gemini Pro judge（eval_judge.md ルーブリック・readerProfile＋plan を採点）。
     **課金**。`GOOGLE_GENAI_USE_VERTEXAI=TRUE`＋`GOOGLE_CLOUD_PROJECT/LOCATION`（ADC）が要る。
     C5.4 再現性・C5.5 閾値微調整はこの backend で実データを測る。GEAP（vertexai.evaluation）は
@@ -45,9 +47,17 @@ _EVIDENCE_KW = [
     "就任", "戦略メモ", "企画書",
 ]
 _MISS_MARK = "あえて外す"
-# 教養/越境（業務直結でない隣接領域）シグナル。rubric は中レンジ(30〜60)で評価する。
+# 教養/越境（業務外の教養テーマ）シグナル＝serendipity検知。
 _SERENDIPITY_KW = ["越境", "教養", "隣接領域", "宗教", "哲学", "思想", "信仰"]
-_SERENDIPITY_BAND = (35, 58)
+# serendipity の①読み替え（2026-06-12・旧中レンジclamp[35,58]を廃止）:
+# ①は「嗜好・許容度との整合」で測る。形式整合（読み切り/ストーリー/追体験等＝
+# readingGenres「事例・ストーリーで学ぶ」への適合）と読者語彙との接点密度を見る。
+# ③は観測groundingでなく「教養素材（歴史・宗教等のフレーム・marketGap）の反映」を見る
+# （whyNowForYou が課題・観測に言及しないのは棚書き文法＝仕様のため）。
+_SERENDIPITY_FIT_KW = ["ストーリー", "読み切り", "追体験", "疑似体験", "対話", "事例", "物語", "ショート"]
+_SERENDIPITY_MATERIAL_KW = [
+    "歴史", "興亡", "宗教", "哲学", "思想", "古典", "文明", "制度", "共同体", "信仰", "物語", "marketGap",
+]
 
 
 def _count(text: str, kws: list[str]) -> int:
@@ -70,37 +80,45 @@ def judge_plan_mock(plan: dict[str, Any]) -> dict[str, int]:
     parts += [str(x) for x in plan.get("agendaOutline", [])]
     body = " ".join(parts)
 
-    # ①relevance: 読者の局面語の出現密度
-    relevance = min(25, _occ(body, _RELEVANCE_KW) * 3)
+    sbody = body + " " + diff
+    serendipity = _count(sbody, _SERENDIPITY_KW) > 0
 
     # ②differentiation: 固有局面への具体化。specific 語があれば「〜でなく一般的」の否定形に騙されない。
+    # （honmei/serendipity 共通）
     spec = _count(diff, _SPECIFIC_DIFF_KW)
     if spec == 0 and any(g in diff for g in _GENERIC_DIFF_KW):
         differentiation = 5
     else:
         differentiation = min(25, 8 + spec * 6)
 
-    # ③researchUse: 観測 grounding（あえて外す=未接地）
-    if _MISS_MARK in why:
-        research = 2
+    if serendipity:
+        # ①読み替え: 嗜好・許容度との整合（形式整合シグナル＋読者語彙との接点密度）
+        relevance = min(25, 9 + _count(sbody, _SERENDIPITY_FIT_KW) * 3 + min(_occ(sbody, _RELEVANCE_KW), 8))
+        # ③読み替え: 教養素材（歴史・宗教等のフレーム・marketGap）の反映
+        research = min(25, 9 + _count(sbody, _SERENDIPITY_MATERIAL_KW) * 3)
+        # ④: 問いかけ型のフック＋素材・形式の固有性
+        question = 4 if ("？" in title or "?" in title or "なぜ" in title) else 0
+        title_hook = min(25, 9 + question + _count(title, _SERENDIPITY_FIT_KW + _SERENDIPITY_MATERIAL_KW) * 3)
     else:
-        research = min(25, _count(why, _EVIDENCE_KW) * 7)
+        # ①relevance: 読者の局面語の出現密度
+        relevance = min(25, _occ(body, _RELEVANCE_KW) * 3)
+        # ③researchUse: 観測 grounding（あえて外す=未接地）
+        if _MISS_MARK in why:
+            research = 2
+        else:
+            research = min(25, _count(why, _EVIDENCE_KW) * 7)
+        # ④titleHook: タイトルの局面エッジ。一般的な定型語は減点。
+        title_hook = min(25, 6 + _occ(title, _RELEVANCE_KW) * 6)
+        if any(g in title for g in _GENERIC_TITLE_KW):
+            title_hook = min(title_hook, 8)
 
-    # ④titleHook: タイトルの局面エッジ。一般的な定型語は減点。
-    title_hook = min(25, 6 + _occ(title, _RELEVANCE_KW) * 6)
-    if any(g in title for g in _GENERIC_TITLE_KW):
-        title_hook = min(title_hook, 8)
-
-    raw = relevance + differentiation + research + title_hook
-    # rubric: 教養/越境のセレンディピティ企画は業務直結でない＝中レンジに収める。
-    serendipity = _count(body + " " + diff, _SERENDIPITY_KW) > 0
-    total = max(_SERENDIPITY_BAND[0], min(_SERENDIPITY_BAND[1], raw)) if serendipity else raw
+    total = relevance + differentiation + research + title_hook
     return {
         "relevance": relevance,
         "differentiation": differentiation,
         "researchUse": research,
         "titleHook": title_hook,
-        "raw": raw,
+        "raw": total,
         "serendipity": serendipity,
         "total": total,
     }
@@ -136,7 +154,7 @@ def _normalize_judge_json(data: dict[str, Any]) -> dict[str, int]:
         "researchUse": research,
         "titleHook": title,
         "raw": raw,
-        # 実judgeはルーブリックで中レンジ評価する＝mockのようなコード側clampはしない。
+        # 実judgeは eval_judge.md のルーブリック側で serendipity ①読み替えを行う＝コード側では何もしない。
         "serendipity": False,
         "total": total,
     }
@@ -285,10 +303,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     for r in rep["results"]:
         mark = "PASS" if r["passed"] else "FAIL"
         b = r["breakdown"]
-        clamp = f" raw={b['raw']}→中レンジclamp" if b.get("serendipity") and b["raw"] != r["score"] else ""
+        srd = " serendipity=①読み替え" if b.get("serendipity") else ""
         print(
             f"{mark} {r['id']} [{r['kind']}] score={r['score']} band={r['band']} "
-            f"(rel={b['relevance']} diff={b['differentiation']} res={b['researchUse']} title={b['titleHook']}{clamp})"
+            f"(rel={b['relevance']} diff={b['differentiation']} res={b['researchUse']} title={b['titleHook']}{srd})"
         )
     print("-- borderline（閾値70近傍の判別力・診断専用・ゲート対象外） --")
     for d in rep["diagnostics"]:
