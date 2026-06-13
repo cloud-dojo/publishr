@@ -117,8 +117,64 @@ def load_credentials():
     return creds
 
 
+# Drive 上にアップロードされた Office(OOXML) ファイル。Google ネイティブ(vnd.google-apps.*)は
+# export 経路、これらは get_media で生バイトを取り _extract_office_text でローカル解析する。
+DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+PPTX_MIME = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+_OFFICE_MIMES = {DOCX_MIME: "docx", XLSX_MIME: "xlsx", PPTX_MIME: "pptx"}
+
+
+def _extract_office_text(mime: str, data: bytes) -> str:
+    """Office(OOXML) 生バイト列 → 本文テキスト（python-docx/openpyxl/python-pptx・lazy import）。
+
+    非対応 mime・解析失敗は空文字に縮退（観測は本文無しでも継続）。トリムは transform 側。
+    解析ライブラリは `google` extra。テストはバイト列直接で offline 検証する。
+    """
+    kind = _OFFICE_MIMES.get(mime)
+    if kind is None:
+        return ""
+    import io
+
+    try:
+        buf = io.BytesIO(data)
+        if kind == "docx":
+            import docx
+
+            doc = docx.Document(buf)
+            return "\n".join(p.text for p in doc.paragraphs if p.text)
+        if kind == "xlsx":
+            import openpyxl
+
+            wb = openpyxl.load_workbook(buf, read_only=True, data_only=True)
+            try:
+                lines: list[str] = []
+                for ws in wb.worksheets:
+                    for row in ws.iter_rows(values_only=True):
+                        cells = [str(c) for c in row if c is not None]
+                        if cells:
+                            lines.append("\t".join(cells))
+                return "\n".join(lines)
+            finally:
+                wb.close()
+        if kind == "pptx":
+            from pptx import Presentation
+
+            prs = Presentation(buf)
+            lines = []
+            for slide in prs.slides:
+                for shape in slide.shapes:
+                    if shape.has_text_frame and shape.text_frame.text:
+                        lines.append(shape.text_frame.text)
+            return "\n".join(lines)
+    except Exception as exc:  # noqa: BLE001 — 解析失敗は本文無しに縮退（観測は継続）
+        logger.warning("office text extract failed: mime=%s err=%s", mime, exc)
+        return ""
+    return ""
+
+
 def _extract_text(drive, file: dict) -> str:
-    """Drive ファイルからテキストを抽出。Google ネイティブは text/plain で export。
+    """Drive ファイルからテキストを抽出。Google ネイティブは export、Office は get_media→ローカル解析。
 
     非ネイティブ／抽出不可は空文字（本文無しでも観測としてメタは残す）。トリムは transform 側。
     """
@@ -131,6 +187,9 @@ def _extract_text(drive, file: dict) -> str:
                 export_mime = "text/plain"
             data = drive.files().export(fileId=file["id"], mimeType=export_mime).execute()
             return data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data)
+        if mime in _OFFICE_MIMES:
+            data = drive.files().get_media(fileId=file["id"]).execute()
+            return _extract_office_text(mime, data if isinstance(data, bytes) else bytes(data))
         if mime.startswith("text/"):
             data = drive.files().get_media(fileId=file["id"]).execute()
             return data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data)

@@ -33,11 +33,31 @@ trigger_guard = TriggerGuard(
 )
 
 
+def _ensure_firebase_app() -> None:
+    """verify_id_token 前に firebase_admin app を遅延初期化（冪等・mock/firestore 両対応）。
+
+    従来 app は firestore リポジトリでしか初期化されず、mock モードでは未初期化＝verify が
+    必ず落ちて /api/auth/google/start が 401 になっていた。ここで初期化することで UI の
+    Google 連携が mock でも通る。Auth エミュレータ利用時は firebase_admin が
+    `FIREBASE_AUTH_EMULATOR_HOST` を自動参照する（projectId は emulator と一致させる）。
+    """
+    import os  # noqa: PLC0415
+
+    import firebase_admin  # noqa: PLC0415
+
+    if firebase_admin._apps:
+        return
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+    options = {"projectId": project_id} if project_id else None
+    firebase_admin.initialize_app(options=options)
+
+
 def _verify_uid(authorization: Optional[str]) -> Optional[str]:
     """Bearer の Firebase IDトークンを検証して uid を返す。無/不正なら None（記録のみ）。"""
     if authorization and authorization.startswith("Bearer "):
         token = authorization[7:]
         try:
+            _ensure_firebase_app()
             import firebase_admin.auth as fb_auth  # noqa: PLC0415
 
             decoded = fb_auth.verify_id_token(token)

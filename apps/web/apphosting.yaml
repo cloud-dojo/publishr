@@ -66,3 +66,22 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  # --- C1.1.3/C4.1: Google Drive Picker（フォルダ選択UI）公開設定（公開可・コミット可） ---
+  # OAuth クライアント(Web・publishr-498123)の client_id ＋ Picker 用 API キー(referrer/Picker限定)。
+  # API キーは本番Web origin を referrer 許可に追加済（GCP コンソール/gcloud）。
+  - variable: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+    value: "355143691286-cv63k6bouj2plhgs93qkkas3b9t6ndd7.apps.googleusercontent.com"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_GOOGLE_API_KEY
+    value: "AIzaSyASkgz0b1WEY3muGEInjvxvjIjcG5RkIUo"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_GOOGLE_APP_ID
+    value: "355143691286"
+    availability:
+      - BUILD
+      - RUNTIME
