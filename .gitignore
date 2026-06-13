@@ -25,6 +25,8 @@ venv/
 .env
 .env.local
 .env.*.local
+.env_real
+.env_real.*
 *.key.json
 service-account*.json
 local-cost-guard/

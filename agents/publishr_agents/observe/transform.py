@@ -14,6 +14,7 @@ from publishr_schema import (
     CalendarSource,
     ConnectedSources,
     DriveFile,
+    DriveFolderLabel,
     DriveSource,
     ObservationBundle,
     ReadingFB,
@@ -56,6 +57,23 @@ def keep_task(due: str | None, status: str, now: datetime, days: int = DEFAULT_W
             return False
         return within_window(due, now, days)
     return True
+
+
+def parse_folder_labels(pairs: list[str] | None) -> list[DriveFolderLabel]:
+    """CLI/設定の "folderId=ラベル" 列 → DriveFolderLabel 列（run_observe --folder-label 用）。
+
+    '=' 区切りで最初の1個のみ分割（ラベルに '=' を含められる）。前後空白はトリム。
+    '=' 無し・ID空・ラベル空は黙って無視する（folderId のみ＝ラベル未指定として扱う）。
+    """
+    out: list[DriveFolderLabel] = []
+    for raw in pairs or []:
+        if "=" not in raw:
+            continue
+        fid, label = raw.split("=", 1)
+        fid, label = fid.strip(), label.strip()
+        if fid and label:
+            out.append(DriveFolderLabel(folder_id=fid, label=label))
+    return out
 
 
 def folder_label_map(connected_sources: ConnectedSources | None) -> dict[str, str]:

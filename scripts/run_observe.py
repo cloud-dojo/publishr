@@ -7,6 +7,7 @@
 fixture は課金なし。google は実API（Drive/Calendar/Tasks の読取・LLM非使用＝課金は実質ゼロ）。
 google を使う前に `uv run python scripts/google_oauth_bootstrap.py` で同意を済ませる。
 `--folder-id`（繰り返し可）は接続元の Drive フォルダIDを一時上書きする（fixtures は変更しない・google検証用）。
+`--folder-label ID=ラベル`（繰り返し可）で上書きフォルダに folderLabel を付与できる（業務/趣味の読み分け表示用）。
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from publishr_schema import load_users
+
+from publishr_agents.observe.transform import parse_folder_labels
 
 # 水朝の本命 run を想定したデモ既定アンカー（6/5 役員報告等が窓内・run_reader と統一）。
 JST = timezone(timedelta(hours=9))
@@ -66,6 +69,13 @@ def main() -> int:
         metavar="ID",
         help="Drive の実フォルダIDで接続元を一時上書き（google検証用・繰り返し可・fixtures不変）",
     )
+    parser.add_argument(
+        "--folder-label",
+        action="append",
+        default=None,
+        metavar="ID=ラベル",
+        help="上書きフォルダに folderLabel を付与（業務/趣味の読み分け・繰り返し可・--folder-id と併用）",
+    )
     parser.add_argument("--json", action="store_true", help="ObservationBundle を JSON で出力")
     args = parser.parse_args()
 
@@ -78,9 +88,15 @@ def main() -> int:
         cs = user.connected_sources
         if cs is None or cs.drive is None:
             raise SystemExit(f"{user.id} に Drive 接続元が無いため --folder-id を適用できません")
-        new_drive = cs.drive.model_copy(update={"folder_ids": list(args.folder_id), "enabled": True})
+        drive_update = {"folder_ids": list(args.folder_id), "enabled": True}
+        labels = parse_folder_labels(args.folder_label)
+        if labels:
+            drive_update["labels"] = labels
+        new_drive = cs.drive.model_copy(update=drive_update)
         new_cs = cs.model_copy(update={"drive": new_drive})
         user = user.model_copy(update={"connected_sources": new_cs})
+    elif args.folder_label:
+        raise SystemExit("--folder-label は --folder-id と併用してください（単独指定は無効）")
 
     now = _resolve_now(args.now, args.source)
     source = _build_source(args.source, args.uid)
