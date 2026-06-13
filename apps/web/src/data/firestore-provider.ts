@@ -37,6 +37,8 @@ export class FirestoreProvider extends BaseProvider {
   private db: Firestore;
   private ownerUid: string | null = null;
   private unsubs: Array<() => void> = [];
+  // GCS退避(C3.3)された本文を一度だけ hydrate するための既取得セット。
+  private hydratedBodies = new Set<string>();
 
   constructor() {
     super();
@@ -78,6 +80,7 @@ export class FirestoreProvider extends BaseProvider {
         this.books.clear();
         snap.forEach((d) => this.books.set(d.id, { id: d.id, ...d.data() } as Book));
         this.notify();
+        void this.hydrateBodies();
       })
     );
 
@@ -133,6 +136,36 @@ export class FirestoreProvider extends BaseProvider {
   // --- 手動トリガー（デモ用）: Cloud Run API ---
   async runPipeline(userId: string): Promise<void> {
     await this.apiPost("/api/trigger/planning", { userId });
+  }
+
+  // 本文が GCS 退避（bodyUrl 有り＆body 空・C3.3）された本だけ、API でサーバ側 read して埋める。
+  // inline 運用では body が常に入っているので何もしない（mock/従来の読書導線は不変）。
+  private async hydrateBodies(): Promise<void> {
+    const targets = [...this.books.values()].filter(
+      (b) => b.bodyUrl && !b.body && !this.hydratedBodies.has(b.id)
+    );
+    for (const b of targets) {
+      this.hydratedBodies.add(b.id);
+      try {
+        const data = (await this.apiGet(`/api/books/${b.id}/body`)) as { body?: string };
+        const cur = this.books.get(b.id);
+        if (cur && data?.body) {
+          this.books.set(b.id, { ...cur, body: data.body });
+          this.notify();
+        }
+      } catch {
+        this.hydratedBodies.delete(b.id); // 失敗は次の購読更新で再試行
+      }
+    }
+  }
+
+  private async apiGet(path: string): Promise<unknown> {
+    const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+    const res = await fetch(`${apiUrl}${path}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
+    return res.json();
   }
 
   private async apiPost(path: string, body: unknown): Promise<unknown> {

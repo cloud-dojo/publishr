@@ -1242,6 +1242,9 @@ dev = [
     { name = "httpx" },
     { name = "pytest" },
 ]
+gcs = [
+    { name = "google-cloud-storage" },
+]
 secret-manager = [
     { name = "google-cloud-secret-manager" },
 ]
@@ -1252,6 +1255,7 @@ requires-dist = [
     { name = "firebase-admin", specifier = ">=6.5" },
     { name = "google-cloud-pubsub", specifier = ">=2.21" },
     { name = "google-cloud-secret-manager", marker = "extra == 'secret-manager'", specifier = ">=2.20" },
+    { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.16" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
     { name = "publishr-agents", editable = "agents" },
     { name = "publishr-schema", editable = "packages/shared-schema/py" },
@@ -1260,7 +1264,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]
-provides-extras = ["dev", "secret-manager"]
+provides-extras = ["dev", "secret-manager", "gcs"]
 
 [[package]]
 name = "publishr-schema"

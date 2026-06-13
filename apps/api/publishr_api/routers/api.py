@@ -67,6 +67,35 @@ def require_reserve_uid(authorization: Optional[str] = Header(default=None)) -> 
     return settings.demo_uid
 
 
+@router.get("/books/{book_id}/body")
+def api_get_book_body(
+    book_id: str,
+    repo: RepositoryProtocol = Depends(get_repository),
+    uid: str = Depends(_uid_from_token),
+) -> dict:
+    """本文を返す（C3.3）。GCS退避時はサーバ側で **非公開** バケットから読む（オブジェクトを晒さない）。
+
+    フロント: firestore-provider が bodyUrl 有り＆body 空の本をこの口で hydrate する。
+    所有者チェック: book.ownerUid が設定済みなら要求 uid と一致を要求（不一致は403）。
+    inline（既定/mock）は book.body をそのまま返す＝従来の読書導線は不変。
+    """
+    book = repo.get_book(book_id)
+    if book is None:
+        raise HTTPException(status_code=404, detail=f"book {book_id} が見つかりません")
+    if book.owner_uid and uid and book.owner_uid != uid:
+        raise HTTPException(status_code=403, detail="この本を読む権限がありません")
+    if settings.require_reserve_auth and not uid:
+        raise HTTPException(status_code=401, detail="ログインが必要です")
+    if book.body:
+        return {"body": book.body}
+    from ..services.body_store import get_body_store  # noqa: PLC0415
+
+    store = get_body_store()
+    if store is not None and book.body_url:
+        return {"body": store.get(book_id, book.body_url) or ""}
+    return {"body": ""}
+
+
 @router.post("/reserve", response_model=Book)
 async def api_reserve(
     payload: ReserveInput,
