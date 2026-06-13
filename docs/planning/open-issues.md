@@ -80,6 +80,10 @@
 | I-22 | **初回体験（first-run）の実15冊生成パイプライン未実装** | 🔴未（firestoreは空振り・C1依存） | 登録直後の「空→生成中→15冊」初回体験は**mockでは決定的15冊（本命10＋セレンディピティ5・`apps/web/src/data/firstRunCatalog.ts`）の時間差入荷で動作**（`runFirstRun`・生成中UI・2026-06-07）。**firestoreモードは`runFirstRun`→`/api/trigger/planning`を叩くだけで実15冊をFirestoreに書く処理が無い**ため生成中UIが空振り→45秒安全タイムアウト/手動「書店を見る」で空書店へ抜ける（詰まりはしない）。実生成は**C1.1–C1.6（モードA全STEP）＋初回まとめ生成のAPI/Job**に依存。デモはmockサンドボックスで見せる前提【WBS C4.2/C1・2026-06-07】 |
 | I-23 | **lint（make verify の lint-web）** | ✅緑（誤認訂正・2026-06-07） | 当初「赤」と起票したが `c858404` 反映前の観測に基づく**誤り**。実際は lint-web/typecheck-web ともに**緑**（`c858404` で `AuthSync.tsx` の `any` を型付け解消・`page.tsx`/`account/page.tsx` の `set-state-in-effect` は `eslint-disable` 済）。**make verify の真の赤は別件＝I-24（test-py）だった** |
 | I-24 | **デモペルソナ不整合で test-py 赤（C0.1違反）** | ✅解消（2026-06-07） | `91d3282`「users.json を佐倉美咲に統一」が **users.json だけ**を変更し、backend（`keep_notes.json`・`canned.py`・`books/plans` ownerUid・Pythonテスト群・`run_pipeline`/`schemas`/`eval_harness`/`local_smoke` 既定ID）が `u_tadokoro`（田所・製造課長30名）のまま残り、**test-py が3件赤＝C0.1ゲート違反**（WBSの「58 passed」は当時から実態と乖離）。**2026-06-07：全面的に佐倉美咲（食品マーケ課長・7名・2026/04昇格・年上部下・初の評価面談・1on1負荷）へ再オーサリングして復旧**（`3e4b03b`）。検証＝test-py **60 passed,1 skipped**／lint／typecheck／make eval 全PASS／make pipeline 緑。make smoke は Windows の OpenSSL/POSIX 環境問題で本機未実行（本件と無関係）【WBS C0.1・2026-06-07】 |
+| I-25 | **serendipity 採点の較正（読み替え①の安定性・境界帯）** | 🟡方針確定・実LLM未検証（要MTG共有） | STEP2手動検証（2026-06-12）で、leader/eval_judge の①relevance を serendipity時に「嗜好・許容度との整合」へ読み替える方針を確定（中レンジ30-60を廃止しモノサシ統一・`1bfc2ac`／一瀬合意済み）。**ただし AI Studio 実測で同一企画群の①が大きく振れた**（条項なし8→あり23・形式不備R1=8→修正R2=23）。few-shot錨（leaderにserendipity採点例1件追加）で緩和したが、**70点近傍の serendipity 企画を安定して裁けるかは未検証**。C5.4 実judge再現性（一瀬・`make eval-repro`）に serendipity ケースを含めて σ/CV を実測し、閾値運用（C5.5）で詰める。関連 G1-8/I-1/I-18/I-21【packages/prompts/{step2_plan_leader,eval_judge}.md・2026-06-12】 |
+| I-26 | **findings 書誌の実在性担保（外部API照合・groundingURL永続化）** | 🟡規律で緩和済・恒久対処は将来 | STEP2c-B/C で findings の著者名・監修者・URL/ISBN を**モデル記憶から創作する**事例を複数観測（三田: 共著者捏造／佐倉serendipity: ページID・ISBN創作）。プロンプトに実在性規律（検索取得ページのみ転記・URL組み立て禁止・確認不能は落とす）を追加し`1d27f87`で捏造ゼロを3ラン連続達成。**ただしモデルの自己申告依存＝ゼロ保証ではない**。本格運用は書誌の外部API照合（国会図書館/Google Books等）が要る。併せて grounding が返す `vertexaisearch.../grounding-api-redirect/...` URLは**有効期限ありで証跡が将来切れる**ため、保存時に正規URLへ解決する処理が要る【AGENT §4-2c・2026-06-12】 |
+| I-27 | **serendipity テーマ選定の個人化（全読者共通ハードコード）** | 🔴未（ハッカソン後スコープ） | `deterministic.py` `_serendipity_theme` は全読者共通の固定文字列（`1695fe2` で距離2文言「興亡の歴史」に更新）。本来は読者ごとに「関心の隣」を導出すべき（例: 佐倉の drv_007 パーパス関心→ブランドの文化史/記号論）。距離2の設計原則「テーマに challenges 語彙（能力名詞）を含めず主語を素材側に置く」は個人化プロンプトを書く際の規律として持ち込む。デモは固定文字列で成立するため割り切り【deterministic.py docstring・2026-06-12】 |
+| I-28 | **PlanProposal に「形式」フィールドがない（受容リスクへの応答が構造化されない）** | 🟡将来・スキーマ拡張候補 | serendipity 検証で leader が「読書体力（多忙・要点絞り希望）に対し重厚な章立てでは挫折する」と差し戻し→owner が対話形式/読み切り/分量を**タイトル・diffFromMarket・agendaOutline に埋め込んで**回避（R2承認）。回避は効くが、本の形式（分量・語り口・構成）を表す独立フィールドがないため形式要求の入出力が曖昧。スキーマに `format`/`lengthHint` 等を足すか現状の埋め込みで割り切るかは要判断。honmei の受容性（積読対策）にも効く論点【packages/shared-schema agent_io・2026-06-12】 |
 
 ---
 
@@ -153,6 +157,7 @@
 - ✅ 著者＝テーマ確定時に都度生成5人（固定プール選抜廃止）【2026-06-03】
 - ✅ スコア閾値ループ＝4観点×各25点・閾値70・最高3R・3R未達は最良案承認【2026-06-03】
 - ✅ Evalは企画リーダーと同じ4観点共通ルーブリック・本命 総合<70で停止【2026-06-03】
+- ✅ **【serendipity採点・2026-06-12】中レンジ帯(30-60)を廃止しモノサシ統一**＝serendipity も閾値70。①relevance を serendipity時に「業務直撃」でなく「嗜好・許容度（readingGenres/readingBehavior/serendipityTolerance）との整合」へ**読み替え**て同一閾値で裁く。旧設計（serendipityは構造的に低得点で別帯）だと leader の閾値70を満たせず**毎回3R強制承認**になる構造問題があったため。leader/eval_judge/eval_set.yaml/eval_gate を一括統一（`1bfc2ac`・一瀬合意済み）。残較正は I-25【2026-06-12】
 - ✅ お気に入り著者の混入比率＝MVP15%【2026-06-03】
 - ✅ 週3回・曜日別トリガー（土/水=本命・日=セレンディピティ）／読者分析は土朝の週1回【2026-06-03】
 - ✅ 採番＝Firestore自動ID＋親子はフィールド【2026-06-02】
