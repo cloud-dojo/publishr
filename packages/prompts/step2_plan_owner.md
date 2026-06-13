@@ -45,6 +45,9 @@ Cテーマ知見: {{subThemeInsight}}
 {{rejectionFeedback}}
 
 PlanProposal（8項目）を出力せよ。
+readerProfile.readingBehavior に学習ループ情報（feedbackSummary/stylePreference/recentReads）が
+あれば活かす: **刺さった軸（高評価・続編希望）を強め、不発/離脱の軸は避け、recentReads と被る企画にしない。
+stylePreference（好みの作風・読み口）に寄せる**。これらが空なら観測ベースで通常どおり立てる。
 ```
 
 ## ✅ 良い出力例（佐倉美咲・本命）

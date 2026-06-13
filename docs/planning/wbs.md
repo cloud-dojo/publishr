@@ -390,7 +390,7 @@ Publishr MVP（カテゴリWBS）
 ### C1.8 学習ループ（ユーザ選択・フィードバックの企画反映）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
-| C1.8.1 | ユーザ選択・フィードバックを企画プロンプトに反映 | ユーザの「選択」（initialProfile編集・お気に入り作家・予約傾向）と「フィードバック」（評価/読了率/いいね・いまいち/readingReaction）を**次サイクルの企画に効かせる学習ループ**。「前回いまいちだった軸を外す／刺さった軸を強める」を出力に出す | 一瀬 | 機能凍結6/30 | C1.2.1,C1.3,C3.1 | STEP1読者分析・STEP2企画のプロンプト入力に feedback/選択シグナルを構造化注入し、嗜好が出力（企画の軸・タイトル）に反映される | 🔜着手前＝**現状はreader分析に「N件の評価」件数のみ**渡る（`reader/deterministic.py:147`）で内容/嗜好は未反映（`planning` の `feedback` は内部の差し戻し=rejection_feedbackで別物）。**残**: ①feedbackシグナル集約（rating/読了率/readingReaction/favoriteAuthors/予約傾向）を `ReaderProfile` か観測束へ構造化 ②`step1_reader_analyst`/`step2_*` プロンプトに反映枠を追加 ③mock決定的経路を保ちつつ実Vertexで嗜好反映を実証。**favoriteAuthors はキャスティング15%混入で部分的に既反映**＝それを企画軸まで拡張する位置づけ |
+| C1.8.1 | ユーザ選択・フィードバックを企画プロンプトに反映 | ユーザの「選択」（initialProfile編集・お気に入り作家・予約傾向）と「フィードバック」（評価/読了率/いいね・いまいち/readingReaction）を**次サイクルの企画に効かせる学習ループ**。「前回いまいちだった軸を外す／刺さった軸を強める」を出力に出す | 一瀬 | 機能凍結6/30 | C1.2.1,C1.3,C3.1 | STEP1読者分析・STEP2企画のプロンプト入力に feedback/選択シグナルを構造化注入し、嗜好が出力（企画の軸・タイトル）に反映される | 🟡**実装済（2026-06-13・mock決定的＋プロンプト＋BFF配線）**＝`reader/preferences.py`（純集約: 過去本feedback→刺さった/続編/離脱サマリ・お気に入り作家+読み口→stylePreference・既読→recentReads／readingReactionは"good"/"bad"・"good:理由"も判定）。reader(`deterministic`/`vertex`)が `readingBehavior` に反映＝STEP2は `readerProfile` 経由で受領。step1/step2_plan_owner プロンプトに反映枠＋ガイド追加。BFF `mode_a_service` が published本(反応あり・owner)を `past_books` で渡す。**FB無しなら出力不変**（fixtureは反応空＝eval/pipeline決定的のまま）。test 6件(`test_reader_preferences`/`test_reader`)。code-review反映(reaction極性・owner scope)。**残＝実Vertexでの嗜好反映 live実証（gated）・実フィードバック蓄積後の効き確認** |
 
 ## C2. エージェント・モードB（後追い執筆）
 

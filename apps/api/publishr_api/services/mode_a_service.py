@@ -80,6 +80,17 @@ def run(
     mode_llm = llm or settings.publishr_llm
     anchor = now or _DEMO_NOW
 
+    # C1.8 学習ループ: ユーザの過去公開本のうち「反応がある」ものを読者分析へ渡す。
+    # 反応ゼロなら空＝読者分析の出力は従来どおり不変（mock差分ゼロ）。
+    from publishr_agents.reader.preferences import has_feedback  # noqa: PLC0415
+
+    # owner スコープ（mockのlist_booksは全件のため明示フィルタ＝firestoreと同義・他者本の混入防止）。
+    past_books = [
+        b
+        for b in repo.list_books(status="published")
+        if has_feedback(b) and (not b.owner_uid or b.owner_uid == owner)
+    ]
+
     result = run_mode_a_pipeline(
         user,
         source=FixtureObservationSource(),
@@ -93,6 +104,7 @@ def run(
         theme_kind="honmei",
         threshold=70,
         limit=settings.max_books_per_run,
+        past_books=past_books,
     )
     books, personas = map_mode_a_to_books(
         result.plan,
