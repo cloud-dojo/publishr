@@ -179,6 +179,24 @@ def _loads_judge_response(text: Optional[str]) -> dict[str, Any]:
     return json.loads(s)
 
 
+def _judge_user_content(plan: dict[str, Any], reader_profile: Optional[dict[str, Any]]) -> str:
+    """judge へ渡す user コンテンツ（readerProfile＋plan）を組む。
+
+    eval_set.yaml は YAML 由来で `date` 等の非JSON型を含むため `default=str` で文字列化する。
+    """
+    parts: list[str] = []
+    if reader_profile is not None:
+        parts.append(
+            "読者プロファイル:\n"
+            + json.dumps(reader_profile, ensure_ascii=False, indent=2, default=str)
+        )
+    parts.append(
+        "採点対象の企画(PlanProposal):\n" + json.dumps(plan, ensure_ascii=False, indent=2, default=str)
+    )
+    parts.append("上記を4観点（各0〜25）で採点し、指定のJSONのみを返してください。")
+    return "\n\n".join(parts)
+
+
 def judge_plan_vertex(
     plan: dict[str, Any], *, reader_profile: Optional[dict[str, Any]] = None
 ) -> dict[str, int]:
@@ -206,16 +224,10 @@ def judge_plan_vertex(
     if doc.good_example:  # few-shot 校正アンカー（registry: eval_judge は fewshot 常時ON）
         system += "\n\n# 採点例（校正アンカー）\n" + doc.good_example
 
-    parts: list[str] = []
-    if reader_profile is not None:
-        parts.append("読者プロファイル:\n" + json.dumps(reader_profile, ensure_ascii=False, indent=2))
-    parts.append("採点対象の企画(PlanProposal):\n" + json.dumps(plan, ensure_ascii=False, indent=2))
-    parts.append("上記を4観点（各0〜25）で採点し、指定のJSONのみを返してください。")
-
     client = genai.Client(vertexai=True, project=project, location=location)
     resp = client.models.generate_content(
         model=model,
-        contents="\n\n".join(parts),
+        contents=_judge_user_content(plan, reader_profile),
         config=types.GenerateContentConfig(
             system_instruction=system,
             temperature=temperature,
