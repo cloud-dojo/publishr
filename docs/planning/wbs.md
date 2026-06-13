@@ -233,7 +233,8 @@ Publishr MVP（カテゴリWBS）
     │   ├─ C1.4 STEP3 キャスティング
     │   ├─ C1.5 STEP4 プレビュー編集
     │   ├─ C1.6 STEP5 装丁
-    │   └─ C1.7 自律トリガー(Scheduler)
+    │   ├─ C1.7 自律トリガー(Scheduler)
+    │   └─ C1.8 学習ループ（ユーザ選択・フィードバックの企画反映）
     ├─ C2 エージェント・モードB（後追い執筆）（一瀬）
     ├─ C3 データ/状態基盤（Firestore/GCS）（**鉄田**へ巻取り・一瀬外れ）
     ├─ C4 フロント（書店UI・16ルート）（鉄田）
@@ -352,6 +353,7 @@ Publishr MVP（カテゴリWBS）
 |---|---|---|---|---|---|---|---|
 | C1.1.1 | 観測ツール実装（Drive/Calendar/Tasks ±14日） | ユーザーのDrive・カレンダー・ToDoを前後14日分読み取り、AIが状況把握する材料（生データ）を集めるツール | 一瀬 | W2（6/15–21） | B1.1,C1.0.1 | ObservationBundle生成（§2） (旧WP1.2) | 🟡**実装済・live検証残（2026-06-07）**＝`agents/publishr_agents/observe/`（transform純粋ロジック＋`FixtureObservationSource`＝既定オフライン決定的＋`GoogleObservationSource`＝実API隔離・`PUBLISHR_OBSERVE`で切替）。型付き`ObservationBundle`（§2）＋`ConnectedSources`をschemaに追加（py/ts）。CLI`scripts/run_observe.py`・`@pytest.mark.google`最小テスト。±14日窓/4000字トリム/Tasks未完了+直近完了をtransformに一元化。**残＝OAuth同意→実Drive/Calendar/Tasks取得のlive検証（鉄田のOAuth/Picker=C4.1と接続）** |
 | C1.1.2 | Drive Pickerサーバ側連携 | Driveは全ファイルを見られない仕様のため、ユーザーが選んだフォルダだけ取得する画面連携をサーバー側で実装 | 一瀬 | W2（6/15–21） | C1.1.1 | 選択フォルダのみ取得＝`connectedSources.drive.folderIds[]` で保持（G1-13＝フォルダ単位・Google Picker前提で確定・MTG 2026-06-05） | 🟡**サーバ側読取実装済（2026-06-07）**＝`connectedSources.drive.folderIds[]` を `User` schemaに追加し、fixture/google 両ソースで folderId 配下のみにスコープ（offline test で folderId スコープを検証）。`scripts/google_oauth_bootstrap.py` で OAuth トークン取得。**残＝Picker UI（C4.1=鉄田）からの folderIds 書込と疎通** |
+| C1.1.3 | Google Drive 実観測の追加（live有効化） | 観測3ソースのうち **Drive を実際に読めるようにする**。現状 live は Calendar+Tasks のみで、`drive.readonly` は Google の restricted スコープのため除外中（`PUBLISHR_GOOGLE_SCOPES=calendar,tasks`） | 一瀬 | 機能凍結6/30 | C1.1.1,C1.1.2,C4.1 | OAuth同意(drive) → Picker `folderIds` → `GoogleObservationSource._fetch_drive` が実Driveテキストを取得し ±14日/4000字トリムまで通る | 🔜着手前＝**残**: ①`drive.readonly` の restricted scope 承認（未検証アプリ警告/verification）or Picker限定の `drive.file` への切替検討 ②`PUBLISHR_GOOGLE_SCOPES=drive,calendar,tasks` で C4.1 Picker→`/api/connect/drive-folders`→observe の live 疎通 ③デモ垢の対象フォルダ準備。観測transform/folderIdスコープ機構は実装済（C1.1.1/1.1.2）＝**scope承認と実疎通が主**。`drive.readonly`↔`drive.file` 整理は `api-contract.md §4` 残ハードニングと連動 |
 
 ### C1.2 STEP1 読者分析
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
@@ -384,6 +386,11 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | C1.7.1 | Cloud Scheduler 曜日別トリガー（土/水/日） | 毎週決まった曜日に自動で企画が走る仕組み（Cloud Scheduler）。デモでは手動起動も可 | 一瀬 | W3（6/22–28） | C1.3.3 | 自律起動で棚更新 (旧WP1.8) | ✅**本番デプロイ済（2026-06-10）**＝Cloud Scheduler `publishr-honmei`（`0 6 * * 3,6`・Asia/Tokyo・OIDC=publishr-pubsub-push SA・audience=trigger URL）→ `POST /api/trigger/planning` → モードA(mock)→佐倉(5JLL)Firestore自律入荷。手動実行(`gcloud scheduler jobs run publishr-honmei`)で arr_p* 即更新（created更新）を実機確認＝**Scheduler→Cloud Run→自律入荷が本番成立**。IaC正本化はB4.1(`infra/terraform`)。ローカル/mock版（`scheduler.py`曜日→themeKind純粋判定＋`run_scheduler.py --once/--watch`・test_scheduler 7件）も維持。**残（小）＝serendipity(日)差別化＝trigger に themeKind param 追加＋日曜ジョブ（cron `0 6 * * 0`・TF/docにコメント用意済）。「棚更新」のFirestore永続化は入荷upsertで達成済** |
+
+### C1.8 学習ループ（ユーザ選択・フィードバックの企画反映）
+| ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
+|---|---|---|---|---|---|---|---|
+| C1.8.1 | ユーザ選択・フィードバックを企画プロンプトに反映 | ユーザの「選択」（initialProfile編集・お気に入り作家・予約傾向）と「フィードバック」（評価/読了率/いいね・いまいち/readingReaction）を**次サイクルの企画に効かせる学習ループ**。「前回いまいちだった軸を外す／刺さった軸を強める」を出力に出す | 一瀬 | 機能凍結6/30 | C1.2.1,C1.3,C3.1 | STEP1読者分析・STEP2企画のプロンプト入力に feedback/選択シグナルを構造化注入し、嗜好が出力（企画の軸・タイトル）に反映される | 🔜着手前＝**現状はreader分析に「N件の評価」件数のみ**渡る（`reader/deterministic.py:147`）で内容/嗜好は未反映（`planning` の `feedback` は内部の差し戻し=rejection_feedbackで別物）。**残**: ①feedbackシグナル集約（rating/読了率/readingReaction/favoriteAuthors/予約傾向）を `ReaderProfile` か観測束へ構造化 ②`step1_reader_analyst`/`step2_*` プロンプトに反映枠を追加 ③mock決定的経路を保ちつつ実Vertexで嗜好反映を実証。**favoriteAuthors はキャスティング15%混入で部分的に既反映**＝それを企画軸まで拡張する位置づけ |
 
 ## C2. エージェント・モードB（後追い執筆）
 
