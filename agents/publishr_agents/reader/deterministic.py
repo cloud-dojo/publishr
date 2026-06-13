@@ -23,7 +23,16 @@ from publishr_schema import (
 
 from .preferences import recent_read_titles, style_preference_from_user, summarize_feedback
 
-_SEREN = {"高": "high", "中": "mid", "低": "low"}
+_SEREN = {
+    "高": "high",
+    "中": "mid",
+    "低": "low",
+    # アカウント「新しい出会いの幅」4語（apps/web profileOptions.serendipityOptions）→ low/mid/high
+    "いつもの専門を深く": "low",
+    "ときどき寄り道": "mid",
+    "バランス重視": "mid",
+    "広く新しい刺激を": "high",
+}
 _ORG = re.compile(r"部下\d+名[^、。/]*")
 _MAX = 3
 
@@ -111,8 +120,18 @@ def analyze_reader_deterministic(
         if len(challenges) >= _MAX:
             break
 
-    # activeWorkThemes ＝ 未完了タスクの上位3
+    # activeWorkThemes ＝ 未完了タスクの上位3 ＋「今の関心」（initialProfile.recentInterests）。
+    # 観測の仕事テーマに加え、ユーザが明示した関心も候補テーマに合流（C1.8拡張・空ならno-op）。
     active = [t.title for t in observation.tasks.items if t.status == "needsAction"][:_MAX]
+    interests = list(user.initial_profile.recent_interests) if (user and user.initial_profile) else []
+    if interests:
+        active = list(dict.fromkeys(active + interests))
+        evidence.append(
+            EvidenceRef(
+                claim="今の関心: " + "・".join(interests[:_MAX]),
+                source="initialProfile:recentInterests",
+            )
+        )
 
     # upcomingKeyEvents ＝ now 以降の予定を参加人数降順 上位3（控える重要局面）
     future = sorted(

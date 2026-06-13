@@ -47,6 +47,8 @@ Publishrは「あなた専用の出版社」。読者の仕事の観測データ
    upcomingKeyEvents（Calendarの控える重要局面）を導く。各項目に evidence（観測ソース）を1つ以上付す。
    activeWorkThemes は重要度順に並べ、先頭は「いま最も重い意思決定・期限を伴う最重要テーマ」にする
    （後段の企画エージェントが先頭テーマから本を企画するため、並び順そのものが出力の一部）。
+   **initialProfile.recentInterests（今の関心・ユーザが明示）も activeWorkThemes の候補テーマに合流させる**
+   （観測の仕事テーマと併せ、関心側は `initialProfile:recentInterests` を evidence に付す）。空なら何も足さない。
    教養・キャリア展望など副次的な関心は末尾に置く。
 ③ readingBehavior（readingFB由来）: readingFB が空の初回は空配列・空文字でよい。
    ただし観測の中に読書に関する記録（読書メモ等）が偶然含まれている場合に限り、recentReads（書名の文字列）・
