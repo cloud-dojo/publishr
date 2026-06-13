@@ -16,6 +16,7 @@ import argparse
 import os
 import statistics
 import sys
+import time
 from pathlib import Path
 from typing import Any, Optional
 
@@ -42,12 +43,19 @@ def score_runs(
     backend: str,
     runs: int,
     reader_profile: dict[str, Any] | None = None,
+    sleep_sec: float = 0.0,
 ) -> list[int]:
-    """同一企画を runs 回採点したスコアの列を返す（実judgeは readerProfile も渡す）。"""
-    return [
-        judge_plan(plan, backend=backend, reader_profile=reader_profile)["total"]
-        for _ in range(runs)
-    ]
+    """同一企画を runs 回採点したスコアの列を返す（実judgeは readerProfile も渡す）。
+
+    sleep_sec>0 で呼び出し間に待機（実Vertex Pro は RPM/TPM が低く、連投すると 429＝
+    RESOURCE_EXHAUSTED でSDKが長時間バックオフするため、ペース調整で回避する）。
+    """
+    scores: list[int] = []
+    for i in range(runs):
+        if sleep_sec > 0 and i > 0:
+            time.sleep(sleep_sec)
+        scores.append(judge_plan(plan, backend=backend, reader_profile=reader_profile)["total"])
+    return scores
 
 
 def summarize(scores: list[int], band: list[int] | tuple[int, int]) -> dict[str, Any]:
@@ -77,13 +85,17 @@ def summarize(scores: list[int], band: list[int] | tuple[int, int]) -> dict[str,
 
 
 def run_reproducibility(
-    eval_set: dict[str, Any], *, backend: str = "mock", runs: int = 5
+    eval_set: dict[str, Any], *, backend: str = "mock", runs: int = 5, sleep_sec: float = 0.0
 ) -> list[dict[str, Any]]:
     reader_profile = eval_set.get("readerProfile")
     rows: list[dict[str, Any]] = []
     for c in _all_cases(eval_set):
         scores = score_runs(
-            c["plan"], backend=backend, runs=runs, reader_profile=reader_profile
+            c["plan"],
+            backend=backend,
+            runs=runs,
+            reader_profile=reader_profile,
+            sleep_sec=sleep_sec,
         )
         stats = summarize(scores, c["expectedBand"])
         rows.append(
@@ -116,10 +128,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         default=1.0,
         help="判定の自己一致率の下限（未満で exit 1・mock は常に1.0）",
     )
+    parser.add_argument(
+        "--sleep-sec",
+        type=float,
+        default=0.0,
+        help="採点呼び出し間の待機秒（実Vertex Pro の低RPM対策・429回避。例: 6）",
+    )
     args = parser.parse_args(argv)
 
     try:
-        rows = run_reproducibility(load_eval_set(), backend=args.backend, runs=args.runs)
+        rows = run_reproducibility(
+            load_eval_set(), backend=args.backend, runs=args.runs, sleep_sec=args.sleep_sec
+        )
     except NotImplementedError as exc:
         print(f"vertex judge は live/gated（課金）です: {exc}")
         return 2
