@@ -144,3 +144,40 @@ def test_learning_loop_noop_without_feedback():
     assert prof.reading_behavior.recent_reads == []
     assert prof.reading_behavior.feedback_summary == ""
     assert prof.reading_behavior.style_preference == ""
+
+
+# ── アカウント選択の反映（今の関心 / 新しい出会いの幅）──────────────
+def test_serendipity_maps_account_words():
+    """新しい出会いの幅の4語（profileOptions）を low/mid/high に写す＋既存(高/中/低)も維持。"""
+    from publishr_agents.reader.deterministic import _serendipity
+
+    assert _serendipity("いつもの専門を深く") == "low"
+    assert _serendipity("広く新しい刺激を") == "high"
+    assert _serendipity("バランス重視") == "mid"
+    assert _serendipity("中") == "mid"
+    assert _serendipity("謎ワード") == "mid"  # 未知は mid 既定
+
+
+def test_recent_interests_merged_into_active_themes():
+    """今の関心（initialProfile.recentInterests）が activeWorkThemes に合流＋evidence が付く。"""
+    from publishr_schema.models import InitialProfile
+
+    user = _sakura().model_copy(
+        update={
+            "initial_profile": InitialProfile(
+                industry="食品", job_type="マーケ", position="課長",
+                recent_interests=["評価・フィードバック", "新任マネジメント"],
+            )
+        }
+    )
+    prof = analyze_reader_deterministic(_bundle(), user=user)
+    assert "評価・フィードバック" in prof.current_work.active_work_themes
+    assert any(e.source == "initialProfile:recentInterests" for e in prof.current_work.evidence)
+
+
+def test_recent_interests_noop_when_absent():
+    """initialProfile=null（fixture）なら関心の合流なし＝従来どおり（mock不変）。"""
+    prof = analyze_reader_deterministic(_bundle(), user=_sakura())
+    assert not any(
+        e.source == "initialProfile:recentInterests" for e in prof.current_work.evidence
+    )
