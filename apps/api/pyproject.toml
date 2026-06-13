@@ -19,6 +19,9 @@ dev = ["pytest>=8", "httpx>=0.27"]
 # 本番の per-uid トークン保存（PUBLISHR_OAUTH_TOKEN_STORE=secret_manager・G1-5）。
 # 既定の file バックエンドはこの extra 無しで動く（オフライン/dev）。
 secret-manager = ["google-cloud-secret-manager>=2.20"]
+# 本番の本文オフロード（PUBLISHR_BODY_STORE=gcs・C3.3）。
+# 既定の inline はこの extra 無しで動く（オフライン/dev・本文はドキュメント内）。
+gcs = ["google-cloud-storage>=2.16"]
 
 [build-system]
 requires = ["hatchling"]

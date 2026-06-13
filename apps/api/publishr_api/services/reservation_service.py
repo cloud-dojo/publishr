@@ -13,6 +13,27 @@ from publishr_schema import Book
 
 from ..config import settings
 from ..repositories.protocol import RepositoryProtocol
+from . import body_store
+
+
+def _persist_published(
+    repo: RepositoryProtocol, book: Book, body: str, edit_round: int
+) -> Book:
+    """writing→published の永続化を1箇所に集約する（C3.3 オフロードのシーム）。
+
+    既定（body_store=inline）は本文をドキュメントにそのまま持つ＝従来挙動（mock不変）。
+    body_store=gcs のときだけ本文を非公開バケットへ退避し、ドキュメントには bodyUrl だけ残す。
+    読了率は published 到達でリセットする（既存挙動）。
+    """
+    fb = book.feedback.model_copy(update={"read_percent": 0})
+    update: dict = {"status": "published", "edit_round": edit_round, "feedback": fb}
+    store = body_store.get_body_store()
+    if store is not None:
+        update["body_url"] = store.put(book.id, body)
+        update["body"] = ""  # 退避済み＝ドキュメントには本文を残さない（肥大防止）
+    else:
+        update["body"] = body  # inline（既定・従来挙動）
+    return repo.upsert_book(book.model_copy(update=update))
 
 
 def _generate_body(repo: RepositoryProtocol, book: Book) -> tuple[str, int]:
@@ -65,12 +86,7 @@ async def advance(
     if book is None or book.status != "writing":
         return
     body, edit_round = _generate_body(repo, book)
-    fb = book.feedback.model_copy(update={"read_percent": 0})
-    repo.upsert_book(
-        book.model_copy(
-            update={"status": "published", "body": body, "edit_round": edit_round, "feedback": fb}
-        )
-    )
+    _persist_published(repo, book, body, edit_round)
 
 
 def schedule_advance(repo: RepositoryProtocol, book_id: str) -> None:
@@ -92,9 +108,4 @@ def process_write_job(repo: RepositoryProtocol, book_id: str) -> Optional[Book]:
     if book.status == "reserved":
         book = repo.upsert_book(book.model_copy(update={"status": "writing"}))
     body, edit_round = _generate_body(repo, book)
-    fb = book.feedback.model_copy(update={"read_percent": 0})
-    return repo.upsert_book(
-        book.model_copy(
-            update={"status": "published", "body": body, "edit_round": edit_round, "feedback": fb}
-        )
-    )
+    return _persist_published(repo, book, body, edit_round)

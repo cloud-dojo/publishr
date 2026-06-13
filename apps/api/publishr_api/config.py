@@ -99,5 +99,18 @@ class Settings(BaseSettings):
         default="", validation_alias="PUBLISHR_SECRET_MANAGER_PROJECT"
     )
 
+    # ── モードB本文(body)の保存先（C3.3・GCSオフロード）─────────────────────────
+    # inline（既定）= body を books ドキュメントにそのまま持つ（mock/dev・課金ゼロ・従来挙動）。
+    # gcs = 本文を非公開バケットへ退避し、ドキュメントには bodyUrl だけ残す（本番・実GCP）。
+    body_store: str = Field(default="inline", validation_alias="PUBLISHR_BODY_STORE")
+    # gcs 退避先（非公開バケット・docs/infra/gcp-setup-log.md）。
+    body_bucket: str = Field(
+        default="publishr-contents-498123", validation_alias="PUBLISHR_BODY_BUCKET"
+    )
+    # 直接ダウンロード用 署名URL の有効秒（既定15分・通常はサーバ側readで本文を返す）。
+    body_signed_url_ttl_sec: int = Field(
+        default=900, validation_alias="PUBLISHR_BODY_SIGNED_URL_TTL_SEC"
+    )
+
 
 settings = Settings()
