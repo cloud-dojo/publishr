@@ -10,6 +10,7 @@ import re
 from datetime import datetime, timezone
 
 from publishr_schema import (
+    Book,
     EvidenceRef,
     ObservationBundle,
     ReaderBase,
@@ -19,6 +20,8 @@ from publishr_schema import (
     UpcomingEvent,
     User,
 )
+
+from .preferences import recent_read_titles, style_preference_from_user, summarize_feedback
 
 _SEREN = {"高": "high", "中": "mid", "低": "low"}
 _ORG = re.compile(r"部下\d+名[^、。/]*")
@@ -89,6 +92,7 @@ def analyze_reader_deterministic(
     *,
     user: User | None = None,
     prev_profile: ReaderProfile3Layer | None = None,
+    past_books: list[Book] | None = None,
 ) -> ReaderProfile3Layer:
     base = _base(user, prev_profile)
     now_tz, cutoff = _now_context(observation.collected_at)
@@ -139,13 +143,18 @@ def analyze_reader_deterministic(
         evidence=evidence,
     )
 
-    # ③ readingBehavior ＝ readingFB 由来（初回は空）＋ serendipity 写像
+    # ③ readingBehavior ＝ readingFB＋過去本の反応・ユーザの選択（C1.8 学習ループ）。
+    # past_books/お気に入り/読み口が無ければ従来どおり空＝決定的 mock の出力は不変。
     fb = observation.reading_fb
+    feedback_summary = summarize_feedback(past_books) or (
+        f"{len(fb.feedback)}件の評価" if fb.feedback else ""
+    )
     behavior = ReaderBehavior(
-        recent_reads=[],  # 既読タイトルは readingFB に無いため初回は空（被り回避は実LLM/後段で）
+        recent_reads=recent_read_titles(past_books),  # 既読＝次サイクルの被り回避材料
         highlights_summary=(f"{len(fb.highlights)}件のハイライト" if fb.highlights else ""),
-        feedback_summary=(f"{len(fb.feedback)}件の評価" if fb.feedback else ""),
+        feedback_summary=feedback_summary,
         serendipity_tolerance=_serendipity(user.profile.serendipity_tolerance if user else "mid"),
+        style_preference=style_preference_from_user(user),
     )
 
     return ReaderProfile3Layer(base=base, current_work=current, reading_behavior=behavior)

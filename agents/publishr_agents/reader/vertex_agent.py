@@ -18,11 +18,12 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="google.ad
 from google.adk.agents import LlmAgent  # noqa: E402
 from google.adk.runners import InMemoryRunner  # noqa: E402
 from google.genai import types  # noqa: E402
-from publishr_schema import ObservationBundle, ReaderProfile3Layer, User  # noqa: E402
+from publishr_schema import Book, ObservationBundle, ReaderProfile3Layer, User  # noqa: E402
 
 from .. import state_keys as K  # noqa: E402
 from ..llm.provider import model_for  # noqa: E402
 from ..prompts import loader, render  # noqa: E402
+from .preferences import recent_read_titles, style_preference_from_user, summarize_feedback  # noqa: E402
 
 _APP = "publishr_reader"
 
@@ -62,12 +63,17 @@ def _init_state(
     observation: ObservationBundle,
     user: Optional[User],
     prev_profile: Optional[ReaderProfile3Layer],
+    past_books: Optional[list[Book]],
 ) -> dict[str, Any]:
     initial = user.initial_profile if user else None
     return {
         "observationBundle": observation.model_dump(by_alias=True),
         "prevProfile": prev_profile.model_dump(by_alias=True) if prev_profile else None,
         "initialProfile": initial.model_dump(by_alias=True) if initial else None,
+        # C1.8 学習ループの素材（空なら readingBehavior に反映しない＝従来どおり）。
+        "feedbackSummary": summarize_feedback(past_books),
+        "stylePreference": style_preference_from_user(user),
+        "recentReads": recent_read_titles(past_books),
     }
 
 
@@ -76,12 +82,13 @@ async def analyze_reader_vertex_async(
     *,
     user: Optional[User] = None,
     prev_profile: Optional[ReaderProfile3Layer] = None,
+    past_books: Optional[list[Book]] = None,
 ) -> ReaderProfile3Layer:
     root = build_reader_agent()
     runner = InMemoryRunner(agent=root, app_name=_APP)
     uid = user.id if user else "reader"
     session = await runner.session_service.create_session(
-        app_name=_APP, user_id=uid, state=_init_state(observation, user, prev_profile)
+        app_name=_APP, user_id=uid, state=_init_state(observation, user, prev_profile, past_books)
     )
     message = types.Content(
         role="user", parts=[types.Part(text="観測データから読者プロファイル(3層)を作成してください")]
@@ -102,8 +109,11 @@ def analyze_reader_vertex(
     *,
     user: Optional[User] = None,
     prev_profile: Optional[ReaderProfile3Layer] = None,
+    past_books: Optional[list[Book]] = None,
 ) -> ReaderProfile3Layer:
     """同期ラッパー（CLI/テストから）。**実Vertex・課金あり**。"""
     return asyncio.run(
-        analyze_reader_vertex_async(observation, user=user, prev_profile=prev_profile)
+        analyze_reader_vertex_async(
+            observation, user=user, prev_profile=prev_profile, past_books=past_books
+        )
     )

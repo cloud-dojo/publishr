@@ -52,6 +52,9 @@ Publishrは「あなた専用の出版社」。読者の仕事の観測データ
    ただし観測の中に読書に関する記録（読書メモ等）が偶然含まれている場合に限り、recentReads（書名の文字列）・
    dropSignals・highlightsSummary に反映してよい。読書記録の存在を前提にしない（無ければ無いで正しい）。
    serendipityTolerance は明確な根拠となる観測が無ければ "mid" とする（多忙さからの推測で下げない）。
+   **学習ループ（C1.8）**: 入力に `feedbackSummary`/`stylePreference`/`recentReads`（過去本の反応・選択の集約）が
+   与えられていれば、それぞれ readingBehavior の同名フィールドにそのまま反映する。これらが空なら何も足さない。
+   この材料は次の企画（STEP2）が「刺さった軸を強め・不発/既読の被りを避ける」ために使う。
 
 【分析の深め方】（要約で終わらせない）
 - 三段で考える:
@@ -119,8 +122,13 @@ Publishrは「あなた専用の出版社」。読者の仕事の観測データ
 {{prevProfile}}
 # 初期プロフィール（登録時・base の素材）
 {{initialProfile}}
+# 学習ループ素材（C1.8・空なら反映しない）: 過去本の反応サマリ / 好みの作風・読み口 / 既読書名
+feedbackSummary: {{feedbackSummary}}
+stylePreference: {{stylePreference}}
+recentReads: {{recentReads}}
 
 上記から ReaderProfile（base/currentWork/readingBehavior）を出力せよ。
+feedbackSummary/stylePreference/recentReads は readingBehavior の同名フィールドへ反映（空なら空のまま）。
 ```
 
 ## ✅ 良い出力例（高村・物流会社営業課長）

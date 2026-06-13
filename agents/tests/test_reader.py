@@ -119,3 +119,28 @@ def test_analyze_reader_unknown_mode_raises(monkeypatch):
         assert "bogus" in str(e)
     else:
         raise AssertionError("unknown PUBLISHR_LLM で ValueError を期待")
+
+
+# ── C1.8 学習ループ ───────────────────────────────────────
+def test_learning_loop_reflects_feedback_when_present():
+    """past_books の反応が readingBehavior（feedbackSummary/recentReads）に出る。"""
+    from publishr_schema import Book, Feedback
+
+    past = [
+        Book(
+            id="b1", plan_id="p1", status="published", author_persona_id="px",
+            title="任せ方の本", cover_variant="midnight", shelf="library",
+            feedback=Feedback(rating=5, wants_sequel=True),
+        )
+    ]
+    prof = analyze_reader_deterministic(_bundle(), user=_sakura(), past_books=past)
+    assert "刺さった: 任せ方の本" in prof.reading_behavior.feedback_summary
+    assert "任せ方の本" in prof.reading_behavior.recent_reads
+
+
+def test_learning_loop_noop_without_feedback():
+    """past_books 無し＝従来どおり（feedbackSummary/recentReads/stylePreference 空）＝mock不変。"""
+    prof = analyze_reader_deterministic(_bundle(), user=_sakura())
+    assert prof.reading_behavior.recent_reads == []
+    assert prof.reading_behavior.feedback_summary == ""
+    assert prof.reading_behavior.style_preference == ""
