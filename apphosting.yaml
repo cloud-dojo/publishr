@@ -3,10 +3,13 @@
 # -----------------------------------------------------------------------------
 # モノレポ構成のため apphosting.yaml をリポジトリルートに置き、rootDir で
 # Next.js アプリのサブディレクトリを指定する。
-# これにより npm install がリポジトリルートで実行され、
-# package-lock.json と @publishr/shared-schema が正しく解決される。
 #
 # Firebase コンソール > App Hosting > 設定 > ルートディレクトリ = / (root)
+#
+# 【2026-06-14 C4.1 本番切替】mock → firestore。Firestore 実データ（佐倉）を読み、
+# Firebase Auth ログイン＋Cloud Run BFF（予約/トリガー/本文hydrate/OAuth start）＋
+# Google Picker を実機化する。NEXT_PUBLIC_* は公開キー（apiKey/Pickerキーは参照元/対象API
+# 制限済＝コミット可）。client secret 等の機微値は web に出さない（BFF 側 Secret 管理）。
 # =============================================================================
 
 runConfig:
@@ -15,28 +18,43 @@ runConfig:
   maxInstances: 2
 
 env:
-  # --- 当面は mock データで公開（フェーズ1）。Firestore 接続後に firestore へ切替 ---
+  # --- データソース: Firestore 実接続（mock から切替）---
   - variable: NEXT_PUBLIC_DATA_SOURCE
-    value: mock
-    availability:
-      - BUILD
-      - RUNTIME
+    value: firestore
+    availability: [BUILD, RUNTIME]
 
-  # --- フェーズ4: Cloud Run API のベースURL（友人のデプロイ後に設定） ---
-  # - variable: NEXT_PUBLIC_API_URL
-  #   value: https://publishr-api-xxxxx.a.run.app
-  #   availability: [BUILD, RUNTIME]
+  # --- Cloud Run BFF ベースURL（予約/トリガー/本文hydrate/OAuth start）---
+  - variable: NEXT_PUBLIC_API_URL
+    value: https://publishr-api-24ru3hr7fq-an.a.run.app
+    availability: [BUILD, RUNTIME]
 
-  # --- フェーズ3: Firebase クライアント設定（公開キー・コミット可） ---
-  # - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-  #   value: "AIza..."
-  #   availability: [BUILD, RUNTIME]
-  # - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-  #   value: publishr-498123.firebaseapp.com
-  #   availability: [BUILD, RUNTIME]
-  # - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-  #   value: publishr-498123
-  #   availability: [BUILD, RUNTIME]
-  # - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-  #   value: "1:...:web:..."
-  #   availability: [BUILD, RUNTIME]
+  # --- Firebase クライアント設定（公開キー・コミット可）---
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyDSK_sF3W81Hk6GVXYZuDpqCngi5VIjTzg"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "publishr-498123.firebaseapp.com"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "publishr-498123"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "publishr-498123.firebasestorage.app"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "355143691286"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:355143691286:web:f8859bd0d1b6338591d937"
+    availability: [BUILD, RUNTIME]
+
+  # --- Google Picker（OAuth クライアントID＝公開・APIキーは参照元/Picker限定）---
+  - variable: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+    value: "355143691286-cv63k6bouj2plhgs93qkkas3b9t6ndd7.apps.googleusercontent.com"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_GOOGLE_API_KEY
+    value: "AIzaSyASkgz0b1WEY3muGEInjvxvjIjcG5RkIUo"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_GOOGLE_APP_ID
+    value: "355143691286"
+    availability: [BUILD, RUNTIME]
