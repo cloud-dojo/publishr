@@ -101,5 +101,6 @@ jobs:
             --source . \
             --region asia-northeast1 \
             --service-account publishr-runner@publishr-498123.iam.gserviceaccount.com \
+            --update-env-vars=PUBLISHR_BODY_STORE=gcs,PUBLISHR_BODY_BUCKET=publishr-contents-498123 \
             --update-secrets=LANGFUSE_HOST=LANGFUSE_HOST:latest,LANGFUSE_PUBLIC_KEY=LANGFUSE_PUBLIC_KEY:latest,LANGFUSE_SECRET_KEY=LANGFUSE_SECRET_KEY:latest \
             --quiet
