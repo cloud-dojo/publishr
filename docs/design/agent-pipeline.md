@@ -1,7 +1,7 @@
 # Publishr エージェント連携設計（フェーズ × Agent × プロンプト × データ）
 
 > どのフェーズで・どのエージェントが・どんなデータから・どんなプロンプトを組み立て・何を次に渡すか。
-> 正本コード: `agents/publishr_agents/`（`mode_a.py` / `planning` / `casting` / `preview` / `cover` / `mode_b` / `prompts/registry.py`）。
+> 正本コード: `agents/publishr_agents/`（`mode_a.py` / `observe` / `reader` / `planning` / `casting` / `preview` / `cover` / `mode_b` / `prompts/registry.py`）。
 > プロンプト本文: `packages/prompts/*.md`。状態キー: `agents/publishr_agents/state_keys.py`。
 
 ---
@@ -94,8 +94,10 @@ observation → reader_profile → (subReaderContext / subMarket / subThemeInsig
 | 5 | `cover` | Flash | `step5_cover.md` | BookDraft（title/coreMessage） | coverPrompt（→ Imagen で画像化・任意） |
 
 ### STEP0 観測（observe）— **非LLM**
-`observe/collect_observation(user, now, source)`。`source` は `FixtureObservationSource`（mock）/ `GoogleObservationSource`（実: Calendar+Tasks）。
-Drive/Calendar/Tasks 等の生メモ → 型付き `ObservationBundle`（signals/evidence）に整形。**ここはプロンプト無し**（決定的収集）。
+`observe/collect_observation(user, now, source)`。`source` は `FixtureObservationSource`（mock）/ `GoogleObservationSource`（実: **Drive + Calendar + Tasks** の3ソース・`drive.readonly` を含め **live 有効化済＝C1.1.3**）。
+- **Drive** は **Picker 選択フォルダ（`connectedSources.drive.folderIds`）配下のみ**を対象に、`text/*`・Google ネイティブ（export）に加え **Office（.docx/.xlsx/.pptx）も本文抽出**（`google_source._extract_office_text`・python-docx/openpyxl/python-pptx）。`folderLabel` で業務/趣味を読み分け。
+- 決定的後処理（±14日窓・4000字トリム・タスク絞り・folderLabel 解決・`parse_folder_labels`）は `observe/transform.py` に集約（fixture/実 API 共通）。
+- 生メモ → 型付き `ObservationBundle`（signals/evidence）に整形。**ここはプロンプト無し**（決定的収集）。スコープは `PUBLISHR_GOOGLE_SCOPES` で絞れる（既定=3ソース）。
 
 ### STEP1 読者分析（reader）
 `reader_analyst`(Pro)。ObservationBundle を**3層プロファイル**（base / currentWork / readingBehavior）に推定 → `ReaderProfile3Layer`。
