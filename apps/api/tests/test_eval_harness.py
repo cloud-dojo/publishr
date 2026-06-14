@@ -64,3 +64,18 @@ def test_fewshot_eval_alignment():
     assert ids == expected
     failed = [r for r in rows if not r["passed"]]
     assert not failed, f"misaligned examples: {[(r['id'], r['detail']) for r in failed]}"
+
+
+# --- C5.1: 全プロンプトの構造健全性（loader で system＋良い例が抽出できる）-----------
+
+def test_all_prompt_files_loadable():
+    # REGISTRY の全プロンプトファイルが loader で読め、system と参照出力例が揃っている
+    # （system フェンス破損／良い例消失＝ few-shot 無効化 を CI が捕まえる）。
+    from publishr_agents.prompts.registry import REGISTRY  # noqa: PLC0415
+
+    rows = eval_harness.check_prompt_files_loadable()
+    ids = {r["id"] for r in rows}
+    expected = {f"prompt_{spec.prompt_file}" for spec in REGISTRY.values()}
+    assert ids == expected
+    failed = [r for r in rows if not r["passed"]]
+    assert not failed, f"broken prompts: {[(r['id'], r['detail']) for r in failed]}"
