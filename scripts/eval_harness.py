@@ -457,14 +457,48 @@ def check_fewshot_eval_alignment() -> list[dict[str, Any]]:
     return rows
 
 
+# 全プロンプトの構造健全性（C5.1）: どのプロンプトも system を抽出でき、参照出力例（few-shot/
+# eval アンカー）が残っていること。プロンプト編集で system フェンスが壊れる／良い例が消える
+# （＝ few-shot が黙って無効化される）退行を、実LLM無しで CI が捕まえる。
+_INLINE_EXAMPLE_FILES = {"step2_research_subs"}  # 例を **system** 直下にインライン保持（## ✅見出し無し）
+
+
+def check_prompt_files_loadable() -> list[dict[str, Any]]:
+    """REGISTRY の全プロンプトファイルが loader で読め、system＋良い例が揃っているか（決定的）。"""
+    from publishr_agents.prompts.registry import REGISTRY  # noqa: PLC0415
+
+    rows: list[dict[str, Any]] = []
+    for prompt_file in sorted({spec.prompt_file for spec in REGISTRY.values()}):
+        rid = f"prompt_{prompt_file}"
+        try:
+            doc = load_prompt(prompt_file)
+        except Exception as exc:  # noqa: BLE001 — 抽出不能は FAIL（理由を載せる）
+            rows.append({"id": rid, "passed": False, "detail": f"load failed: {exc}"})
+            continue
+        notes: list[str] = []
+        if not doc.system.strip():
+            notes.append("system empty")
+        if prompt_file not in _INLINE_EXAMPLE_FILES and not doc.good_example:
+            notes.append("good example (✅) missing")
+        rows.append(
+            {
+                "id": rid,
+                "passed": not notes,
+                "detail": "; ".join(notes) or "loadable + has example",
+            }
+        )
+    return rows
+
+
 def main() -> int:
     report = evaluate_pipeline()
     alignment = check_fewshot_eval_alignment()
-    failed = [r for r in report if not r["passed"]] + [r for r in alignment if not r["passed"]]
+    prompts = check_prompt_files_loadable()
+    failed = [r for r in (report + alignment + prompts) if not r["passed"]]
     for row in report:
         mark = "PASS" if row["passed"] else "FAIL"
         print(f"{mark} {row['id']}: score={row['score']} threshold={row['threshold']} {row['detail']}")
-    for row in alignment:
+    for row in alignment + prompts:
         mark = "PASS" if row["passed"] else "FAIL"
         print(f"{mark} {row['id']}: {row['detail']}")
     return 1 if failed else 0
