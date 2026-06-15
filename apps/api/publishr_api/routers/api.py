@@ -137,10 +137,10 @@ def api_trigger_planning(
 ) -> dict:
     """企画パイプライン（モードA）を手動起動する（デモ用・許可 uid のみ・連打/多重防止）。
     フロント: firestore-provider.ts POST /api/trigger/planning { userId }"""
-    # user_id = どの fixture を観測入力にするか（身元ではない）。
-    user_id = payload.user_id or uid or settings.demo_uid
-    # 所有者は検証済み uid を優先。body 由来の user_id は mock/単一ユーザー時のみの最後の保険。
-    # TODO(C4.9): 本番では owner を検証済み uid のみから決める（body を信用しない）。
+    # 企画対象/所有者は **検証済み uid を最優先**（C4.9・body を信用しない）。本番では uid＝Firebase
+    # 検証済み or demo_uid。body の userId（既定 "u_sakura"）は uid が無いローカル/mock のときだけ
+    # 使う。これで「body 既定の u_sakura → fixtures の fld_work で実Drive 404」を防ぐ（#2）。
+    user_id = uid or payload.user_id or settings.demo_uid
     owner = uid or settings.demo_uid or user_id
     key = uid or user_id or "anon"
     try:

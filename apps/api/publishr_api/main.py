@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,6 +13,14 @@ from .config import settings
 from .errors import ConflictError, NotFoundError
 from .routers import api, auth, books, personas, pipeline, plans, users, worker
 from .services.rate_limit import RateLimitError
+
+# 本番（Cloud Run）でアプリの INFO ログ（observe: 経路・trigger ok 等）を stdout へ出す。
+# 未設定だと root 既定 WARNING で握りつぶされ、実観測/企画の切り分けができない（#6）。
+# LOG_LEVEL で上書き可（既定 INFO）。uvicorn のアクセスログとは別系統。
+logging.basicConfig(
+    level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(levelname)s %(name)s: %(message)s",
+)
 
 app = FastAPI(title="Publishr BFF", version="0.0.0")
 
