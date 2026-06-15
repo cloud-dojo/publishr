@@ -148,7 +148,8 @@ def api_trigger_planning(
     except TriggerError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.message) from exc
     try:
-        result = mode_a_service.run(repo, user_id, owner_uid=owner)
+        # observe_uid=検証済み uid（実Google観測の per-uid トークン解決に使う）。
+        result = mode_a_service.run(repo, user_id, owner_uid=owner, observe_uid=uid)
     finally:
         # 例外時もロックを解放（恒久 409 を防ぐ）。
         trigger_guard.release(key, now=time.monotonic())

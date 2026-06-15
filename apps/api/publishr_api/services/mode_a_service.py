@@ -28,15 +28,69 @@ JST = timezone(timedelta(hours=9))
 _DEMO_NOW = datetime(2026, 6, 3, 6, 0, tzinfo=JST)
 
 
-def _load_user(user_id: str) -> User:
-    # MVP: モードAの観測は fixture 由来（connectedSources を持つ）ため、ここは fixtures から
-    # ユーザーを引く。per-user の実 Firestore ロードは C4.9（実Auth接続）で対応する。
-    user = next((u for u in load_users() if u.id == user_id), None)
+def _load_user(repo: RepositoryProtocol, user_id: str) -> User:
+    # まず repo（firestore なら OAuth/Picker が保存した connectedSources を持つ実ユーザー）。
+    # 無ければ fixtures にフォールバック（オフライン/mock・CLI 経路の従来挙動を保持）。
+    user = repo.get_user(user_id)
+    if user is None:
+        user = next((u for u in load_users() if u.id == user_id), None)
     if user is None:
         # 入力値はエコーせず（列挙オラクル回避）、サーバログにのみ残す。
         logger.warning("mode_a: user not found: %r", user_id)
         raise NotFoundError("user not found")
     return user
+
+
+def _google_credentials(uid: str):
+    """token_store(uid) の保存トークンから Credentials を作る（file/secret_manager 両対応）。
+
+    未保存なら None。生トークンはログに出さない。失効していれば refresh_token で更新する。
+    """
+    import json  # noqa: PLC0415
+
+    from ..services.token_store import get_token_store  # noqa: PLC0415
+
+    token_json = get_token_store().load(uid)
+    if not token_json:
+        return None
+    from google.auth.transport.requests import Request  # noqa: PLC0415
+    from google.oauth2.credentials import Credentials  # noqa: PLC0415
+    from publishr_agents.observe.google_source import resolve_scopes  # noqa: PLC0415
+
+    creds = Credentials.from_authorized_user_info(json.loads(token_json), resolve_scopes())
+    if not creds.valid and creds.refresh_token:
+        creds.refresh(Request())
+    return creds
+
+
+def _observation_source(user: User, observe_uid: Optional[str]):
+    """観測ソースを決める。settings.observe=google かつ接続済み＆トークン有りなら実Google。
+
+    それ以外（既定 fixture／未接続／トークン無し／構築失敗）は決定的 fixture へフォールバック＝
+    デモが空/エラーで壊れない。mock 既定では常に fixture（従来挙動・差分ゼロ）。
+    """
+    if settings.observe != "google":
+        return FixtureObservationSource()
+    cs = user.connected_sources
+    drive_ready = bool(cs and cs.drive and cs.drive.enabled and cs.drive.folder_ids)
+    feed_ready = bool(
+        cs and ((cs.calendar and cs.calendar.enabled) or (cs.tasks and cs.tasks.enabled))
+    )
+    if not (observe_uid and (drive_ready or feed_ready)):
+        logger.info("observe: user=%s 未接続 → fixture", getattr(user, "id", "?"))
+        return FixtureObservationSource()
+    try:
+        creds = _google_credentials(observe_uid)
+        if creds is None:
+            logger.info("observe: uid 連携トークン無し → fixture")
+            return FixtureObservationSource()
+        from publishr_agents.observe.google_source import GoogleObservationSource  # noqa: PLC0415
+
+        logger.info("observe: 実Google 観測を使用（接続済み）")
+        return GoogleObservationSource(credentials=creds)
+    except Exception as exc:  # noqa: BLE001 — 実Google失敗はデモ継続のため fixture へ縮退
+        logger.warning("observe: 実Google 構築失敗 → fixture: %s", type(exc).__name__)
+        return FixtureObservationSource()
 
 
 def _reject_log(planning: dict[str, Any], plan: Any) -> list[RejectLogEntry]:
@@ -67,18 +121,25 @@ def run(
     user_id: str,
     *,
     owner_uid: Optional[str] = None,
+    observe_uid: Optional[str] = None,
     llm: Optional[str] = None,
     now: Optional[datetime] = None,
 ) -> PipelineResult:
     """モードAを1回実行し、生成本を arrivals へ upsert して PipelineResult を返す。
 
     owner_uid 省略時は user_id を所有者にする（mock/単一ユーザー）。firestore では呼び出し側が
-    検証済み Firebase uid を渡す。llm 省略時は settings.publishr_llm。
+    検証済み Firebase uid を渡す。observe_uid は実Google観測のトークン解決に使う認証uid。
+    llm 省略時は settings.publishr_llm。
     """
-    user = _load_user(user_id)
+    user = _load_user(repo, user_id)
     owner = owner_uid or user_id
     mode_llm = llm or settings.publishr_llm
-    anchor = now or _DEMO_NOW
+
+    # 観測ソース: 実Google（接続済み）か fixture（既定/フォールバック）。
+    source = _observation_source(user, observe_uid)
+    is_google = type(source).__name__ == "GoogleObservationSource"
+    # fixture は決定的アンカー（役員報告が±14日窓内）。実Googleは「今」を基準に±14日を読む。
+    anchor = now or (datetime.now(JST) if is_google else _DEMO_NOW)
 
     # C1.8 学習ループ: ユーザの過去公開本のうち「反応がある」ものを読者分析へ渡す。
     # 反応ゼロなら空＝読者分析の出力は従来どおり不変（mock差分ゼロ）。
@@ -93,7 +154,7 @@ def run(
 
     result = run_mode_a_pipeline(
         user,
-        source=FixtureObservationSource(),
+        source=source,
         now=anchor,
         reader_llm=mode_llm,
         llm=mode_llm,
