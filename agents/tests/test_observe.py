@@ -248,3 +248,23 @@ def test_map_task_item_fields():
     assert t.notes == "至急"
     # notes 欠落でも空文字
     assert map_task_item({"title": "x", "status": "completed"}).notes == ""
+
+
+# --- fixture 堅牢化: fixture の無いユーザー（実uid等）は空観測に縮退（クラッシュしない）---
+
+def test_load_persona_missing_returns_empty():
+    from publishr_agents.observe.fixture_source import _load_persona
+
+    assert _load_persona("uid_without_fixtures_5JLL", "drive.json") == {}
+
+
+def test_fixture_source_no_fixtures_user_does_not_crash():
+    """実uid など fixtures が無いユーザーでも collect は空束を返す（実Google fallback の安全網）。"""
+    now = datetime(2026, 6, 3, 6, 0, tzinfo=timezone(timedelta(hours=9)))
+    base = next(u for u in load_users() if u.id == "u_sakura")
+    user = base.model_copy(
+        update={"id": "5JLLGOc3rpXiGN9KXmsISBNAKty2", "connected_sources": None}
+    )
+    bundle = FixtureObservationSource().collect(user, now=now)
+    assert isinstance(bundle, ObservationBundle)
+    assert bundle.drive.files == []  # fixture 無し → 空

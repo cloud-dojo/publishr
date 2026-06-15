@@ -25,9 +25,14 @@ from .transform import build_observation_bundle, folder_label_map
 
 
 def _load_persona(user_id: str, name: str) -> dict:
+    # fixture が無いユーザー（実uid など）は空観測に縮退する（クラッシュさせない）。
+    # 実Google観測のフォールバック先がここになるケースの安全網。
     path: Path = fixtures_dir() / "personas" / user_id / name
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
 
 
 class FixtureObservationSource:

@@ -121,11 +121,17 @@ async def worker_plan(
     if not job:
         logger.warning("worker(plan): bad/empty message, acking")
         return Response(status_code=204)  # ack（再配信ループ防止）
-    await run_in_threadpool(
-        mode_a_service.run,
-        repo,
-        job["user_id"],
-        owner_uid=job["owner"],
-        observe_uid=job["observe_uid"] or None,
-    )
+    # 企画は高価（実Vertex 数分）。失敗を 5xx で返すと Pub/Sub が同じジョブを再配信＝企画の連打
+    # （コスト/クォータ事故）になる。例外はログに残して **常に 204 で ack**（自動リトライしない＝
+    # 必要なら手動で再トリガー）。重複実行も book ID 決定的 upsert で同スロット上書き。
+    try:
+        await run_in_threadpool(
+            mode_a_service.run,
+            repo,
+            job["user_id"],
+            owner_uid=job["owner"],
+            observe_uid=job["observe_uid"] or None,
+        )
+    except Exception as exc:  # noqa: BLE001 — 再配信ストーム防止のため握って ack
+        logger.exception("worker(plan): run failed, acking to avoid redelivery: %s", type(exc).__name__)
     return Response(status_code=204)
