@@ -100,3 +100,15 @@ def test_worker_plan_bad_or_missing_message_acks():
     missing = base64.b64encode(json.dumps({"owner": "x"}).encode()).decode()
     assert client.post("/api/worker/plan", json={"message": {"data": missing}}).status_code == 204
     assert client.post("/api/worker/plan", json={}).status_code == 204
+
+
+def test_worker_plan_acks_even_on_run_failure(monkeypatch):
+    """企画実行が失敗(例: Vertex 429)でも 204 で ack＝高価な企画の再配信ストームを防ぐ。"""
+    from publishr_api.services import mode_a_service
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("vertex exhausted")
+
+    monkeypatch.setattr(mode_a_service, "run", boom)
+    res = client.post("/api/worker/plan", json=_plan_push("u_sakura"))
+    assert res.status_code == 204
