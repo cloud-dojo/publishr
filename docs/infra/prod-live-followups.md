@@ -24,11 +24,11 @@ mock 既定だった本番を「実 GCS 本文退避（C3.3）・実 OAuth/Drive
 | # | 重大度 | 領域 | 問題 | 対応 | 状態 |
 |---|---|---|---|---|---|
 | 1 | 高 | 速度/可用性 | 実Vertex で5冊同期生成＝**515秒**。Cloud Run HTTP 上限 **600秒**に近く、Drive増・遅延で **504** 落ちのリスク | **企画を Pub/Sub 非同期化**（`/api/worker/plan`）＋ack_deadline 600s | ✅実装（2026-06-15・`feat/c2-planning-async`）／infra設定で有効化 |
-| 2 | 高 | 正当性/安全 | `/trigger/planning` の `user_id` 既定が **`u_sakura`**（fixture）→ 実フォルダでなく **`fld_work` を Drive 照会 → 404**。UI は正しい uid を送るのでデモは可だが脆い | body を信用せず**検証済み uid** を使う（C4.9） | 未 |
+| 2 | 高 | 正当性/安全 | `/trigger/planning` の `user_id` 既定が **`u_sakura`**（fixture）→ 実フォルダでなく **`fld_work` を Drive 照会 → 404**。UI は正しい uid を送るのでデモは可だが脆い | body を信用せず**検証済み uid** を使う（C4.9） | ✅2026-06-15（`user_id = uid or payload.user_id or demo_uid`・api.py） |
 | 3 | 中 | クォータ | Vertex **429 RESOURCE_EXHAUSTED**（`asia-northeast1` の Pro クォータ枯渇）で企画が落ちていた | `GOOGLE_CLOUD_LOCATION=us-central1` に切替 | ✅暫定対応済 |
-| 4 | 中 | セキュリティ | `GOOGLE_OAUTH_CLIENT_SECRET`・`PUBLISHR_OAUTH_STATE_SECRET` が**平文 env**（コンソール権限者は閲覧可・作業中に露出） | Secret Manager 移行＋**ローテーション** | 未 |
-| 5 | 中 | セキュリティ | per-uid トークン保存のため runner SA に **`roles/secretmanager.admin`**（広い＝全 secret 読み書き可） | カスタムロール（`secrets.create`＋`versions.add/access` のみ）へ scope-down | 未 |
-| 6 | 中 | 運用/可観測性 | 本番で **INFO ログが出ない**（`main.py` に logging 構成無し＝root 既定 WARNING）。`observe:`/`trigger ok` が見えず切り分けに難。WARNING/ERROR は出る | `logging.basicConfig(level=INFO)` 等を追加 | 未 |
+| 4 | 中 | セキュリティ | `GOOGLE_OAUTH_CLIENT_SECRET`・`PUBLISHR_OAUTH_STATE_SECRET` が**平文 env**（コンソール権限者は閲覧可・作業中に露出） | Secret Manager 移行＋**ローテーション** | ✅2026-06-15 SM移行・平文env削除・state は新値ローテ・ci.yml `--update-secrets` 明記。**残＝client secret はコンソールで reset（露出値の無効化）→新値で SM 版更新** |
+| 5 | 中 | セキュリティ | per-uid トークン保存のため runner SA に **`roles/secretmanager.admin`**（広い＝全 secret 読み書き可） | カスタムロール（`secrets.create`＋`versions.add/access` のみ）へ scope-down | ✅2026-06-15 カスタムロール `publishrTokenStore`（`secrets.create`＋`versions.add`）付与＋`secretAccessor` 維持＋**admin 剥奪** |
+| 6 | 中 | 運用/可観測性 | 本番で **INFO ログが出ない**（`main.py` に logging 構成無し＝root 既定 WARNING）。`observe:`/`trigger ok` が見えず切り分けに難。WARNING/ERROR は出る | `logging.basicConfig(level=INFO)` 等を追加 | ✅2026-06-15 `main.py` で `logging.basicConfig(level=INFO)`（`LOG_LEVEL` 上書き可） |
 | 7 | 中 | UX | UI から**企画を再実行できない**（`runPipeline` は first-run 状態でのみ発火＝localStorage gated）。既存ユーザー（佐倉=ready）は再生成不可・手動「今すぐ企画」ボタン無し | 再生成アクション追加 or first-run リセット導線 | 未 |
 | 8 | 中 | ビルド | `gcloud run deploy --source .` は**ルート `Dockerfile`** を使うが `apps/api/Dockerfile` の同名コピーが存在。誤って後者を編集すると**本番に反映されない**（実際に extra 同梱が空振りし `google-auth-oauthlib` 欠落 → token 交換 ModuleNotFoundError が発生） | ルートを正本化（コメント済）／将来は1本化 | ✅原因対応済（重複は残） |
 | 9 | 低 | デモ品質 | 実観測は**佐倉の実 Google の中身**を「今」基準±14日で読む。アカウントが空だと本が薄くなる | publishr.hackathon の Drive(選択フォルダ)/Calendar/Tasks にデモ用コンテンツを直近日付で投入 | 運用 |
