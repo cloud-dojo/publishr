@@ -21,16 +21,19 @@ from fastapi.concurrency import run_in_threadpool
 from ..config import settings
 from ..deps import get_repository
 from ..repositories.protocol import RepositoryProtocol
-from ..services import reservation_service
+from ..services import mode_a_service, reservation_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["worker"])
 
 
-def _verify_push(request: Request) -> None:
-    """Pub/Sub push の OIDC を検証（audience 設定時のみ＝本番）。失敗は 401/403。"""
-    audience = settings.pubsub_push_audience
+def _verify_push(request: Request, audience: str) -> None:
+    """Pub/Sub push の OIDC を検証（audience 設定時のみ＝本番）。失敗は 401/403。
+
+    audience は endpoint ごとに異なる（push サブスクの push_endpoint URL）。空（ローカル/mock）は
+    検証スキップ＝オフラインでテスト可能。送信元 SA は `pubsub_push_sa` で共通検証する。
+    """
     if not audience:
         return  # ローカル/mock: 検証スキップ
     auth = request.headers.get("Authorization", "")
@@ -61,12 +64,30 @@ def _book_id_from_envelope(envelope: dict[str, Any]) -> str | None:
     return str(book_id) if book_id else None
 
 
+def _planning_job_from_envelope(envelope: dict[str, Any]) -> dict[str, str] | None:
+    data_b64 = (envelope.get("message") or {}).get("data")
+    if not data_b64:
+        return None
+    try:
+        payload = json.loads(base64.b64decode(data_b64).decode("utf-8"))
+    except Exception:  # noqa: BLE001 — 壊れたメッセージは ack して捨てる
+        return None
+    user_id = payload.get("userId")
+    if not user_id:
+        return None
+    return {
+        "user_id": str(user_id),
+        "owner": str(payload.get("owner") or user_id),
+        "observe_uid": str(payload.get("observeUid") or ""),
+    }
+
+
 @router.post("/worker/write")
 async def worker_write(
     request: Request, repo: RepositoryProtocol = Depends(get_repository)
 ) -> Response:
     """予約された本を執筆して published にする（冪等）。常に 2xx で ack する。"""
-    _verify_push(request)
+    _verify_push(request, settings.pubsub_push_audience)
     try:
         envelope = await request.json()
     except Exception:  # noqa: BLE001
@@ -78,4 +99,33 @@ async def worker_write(
     # threadpool で実行＝同期 process_write_job が内部で asyncio.run（vertex本文生成）を呼んでも
     # 実行中イベントループとネストしない（C2.2/実Vertex対応）。mock経路はそのまま高速。
     await run_in_threadpool(reservation_service.process_write_job, repo, book_id)  # 冪等
+    return Response(status_code=204)
+
+
+@router.post("/worker/plan")
+async def worker_plan(
+    request: Request, repo: RepositoryProtocol = Depends(get_repository)
+) -> Response:
+    """企画パイプライン（モードA）を非同期に実行して arrivals へ入荷する。常に 2xx で ack。
+
+    `/api/trigger/planning` が Pub/Sub に積んだジョブを push で受ける。実Vertex企画は重い（数分）
+    ため、サブスクの ack_deadline は長め（600s）に設定すること。生成本は Firestore に upsert され、
+    フロントは購読で受け取る（同期HTTPの 600s 張り付きを回避）。
+    """
+    _verify_push(request, settings.pubsub_plan_push_audience)
+    try:
+        envelope = await request.json()
+    except Exception:  # noqa: BLE001
+        envelope = {}
+    job = _planning_job_from_envelope(envelope if isinstance(envelope, dict) else {})
+    if not job:
+        logger.warning("worker(plan): bad/empty message, acking")
+        return Response(status_code=204)  # ack（再配信ループ防止）
+    await run_in_threadpool(
+        mode_a_service.run,
+        repo,
+        job["user_id"],
+        owner_uid=job["owner"],
+        observe_uid=job["observe_uid"] or None,
+    )
     return Response(status_code=204)

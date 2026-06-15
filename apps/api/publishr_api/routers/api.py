@@ -19,7 +19,7 @@ from ..config import settings
 from ..deps import get_repository
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import ReserveInput, TriggerPlanningInput
-from ..services import mode_a_service, reservation_service, write_queue
+from ..services import reservation_service, write_queue
 from ..services.trigger_guard import TriggerError, TriggerGuard
 
 logger = logging.getLogger(__name__)
@@ -148,10 +148,14 @@ def api_trigger_planning(
     except TriggerError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.message) from exc
     try:
+        # 企画は重い（実Vertex数分）。pubsub なら enqueue して即返し（worker /api/worker/plan が実行）、
+        # 生成本はフロントが Firestore 購読で受け取る。mock は in-process 即実行（決定的・オフライン）。
         # observe_uid=検証済み uid（実Google観測の per-uid トークン解決に使う）。
-        result = mode_a_service.run(repo, user_id, owner_uid=owner, observe_uid=uid)
+        queued = write_queue.enqueue_planning(
+            repo, user_id=user_id, owner_uid=owner, observe_uid=uid
+        )
     finally:
         # 例外時もロックを解放（恒久 409 を防ぐ）。
         trigger_guard.release(key, now=time.monotonic())
-    logger.info("trigger ok key=%s books=%d llm=%s", key, len(result.books), settings.publishr_llm)
-    return {"ok": True, "booksAdded": len(result.books)}
+    logger.info("trigger ok key=%s queued=%s llm=%s", key, queued, settings.publishr_llm)
+    return {"ok": True, "queued": queued}
