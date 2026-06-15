@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     # mock = インメモリ(MVP) / firestore = 実Firestore(将来)
     data_source: str = "mock"
+    # 観測ソース: fixture（既定・佐倉のキャンド観測＝決定的） / google（実Drive/Calendar/Tasks）。
+    # google でも、ユーザー未接続・トークン無し・取得失敗時は fixture へ自動フォールバック（C1.1）。
+    observe: str = Field(default="fixture", validation_alias="PUBLISHR_OBSERVE")
     # mock = 決定的キャンド(MVP) / vertex = Vertex Gemini(将来)
     publishr_llm: str = "mock"
     # プロンプトの few-shot 注入: on(既定) / off(dev コスト節約)。採点系は常時ON固定（render.py）。

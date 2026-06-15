@@ -52,3 +52,62 @@ def test_run_is_deterministic_in_mock():
 def test_run_unknown_user_raises():
     with pytest.raises(NotFoundError):
         mode_a_service.run(MockRepository(), "u_does_not_exist")
+
+
+# --- C1.1: 観測ソースの選択（実Google ⇄ fixture フォールバック）-------------------
+
+from publishr_schema import ConnectedSources, DriveConnection, User, load_users  # noqa: E402
+
+
+def _user_with_drive(folder_ids: list[str]) -> User:
+    base = next(u for u in load_users() if u.id == "u_sakura")
+    cs = ConnectedSources(drive=DriveConnection(enabled=True, folder_ids=folder_ids))
+    return base.model_copy(update={"connected_sources": cs})
+
+
+def _user_no_sources() -> User:
+    base = next(u for u in load_users() if u.id == "u_sakura")
+    return base.model_copy(update={"connected_sources": None})
+
+
+def test_source_is_fixture_by_default(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "fixture")
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), "uid1")
+    assert type(src).__name__ == "FixtureObservationSource"  # 既定は常に fixture（mock不変）
+
+
+def test_source_is_google_when_connected_with_token(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    monkeypatch.setattr(mode_a_service, "_google_credentials", lambda uid: object())
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), "uid1")
+    assert type(src).__name__ == "GoogleObservationSource"
+
+
+def test_source_falls_back_to_fixture_without_token(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    monkeypatch.setattr(mode_a_service, "_google_credentials", lambda uid: None)  # 連携トークン無し
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), "uid1")
+    assert type(src).__name__ == "FixtureObservationSource"
+
+
+def test_source_falls_back_to_fixture_when_not_connected(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    monkeypatch.setattr(mode_a_service, "_google_credentials", lambda uid: object())
+    src = mode_a_service._observation_source(_user_no_sources(), "uid1")
+    assert type(src).__name__ == "FixtureObservationSource"  # 未接続→fixture
+
+
+def test_source_falls_back_when_no_observe_uid(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), None)
+    assert type(src).__name__ == "FixtureObservationSource"  # uid 無し→fixture
