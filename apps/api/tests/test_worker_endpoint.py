@@ -76,3 +76,27 @@ def test_worker_runs_blocking_asyncio_job_without_nested_loop(monkeypatch):
     res = client.post("/api/worker/write", json=_push("b_any"))
     assert res.status_code == 204
     assert called["ok"] is True
+
+
+# --- 企画(モードA)非同期 worker（/api/worker/plan）------------------------------
+
+def _plan_push(user_id: str, owner: str | None = None, observe_uid: str = "") -> dict:
+    payload = {"userId": user_id, "owner": owner or user_id, "observeUid": observe_uid}
+    data = base64.b64encode(json.dumps(payload).encode()).decode()
+    return {"message": {"data": data, "messageId": "p1"}, "subscription": "sub"}
+
+
+def test_worker_plan_runs_mode_a_and_adds_arrivals():
+    repo = get_repository()
+    before = len(repo.list_books(shelf="arrivals"))
+    res = client.post("/api/worker/plan", json=_plan_push("u_sakura"))
+    assert res.status_code == 204
+    assert len(repo.list_books(shelf="arrivals")) > before  # 入荷が増えた
+
+
+def test_worker_plan_bad_or_missing_message_acks():
+    # 壊れた data / userId 欠落 はどちらも 2xx で ack（再配信ループ防止）。
+    assert client.post("/api/worker/plan", json={"message": {"data": "!!notb64"}}).status_code == 204
+    missing = base64.b64encode(json.dumps({"owner": "x"}).encode()).decode()
+    assert client.post("/api/worker/plan", json={"message": {"data": missing}}).status_code == 204
+    assert client.post("/api/worker/plan", json={}).status_code == 204

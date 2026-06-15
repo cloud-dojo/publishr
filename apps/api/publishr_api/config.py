@@ -46,6 +46,14 @@ class Settings(BaseSettings):
     # Pub/Sub push の OIDC 検証用（worker endpoint の audience＝自URL・許可する push SA email）。
     pubsub_push_audience: str = Field(default="", validation_alias="PUBSUB_PUSH_AUDIENCE")
     pubsub_push_sa: str = Field(default="", validation_alias="PUBSUB_PUSH_SA")
+    # 企画(モードA)の非同期キュー（重い実Vertex企画を /trigger/planning から切り離す）。
+    pubsub_planning_topic: str = Field(
+        default="publishr-planning", validation_alias="PUBSUB_PLANNING_TOPIC"
+    )
+    # 企画 worker（/api/worker/plan）push の OIDC audience（＝その push_endpoint URL）。
+    pubsub_plan_push_audience: str = Field(
+        default="", validation_alias="PUBSUB_PLAN_PUSH_AUDIENCE"
+    )
 
     # 予約後の状態遷移タイマー（秒）。デモ用に短く。
     reserve_to_writing_sec: float = 2.0

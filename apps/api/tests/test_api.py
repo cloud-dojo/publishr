@@ -179,12 +179,18 @@ def test_pipeline_run_returns_reject_log():
 
 
 def test_trigger_planning_adds_books():
-    """手動トリガー（モードA）で入荷が増える＝『押す→本ができる』。"""
+    """手動トリガー（モードA）で入荷が増える＝『押す→本ができる』。
+
+    mock キュー（既定）は enqueue_planning が in-process 即実行＝queued は False だが本はできる。
+    """
+    repo = get_repository()
+    before = len(repo.list_books(shelf="arrivals"))
     res = client.post("/api/trigger/planning", json={"userId": "u_sakura"})
     assert res.status_code == 200
     data = res.json()
     assert data["ok"] is True
-    assert data["booksAdded"] >= 1
+    assert data["queued"] is False  # mock は同期実行
+    assert len(repo.list_books(shelf="arrivals")) > before  # 入荷が増えた
 
 
 def test_trigger_planning_rate_limited_on_immediate_repeat():
