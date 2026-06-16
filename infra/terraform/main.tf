@@ -1,8 +1,9 @@
 locals {
   # Cloud Run の project-number URL（自己参照を避けるため決定的に組み立てる）
-  base_url    = "https://${var.service_name}-${var.project_number}.${var.region}.run.app"
-  worker_url  = "${local.base_url}/api/worker/write"      # Pub/Sub push 先（執筆ワーカー）
-  trigger_url = "${local.base_url}/api/trigger/planning"  # Scheduler 起動先（自律入荷）
+  base_url        = "https://${var.service_name}-${var.project_number}.${var.region}.run.app"
+  worker_url      = "${local.base_url}/api/worker/write"      # Pub/Sub push 先（執筆ワーカー）
+  plan_worker_url = "${local.base_url}/api/worker/plan"       # Pub/Sub push 先（企画ワーカー・C2非同期）
+  trigger_url     = "${local.base_url}/api/trigger/planning"  # Scheduler 起動先（自律入荷）
   # Pub/Sub サービスエージェント（push 用 OIDC トークン生成に tokenCreator が要る）
   pubsub_agent = "serviceAccount:service-${var.project_number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
@@ -164,6 +165,51 @@ resource "google_pubsub_subscription" "writing_push" {
   }
 }
 
+# ── 企画(モードA)非同期キュー（C2）。重い実Vertex企画を /trigger/planning から切り離す ──
+#
+# ⚠️ これらは 2026-06-15 に **gcloud で本番作成済**（topic publishr-planning / subscription
+#    publishr-planning-push / runner publisher）。state を持つ環境で次の import を実行してから
+#    apply すること（import 無しで apply すると "already exists" で失敗する）:
+#
+#      terraform import google_pubsub_topic.planning \
+#        projects/publishr-498123/topics/publishr-planning
+#      terraform import google_pubsub_subscription.planning_push \
+#        projects/publishr-498123/subscriptions/publishr-planning-push
+#      terraform import google_pubsub_topic_iam_member.runner_publisher_planning \
+#        "projects/publishr-498123/topics/publishr-planning roles/pubsub.publisher serviceAccount:publishr-runner@publishr-498123.iam.gserviceaccount.com"
+#
+# ⚠️ さらに本 state は本セッションの多数の gcloud 変更（Cloud Run env: PUBSUB_PLAN_PUSH_AUDIENCE/
+#    PUBLISHR_OBSERVE/PUBLISHR_BODY_STORE/OAuth secret 参照 等、IAM: secretmanager カスタムロール、
+#    writing サブスクの ack_deadline 600 など）と広くドリフトしている。`terraform apply` 前に
+#    `terraform plan` 差分を必ず確認し、env/IAM の巻き戻しが起きないよう main.tf を実態に合わせて
+#    更新すること（本PRは planning 資源の追加のみ。Cloud Run env ブロックは意図的に未変更）。
+resource "google_pubsub_topic" "planning" {
+  name       = var.pubsub_planning_topic
+  depends_on = [google_project_service.apis]
+}
+
+# push サブスクリプション → Cloud Run /api/worker/plan（OIDC 付き）。
+# 企画は実Vertex で数分かかるため ack_deadline は長め（600s）。worker は失敗時も 2xx で ack するので
+# 再配信は genuine な push 失敗時のみ（10〜60s backoff）。
+resource "google_pubsub_subscription" "planning_push" {
+  name                 = "${var.pubsub_planning_topic}-push"
+  topic                = google_pubsub_topic.planning.id
+  ack_deadline_seconds = 600
+
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "60s"
+  }
+
+  push_config {
+    push_endpoint = local.plan_worker_url
+    oidc_token {
+      service_account_email = google_service_account.pubsub_push.email
+      audience              = local.plan_worker_url
+    }
+  }
+}
+
 # ───────────────────────── Cloud Scheduler (自律入荷) ─────────────────────────
 # 本命テーマ＝水/土 06:00 JST に Cloud Run トリガーを OIDC で叩く（C1.7）。
 resource "google_cloud_scheduler_job" "honmei" {
@@ -217,6 +263,13 @@ resource "google_project_iam_member" "runner_datastore" {
 # runner: 予約時に Pub/Sub へ発行
 resource "google_pubsub_topic_iam_member" "runner_publisher" {
   topic  = google_pubsub_topic.writing.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# runner: 企画トリガー時に企画トピックへ発行（C2 非同期企画）
+resource "google_pubsub_topic_iam_member" "runner_publisher_planning" {
+  topic  = google_pubsub_topic.planning.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${google_service_account.runner.email}"
 }

@@ -43,6 +43,12 @@ variable "pubsub_topic" {
   default     = "publishr-writing"
 }
 
+variable "pubsub_planning_topic" {
+  type        = string
+  description = "企画(モードA)ジョブ用 Pub/Sub トピック名（C2 非同期企画）。"
+  default     = "publishr-planning"
+}
+
 variable "max_books_per_run" {
   type        = string
   description = "1回の自律入荷で予約する最大冊数（C2.1 予約上限）。"
