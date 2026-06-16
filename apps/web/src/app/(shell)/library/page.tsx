@@ -10,7 +10,12 @@ export default function LibraryPage() {
   const provider = useProvider();
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
-  const library = provider.booksByShelf("library");
+  // 書庫＝あなたの published 本すべての恒久コレクション（shelf に依らない）。書店(arrivals)は
+  // 直近7日の新着ビューで、7日で落ちても書庫には残り続ける＝本が永久に消えない。新しい順。
+  const library = provider
+    .listBooks()
+    .filter((b) => b.status === "published")
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
 
   return (
     <>
