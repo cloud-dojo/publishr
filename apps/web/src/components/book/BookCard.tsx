@@ -7,9 +7,9 @@ import { StatusBadge } from "./StatusBadge";
 import { WhyBubble } from "./WhyBubble";
 
 function hrefFor(book: Book): string {
-  if (book.status === "writing" || book.status === "reserved") return `/writing/${book.id}`;
-  if (book.status === "published") return `/read/${book.id}`;
-  return `/books/${book.id}`;
+  // 企画したら自動で本文まで書く＝予約導線なし。常に読書ページへ直行（published は全文、未完は
+  // parseBook が序文サンプルにフォールバック＝執筆完了後に全文へ差し替わる）。
+  return `/read/${book.id}`;
 }
 
 function authorSuffix(book: Book): string {
