@@ -30,16 +30,17 @@ export default function HomePage() {
   // 理由は plan 由来を優先し、初回カタログ本は deliveryReason をフォールバックに。
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason ?? b.deliveryReason;
 
-  // 棚＝status＋shelf(=themeKind相当)＋直近7日ウィンドウで導出（mvp-scope §5-2）。
-  // - 関心/新しい出会い：status=draft かつ 入荷から7日以内（予約すると status が変わり自動で棚落ち）
-  // - 執筆中：status=reserved/writing（予約された本がここへ移る）
+  // 棚＝shelf＋直近7日ウィンドウで導出（mvp-scope §5-2）。
+  // 企画したら本文まで自動執筆＝予約導線なし。draft はすぐ published になるため status は問わず
+  // 「入荷から7日以内の本」を関心/新しい出会いに並べる（published も消えずに残す）。
+  // 読了すると shelf=library に移って棚落ちする。
   const now = new Date();
-  const isFreshDraft = (b: Book) =>
-    b.status === "draft" && isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
+  const isFreshArrival = (b: Book) => isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
   const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
 
-  const interests = provider.booksByShelf("arrivals").filter(isFreshDraft).sort(byNewest);
-  const encounters = provider.booksByShelf("odd").filter(isFreshDraft).sort(byNewest);
+  const interests = provider.booksByShelf("arrivals").filter(isFreshArrival).sort(byNewest);
+  const encounters = provider.booksByShelf("odd").filter(isFreshArrival).sort(byNewest);
+  // 執筆中（自動執筆の短時間遷移）：reserved/writing をさりげなく表示。
   const press = provider
     .listBooks()
     .filter((b) => b.status === "writing" || b.status === "reserved")

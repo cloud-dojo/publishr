@@ -175,8 +175,35 @@ def run(
         created_at=datetime.now(JST).isoformat(),
     )
     persist_arrivals(repo, books, personas)
+
+    # 企画したら本文まで自動で書く（手動「予約」を介さない）。1冊=1執筆ジョブで投入し、
+    # 重い本文生成は既存の Mode B 経路（worker→write_body_loop→published・C3.3）に委ねる
+    # ＝per-book 非同期で push の ack 期限(600s)に収まる・並列・新規本文コードなし。
+    _autowrite_books(repo, [b.id for b in books], owner)
+
     return PipelineResult(
-        books=books,
+        books=[repo.get_book(b.id) or b for b in books],  # mock は published＋body 反映後を返す
         reject_log=_reject_log(result.planning, result.plan),
         approved_plan_ids=[result.plan.proposal_id],
     )
+
+
+def _autowrite_books(repo: RepositoryProtocol, book_ids: list[str], owner: str) -> None:
+    """企画直後に各 book を自動執筆へ投入する（draft→reserved→執筆）。
+
+    - pubsub（本番）: reserve→`write_queue.enqueue` で 1冊1ジョブの非同期執筆（worker が published 化）。
+    - mock（既定/テスト/ローカル）: reserve→`process_write_job` を同期インライン実行（決定的・event loop
+      不要。`schedule_advance` の create_task は threadpool で loop 不在＝使わない）。
+    - cap 超過(ConflictError)等は log してスキップ＝その本は draft のまま（企画全体は失敗させない）。
+    """
+    from . import reservation_service, write_queue  # noqa: PLC0415 — 循環回避の lazy import
+
+    for book_id in book_ids:
+        try:
+            reservation_service.reserve_now(repo, book_id, owner_uid=owner)
+            if settings.queue == "pubsub":
+                write_queue.enqueue(repo, book_id)  # 非同期（per-book worker）
+            else:
+                reservation_service.process_write_job(repo, book_id)  # mock: 同期インライン
+        except Exception as exc:  # noqa: BLE001 — 1冊の失敗で企画全体を落とさない
+            logger.warning("autowrite skipped book=%s: %s", book_id, type(exc).__name__)

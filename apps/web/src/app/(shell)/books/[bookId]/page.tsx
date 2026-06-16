@@ -1,20 +1,16 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
 
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
-import { useActions, useProvider } from "@/data/hooks";
+import { useProvider } from "@/data/hooks";
 
 export default function BookDetailPage() {
   const params = useParams<{ bookId: string }>();
-  const router = useRouter();
   const provider = useProvider();
-  const { reserve } = useActions();
-  const [busy, setBusy] = useState(false);
 
   const book = provider.getBook(params.bookId);
   if (!book) {
@@ -29,12 +25,6 @@ export default function BookDetailPage() {
   const persona = provider.getPersona(book.authorPersonaId);
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
-
-  const onReserve = async () => {
-    setBusy(true);
-    await reserve(book.id);
-    router.push(`/writing/${book.id}`);
-  };
 
   return (
     <>
@@ -54,21 +44,9 @@ export default function BookDetailPage() {
             titleSize={25}
           />
           <div className="detail-actions">
-            {book.status === "draft" && (
-              <button className="btn btn--gold btn--block" onClick={onReserve} disabled={busy}>
-                {busy ? "依頼を送っています…" : "この本を執筆依頼する →"}
-              </button>
-            )}
-            {(book.status === "reserved" || book.status === "writing") && (
-              <Link className="btn btn--gold btn--block" href={`/writing/${book.id}`}>
-                執筆の様子を見る →
-              </Link>
-            )}
-            {book.status === "published" && (
-              <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
-                いま読む →
-              </Link>
-            )}
+            <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
+              いま読む →
+            </Link>
             {persona && (
               <span className="btn btn--ghost btn--block" style={{ cursor: "default" }}>
                 ✦ {persona.name} を知る
@@ -126,7 +104,7 @@ export default function BookDetailPage() {
             <div className="section" style={{ marginTop: 40 }}>
               <div className="section-head">
                 <div>
-                  <div className="eyebrow">A glimpse before you reserve</div>
+                  <div className="eyebrow">A glimpse before you read</div>
                   <div className="section-title">
                     序文の<span className="accent">サンプル</span>
                   </div>
@@ -140,16 +118,11 @@ export default function BookDetailPage() {
                   </p>
                 ))}
               </div>
-              {book.status === "draft" && (
-                <div className="row gap12" style={{ marginTop: 24 }}>
-                  <button className="btn btn--gold" onClick={onReserve} disabled={busy}>
-                    続きを執筆依頼する →
-                  </button>
-                  <span className="muted" style={{ fontSize: 12.5 }}>
-                    {persona?.name} が本文を書き始めます（明朝に入荷）
-                  </span>
-                </div>
-              )}
+              <div className="row gap12" style={{ marginTop: 24 }}>
+                <Link className="btn btn--gold" href={`/read/${book.id}`}>
+                  全文を読む →
+                </Link>
+              </div>
             </div>
           )}
         </div>
@@ -161,9 +134,9 @@ export default function BookDetailPage() {
 function statusLabel(status: string): string {
   switch (status) {
     case "draft":
-      return "企画段階（本文は未執筆）";
+      return "入荷準備中（まもなく全文が読めます）";
     case "reserved":
-      return "執筆依頼中";
+      return "執筆待ち";
     case "writing":
       return "執筆中";
     case "published":

@@ -12,7 +12,8 @@ from publishr_api.repositories.mock_repository import MockRepository
 from publishr_api.services import mode_a_service
 
 
-def test_run_persists_arrivals_and_returns_reject_log():
+def test_run_writes_books_published_with_body_and_returns_reject_log():
+    """企画したら本文まで自動執筆（mock は同期）＝ books は published＋body 付きで入荷される。"""
     repo = MockRepository()
     result = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
 
@@ -20,12 +21,14 @@ def test_run_persists_arrivals_and_returns_reject_log():
     for book in result.books:
         b = book.model_dump(by_alias=True)
         assert b["shelf"] == "arrivals"
-        assert b["status"] == "draft"
+        assert b["status"] == "published"  # 自動執筆で draft→published
+        assert b["body"]  # 本文が書かれている（手動予約なし）
         assert b["ownerUid"] == "uid_demo"
 
-    # 永続（冪等 upsert）されている＝ get_book で引ける。
+    # 永続（冪等 upsert）されている＝ get_book で published・body 付きで引ける。
     first = result.books[0]
-    assert repo.get_book(first.id).id == first.id
+    persisted = repo.get_book(first.id)
+    assert persisted.id == first.id and persisted.status == "published" and persisted.body
 
     # 採用企画ID と本の planId が整合。
     assert result.approved_plan_ids
@@ -52,6 +55,21 @@ def test_run_is_deterministic_in_mock():
 def test_run_unknown_user_raises():
     with pytest.raises(NotFoundError):
         mode_a_service.run(MockRepository(), "u_does_not_exist")
+
+
+def test_autowrite_failure_degrades_to_draft(monkeypatch):
+    """自動執筆の投入失敗（cap 超過等）は握って draft のまま＝企画全体は成功する。"""
+    from publishr_api.errors import ConflictError
+    from publishr_api.services import reservation_service
+
+    def boom(*args, **kwargs):
+        raise ConflictError("同時予約上限")
+
+    monkeypatch.setattr(reservation_service, "reserve_now", boom)
+    repo = MockRepository()
+    result = mode_a_service.run(repo, "u_sakura", owner_uid="u")
+    assert len(result.books) >= 1  # 企画自体は成功
+    assert repo.get_book(result.books[0].id).status == "draft"  # 執筆未投入＝draft 据え置き
 
 
 # --- C1.1: 観測ソースの選択（実Google ⇄ fixture フォールバック）-------------------
