@@ -93,7 +93,17 @@
 
 ---
 
-## 🧭 現在地サマリ（最新: 2026-06-12）
+## 🧭 現在地サマリ（最新: 2026-06-17）
+
+> **いまどこ（2026-06-17）**: **本番が「実観測→実企画→実本文→実表紙」までフル稼働**。Cloud Run `publishr-api`(asia-northeast1・rev 00057)＋Firebase App Hosting(web・firestore全面)＋Firestore＋Pub/Sub＋Cloud Scheduler。デモ垢＝佐倉(5JLL…/publishr.hackathon)。
+> - **C3.3 本文GCSオフロード live**（PR#43前後）: published 本文を非公開 `publishr-contents-498123` へ退避（`PUBLISHR_BODY_STORE=gcs`・`bodyUrl`）。読書ページは `/api/books/{id}/body` でサーバ側 read して hydrate（GCSを晒さない）。runner SA `roles/storage.objectAdmin`。
+> - **C4.1 OAuth/実観測 live**（PR#44）: `/api/auth/google/start`→`/callback` のトークン交換が本番で実動。接続済みユーザーの**実 Drive(選択folder)/Calendar/Tasks** から企画。redirect_uri・client secret 配線完了。`PUBLISHR_OBSERVE=google`＋`PUBLISHR_OAUTH_TOKEN_STORE=secret_manager`。未接続/失敗は fixture へ自動フォールバック。
+> - **企画の Pub/Sub 非同期化**（PR#47前後・`/api/worker/plan`・ack 600s）＋**企画→本文の自動執筆統合**（PR#50-53）: 手動「予約」を撤去し、**企画した本を 1冊=1ジョブで自動 enqueue→worker→write_body_loop→published**（per-book 並列・各<600s）。書庫は read 直行・予約導線なし。本の推定分量/序文は**実本文から算出**（#53）。書庫は published を新しい順で永続表示＝消えない（#52）。
+> - **入荷本の run-uniqueID**（PR#54）: `arr_<YYYYMMDDHHMMSS>_<personaId>`＝run ごとに積み上げ（旧 `arr_<personaId>` の上書き廃止）。著者IDも同トークン。
+> - **表紙 Imagen GCS化＋ENABLE_IMAGEN ON live**（PR#55・rev 00057）: 各本に Imagen 表紙→非公開GCS `covers/<id>_<uuid8>.png`→`Book.cover_url`。配信は `GET /api/books/{id}/cover`（本文C3.3と同型のサーバ側 read・所有者チェック無し＝書影は非機微・未生成は404→CSS装丁にフォールバック）。フロントは `coverSrc()`(web/data/config.ts) で結線。
+> - **自律 Scheduler 稼働**（C1.7）: `publishr-honmei`＝cron `0 6 * * 3,6`(水・土 06:00 JST)・ENABLED・`PUBLISHR_MAX_BOOKS_PER_RUN=4`。次回 2026-06-17 06:00 JST から実表紙＋run-uniqueID で自律入荷。
+> - **セキュリティ/運用ハードニング**: OAuth secrets を Secret Manager 化＋client secret ローテ（#4）・runner SA を `secretmanager.admin`→カスタムロール `publishrTokenStore` に scope-down（#5）・本番 INFO ログ（#6）・予約/トリガーの fail-closed 認証（C4.9）。
+> - **残**: ①UIからの企画再実行導線（#7・未）②`make eval` 実judge閾値調整（課金）③M5/M6＝デモ録画・ProtoPedia・公開リポ・最終提出7/10（鉄田主体）④Pub/Sub 同一job再配信時の重複本（trigger_guard＋ack-on-error で稀・MVP許容）。詳細は [prod-live-followups.md](../infra/prod-live-followups.md)。
 
 > **いまどこ（2026-06-12）**: M0〜M3完了＋M4ほぼ完了に加え、**C4.1（Google連携の一瀬バックエンド＋Drive Picker UI フロント）と C5.4/5.5（judge再現性・閾値ツール＋実Gemini judge配線）が main 入り**（PR#23・#24）＋**I-20 予約原子性transaction・C4.9 rate limit/nonce 単回化**。`make verify` **262 passed, 9 skipped**／web typecheck+lint 緑。**C4.1 は code-complete**＝BFF `routers/auth.py`（`/api/auth/google/start`・`/callback`・`/api/connect/drive-folders`）＋`oauth_service`/`token_store`(file既定/Secret Manager)/`upsert_user`、フロント `apps/web/src/lib/googlePicker.ts`＋`(auth)/connect`統合＋型＋`config` の `NEXT_PUBLIC_GOOGLE_*`。**実judge** は `eval_gate.judge_plan(backend="vertex")`＝実Gemini Pro採点(`eval_judge.md`ルーブリック・readerProfile+plan→4観点JSON)を **gated 配線**（既定mock・$0・`scripts/eval_reproducibility.py`＋`eval_threshold_sweep.py`）。**残＝①C4.1を実際に動かす＝GCPで Picker API有効化＋OAuth Webクライアント/APIキー発行＋`apphosting.yaml`に`NEXT_PUBLIC_GOOGLE_*`投入＋ブラウザQA ②実judge閾値調整＝`PUBLISHR_RUN_VERTEX=1 PUBLISHR_EVAL_BACKEND=vertex make eval-repro/eval-sweep`（課金・ADC要）で実σ/CV→`eval_set.yaml`閾値/`eval_judge.md`微調整 ③M5/M6＝デモ録画・ProtoPedia・公開リポ・最終提出7/10（鉄田主体）④別軸ハードニング＝**I-20予約原子性＋C4.9 rate limit/nonce単回化を実装済**（`reserve_book_atomic`＝mockロック/firestore `@transactional`・owner別cap・`ownerUid+status`複合index追加／`RateLimiter`(/start・/drive-folders per-uid 429)／`NonceStore`(callback replay 403)）。残＝state ブラウザ束縛(PKCE/cookie)・nonce/RLのマルチインスタンス共有ストア・I-20 emulator/live検証・mode_b vertex live・C3.3約100p+GCS ⑤小follow-up＝C1.7 serendipity・C5.1全11プロンプト実テスト・C5.3 GEAP純正運用(任意・基準5アピール)**。運用メモ: デモ垢＝佐倉 美咲(5JLL…/publishr.hackathon)。
 >
