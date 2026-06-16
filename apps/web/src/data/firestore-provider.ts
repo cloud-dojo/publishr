@@ -37,8 +37,9 @@ export class FirestoreProvider extends BaseProvider {
   private db: Firestore;
   private ownerUid: string | null = null;
   private unsubs: Array<() => void> = [];
-  // GCS退避(C3.3)された本文を一度だけ hydrate するための既取得セット。
-  private hydratedBodies = new Set<string>();
+  // GCS退避(C3.3)された本文の取得済みキャッシュ（id→本文）。snapshot 再取得で books が
+  // 作り直されても本文を消さずに復元するために保持する（id→body）。
+  private bodyCache = new Map<string, string>();
 
   constructor() {
     super();
@@ -78,7 +79,14 @@ export class FirestoreProvider extends BaseProvider {
     this.unsubs.push(
       onSnapshot(query(collection(this.db, "books"), where("ownerUid", "==", uid)), (snap) => {
         this.books.clear();
-        snap.forEach((d) => this.books.set(d.id, { id: d.id, ...d.data() } as Book));
+        snap.forEach((d) => {
+          const b = { id: d.id, ...d.data() } as Book;
+          // 既に GCS から hydrate 済みの本文を復元（snapshot で body="" に戻して読書ページを
+          // 序文だけに退行させない・C3.3）。Firestore 側に実体があればそちらを優先。
+          const cached = this.bodyCache.get(d.id);
+          if (cached && !b.body) b.body = cached;
+          this.books.set(d.id, b);
+        });
         this.notify();
         void this.hydrateBodies();
       })
@@ -140,21 +148,25 @@ export class FirestoreProvider extends BaseProvider {
 
   // 本文が GCS 退避（bodyUrl 有り＆body 空・C3.3）された本だけ、API でサーバ側 read して埋める。
   // inline 運用では body が常に入っているので何もしない（mock/従来の読書導線は不変）。
+  // 取得した本文は bodyCache に保持し、以降の snapshot 再取得でも復元する（消えない）。
   private async hydrateBodies(): Promise<void> {
     const targets = [...this.books.values()].filter(
-      (b) => b.bodyUrl && !b.body && !this.hydratedBodies.has(b.id)
+      (b) => b.bodyUrl && !b.body && !this.bodyCache.has(b.id)
     );
     for (const b of targets) {
-      this.hydratedBodies.add(b.id);
       try {
         const data = (await this.apiGet(`/api/books/${b.id}/body`)) as { body?: string };
-        const cur = this.books.get(b.id);
-        if (cur && data?.body) {
-          this.books.set(b.id, { ...cur, body: data.body });
-          this.notify();
+        if (data?.body) {
+          this.bodyCache.set(b.id, data.body); // snapshot を越えて保持
+          const cur = this.books.get(b.id);
+          if (cur) {
+            this.books.set(b.id, { ...cur, body: data.body });
+            this.notify();
+          }
         }
+        // 本文が空（まだ書かれていない）なら cache に入れず、次の snapshot で再試行する。
       } catch {
-        this.hydratedBodies.delete(b.id); // 失敗は次の購読更新で再試行
+        // 失敗は次の購読更新で再試行（cache に入れていないので再度 target になる）。
       }
     }
   }
