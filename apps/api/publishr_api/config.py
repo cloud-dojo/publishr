@@ -122,6 +122,11 @@ class Settings(BaseSettings):
     body_signed_url_ttl_sec: int = Field(
         default=900, validation_alias="PUBLISHR_BODY_SIGNED_URL_TTL_SEC"
     )
+    # 表紙画像(Imagen)の退避先 GCS バケット（本文と同バケット・prefix covers/）。空なら
+    # cover 配信エンドポイントは無効（GCS read 不可）。本文と同方針＝非公開・サーバ側 read。
+    cover_bucket: str = Field(
+        default="publishr-contents-498123", validation_alias="PUBLISHR_COVER_BUCKET"
+    )
 
 
 settings = Settings()

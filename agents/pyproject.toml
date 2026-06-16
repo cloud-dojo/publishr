@@ -21,6 +21,8 @@ google = [
     "python-docx>=1.1",
     "openpyxl>=3.1",
     "python-pptx>=0.6",
+    # ENABLE_IMAGEN=true 時の表紙画像を非公開 GCS へ退避（imagen.generate_cover_image・lazy import）。
+    "google-cloud-storage>=2.10",
 ]
 
 [build-system]

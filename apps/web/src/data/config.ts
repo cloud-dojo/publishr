@@ -8,6 +8,15 @@ export const dataSource: DataSource =
 export const apiUrl: string =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+// 表紙画像(Imagen)の表示元を解決する。実 Imagen 表紙は非公開 GCS の object パス
+// （`covers/...png`）で coverUrl に入るため、BFF のサーバ側 read 配信口に解決する。
+// http(s) URL はそのまま。未設定(null)は undefined＝CSS バリアントの装丁にフォールバック。
+export function coverSrc(bookId: string, coverUrl?: string | null): string | undefined {
+  if (!coverUrl) return undefined;
+  if (coverUrl.startsWith("http")) return coverUrl;
+  return `${apiUrl}/api/books/${encodeURIComponent(bookId)}/cover`;
+}
+
 // Firebase クライアント設定（公開キー・コミット可）。
 // 値は apphosting.yaml / .env.local の NEXT_PUBLIC_FIREBASE_* で投入する。
 // 未設定（mock運用中）でもアプリが動くよう、firebase.ts 側で空判定する。

@@ -12,7 +12,8 @@ import logging
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from fastapi.responses import RedirectResponse
 from publishr_schema import Book
 
 from ..config import settings
@@ -114,6 +115,37 @@ def api_get_book_body(
     if store is not None and book.body_url:
         return {"body": store.get(book_id, book.body_url) or ""}
     return {"body": ""}
+
+
+@router.get("/books/{book_id}/cover")
+def api_get_book_cover(
+    book_id: str,
+    repo: RepositoryProtocol = Depends(get_repository),
+):
+    """表紙画像を返す（Imagen・ENABLE_IMAGEN=true 時のみ存在）。本文C3.3と同方針で **非公開**
+    GCSバケットからサーバ側 read して画像バイトを配信＝オブジェクトを外部に晒さない。
+
+    `<img src>` から認証ヘッダを送れないため所有者チェックは課さない（表紙は書影アートで非機微）。
+    coverUrl が無い/未退避なら404（フロントは CSS バリアントの装丁にフォールバック）。
+    """
+    book = repo.get_book(book_id)
+    if book is None or not book.cover_url:
+        raise HTTPException(status_code=404, detail=f"book {book_id} の表紙がありません")
+    cover_url = book.cover_url
+    if cover_url.startswith("http"):  # 既に外部URL（将来用）＝そのままリダイレクト
+        return RedirectResponse(cover_url)
+
+    from ..services.cover_store import get_cover_store  # noqa: PLC0415
+
+    store = get_cover_store()
+    data = store.get_bytes(book_id, cover_url) if store is not None else None
+    if not data:
+        raise HTTPException(status_code=404, detail=f"book {book_id} の表紙がありません")
+    return Response(
+        content=data,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @router.post("/reserve", response_model=Book)
