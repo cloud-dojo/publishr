@@ -45,7 +45,6 @@ export default function HomePage() {
     .listBooks()
     .filter((b) => b.status === "writing" || b.status === "reserved")
     .sort(byNewest);
-  const user = provider.getUser(DEMO_USER_ID);
   const arrival = arrivalLabel(); // 今朝 / 昨日 / おととい / 先日
 
   // --- 初回体験（登録直後）：空→生成中→15冊 ---
@@ -97,7 +96,7 @@ export default function HomePage() {
         <Topbar
           greeting={
             <>
-              ようこそ、<b>{authDisplayName ?? user?.name ?? "あなた"}</b> さん。
+              ようこそ、<b>{authDisplayName ?? "あなた"}</b> さん。
             </>
           }
         />
@@ -152,7 +151,7 @@ export default function HomePage() {
       <Topbar
         greeting={
           <>
-            おはようございます、<b>{authDisplayName ?? user?.name ?? "佐倉 美咲"}</b> さん。
+            おはようございます、<b>{authDisplayName ?? "ゲスト"}</b> さん。
           </>
         }
       />

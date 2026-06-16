@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { fixtures } from "@publishr/shared-schema";
-
 import { useProvider } from "@/data/hooks";
 import { watchAuth } from "@/lib/firebase";
 
@@ -26,13 +24,12 @@ const SPINE: Record<string, string> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  // ログイン中の Firebase Auth ユーザーを優先表示し、アカウントページと一致させる。
-  // 未ログイン（mock 等）時のみ fixtures のデモペルソナにフォールバック。
+  // ログイン中の Firebase Auth ユーザーを表示し、アカウントページと一致させる。
+  // 未ログイン時は特定人物（デモの佐倉）を出さず「ゲスト」にする（第一印象/プライバシー）。
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
   useEffect(() => watchAuth((u) => setAuthDisplayName(u?.displayName ?? null)), []);
 
-  const persona = fixtures.users[0];
-  const readerName = authDisplayName || persona?.name || "ゲスト";
+  const readerName = authDisplayName || "ゲスト";
   const readerInitial = readerName[0] ?? "読";
 
   // 「最近読んだ本」はプロバイダ経由の実データ（ログイン時は Firestore、mock 時は fixtures）。
