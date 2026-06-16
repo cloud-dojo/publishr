@@ -50,7 +50,7 @@ export function BookCard({
         />
         <div className="book-body">
           <div className="book-badges">
-            <StatusBadge status={book.status} shelf={book.shelf} floating={false} />
+            <StatusBadge book={book} floating={false} />
           </div>
           <div className="bm-title">{book.title}</div>
           <div className="bm-author">
@@ -71,7 +71,7 @@ export function BookCard({
         title={book.title}
         subtitle={book.subtitle}
         author={authorName}
-        badge={<StatusBadge status={book.status} shelf={book.shelf} floating={false} />}
+        badge={<StatusBadge book={book} floating={false} />}
       />
       <div className="book-meta">
         <div className="bm-title">{book.title}</div>

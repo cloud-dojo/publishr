@@ -134,14 +134,13 @@ export default function BookDetailPage() {
 
 function statusLabel(status: string): string {
   switch (status) {
+    // 予約撤去・自動執筆後は draft/reserved/writing は数十秒〜数分の一時状態＝「準備中」に集約。
     case "draft":
-      return "入荷準備中（まもなく全文が読めます）";
     case "reserved":
-      return "執筆待ち";
     case "writing":
-      return "執筆中";
+      return "準備中（まもなく全文が読めます）";
     case "published":
-      return "入荷済み（読めます）";
+      return "読めます";
     default:
       return status;
   }
