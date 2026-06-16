@@ -7,9 +7,9 @@ import { StatusBadge } from "./StatusBadge";
 import { WhyBubble } from "./WhyBubble";
 
 function hrefFor(book: Book): string {
-  // 企画したら自動で本文まで書く＝予約導線なし。常に読書ページへ直行（published は全文、未完は
-  // parseBook が序文サンプルにフォールバック＝執筆完了後に全文へ差し替わる）。
-  return `/read/${book.id}`;
+  // 本を選んだら一旦「概要」へ（いきなり本文に飛ばさない）。なぜこの本か・目次・序文サンプルを
+  // 見せ、概要の「いま読む」で /read へ。予約導線は無し（企画したら自動執筆済み）。
+  return `/books/${book.id}`;
 }
 
 function authorSuffix(book: Book): string {

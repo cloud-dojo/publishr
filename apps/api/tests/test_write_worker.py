@@ -66,3 +66,20 @@ def test_process_write_job_uses_mode_b_and_records_edit_rounds():
     assert book.status == "published"
     assert book.edit_round >= 2  # 編集ループを通った証跡（既存 Book.edit_round に記録）
     assert book.body.count("## ") >= 3  # 複数章の本文（mode_b 形式）
+
+
+def test_published_estimate_and_preface_match_body():
+    """入荷時に推定分量(章数/分)・序文サンプルを実本文から再計算＝preview の見積り/別ティザーと
+    実体の乖離（推定分量が違う・序文と本文が異なる）を是正する。"""
+    from publishr_api.services.reservation_service import _body_chapter_count, _body_preface
+
+    repo = MockRepository()
+    bid = _a_draft_id(repo)
+    reservation_service.reserve_now(repo, bid)
+    book = reservation_service.process_write_job(repo, bid)
+    assert book is not None and book.status == "published"
+    assert book.estimated_chapters == _body_chapter_count(book.body) >= 3  # 実本文の章数
+    assert book.estimated_minutes >= 1
+    assert book.preface_sample == _body_preface(book.body)  # 本文冒頭プローズ＝本文と整合
+    assert book.preface_sample and not book.preface_sample.lstrip().startswith("#")
+    assert book.preface_sample[:15] in book.body  # サンプルは実本文の一部
