@@ -7,6 +7,8 @@ advance:     reserved → writing → published（非同期・タイマー）
 from __future__ import annotations
 
 import asyncio
+import math
+import re
 from typing import Optional
 
 from publishr_schema import Book
@@ -14,6 +16,36 @@ from publishr_schema import Book
 from ..config import settings
 from ..repositories.protocol import RepositoryProtocol
 from . import body_store
+
+
+_CHARS_PER_MIN = 500  # 日本語のおおまかな読書速度（字/分）
+_CHAPTER_RE = re.compile(r"(?m)^##\s")  # 本文の章見出し（## ）
+
+
+def _body_chapter_count(body: str) -> int:
+    """実本文の章数（## 見出しの数。見出しが無くても本文があれば1）。"""
+    n = len(_CHAPTER_RE.findall(body or ""))
+    return n if n else (1 if body else 0)
+
+
+def _reading_minutes(body: str) -> int:
+    """実本文の長さから読了目安（分）。"""
+    return max(1, math.ceil(len(body) / _CHARS_PER_MIN)) if body else 0
+
+
+def _body_preface(body: str, limit: int = 300) -> str:
+    """序文サンプル＝実本文の冒頭プローズ（見出し行を除いた先頭段落を limit 字まで）。
+
+    preview 段階の prefaceSample（別生成のティザー）が実本文とズレる問題を解消するため、
+    入荷時に「実際に読む本文の書き出し」をサンプルに差し替える。
+    """
+    paras = [
+        ln.strip()
+        for ln in (body or "").split("\n")
+        if ln.strip() and not ln.lstrip().startswith("#")
+    ]
+    text = "\n\n".join(paras)
+    return text if len(text) <= limit else text[:limit].rstrip() + "…"
 
 
 def _persist_published(
@@ -24,9 +56,20 @@ def _persist_published(
     既定（body_store=inline）は本文をドキュメントにそのまま持つ＝従来挙動（mock不変）。
     body_store=gcs のときだけ本文を非公開バケットへ退避し、ドキュメントには bodyUrl だけ残す。
     読了率は published 到達でリセットする（既存挙動）。
+    推定分量(章数/分)と序文サンプルは **実本文から** 再計算して上書きする（preview の見積りや
+    別生成ティザーと実体の乖離を解消＝「推定分量が違う」「序文と本文が異なる」を是正）。
     """
     fb = book.feedback.model_copy(update={"read_percent": 0})
-    update: dict = {"status": "published", "edit_round": edit_round, "feedback": fb}
+    update: dict = {
+        "status": "published",
+        "edit_round": edit_round,
+        "feedback": fb,
+        "estimated_chapters": _body_chapter_count(body),
+        "estimated_minutes": _reading_minutes(body),
+    }
+    preface = _body_preface(body)
+    if preface:
+        update["preface_sample"] = preface  # 実本文の書き出しに統一（空なら据え置き）
     store = body_store.get_body_store()
     if store is not None:
         update["body_url"] = store.put(book.id, body)
