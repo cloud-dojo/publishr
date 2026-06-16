@@ -95,7 +95,7 @@ def test_author_persona_resolvable():
     for b in books:
         assert b.author_persona_id in pmap  # 著者名が引ける（UI getPersona）
     assert all(isinstance(p, Persona) for p in personas)
-    p1 = pmap["p1"]
+    p1 = pmap["0_p1"]  # persona ID は run トークン付き（created_at 未指定→"0"）
     assert p1.name == "神崎 玄一郎"
     assert p1.persona.career  # PersonaDetail 必須が埋まる
     assert p1.voice_style == "ロジカル・構造化"
@@ -124,10 +124,16 @@ def test_does_not_mutate_input():
     assert shelved[0]["bookDraft"]["title"] == before
 
 
-def test_deterministic_book_ids_idempotent():
-    a, _ = map_mode_a_to_books(_plan(), _shelved(), _personas(), owner_uid="u_x")
-    b, _ = map_mode_a_to_books(_plan(), _shelved(), _personas(), owner_uid="u_x")
-    assert [x.id for x in a] == [x.id for x in b]  # 再runで同一ID＝冪等上書き
+def test_book_ids_unique_per_run():
+    """同じ created_at（＝同一runの再処理）は同一ID（冪等）、別 created_at（＝別run）は別ID
+    （上書きせず書庫に積み上がる）。"""
+    t1 = "2026-06-16T06:00:00+09:00"
+    t2 = "2026-06-17T06:00:00+09:00"
+    a, _ = map_mode_a_to_books(_plan(), _shelved(), _personas(), owner_uid="u_x", created_at=t1)
+    a2, _ = map_mode_a_to_books(_plan(), _shelved(), _personas(), owner_uid="u_x", created_at=t1)
+    b, _ = map_mode_a_to_books(_plan(), _shelved(), _personas(), owner_uid="u_x", created_at=t2)
+    assert [x.id for x in a] == [x.id for x in a2]  # 同一run（同 created_at）＝同一ID（再処理冪等）
+    assert {x.id for x in a}.isdisjoint({x.id for x in b})  # 別run＝別ID＝積み上げ（上書きしない）
     assert all(x.id.startswith("arr_") for x in a)  # 既存 b_*/_sakura と衝突しない接頭辞
 
 
@@ -136,4 +142,4 @@ def test_limit_consistency_only_used_personas_mapped():
     one = _shelved()[:1]
     books, personas = map_mode_a_to_books(_plan(), one, _personas(), owner_uid="u_x")
     assert len(books) == 1
-    assert {p.id for p in personas} == {"p1"}
+    assert {p.id for p in personas} == {"0_p1"}  # run トークン付き（created_at 未指定→"0"）

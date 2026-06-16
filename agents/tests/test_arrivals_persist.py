@@ -47,15 +47,16 @@ def test_persist_arrivals_books_and_personas():
     n = persist_arrivals(repo, books, personas)
     assert n == len(books)
 
-    # 書店UIの arrivals クエリで取れる
+    # 書店UIの arrivals クエリで取れる（ID は run ごとユニーク＝arr_<token>_<personaId>。
+    # created_at 未指定なので token="0"）。
     arrivals = repo.list_books(status="draft", shelf="arrivals")
     ids = {b.id for b in arrivals}
-    assert {"arr_p1", "arr_p2"} <= ids
+    assert {"arr_0_p1", "arr_0_p2"} <= ids
 
-    # 著者が解決できる（getPersona）
+    # 著者が解決できる（getPersona）＝本の author_persona_id（run トークン付き）で引ける
     for b in books:
         assert repo.get_persona(b.author_persona_id) is not None
-    assert repo.get_persona("p1").name == "神崎 玄一郎"
+    assert repo.get_persona("0_p1").name == "神崎 玄一郎"
 
 
 def test_persist_is_idempotent():
