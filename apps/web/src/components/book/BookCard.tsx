@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import type { Book } from "@publishr/shared-schema";
 
+import { coverSrc } from "@/data/config";
+
 import { BookCover } from "./BookCover";
 import { StatusBadge } from "./StatusBadge";
 import { WhyBubble } from "./WhyBubble";
@@ -40,7 +42,7 @@ export function BookCard({
       <Link className="book book--row reveal" href={hrefFor(book)}>
         <BookCover
           variant={book.coverVariant}
-          coverUrl={book.coverUrl}
+          coverUrl={coverSrc(book.id, book.coverUrl)}
           title={book.title}
           subtitle={book.subtitle}
           author={authorName}
@@ -65,6 +67,7 @@ export function BookCard({
     <Link className="book reveal" href={hrefFor(book)}>
       <BookCover
         variant={book.coverVariant}
+        coverUrl={coverSrc(book.id, book.coverUrl)}
         title={book.title}
         subtitle={book.subtitle}
         author={authorName}

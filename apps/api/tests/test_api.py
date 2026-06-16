@@ -217,3 +217,58 @@ def test_advance_state_machine():
     book = repo.get_book("b_makasekata")
     assert book.status == "published"
     assert book.body and "権限の設計図" in book.body
+
+
+# --- 表紙画像配信（Imagen・GET /api/books/{id}/cover）-------------------------
+
+
+def _set_cover_url(cover_url):
+    """cached repo の既存本に coverUrl を載せ、その id を返す（テスト用）。"""
+    repo = get_repository()
+    b = repo.get_book("b_makasekata")
+    repo.upsert_book(b.model_copy(update={"cover_url": cover_url}))
+    return "b_makasekata"
+
+
+def test_get_cover_404_when_no_cover_url():
+    # fixtures の本は coverUrl=None → 表紙なし → 404（フロントは CSS 装丁にフォールバック）。
+    assert client.get("/api/books/b_makasekata/cover").status_code == 404
+
+
+def test_get_cover_404_for_missing_book():
+    assert client.get("/api/books/does_not_exist/cover").status_code == 404
+
+
+def test_get_cover_redirects_external_url():
+    _set_cover_url("https://example.com/c.png")
+    res = client.get("/api/books/b_makasekata/cover", follow_redirects=False)
+    assert res.status_code in (302, 307)
+    assert res.headers["location"] == "https://example.com/c.png"
+
+
+def test_get_cover_streams_gcs_bytes(monkeypatch):
+    _set_cover_url("covers/arr_x_p1_ab12cd34.png")
+    import publishr_api.services.cover_store as cover_store
+
+    class _FakeStore:
+        def get_bytes(self, book_id, cover_url):
+            assert cover_url == "covers/arr_x_p1_ab12cd34.png"  # 保存済 object パスをそのまま読む
+            return b"\x89PNG\r\n\x1a\nFAKEDATA"
+
+    monkeypatch.setattr(cover_store, "get_cover_store", lambda: _FakeStore())
+    res = client.get("/api/books/b_makasekata/cover")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "image/png"
+    assert res.content.startswith(b"\x89PNG")
+
+
+def test_get_cover_404_when_not_offloaded(monkeypatch):
+    _set_cover_url("covers/missing.png")
+    import publishr_api.services.cover_store as cover_store
+
+    class _EmptyStore:
+        def get_bytes(self, *_a):
+            return None
+
+    monkeypatch.setattr(cover_store, "get_cover_store", lambda: _EmptyStore())
+    assert client.get("/api/books/b_makasekata/cover").status_code == 404

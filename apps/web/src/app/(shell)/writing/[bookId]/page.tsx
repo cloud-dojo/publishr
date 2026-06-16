@@ -9,7 +9,7 @@ import type { Book } from "@publishr/shared-schema";
 import { BookCover } from "@/components/book/BookCover";
 import { DebateCandidates } from "@/components/writing/DebateCandidates";
 import { Topbar } from "@/components/shell/Topbar";
-import { DEMO_USER_ID } from "@/data/config";
+import { coverSrc, DEMO_USER_ID } from "@/data/config";
 import { useDebate, usePlanningCandidates, useProvider, useReaderAnalysis } from "@/data/hooks";
 
 type StepState = "done" | "active" | "pending";
@@ -75,7 +75,7 @@ export default function WritingPage() {
 
       <div className="stage">
         <div className={`writing-book ${isPublished ? "done" : "active"}`}>
-          <BookCover variant={book.coverVariant} coverUrl={book.coverUrl} title={book.title} author={persona?.name} titleSize={22} />
+          <BookCover variant={book.coverVariant} coverUrl={coverSrc(book.id, book.coverUrl)} title={book.title} author={persona?.name} titleSize={22} />
           <div className={`pen-line ${isPublished ? "done" : "active"}`}>
             <i />
           </div>

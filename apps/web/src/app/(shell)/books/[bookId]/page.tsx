@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
+import { coverSrc } from "@/data/config";
 import { useProvider } from "@/data/hooks";
 
 export default function BookDetailPage() {
@@ -37,7 +38,7 @@ export default function BookDetailPage() {
         <div className="detail-cover-col">
           <BookCover
             variant={book.coverVariant}
-            coverUrl={book.coverUrl}
+            coverUrl={coverSrc(book.id, book.coverUrl)}
             title={book.title}
             subtitle={book.subtitle}
             author={persona?.name}

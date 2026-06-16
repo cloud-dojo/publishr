@@ -1,8 +1,11 @@
 """実 Imagen 画像生成（ENABLE_IMAGEN=true 時のみ・隔離・課金あり）。
 
-google.genai（Vertex 経由）で Imagen を呼び、表紙画像を生成してローカルに保存し coverUrl を返す。
+google.genai（Vertex 経由）で Imagen を呼び、表紙画像を生成して coverUrl を返す。
 Imagen はリージョン制約があるため `PUBLISHR_IMAGEN_LOCATION`（既定 us-central1）で別管理。
-本番では GCS 署名URL等に置換（C3.3）。dev はローカル `.dev-logs/covers/`（gitignore）に保存。
+保存先（本文C3.3と同方針）:
+  - 本番（`PUBLISHR_COVER_BUCKET` 設定時）= 非公開 GCS バケットへ退避し object パスを返す。
+    フロントは BFF `/api/books/{id}/cover` でサーバ側 read 配信（GCSを外部に晒さない）。
+  - dev（未設定）= ローカル `.dev-logs/covers/`（gitignore）。
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ DEFAULT_OUT_DIR = ".dev-logs/covers"
 
 
 def generate_cover_image(prompt: str, *, book_id: str, out_dir: str = DEFAULT_OUT_DIR) -> str:
-    """coverPrompt から Imagen で1枚生成し、PNG をローカル保存して保存先パスを返す。"""
+    """coverPrompt から Imagen で1枚生成し、保存先（GCS object パス or ローカルパス）を返す。"""
     from google import genai
     from google.genai import types
 
@@ -42,10 +45,28 @@ def generate_cover_image(prompt: str, *, book_id: str, out_dir: str = DEFAULT_OU
         raise RuntimeError(f"Imagen が画像を返しませんでした（book_id={book_id}, rai={reason}）")
     data = img.image_bytes
 
-    out_path = Path(out_dir)
-    out_path.mkdir(parents=True, exist_ok=True)
     # book_id はデータ由来。パストラバーサル防止にサニタイズ。
     safe_id = re.sub(r"[^A-Za-z0-9_.-]", "_", book_id)
+
+    # 本番: 非公開 GCS バケットへ退避し object パスを coverUrl に。pipeline 段階の book_id は
+    # run 間で衝突しうる（book_<personaId>）ため短い uuid を付け、run ごとに別オブジェクト
+    # ＝過去本の表紙を上書きしない（入荷本の run ユニークIDと同方針）。
+    bucket = os.environ.get("PUBLISHR_COVER_BUCKET", "").strip()
+    if bucket:
+        import uuid  # noqa: PLC0415
+
+        from google.cloud import storage  # noqa: PLC0415
+
+        name = f"covers/{safe_id}_{uuid.uuid4().hex[:8]}.png"
+        storage.Client().bucket(bucket).blob(name).upload_from_string(
+            data, content_type="image/png"
+        )
+        logger.info("cover image uploaded: gs://%s/%s (%d bytes)", bucket, name, len(data))
+        return name
+
+    # dev: ローカル `.dev-logs/covers/`（gitignore）に保存。
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
     out_file = out_path / f"{safe_id}.png"
     out_file.write_bytes(data)
     logger.info("cover image saved: %s (%d bytes)", out_file, len(data))
