@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import type { Book } from "@publishr/shared-schema";
+
 import { useProvider } from "@/data/hooks";
 import { watchAuth } from "@/lib/firebase";
 
@@ -34,12 +36,16 @@ export function Sidebar() {
 
   // 「最近読んだ本」＝実際に読んだ published 本（読書進捗 > 0）。shelf には依存しない
   // （企画→自動執筆した本は shelf=arrivals のままなので、旧 booksByShelf("library") では
-  // 新刊が永遠に出ず「更新されない」状態だった）。新しい順に最大5冊。
+  // 新刊が永遠に出ず「更新されない」状態だった）。読んだ時刻が新しい順に最大5冊。
+  // lastReadAt（実際に読んだ時刻）を優先し、無い本は createdAt にフォールバック。
+  // 形式が UTC/JST 混在しうるので文字列比較でなく Date でパースして比較する。
   const provider = useProvider();
+  const readTime = (b: Book) =>
+    new Date(b.feedback?.lastReadAt ?? b.createdAt ?? 0).getTime() || 0;
   const recentlyRead = provider
     .listBooks()
     .filter((b) => b.status === "published" && (b.feedback?.readPercent ?? 0) > 0)
-    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+    .sort((a, b) => readTime(b) - readTime(a))
     .slice(0, 5);
 
   const isActive = (href: string) =>
