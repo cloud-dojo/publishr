@@ -10,7 +10,7 @@
 //  - Drive だけ追加で「観測フォルダを選ぶ」(Picker) が要る（folderIds が必要）。
 //  - 状態の正本はサーバの connectedSources（initial prop で実値を反映）。mock 時は localStorage。
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { ConnectedSources } from "@publishr/shared-schema";
 
@@ -41,6 +41,17 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
   const [folders, setFolders] = useState<PickedFolder[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // サーバの connectedSources（initial）は親が非同期に取得する（Firestore 購読 / OAuth callback 後）。
+  // 後から届く・更新される実値に表示を追従させる（旧実装は初期 useState だけ＝OAuth 完了後も
+  // localStorage の古い状態を出し続け「未連携」のままに見えていた）。primitive 依存でループ回避。
+  const dEnabled = initial?.drive?.enabled ?? null;
+  const cEnabled = initial?.calendar?.enabled ?? null;
+  const tEnabled = initial?.tasks?.enabled ?? null;
+  useEffect(() => {
+    if (initial) setConnected(seedConnected(initial));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dEnabled, cEnabled, tEnabled]);
 
   // 1回の同意で3スコープ付与。ログイン時は実 OAuth、未設定（mock）時は localStorage で擬似完了。
   const onConnect = async () => {
@@ -94,6 +105,8 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
   };
 
   const allConnected = connected.drive && connected.calendar && connected.tasks;
+  // サーバに保存済みの Drive 観測フォルダ数（再ロードしても消えない・このセッションの選択が優先）。
+  const savedFolderCount = initial?.drive?.folderIds?.length ?? 0;
 
   return (
     <div className="connect-sources">
@@ -124,8 +137,16 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
             onClick={onPickFolders}
             disabled={busy}
           >
-            {busy ? "選択中…" : folders.length ? "Driveフォルダを選び直す" : "Driveの対象フォルダを選ぶ"}
+            {busy
+              ? "選択中…"
+              : folders.length || savedFolderCount
+                ? "Driveフォルダを選び直す"
+                : "Driveの対象フォルダを選ぶ"}
           </button>
+          {/* このセッションで選び直していなくても、サーバ保存済みのフォルダ数を表示（再ロードで消えない）。 */}
+          {folders.length === 0 && savedFolderCount > 0 && (
+            <p className="auth-note">✓ {savedFolderCount} 個のフォルダを連携中（選び直せます）</p>
+          )}
           {folders.length > 0 && (
             <ul className="connect-list" aria-label="選択したフォルダ">
               {folders.map((f) => (
