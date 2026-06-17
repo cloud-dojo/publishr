@@ -17,11 +17,28 @@ const NAV = [
   { href: "/map", ico: "✦", label: "サイトマップ" },
 ];
 
+// ミニ背表紙のグラデーション。旧実装は4色しか無く、パイプライン本の variant（b1〜b10）が
+// すべて黒の既定にフォールバックしていた（「最近読んだ本」が真っ黒になる原因）。
+// globals.css の .cover--* の実色に対応させ全 variant を網羅する。
 const SPINE: Record<string, string> = {
+  // mockup の名前付き variant
   midnight: "linear-gradient(160deg,#1b2440,#0c1226)",
   forest: "linear-gradient(160deg,#28402f,#11231a)",
   slate: "linear-gradient(160deg,#38404e,#181c25)",
   rust: "linear-gradient(160deg,#8a4326,#3d1b0f)",
+  wine: "linear-gradient(160deg,#8c3b4d,#3a1820)",
+  ink: "linear-gradient(160deg,#2a2d34,#0c0d10)",
+  // パイプライン装丁 cover--b1..b10（globals.css の背景色に対応）
+  b1: "linear-gradient(160deg,#0e1e42,#07102a)",
+  b2: "linear-gradient(150deg,#1a3329,#0c1f18)",
+  b3: "linear-gradient(160deg,#242a36,#13151b)",
+  b4: "linear-gradient(160deg,#1a1e2a,#0a0c12)",
+  b5: "linear-gradient(160deg,#8a6020,#5a3e12)",
+  b6: "linear-gradient(155deg,#2a3142,#141922)",
+  b7: "linear-gradient(155deg,#4a1e2c,#240f17)",
+  b8: "linear-gradient(160deg,#211b14,#0c0a08)",
+  b9: "linear-gradient(160deg,#6e3318,#2d150a)",
+  b10: "linear-gradient(160deg,#141821,#080a0e)",
 };
 
 export function Sidebar() {
@@ -77,7 +94,7 @@ export function Sidebar() {
           <Link key={b.id} href={`/read/${b.id}`} className="mini-book">
             <span
               className="mini-spine"
-              style={{ background: SPINE[b.coverVariant] ?? "linear-gradient(160deg,#2a2d34,#0c0d10)" }}
+              style={{ background: SPINE[b.coverVariant] ?? SPINE.ink }}
             />
             <span className="mini-meta">
               <span className="mini-title">{b.title}</span>
