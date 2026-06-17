@@ -10,7 +10,7 @@
 //  - Drive だけ追加で「観測フォルダを選ぶ」(Picker) が要る（folderIds が必要）。
 //  - 状態の正本はサーバの connectedSources（initial prop で実値を反映）。mock 時は localStorage。
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type { ConnectedSources } from "@publishr/shared-schema";
 
@@ -37,21 +37,15 @@ function seedConnected(initial?: ConnectedSources | null): Record<ConnectSource,
 }
 
 export function ConnectSources({ initial }: { initial?: ConnectedSources | null }) {
-  const [connected, setConnected] = useState<Record<ConnectSource, boolean>>(() => seedConnected(initial));
+  // 表示状態はサーバの connectedSources（initial）から毎レンダリング派生し、ローカルの楽観的変更
+  // （mock の連携・Picker 直後）だけを override として重ねる。こうすると effect 内 setState を使わず、
+  // 親が非同期に取得/更新する initial（Firestore 購読 / OAuth callback 後）へ自然に追従する。
+  // 旧実装は初期 useState だけで、OAuth 完了後も localStorage の古い状態を「未連携」と出し続けていた。
+  const [override, setOverride] = useState<Partial<Record<ConnectSource, boolean>>>({});
+  const connected: Record<ConnectSource, boolean> = { ...seedConnected(initial), ...override };
   const [folders, setFolders] = useState<PickedFolder[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // サーバの connectedSources（initial）は親が非同期に取得する（Firestore 購読 / OAuth callback 後）。
-  // 後から届く・更新される実値に表示を追従させる（旧実装は初期 useState だけ＝OAuth 完了後も
-  // localStorage の古い状態を出し続け「未連携」のままに見えていた）。primitive 依存でループ回避。
-  const dEnabled = initial?.drive?.enabled ?? null;
-  const cEnabled = initial?.calendar?.enabled ?? null;
-  const tEnabled = initial?.tasks?.enabled ?? null;
-  useEffect(() => {
-    if (initial) setConnected(seedConnected(initial));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dEnabled, cEnabled, tEnabled]);
 
   // 1回の同意で3スコープ付与。ログイン時は実 OAuth、未設定（mock）時は localStorage で擬似完了。
   const onConnect = async () => {
@@ -72,7 +66,7 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
       return;
     }
     (["drive", "calendar", "tasks"] as ConnectSource[]).forEach((k) => setSourceConnectedLocal(k, true));
-    setConnected({ drive: true, calendar: true, tasks: true });
+    setOverride({ drive: true, calendar: true, tasks: true });
   };
 
   // Drive Picker: フォルダ選択 → サーバ保存（POST /api/connect/drive-folders）。
@@ -96,7 +90,7 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
       });
       if (!res.ok) throw new Error(`フォルダ保存に失敗しました (${res.status})`);
       setFolders(picked);
-      setConnected((c) => ({ ...c, drive: true }));
+      setOverride((o) => ({ ...o, drive: true }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "フォルダ選択に失敗しました");
     } finally {
