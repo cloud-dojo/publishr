@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { NotificationBell } from "./NotificationBell";
+import { SearchBar } from "./SearchBar";
 
 export function Topbar({
   greeting,
@@ -23,10 +24,7 @@ export function Topbar({
       ) : (
         <div className="greeting">{greeting}</div>
       )}
-      <div className="searchbar">
-        <span>⌕</span>
-        <input placeholder="作家・テーマで書庫を探す…" />
-      </div>
+      <SearchBar />
       {notify ? (
         <NotificationBell />
       ) : (

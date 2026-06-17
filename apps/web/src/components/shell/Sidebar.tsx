@@ -32,11 +32,13 @@ export function Sidebar() {
   const readerName = authDisplayName || "ゲスト";
   const readerInitial = readerName[0] ?? "読";
 
-  // 「最近読んだ本」はプロバイダ経由の実データ（ログイン時は Firestore、mock 時は fixtures）。
+  // 「最近読んだ本」＝実際に読んだ published 本（読書進捗 > 0）。shelf には依存しない
+  // （企画→自動執筆した本は shelf=arrivals のままなので、旧 booksByShelf("library") では
+  // 新刊が永遠に出ず「更新されない」状態だった）。新しい順に最大5冊。
   const provider = useProvider();
-  const library = provider
-    .booksByShelf("library")
-    .filter((b) => b.status === "published")
+  const recentlyRead = provider
+    .listBooks()
+    .filter((b) => b.status === "published" && (b.feedback?.readPercent ?? 0) > 0)
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
     .slice(0, 5);
 
@@ -65,7 +67,7 @@ export function Sidebar() {
 
       <div className="shelf-label">最近読んだ本</div>
       <div className="mini-books">
-        {library.map((b) => (
+        {recentlyRead.map((b) => (
           <Link key={b.id} href={`/read/${b.id}`} className="mini-book">
             <span
               className="mini-spine"
@@ -76,6 +78,9 @@ export function Sidebar() {
             </span>
           </Link>
         ))}
+        {recentlyRead.length === 0 && (
+          <div className="mini-empty">まだ読んだ本はありません</div>
+        )}
       </div>
 
       <div className="sidebar-foot">
