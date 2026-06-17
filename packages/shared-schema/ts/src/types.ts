@@ -189,6 +189,7 @@ export interface Feedback {
   rating: number | null;
   wantsSequel: boolean;
   readingReaction?: string | null;
+  lastReadAt?: string | null; // 最後に読んだ時刻(ISO8601)。「最近読んだ本」の並び順に使う
 }
 
 export interface ReadingAnnotation {
@@ -259,6 +260,7 @@ export interface FeedbackInput {
   rating?: number | null;
   wantsSequel?: boolean;
   readingReaction?: string | null;
+  lastReadAt?: string; // 通常はクライアント/サーバが読了率更新時に自動付与
 }
 
 export interface ReadingStateInput {

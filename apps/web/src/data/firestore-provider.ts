@@ -128,8 +128,13 @@ export class FirestoreProvider extends BaseProvider {
   // --- 簡易FB: Firestore 直書き（books/{id}.feedback） ---
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
     const book = this.books.get(id);
+    // 読了率の更新＝読書イベント。最後に読んだ時刻を刻む（「最近読んだ本」の並び順）。
+    const stamped: FeedbackInput =
+      feedback.readPercent !== undefined
+        ? { ...feedback, lastReadAt: new Date().toISOString() }
+        : feedback;
     await updateDoc(doc(this.db, "books", id), {
-      feedback: { ...book?.feedback, ...feedback },
+      feedback: { ...book?.feedback, ...stamped },
     });
   }
 
