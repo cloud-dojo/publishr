@@ -294,7 +294,10 @@ export default function AccountPage() {
     await signOutUser();
     router.push("/login");
   };
-  const total = provider.listBooks().filter((b) => b.shelf === "library").length;
+  // 蔵書＝published 本すべて（shelf に依らない＝書庫ページと一致）。shelf は種別（arrivals=本命/
+  // odd=セレンディピティ）であってライフサイクルではないため、shelf==="library" 依存だと
+  // 自動執筆した新刊（shelf=arrivals のまま）を数え落としていた（#11 と同根）。
+  const total = provider.listBooks().filter((b) => b.status === "published").length;
   // ハイライト数：mockデモ時のみシード件数、本番（firestore/bff）は実注釈のみ集計。
   const highlightCount =
     dataSource === "mock"

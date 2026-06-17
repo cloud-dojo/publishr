@@ -110,7 +110,6 @@ export default function ReaderPage() {
   const flowRef = useRef<HTMLDivElement>(null);
   const spreadsRef = useRef(1);
   const strideRef = useRef(1);
-  const navigatedRef = useRef(false);
   const jumpedRef = useRef(false);
   const lastViewRef = useRef(0);
 
@@ -180,7 +179,6 @@ export default function ReaderPage() {
   }, [recompute, params.bookId]);
 
   const go = useCallback((dir: number) => {
-    navigatedRef.current = true;
     setView((v) => Math.min(spreadsRef.current - 1, Math.max(0, v + dir)));
     setTurning(true);
     window.setTimeout(() => setTurning(false), 170);
@@ -196,7 +194,10 @@ export default function ReaderPage() {
   }, [go]);
 
   useEffect(() => {
-    if (!book || !navigatedRef.current) return;
+    // レイアウト確定後（totalCols>0）は、ページをめくらず開いただけでも現在ページ分の進捗を報告。
+    // 旧実装は navigatedRef（ページめくり）が立つまで未報告で、1ページ目を読んで離脱すると
+    // readPercent/lastReadAt が付かず「最近読んだ本」に出なかった。pct は単調増加のみ採用。
+    if (!book || totalCols <= 0) return;
     const pct = Math.round((Math.min((view + 1) * colsPerView, totalCols) / totalCols) * 100);
     if (pct > (book.feedback.readPercent ?? 0)) {
       void sendFeedback(book.id, { readPercent: pct });
@@ -313,6 +314,9 @@ export default function ReaderPage() {
   const onFlowMouseUp = () => {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+    // 本文未確定（draft＝序文サンプル表示中）はハイライトを作らない。今は序文段落基準の
+    // オフセットになり、published 化で本文が差し替わると位置がズレるため（#5）。
+    if (!book.body) { sel.removeAllRanges(); return; }
 
     const range = sel.getRangeAt(0);
     const selectedText = sel.toString().trim();

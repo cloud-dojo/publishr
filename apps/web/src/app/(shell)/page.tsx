@@ -59,12 +59,15 @@ export default function HomePage() {
   // 完了判定：mock は全15冊そろったら、firestore は実本が1冊でも届いたら通常表示へ。
   const firstRunTarget = dataSource === "mock" ? FIRST_RUN_TOTAL : 1;
 
-  // 生成の開始（1回だけ）。mockは時間差入荷、firestoreはパイプライン起動。
-  const startedRef = useRef(false);
+  // 生成の開始（uid ごとに1回だけ）。mockは時間差入荷、firestoreはパイプライン起動。
+  // 旧実装は boolean ref で「最初の uid」が消費すると、後から確定した実 uid で発火しない/
+  // 取り違える恐れがあった（#8）。uid をキーにして各ユーザーで確実に1回だけ起動する。
+  const startedForRef = useRef<string | null>(null);
   useEffect(() => {
-    if (generating && !startedRef.current) {
-      startedRef.current = true;
-      void provider.runFirstRun(uid ?? DEMO_USER_ID, getInitialProfile());
+    const u = uid ?? DEMO_USER_ID;
+    if (generating && startedForRef.current !== u) {
+      startedForRef.current = u;
+      void provider.runFirstRun(u, getInitialProfile());
     }
   }, [generating, provider, uid]);
 
