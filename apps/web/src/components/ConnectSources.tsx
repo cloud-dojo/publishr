@@ -37,7 +37,12 @@ function seedConnected(initial?: ConnectedSources | null): Record<ConnectSource,
 }
 
 export function ConnectSources({ initial }: { initial?: ConnectedSources | null }) {
-  const [connected, setConnected] = useState<Record<ConnectSource, boolean>>(() => seedConnected(initial));
+  // 表示状態はサーバの connectedSources（initial）から毎レンダリング派生し、ローカルの楽観的変更
+  // （mock の連携・Picker 直後）だけを override として重ねる。こうすると effect 内 setState を使わず、
+  // 親が非同期に取得/更新する initial（Firestore 購読 / OAuth callback 後）へ自然に追従する。
+  // 旧実装は初期 useState だけで、OAuth 完了後も localStorage の古い状態を「未連携」と出し続けていた。
+  const [override, setOverride] = useState<Partial<Record<ConnectSource, boolean>>>({});
+  const connected: Record<ConnectSource, boolean> = { ...seedConnected(initial), ...override };
   const [folders, setFolders] = useState<PickedFolder[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +66,7 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
       return;
     }
     (["drive", "calendar", "tasks"] as ConnectSource[]).forEach((k) => setSourceConnectedLocal(k, true));
-    setConnected({ drive: true, calendar: true, tasks: true });
+    setOverride({ drive: true, calendar: true, tasks: true });
   };
 
   // Drive Picker: フォルダ選択 → サーバ保存（POST /api/connect/drive-folders）。
@@ -85,7 +90,7 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
       });
       if (!res.ok) throw new Error(`フォルダ保存に失敗しました (${res.status})`);
       setFolders(picked);
-      setConnected((c) => ({ ...c, drive: true }));
+      setOverride((o) => ({ ...o, drive: true }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "フォルダ選択に失敗しました");
     } finally {
@@ -94,6 +99,8 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
   };
 
   const allConnected = connected.drive && connected.calendar && connected.tasks;
+  // サーバに保存済みの Drive 観測フォルダ数（再ロードしても消えない・このセッションの選択が優先）。
+  const savedFolderCount = initial?.drive?.folderIds?.length ?? 0;
 
   return (
     <div className="connect-sources">
@@ -124,8 +131,16 @@ export function ConnectSources({ initial }: { initial?: ConnectedSources | null 
             onClick={onPickFolders}
             disabled={busy}
           >
-            {busy ? "選択中…" : folders.length ? "Driveフォルダを選び直す" : "Driveの対象フォルダを選ぶ"}
+            {busy
+              ? "選択中…"
+              : folders.length || savedFolderCount
+                ? "Driveフォルダを選び直す"
+                : "Driveの対象フォルダを選ぶ"}
           </button>
+          {/* このセッションで選び直していなくても、サーバ保存済みのフォルダ数を表示（再ロードで消えない）。 */}
+          {folders.length === 0 && savedFolderCount > 0 && (
+            <p className="auth-note">✓ {savedFolderCount} 個のフォルダを連携中（選び直せます）</p>
+          )}
           {folders.length > 0 && (
             <ul className="connect-list" aria-label="選択したフォルダ">
               {folders.map((f) => (
