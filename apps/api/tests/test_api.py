@@ -272,3 +272,31 @@ def test_get_cover_404_when_not_offloaded(monkeypatch):
 
     monkeypatch.setattr(cover_store, "get_cover_store", lambda: _EmptyStore())
     assert client.get("/api/books/b_makasekata/cover").status_code == 404
+
+
+# --- 書庫へ移動（動的フィルタリング・POST /api/books/{id}/move-to-library）-------------
+
+
+def test_move_to_library_sets_shelf():
+    res = client.post("/api/books/b_makasekata/move-to-library")
+    assert res.status_code == 200
+    assert res.json()["shelf"] == "library"  # 入荷(shelf=arrivals/odd)から外れる
+    assert get_repository().get_book("b_makasekata").shelf == "library"
+
+
+def test_move_to_library_404_for_missing_book():
+    assert client.post("/api/books/does_not_exist/move-to-library").status_code == 404
+
+
+def test_move_to_library_forbidden_for_other_owner(monkeypatch):
+    repo = get_repository()
+    b = repo.get_book("b_makasekata")
+    repo.upsert_book(b.model_copy(update={"owner_uid": "u_other"}))
+    from publishr_api.routers import api as api_mod
+
+    monkeypatch.setattr(api_mod, "_verify_uid", lambda _auth: "u_me")
+    res = client.post(
+        "/api/books/b_makasekata/move-to-library", headers={"Authorization": "Bearer x"}
+    )
+    assert res.status_code == 403
+    assert repo.get_book("b_makasekata").shelf != "library"  # 移動していない

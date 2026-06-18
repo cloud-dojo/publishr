@@ -125,6 +125,16 @@ export class FirestoreProvider extends BaseProvider {
     // status は books 購読で draft→reserved→writing→published と流れてくる（ポーリング不要）。
   }
 
+  // --- 書庫へ移動: Cloud Run API でサーバ側が shelf=library に。購読で反映＋即時に楽観更新 ---
+  async moveToLibrary(id: string): Promise<void> {
+    await this.apiPost(`/api/books/${id}/move-to-library`, {});
+    const cur = this.books.get(id);
+    if (cur) {
+      this.books.set(id, { ...cur, shelf: "library" });
+      this.notify(); // onSnapshot が最終的に同期するが、入荷一覧から即消すため楽観更新
+    }
+  }
+
   // --- 簡易FB: Firestore 直書き（books/{id}.feedback） ---
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
     const book = this.books.get(id);

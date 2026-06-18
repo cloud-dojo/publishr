@@ -14,6 +14,7 @@ from typing import Optional
 from publishr_schema import Book
 
 from ..config import settings
+from ..errors import NotFoundError
 from ..repositories.protocol import RepositoryProtocol
 from . import body_store
 
@@ -106,6 +107,19 @@ def reserve_now(repo: RepositoryProtocol, book_id: str, *, owner_uid: str = "") 
         owner_uid=owner_uid,
         max_concurrent=settings.max_concurrent_reservations,
     )
+
+
+def move_to_library(repo: RepositoryProtocol, book_id: str) -> Book:
+    """入荷一覧から書庫へ移す（shelf="library"・動的フィルタリング）。
+
+    入荷ビューは shelf=arrivals/odd を見るので shelf を library にすると一覧から外れ、
+    書庫（status=published 全件・shelf 非依存）には残り続ける。status は変えない。
+    所有者チェックは呼び出し側（router）が実施する（body エンドポイントと同方針）。
+    """
+    book = repo.get_book(book_id)
+    if book is None:
+        raise NotFoundError(f"book {book_id} が見つかりません")
+    return repo.upsert_book(book.model_copy(update={"shelf": "library"}))
 
 
 async def advance(

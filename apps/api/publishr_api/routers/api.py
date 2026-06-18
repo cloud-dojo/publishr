@@ -117,6 +117,22 @@ def api_get_book_body(
     return {"body": ""}
 
 
+@router.post("/books/{book_id}/move-to-library", response_model=Book)
+def api_move_to_library(
+    book_id: str,
+    repo: RepositoryProtocol = Depends(get_repository),
+    uid: str = Depends(_uid_from_token),
+) -> Book:
+    """入荷一覧から書庫へ移す（shelf="library"・動的フィルタリング）。移動後は入荷から消え、
+    書庫（status=published）には残る。所有者チェックは body エンドポイントと同方針（不一致403）。"""
+    book = repo.get_book(book_id)
+    if book is None:
+        raise HTTPException(status_code=404, detail=f"book {book_id} が見つかりません")
+    if book.owner_uid and uid and book.owner_uid != uid:
+        raise HTTPException(status_code=403, detail="この本を移動する権限がありません")
+    return reservation_service.move_to_library(repo, book_id)
+
+
 @router.get("/books/{book_id}/cover")
 def api_get_book_cover(
     book_id: str,

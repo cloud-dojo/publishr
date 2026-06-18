@@ -85,6 +85,12 @@ export class BffProvider extends BaseProvider {
     this.startPolling();
   }
 
+  async moveToLibrary(id: string): Promise<void> {
+    const book = await jpost<Book>(`/api/books/${id}/move-to-library`);
+    this.books.set(id, book);
+    this.notify();
+  }
+
   watchBook(id: string): void {
     const book = this.books.get(id);
     if (!book || (book.status !== "reserved" && book.status !== "writing")) return;

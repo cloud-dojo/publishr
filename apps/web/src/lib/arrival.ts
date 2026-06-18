@@ -20,8 +20,9 @@ export function latestArrivalDate(now: Date = new Date()): Date {
   return base;
 }
 
-/** "今週の入荷"棚の保持期間（日）。これより古い未予約 draft は棚落ち。 */
-export const ARRIVAL_WINDOW_DAYS = 7;
+/** 入荷棚の保持期間（日）。これより古い本は入荷一覧から自動で落ちる（書庫には残る）。
+ *  4週間＝4冊/日×週3回 で自然に最大 ~48冊のストック型運用。 */
+export const ARRIVAL_WINDOW_DAYS = 28;
 
 /** createdAt(ISO) が now から指定日数以内か。未設定(undefined)は true（棚から消さない）。 */
 export function isWithinDays(
