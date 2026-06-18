@@ -19,6 +19,8 @@ function spec(book: Book): BadgeSpec | null {
   if ((book.feedback?.readPercent ?? 0) >= READ_DONE_PERCENT) {
     return { cls: "badge--done", label: "読了", pulse: false };
   }
+  // ユーザーが書庫へ移動済み（shelf=library）は入荷扱いしない＝書庫グリッドで「入荷」と出さない。
+  if (book.shelf === "library") return null;
   // 入荷＝published かつ入荷から数日以内の新刊（セレンディピティは「新しい出会い」）。
   if (isWithinDays(book.createdAt, ARRIVAL_WINDOW_DAYS)) {
     return book.shelf === "odd"

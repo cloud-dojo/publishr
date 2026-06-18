@@ -100,6 +100,7 @@ export function useActions() {
   const provider = getProvider();
   return {
     reserve: (id: string) => provider.reserve(id),
+    moveToLibrary: (id: string) => provider.moveToLibrary(id),
     sendFeedback: provider.sendFeedback.bind(provider),
     updateReadingState: provider.updateReadingState.bind(provider),
     runPipeline: (userId: string) => provider.runPipeline(userId),

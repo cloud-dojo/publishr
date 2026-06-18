@@ -7,11 +7,12 @@ import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
 import { coverSrc } from "@/data/config";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
 
 export default function BookDetailPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
+  const { moveToLibrary } = useActions();
 
   const book = provider.getBook(params.bookId);
   if (!book) {
@@ -52,6 +53,17 @@ export default function BookDetailPage() {
               <span className="btn btn--ghost btn--block" style={{ cursor: "default" }}>
                 ✦ {persona.name} を知る
               </span>
+            )}
+            {/* 書庫へ移動: 入荷一覧から外し書庫に残す（動的フィルタリング）。移動後は shelf=library
+                になりこのボタンは消える（書庫には残る）。 */}
+            {book.status === "published" && book.shelf !== "library" && (
+              <button
+                type="button"
+                className="btn btn--ghost btn--block"
+                onClick={() => void moveToLibrary(book.id)}
+              >
+                📚 書庫へ移動
+              </button>
             )}
           </div>
           <div className="detail-meta-line">

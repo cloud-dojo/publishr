@@ -136,6 +136,13 @@ export class MockProvider extends BaseProvider {
     }, timing.reserveToWriting);
   }
 
+  async moveToLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, { ...book, shelf: "library" });
+    this.notify();
+  }
+
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
     const book = this.books.get(id);
     if (!book) return;
