@@ -32,6 +32,16 @@ def _run_token(created_at: str) -> str:
     return digits[:14] if digits else "0"
 
 
+def _persona_uid(gp: GeneratedPersona, run_token: str) -> str:
+    """著者IDの安定化方針。
+    - お気に入り再登板（from_favorite）＝run をまたいで **同一ID** を保つ。casting が
+      `persona_id` に登録時のお気に入りIDをそのまま入れるので、run-token を付けずに維持すれば
+      毎runの再登板でも `favorites.has(id)` が一致し「お気に入り作家が書き続ける」が成立する。
+    - それ以外＝run ごとユニーク（書庫に積み上げ・上書きしない）。
+    """
+    return gp.persona_id if gp.from_favorite else f"{run_token}_{gp.persona_id}"
+
+
 def _agenda(raw: list[dict[str, Any]]) -> list[AgendaItem]:
     return [
         AgendaItem(no=f"{i:02d}", title=e.get("chapter", f"第{i}章"), desc=e.get("summary", ""))
@@ -41,17 +51,18 @@ def _agenda(raw: list[dict[str, Any]]) -> list[AgendaItem]:
 
 def _book(
     plan_id: str, theme_kind: str, owner_uid: str, entry: dict[str, Any], created_at: str,
-    run_token: str,
+    run_token: str, author_uid: str,
 ) -> Book:
     bd = entry.get("bookDraft", {})
     agenda = _agenda(bd.get("agenda", []))
     persona_id = entry.get("personaId", "")
-    uid = f"{run_token}_{persona_id}"  # run ごとにユニークな著者ID（本→著者の参照に使う）
     return Book(
-        id=f"{_BOOK_ID_PREFIX}{uid}",
+        # 本IDは run ごとユニーク＝積み上げ（お気に入り著者でも毎runの本は別冊）。
+        id=f"{_BOOK_ID_PREFIX}{run_token}_{persona_id}",
         plan_id=plan_id,
         status="draft",
-        author_persona_id=uid,
+        # 著者参照はお気に入りなら安定ID（run またぎで同一）・それ以外は run-unique。
+        author_persona_id=author_uid,
         title=bd.get("title", "（無題）"),
         subtitle=bd.get("subtitle", ""),
         cover_variant=entry.get("coverVariant", "b1"),
@@ -74,7 +85,7 @@ def _persona(gp: GeneratedPersona, run_token: str) -> Persona:
     desc = gp.persona or ""
     monogram = gp.name.strip()[:1] if gp.name.strip() else "著"
     return Persona(
-        id=f"{run_token}_{gp.persona_id}",  # 本の author_persona_id と一致させる（run ごと）
+        id=_persona_uid(gp, run_token),  # 本の author_persona_id と一致（お気に入りは安定ID）
         name=gp.name,
         name_reading="",
         monogram=monogram,
@@ -113,9 +124,16 @@ def map_mode_a_to_books(
     theme_kind = str(plan.theme_kind or "honmei")
     token = _run_token(created_at)  # run ごとに本/著者IDをユニーク化＝書庫に積み上げ（上書きしない）
 
-    books = [_book(pid, theme_kind, owner_uid, e, created_at, token) for e in shelved]
-
     by_id = {p.persona_id: p for p in personas}
+
+    def _author_uid(entry: dict[str, Any]) -> str:
+        # 本の著者ID。お気に入り再登板は安定ID・それ以外は run-unique（persona と一致させる）。
+        gp = by_id.get(entry.get("personaId", ""))
+        return _persona_uid(gp, token) if gp is not None else f"{token}_{entry.get('personaId', '')}"
+
+    books = [
+        _book(pid, theme_kind, owner_uid, e, created_at, token, _author_uid(e)) for e in shelved
+    ]
     out_personas = [
         _persona(by_id[i], token) for i in (e.get("personaId") for e in shelved) if i in by_id
     ]
