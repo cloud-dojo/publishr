@@ -22,6 +22,16 @@ logging.basicConfig(
     format="%(levelname)s %(name)s: %(message)s",
 )
 
+# Langfuse(OTel) を起動時に初期化＝global TracerProvider を張り、以降の ADK 各LLM呼び出しが
+# 自動で span 化されて Langfuse に流れる（Level 2）。LANGFUSE_* 未設定/未導入なら no-op。
+try:
+    from publishr_agents.observability import init_tracing  # noqa: PLC0415
+
+    if init_tracing():
+        logging.getLogger(__name__).info("langfuse OTel tracing 有効（ADKトレースを送信）")
+except Exception:  # noqa: BLE001 — 計装初期化失敗は致命でない
+    pass
+
 app = FastAPI(title="Publishr BFF", version="0.0.0")
 
 app.add_middleware(

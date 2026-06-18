@@ -99,6 +99,7 @@ async def worker_write(
     # threadpool で実行＝同期 process_write_job が内部で asyncio.run（vertex本文生成）を呼んでも
     # 実行中イベントループとネストしない（C2.2/実Vertex対応）。mock経路はそのまま高速。
     await run_in_threadpool(reservation_service.process_write_job, repo, book_id)  # 冪等
+    _flush_traces()  # 本文執筆中の ADK span を Langfuse へ確実に送る（Cloud Run 終端）
     return Response(status_code=204)
 
 
@@ -134,4 +135,15 @@ async def worker_plan(
         )
     except Exception as exc:  # noqa: BLE001 — 再配信ストーム防止のため握って ack
         logger.exception("worker(plan): run failed, acking to avoid redelivery: %s", type(exc).__name__)
+    _flush_traces()  # 企画中の ADK span を Langfuse へ確実に送る（trace_pipeline と二重でも安全）
     return Response(status_code=204)
+
+
+def _flush_traces() -> None:
+    """Langfuse の保留 span を flush（best-effort・no-op 安全）。"""
+    try:
+        from publishr_agents.observability import flush  # noqa: PLC0415
+
+        flush()
+    except Exception:  # noqa: BLE001
+        pass

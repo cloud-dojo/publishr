@@ -1,10 +1,14 @@
-"""Langfuse best-effort 計装（P2 / C5.6）。
+"""Langfuse 計装（P2 / C5.6 ＋ Level 2 OTel）。
 
 langfuse 未インストール／キー未設定なら **no-op**（本体は計装に依存しない）。
 LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST を env から読む。
 
-C5.6: 「AIの必然性」の証跡＝2つの差し戻しループ（①企画リーダー / ②編集長の本文）と
-grounding 取得URL を 1 トレースで可視化する（`trace_pipeline`）。
+3層で可視化する:
+  - `trace_pipeline`（Stage A/B）: ①企画リーダー差し戻しループ＋②編集長ループ＋grounding URL を
+    1トレースに、企画スコア（70ゲート）を Langfuse score として付与（C5.6 必然性の証跡）。
+  - `init_tracing`（Stage C / Level 2）: Langfuse v3 は OpenTelemetry ベースで、初期化すると
+    **global TracerProvider** を張る。ADK は global tracer を使うので、これだけで各エージェント/
+    LLM 呼び出し（モデル・トークン・レイテンシ・prompt/response）が span として Langfuse に流れる。
 """
 
 from __future__ import annotations
@@ -21,9 +25,29 @@ def _client():
     except Exception:
         return None
     try:
-        return Langfuse()  # LANGFUSE_* env から設定を読む
+        return Langfuse()  # LANGFUSE_* env から設定を読む（v3 は呼び出しごとに同一インスタンスを再利用）
     except Exception:
         return None
+
+
+def init_tracing() -> bool:
+    """Langfuse(OTel) を初期化して global TracerProvider を張る（Level 2）。アプリ起動時に1回呼ぶ。
+
+    これにより ADK の各エージェント/LLM 呼び出し（global tracer 経由）が自動で span 化され
+    Langfuse に送られる。キー未設定/未導入なら no-op で False。冪等。
+    """
+    return _client() is not None
+
+
+def flush() -> None:
+    """保留中の span を Langfuse へ送る（Cloud Run のリクエスト終端で確実に出すため）。no-op 安全。"""
+    lf = _client()
+    if lf is None:
+        return
+    try:
+        lf.flush()
+    except Exception:
+        pass
 
 
 def grounding_urls_from_events(events: Any) -> list[str]:
@@ -87,7 +111,19 @@ def trace_pipeline(payload: dict[str, Any], *, client: Any = None) -> str:
         if grounding:
             g = root.start_span(name="grounding", metadata={"urls": grounding})
             g.end()
-        root.update(output={"approved": bool(payload.get("approved"))})
+        # Stage B: 採用企画の総合スコアを Langfuse score として付与（70ゲートの可視化）。
+        rounds = list(payload.get("planning_rounds") or [])
+        final = rounds[-1] if rounds else None
+        sc = final.get("score") if isinstance(final, dict) else None
+        if isinstance(sc, (int, float)):
+            try:
+                root.score(name="plan_score", value=float(sc), data_type="NUMERIC",
+                           comment=f"threshold=70 decision={final.get('decision')}")
+                root.score(name="plan_passed", value=("pass" if sc >= 70 else "fail"),
+                           data_type="CATEGORICAL")
+            except Exception:  # noqa: BLE001 — score 付与失敗は致命でない
+                pass
+        root.update(output={"approved": bool(payload.get("approved")), "planScore": sc})
         root.end()
         lf.flush()
         return "sent"
