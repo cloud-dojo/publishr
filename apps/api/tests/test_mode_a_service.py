@@ -129,3 +129,21 @@ def test_source_falls_back_when_no_observe_uid(monkeypatch):
     monkeypatch.setattr(config.settings, "observe", "google")
     src = mode_a_service._observation_source(_user_with_drive(["f1"]), None)
     assert type(src).__name__ == "FixtureObservationSource"  # uid 無し→fixture
+
+
+def test_run_emits_langfuse_pipeline_trace(monkeypatch):
+    """企画 run が Langfuse の trace_pipeline を planning_rounds（差し戻し→採用の証跡）付きで呼ぶ。"""
+    import publishr_agents.observability as obs
+
+    captured: dict = {}
+
+    def fake_trace(payload, **_kw):
+        captured["payload"] = payload
+        return "sent"
+
+    monkeypatch.setattr(obs, "trace_pipeline", fake_trace)
+    mode_a_service.run(MockRepository(), "u_sakura", owner_uid="u")
+    assert "payload" in captured  # 計装が結線されている
+    p = captured["payload"]
+    assert p["approved"] is True
+    assert isinstance(p["planning_rounds"], list) and len(p["planning_rounds"]) >= 1

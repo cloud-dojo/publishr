@@ -181,6 +181,26 @@ def run(
     # ＝per-book 非同期で push の ack 期限(600s)に収まる・並列・新規本文コードなし。
     _autowrite_books(repo, [b.id for b in books], owner)
 
+    # Langfuse: 企画の「必然性の証跡」（①企画リーダーの差し戻しループ＋grounding 取得URL＋採否）を
+    # 1トレースで送る（C5.6）。本番の自律run/手動トリガーが Langfuse に可視化される。
+    # best-effort＝LANGFUSE_* 未設定（mock/ローカル/テスト）や失敗時は no-op で本体に影響しない。
+    try:
+        from publishr_agents.observability import trace_pipeline  # noqa: PLC0415
+
+        planning = result.planning or {}
+        status = trace_pipeline(
+            {
+                "theme": getattr(result.plan, "tentative_title", None)
+                or getattr(result.plan, "core_message", None),
+                "approved": True,
+                "planning_rounds": planning.get("verdictHistory") or [],
+                "grounding_urls": planning.get("groundingUrls") or [],
+            }
+        )
+        logger.info("langfuse trace_pipeline: %s (books=%d)", status, len(books))
+    except Exception as exc:  # noqa: BLE001 — 計装失敗は致命でない
+        logger.warning("langfuse trace_pipeline failed: %s", type(exc).__name__)
+
     return PipelineResult(
         books=[repo.get_book(b.id) or b for b in books],  # mock は published＋body 反映後を返す
         reject_log=_reject_log(result.planning, result.plan),
