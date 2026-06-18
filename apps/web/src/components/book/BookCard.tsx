@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Book } from "@publishr/shared-schema";
 
 import { coverSrc } from "@/data/config";
+import { arrivedLabel } from "@/lib/arrival";
 
 import { BookCover } from "./BookCover";
 import { StatusBadge } from "./StatusBadge";
@@ -51,6 +52,11 @@ export function BookCard({
         <div className="book-body">
           <div className="book-badges">
             <StatusBadge book={book} floating={false} />
+            {book.createdAt && (
+              <span className="bm-arrived" title={`入荷: ${book.createdAt.slice(0, 10)}`}>
+                🕓 {arrivedLabel(book.createdAt)}入荷
+              </span>
+            )}
           </div>
           <div className="bm-title">{book.title}</div>
           <div className="bm-author">
@@ -78,6 +84,11 @@ export function BookCard({
         <div className="bm-author">
           {authorName} 著{authorSuffix(book)}
         </div>
+        {book.createdAt && (
+          <div className="bm-arrived" title={`入荷: ${book.createdAt.slice(0, 10)}`}>
+            🕓 {arrivedLabel(book.createdAt)}入荷
+          </div>
+        )}
       </div>
       {showWhy && reason ? <WhyBubble reason={reason} /> : null}
     </Link>

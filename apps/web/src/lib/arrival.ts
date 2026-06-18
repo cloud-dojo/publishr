@@ -51,3 +51,21 @@ export function arrivalLabel(now: Date = new Date()): string {
   if (days === 2) return "おととい";
   return "先日";
 }
+
+/** 各本の入荷日(createdAt)を相対表記で。今朝 / 昨日 / おととい / N日前（〜6日）/ M/D（1週間以上前）。
+ *  4週間保持の入荷一覧で「いつ入荷したか」を本ごとに示すために使う。 */
+export function arrivedLabel(createdAt: string | undefined, now: Date = new Date()): string {
+  if (!createdAt) return "";
+  const t = new Date(createdAt);
+  if (Number.isNaN(t.getTime())) return "";
+  const startToday = new Date(now);
+  startToday.setHours(0, 0, 0, 0);
+  const startThat = new Date(t);
+  startThat.setHours(0, 0, 0, 0);
+  const days = Math.round((startToday.getTime() - startThat.getTime()) / 86_400_000);
+  if (days <= 0) return "今朝";
+  if (days === 1) return "昨日";
+  if (days === 2) return "おととい";
+  if (days <= 6) return `${days}日前`;
+  return `${t.getMonth() + 1}/${t.getDate()}`;
+}
