@@ -86,7 +86,7 @@ function renderParaContent(
 export default function ReaderPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { sendFeedback, updateReadingState } = useActions();
+  const { sendFeedback, updateReadingState, moveToLibrary } = useActions();
   const book = provider.getBook(params.bookId);
 
   const [view, setView] = useState(0);
@@ -587,6 +587,19 @@ export default function ReaderPage() {
               <span className="rd-navrow-arrow">›</span>
             </Link>
           </nav>
+
+          {/* 書庫へ移動: 入荷一覧から外し書庫に残す。移動後は shelf=library で非表示になる。 */}
+          {book.status === "published" && book.shelf !== "library" && (
+            <div className="tool-card panel">
+              <button
+                type="button"
+                className="btn btn--ghost btn--block"
+                onClick={() => void moveToLibrary(book.id)}
+              >
+                📚 書庫へ移動
+              </button>
+            </div>
+          )}
 
           <div className="tool-card panel">
             <div className="tc-h">
