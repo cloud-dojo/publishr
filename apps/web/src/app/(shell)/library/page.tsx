@@ -10,11 +10,12 @@ export default function LibraryPage() {
   const provider = useProvider();
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
-  // 書庫＝あなたの published 本すべての恒久コレクション（shelf に依らない）。書店(arrivals)は
-  // 直近7日の新着ビューで、7日で落ちても書庫には残り続ける＝本が永久に消えない。新しい順。
+  // 書庫＝ユーザーが「書庫へ移動」した本だけのキュレーション集（shelf==="library"）。
+  // 入荷(arrivals/odd)は直近28日の新着ビュー。移動しないと28日で入荷から落ち、書庫にも入らない
+  // （検索からは到達可）。新しい順。
   const library = provider
     .listBooks()
-    .filter((b) => b.status === "published")
+    .filter((b) => b.status === "published" && b.shelf === "library")
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
 
   return (
@@ -22,7 +23,7 @@ export default function LibraryPage() {
       <Topbar
         greeting={
           <>
-            <b>わたしの書庫</b>　― これまでに届いた、あなたのための本。
+            <b>わたしの書庫</b>　― あなたが書庫に集めた、お気に入りの蔵書。
           </>
         }
       />
@@ -40,7 +41,11 @@ export default function LibraryPage() {
             <BookCard key={b.id} book={b} authorName={authorName(b)} />
           ))}
           {library.length === 0 && (
-            <div className="muted">{provider.ready ? "まだ蔵書がありません。" : "読み込み中…"}</div>
+            <div className="muted">
+              {provider.ready
+                ? "まだ蔵書がありません。入荷で気に入った本を「📚 書庫へ移動」すると、ここに集まります。"
+                : "読み込み中…"}
+            </div>
           )}
         </div>
       </section>
