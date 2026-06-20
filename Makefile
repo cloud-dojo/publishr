@@ -1,7 +1,7 @@
 # Publishr — ローカルMVP用タスク
 # 前提: node>=22, uv>=0.10 （Python 3.12 は uv が用意）
 
-.PHONY: help setup setup-py setup-web web api pipeline dev smoke eval eval-gate eval-repro eval-sweep verify test-py lint-web typecheck-web fmt
+.PHONY: help setup setup-py setup-web web api pipeline dev smoke eval eval-gate eval-gate-vertex eval-repro eval-sweep verify test-py lint-web typecheck-web fmt
 
 help:
 	@echo "make setup     - Python(uv) と Web(npm) の依存をインストール"
@@ -11,7 +11,8 @@ help:
 	@echo "make smoke     - ローカルE2Eを1コマンドでスモーク確認"
 	@echo "make pipeline  - ADK企画パイプラインをオフライン実行"
 	@echo "make eval      - Eval観点をオフライン判定"
-	@echo "make eval-gate - Eval judge 品質ゲート（cases 7/8・未満で exit 1）"
+	@echo "make eval-gate - Eval judge 品質ゲート（mock・cases 7/8・未満で exit 1）"
+	@echo "make eval-gate-vertex - 同ゲートを実 Gemini Pro judge で（課金・要 ADC/Vertex）"
 	@echo "make eval-repro- judge再現性（複数回採点のσ/CV/一致・C5.4）"
 	@echo "make eval-sweep- 閾値感度スイープ（本命合格ラインを振る・C5.5）"
 	@echo "make verify    - pytest + web lint/typecheck"
@@ -45,6 +46,9 @@ eval:
 
 eval-gate:
 	uv run python -m scripts.eval_gate
+
+eval-gate-vertex:
+	uv run python -m scripts.eval_gate --backend vertex
 
 eval-repro:
 	uv run python -m scripts.eval_reproducibility
