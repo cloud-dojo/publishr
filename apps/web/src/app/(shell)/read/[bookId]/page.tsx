@@ -111,6 +111,7 @@ export default function ReaderPage() {
   const spreadsRef = useRef(1);
   const strideRef = useRef(1);
   const jumpedRef = useRef(false);
+  const forcedFullRef = useRef(false);
   const lastViewRef = useRef(0);
 
   const recompute = useCallback(() => {
@@ -147,6 +148,19 @@ export default function ReaderPage() {
     const q = new URLSearchParams(window.location.search);
     const piParam = q.get("pi");
     const chParam = q.get("ch");
+    // ?pi/?ch ジャンプ対象があるとき、要約/抜粋だと対象段落がDOMに無く不達になる
+    // （querySelector が null → 前回位置に落ちる）。full へ強制して対象を描画させる（1度だけ）。
+    // granularity は deps に入っているので、full 反映後にこの effect が再実行されジャンプが成立する。
+    if (
+      (piParam != null || chParam != null) &&
+      book &&
+      book.granularity !== "full" &&
+      !forcedFullRef.current
+    ) {
+      forcedFullRef.current = true;
+      void updateReadingState(book.id, { granularity: "full" });
+      return;
+    }
     let el: HTMLElement | null = null;
     if (piParam != null) {
       el = flow.querySelector<HTMLElement>(`[data-pi="${CSS.escape(piParam)}"]`);
@@ -168,6 +182,9 @@ export default function ReaderPage() {
         }
       }
     }
+    // book/updateReadingState は意図的に deps から除外（毎 book 変化での再 recompute/再ジャンプを
+    // 避ける）。granularity 強制は book?.granularity の deps 変化で再実行され成立する。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recompute, params.bookId, book?.body, book?.granularity, fontStep]);
 
   useEffect(() => {
@@ -197,13 +214,15 @@ export default function ReaderPage() {
     // レイアウト確定後（totalCols>0）は、ページをめくらず開いただけでも現在ページ分の進捗を報告。
     // 旧実装は navigatedRef（ページめくり）が立つまで未報告で、1ページ目を読んで離脱すると
     // readPercent/lastReadAt が付かず「最近読んだ本」に出なかった。pct は単調増加のみ採用。
-    if (!book || totalCols <= 0) return;
+    // ★full 表示のときだけ進捗を保存する。要約/抜粋は本文を間引くため totalCols が縮み、
+    //   数ページで pct=100=誤読了になる。分母が本来の本文長を表す full のみが正しい進捗基準。
+    if (!book || totalCols <= 0 || book.granularity !== "full") return;
     const pct = Math.round((Math.min((view + 1) * colsPerView, totalCols) / totalCols) * 100);
     if (pct > (book.feedback.readPercent ?? 0)) {
       void sendFeedback(book.id, { readPercent: pct });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, totalCols, colsPerView]);
+  }, [view, totalCols, colsPerView, book?.granularity]);
 
   // ポップアップ外クリックで閉じる
   useEffect(() => {

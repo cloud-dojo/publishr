@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 
 import type {
+  AppNotification,
   Book,
   FeedbackInput,
   Persona,
@@ -40,6 +41,9 @@ export class FirestoreProvider extends BaseProvider {
   // GCS退避(C3.3)された本文の取得済みキャッシュ（id→本文）。snapshot 再取得で books が
   // 作り直されても本文を消さずに復元するために保持する（id→body）。
   private bodyCache = new Map<string, string>();
+  // 通知は実データ（入荷/配信）から一度だけ導出する（本番では Firestore に通知コレクションが
+  // 無く、ベルが常に空になるため）。再導出で既読状態や favoriteAuthor push を消さないよう1回限り。
+  private notificationsSeeded = false;
 
   constructor() {
     super();
@@ -88,6 +92,7 @@ export class FirestoreProvider extends BaseProvider {
           this.books.set(d.id, b);
         });
         this.notify();
+        this.seedNotificationsFromData();
         void this.hydrateBodies();
       })
     );
@@ -159,6 +164,49 @@ export class FirestoreProvider extends BaseProvider {
   // --- 手動トリガー（デモ用）: Cloud Run API ---
   async runPipeline(userId: string): Promise<void> {
     await this.apiPost("/api/trigger/planning", { userId });
+  }
+
+  // 実データ（入荷=最近の本、配信=最新の published 本）から通知を一度だけ導出する。
+  // 本番は Firestore に通知コレクションが無くベルが常に空になるため、最低限の通知を実本から作る。
+  // 1回限り＝既読操作や notifyFavoriteAuthor のメモリ push を消さない（重複IDはスキップ）。
+  private seedNotificationsFromData(): void {
+    if (this.notificationsSeeded || this.books.size === 0) return;
+    this.notificationsSeeded = true;
+    const now = Date.now();
+    const all = [...this.books.values()];
+    const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+    const recent = all
+      .filter((b) => b.createdAt && now - new Date(b.createdAt).getTime() <= 2 * 86_400_000)
+      .sort(byNewest);
+    const newestPublished = all.filter((b) => b.status === "published").sort(byNewest)[0];
+    const derived: AppNotification[] = [];
+    if (recent.length > 0) {
+      derived.push({
+        id: "ntf_arrival",
+        kind: "arrival",
+        title: `最近、あなたのために${recent.length}冊が入荷しました`,
+        body: "いま、あなたの関心にまっすぐ応える一冊たちです。",
+        createdAt: recent[0].createdAt ?? new Date(now).toISOString(),
+        read: false,
+        href: "/",
+      });
+    }
+    if (newestPublished) {
+      derived.push({
+        id: "ntf_delivery",
+        kind: "delivery",
+        title: `『${newestPublished.title}』が読めます`,
+        body: "執筆が完了しました。まずは本の概要をご覧いただけます。",
+        createdAt: newestPublished.createdAt ?? new Date(now).toISOString(),
+        read: true,
+        href: `/books/${newestPublished.id}`,
+        bookId: newestPublished.id,
+      });
+    }
+    if (derived.length === 0) return;
+    const existing = new Set(this.notifications.map((n) => n.id));
+    this.notifications = [...derived.filter((n) => !existing.has(n.id)), ...this.notifications];
+    this.notify();
   }
 
   // 本文が GCS 退避（bodyUrl 有り＆body 空・C3.3）された本だけ、API でサーバ側 read して埋める。

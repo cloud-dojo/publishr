@@ -75,15 +75,21 @@ export async function hasCompletedOnboarding(uidOverride?: string): Promise<bool
   const uid = uidOverride ?? currentUid();
   const db = getDb();
   if (db) {
-    try {
-      const snap = await getDoc(doc(db, "users", uid));
-      const ip = snap.exists() ? snap.data().initialProfile : null;
-      if (ip) return true;
-    } catch (e) {
-      console.warn("initialProfile の Firestore 読取に失敗（localStorage で判定）", e);
+    // Firestore(users/{uid}.initialProfile) を正本に。一過性の読取失敗で既済ユーザーを誤って
+    // 再オンボーディングへ送らないよう、一度だけリトライしてから localStorage にフォールバックする。
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const snap = await getDoc(doc(db, "users", uid));
+        if (snap.exists() && snap.data().initialProfile) return true;
+        break; // 読取成功＝Firestore には無いと確定。localStorage（同一ブラウザ書込）で最終判定。
+      } catch (e) {
+        if (attempt === 1) {
+          console.warn("initialProfile の Firestore 読取に失敗（localStorage で判定）", e);
+        }
+      }
     }
   }
-  // localStorage フォールバック（同一ブラウザでの再ログイン）。
+  // localStorage フォールバック（同一ブラウザでの再ログイン／Firestore 書込が失敗していた場合）。
   if (typeof window !== "undefined") {
     return window.localStorage.getItem(LS.profile(uid)) != null;
   }
