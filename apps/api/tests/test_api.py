@@ -136,6 +136,19 @@ def test_feedback_updates():
     assert fb["readingReaction"] == "helpful"
 
 
+def test_feedback_impression_saved_sanitized_and_capped():
+    published = client.get("/books", params={"status": "published"}).json()[0]
+    bid = published["id"]
+    # 制御文字（\x00）は除去・改行は残す・2000字で打ち切り。
+    raw = "良かった\x00\x07\n次も読みたい" + "あ" * 3000
+    res = client.post(f"/books/{bid}/feedback", json={"impression": raw})
+    assert res.status_code == 200
+    imp = res.json()["feedback"]["impression"]
+    assert "\x00" not in imp and "\x07" not in imp  # 制御文字除去
+    assert "良かった\n次も読みたい" in imp  # 改行は保持
+    assert len(imp) == 2000  # 上限カット
+
+
 def test_reading_state_updates_granularity_and_annotations():
     published = client.get("/books", params={"status": "published"}).json()[0]
     bid = published["id"]

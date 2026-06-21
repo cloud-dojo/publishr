@@ -16,7 +16,7 @@ export default function FinishPage() {
 
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
   const [following, setFollowing] = useState(false);
-  const [impression, setImpression] = useState("");
+  const [impression, setImpression] = useState(book?.feedback.impression ?? "");
   const [saved, setSaved] = useState(false);
 
   if (!book) {
@@ -35,10 +35,10 @@ export default function FinishPage() {
     void sendFeedback(book.id, { rating: n, readPercent: 100 });
   };
   const onSaveImpression = () => {
-    // mock: 自由記入の感想をローカル保存（フェーズ3で Firestore 直書きに差し替え）。
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(`publishr.impression.${book.id}`, impression);
-    }
+    const text = impression.trim();
+    if (!text) return;
+    // 自由記述感想を Firestore に保存（feedback.impression・サーバ側で制御文字除去＋長さ制限）。
+    void sendFeedback(book.id, { impression: text });
     setSaved(true);
   };
 
