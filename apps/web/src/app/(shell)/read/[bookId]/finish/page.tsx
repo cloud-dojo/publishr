@@ -12,7 +12,7 @@ import { useActions, useProvider } from "@/data/hooks";
 export default function FinishPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { sendFeedback, notifyFavoriteAuthor } = useActions();
+  const { sendFeedback, notifyFavoriteAuthor, moveToLibrary } = useActions();
   // お気に入りは /authors と同じ正本ストア（localStorage＋Firestore favoriteAuthors）を読む。
   const favorites = useFavorites();
   const book = provider.getBook(params.bookId);
@@ -20,6 +20,7 @@ export default function FinishPage() {
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
   const [impression, setImpression] = useState(book?.feedback.impression ?? "");
   const [saved, setSaved] = useState(false);
+  const [savedToLibrary, setSavedToLibrary] = useState(false);
 
   if (!book) {
     return (
@@ -32,6 +33,14 @@ export default function FinishPage() {
 
   const persona = provider.getPersona(book.authorPersonaId);
   const isFav = persona ? favorites.has(persona.id) : false;
+  // 書庫保存：移動済み(shelf=library) か、この画面で押した直後なら「保存済み」。一方向。
+  const inLibrary = book.shelf === "library" || savedToLibrary;
+
+  const onSaveToLibrary = () => {
+    if (inLibrary) return;
+    void moveToLibrary(book.id); // shelf=library に。入荷一覧から外れ、書庫に残る。
+    setSavedToLibrary(true);
+  };
 
   const onRate = (n: number) => {
     setRating(n);
@@ -130,6 +139,26 @@ export default function FinishPage() {
               <div className="sq-d">
                 あなたがお気に入り登録した {persona.name} は、次回作を検討しています。新しい一冊が入荷した際はご案内します。
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 書庫に保存：読了したこの本を蔵書に残す導線。押さないと28日で入荷から落ち書庫にも
+            入らない（curation型・手動キュレーション）。移動は一方向。 */}
+        {book.status === "published" && (
+          <div className="panel" style={{ textAlign: "center" }}>
+            <button
+              type="button"
+              className={inLibrary ? "btn btn--gold btn--block" : "btn btn--ghost btn--block"}
+              onClick={onSaveToLibrary}
+              disabled={inLibrary}
+            >
+              {inLibrary ? "📚 書庫に保存しました" : "📚 この本を書庫に保存する"}
+            </button>
+            <div className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
+              {inLibrary
+                ? "「わたしの書庫」からいつでも読み返せます。"
+                : "保存すると「わたしの書庫」に残ります。しなければ入荷一覧から自然に消えます。"}
             </div>
           </div>
         )}
