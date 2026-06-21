@@ -19,6 +19,7 @@ class FeedbackInput(_Camel):
     wants_sequel: Optional[bool] = None
     reading_reaction: Optional[str] = None
     last_read_at: Optional[str] = None  # 通常は読了率更新時にサーバ側で自動付与
+    impression: Optional[str] = None  # 自由記述感想（サーバで長さ制限/サニタイズして保存）
 
 
 class ReadingAnnotationInput(_Camel):

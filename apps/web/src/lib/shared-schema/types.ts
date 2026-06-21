@@ -190,6 +190,7 @@ export interface Feedback {
   wantsSequel: boolean;
   readingReaction?: string | null;
   lastReadAt?: string | null; // 最後に読んだ時刻(ISO8601)。「最近読んだ本」の並び順に使う
+  impression?: string | null; // 読了時の自由記述感想（untrusted。学習ループ利用時は要正規化）
 }
 
 export interface ReadingAnnotation {
@@ -261,6 +262,7 @@ export interface FeedbackInput {
   wantsSequel?: boolean;
   readingReaction?: string | null;
   lastReadAt?: string; // 通常はクライアント/サーバが読了率更新時に自動付与
+  impression?: string; // 自由記述感想（サーバで制御文字除去＋長さ制限して保存）
 }
 
 export interface ReadingStateInput {
