@@ -50,6 +50,23 @@ def test_summarize_feedback_classifies_hits_sequel_miss():
     assert "離脱/不発:" in s and "離脱本" in s and "いまいち本" in s
 
 
+def test_summarize_feedback_includes_impression_as_labeled_data():
+    """自由記述感想は『データ』ラベル付きで抜粋（160字）して足す（感想だけでも学習対象）。"""
+    long_note = "主人公の決断に共感した。" + "あ" * 300
+    books = [_book("b1", "感想本", impression=long_note)]
+    s = summarize_feedback(books)
+    assert "感想(ユーザー記述・データ)" in s  # 指示でなくデータと明示
+    assert "主人公の決断に共感した" in s
+    assert "あ" * 161 not in s  # 抜粋上限160で切る
+
+
+def test_impression_only_counts_as_feedback():
+    from publishr_agents.reader.preferences import has_feedback
+
+    assert has_feedback(_book("b1", "感想のみ本", impression="良かった")) is True
+    assert has_feedback(_book("b2", "無反応本")) is False
+
+
 def test_style_preference_from_user():
     user = User(
         id="u1",
