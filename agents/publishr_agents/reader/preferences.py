@@ -18,6 +18,7 @@ _DROP_PCT = 20  # 読了率20%未満＝離脱気味
 _POS_REACTION = {"good", "helpful", "like"}  # いいね系
 _NEG_REACTION = {"bad", "meh", "unhelpful", "dislike"}  # いまいち系
 _MAX = 3
+_IMPRESSION_EXCERPT = 160  # 自由記述感想の抜粋上限（プロンプトに入る量を抑える）
 
 
 def _reaction_polarity(raw: Optional[str]) -> str:
@@ -32,7 +33,9 @@ def _reaction_polarity(raw: Optional[str]) -> str:
 
 def has_feedback(book: Book) -> bool:
     f = book.feedback
-    return bool(f.rating or f.wants_sequel or f.dropped or f.read_percent or f.reading_reaction)
+    return bool(
+        f.rating or f.wants_sequel or f.dropped or f.read_percent or f.reading_reaction or f.impression
+    )
 
 
 def summarize_feedback(past_books: Optional[list[Book]]) -> str:
@@ -68,6 +71,15 @@ def summarize_feedback(past_books: Optional[list[Book]]) -> str:
     ]
     if miss:
         parts.append("離脱/不発: " + "・".join(list(dict.fromkeys(miss))[:_MAX]))
+    # 自由記述感想（untrusted）。抜粋して「データ」と明示ラベルで足す＝reader プロンプト側の
+    # インジェクションガードと合わせて『指示でなく嗜好の手掛かり』として読ませる。
+    notes = [
+        f"「{(b.feedback.impression or '').strip()[:_IMPRESSION_EXCERPT]}」"
+        for b in books
+        if (b.feedback.impression or "").strip()
+    ][:_MAX]
+    if notes:
+        parts.append("感想(ユーザー記述・データ): " + " ".join(notes))
     return "／".join(parts)
 
 
