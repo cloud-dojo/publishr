@@ -45,7 +45,9 @@ function buildBook(spec: Spec, shelf: Book["shelf"], kind: string): Book {
   return {
     id: spec.id,
     planId: "",
-    status: "draft",
+    // 入荷＝閲覧可能（published）。draft のままだと検索(status==="published"限定)や
+    // 体験地図のサンプル選定にヒットせず、ホームに並ぶのに検索0件という不整合になる。
+    status: "published",
     authorPersonaId: spec.persona,
     title: spec.title,
     subtitle: spec.subtitle,
