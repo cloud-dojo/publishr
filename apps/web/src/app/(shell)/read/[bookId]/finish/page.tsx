@@ -6,16 +6,18 @@ import { useState } from "react";
 
 import { StarRating } from "@/components/postread/StarRating";
 import { Topbar } from "@/components/shell/Topbar";
+import { toggleFavorite, useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 
 export default function FinishPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
   const { sendFeedback, notifyFavoriteAuthor } = useActions();
+  // お気に入りは /authors と同じ正本ストア（localStorage＋Firestore favoriteAuthors）を読む。
+  const favorites = useFavorites();
   const book = provider.getBook(params.bookId);
 
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
-  const [following, setFollowing] = useState(false);
   const [impression, setImpression] = useState(book?.feedback.impression ?? "");
   const [saved, setSaved] = useState(false);
 
@@ -29,6 +31,7 @@ export default function FinishPage() {
   }
 
   const persona = provider.getPersona(book.authorPersonaId);
+  const isFav = persona ? favorites.has(persona.id) : false;
 
   const onRate = (n: number) => {
     setRating(n);
@@ -66,14 +69,21 @@ export default function FinishPage() {
           <div className="pr-actions">
             <button
               type="button"
-              className={following ? "btn btn--gold" : "btn btn--ghost"}
+              className={isFav ? "btn btn--gold" : "btn btn--ghost"}
               onClick={() => {
-                const next = !following;
-                if (next && persona) notifyFavoriteAuthor(persona.id, persona.name, book.id);
-                setFollowing(next);
+                if (!persona) return;
+                const wasFav = favorites.has(persona.id);
+                // 正本ストアへ登録/解除（/authors の★と一致・Firestore favoriteAuthors にも反映）。
+                toggleFavorite({
+                  personaId: persona.id,
+                  name: persona.name,
+                  savedAt: new Date().toISOString(),
+                });
+                // 新規登録時のみ通知を出す（解除時は出さない）。
+                if (!wasFav) notifyFavoriteAuthor(persona.id, persona.name, book.id);
               }}
             >
-              {following ? "♥ お気に入りの作家に登録済み" : `♡ ${persona?.name} をお気に入りに`}
+              {isFav ? "♥ お気に入りの作家に登録済み" : `♡ ${persona?.name} をお気に入りに`}
             </button>
           </div>
         </div>
@@ -112,7 +122,7 @@ export default function FinishPage() {
           </div>
         </div>
 
-        {following && persona && (
+        {isFav && persona && (
           <div className="sequel">
             <div style={{ fontSize: 26 }}>✦</div>
             <div style={{ flex: 1 }}>
