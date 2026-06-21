@@ -10,7 +10,7 @@ import { DEMO_USER_ID, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
 import { useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
-import { MOCK_HIGHLIGHTS } from "@/data/mock-highlights";
+import { annotationsToHighlights, mergeHighlights } from "@/data/mock-highlights";
 import {
   optionsFor,
   serendipityOptions,
@@ -298,11 +298,12 @@ export default function AccountPage() {
   const total = provider
     .listBooks()
     .filter((b) => b.status === "published" && b.shelf === "library").length;
-  // ハイライト数：mockデモ時のみシード件数、本番（firestore/bff）は実注釈のみ集計。
-  const highlightCount =
+  // ハイライト数：ハイライト画面(visibleItems)と完全に同じソース・同じ除外条件で数える
+  // （note=付箋は表示しないので集計からも除外）。account 8 vs 画面 6 の食い違いを解消。
+  const highlightCount = mergeHighlights(
+    annotationsToHighlights(provider.listBooks()),
     dataSource === "mock"
-      ? MOCK_HIGHLIGHTS.length
-      : provider.listBooks().reduce((n, b) => n + (b.annotations?.length ?? 0), 0);
+  ).filter((h) => h.kind !== "note").length;
   // お気に入り作家数：お気に入りストア（localStorage＋Firestore）の実数。
   const favoriteCount = useFavorites().size;
 

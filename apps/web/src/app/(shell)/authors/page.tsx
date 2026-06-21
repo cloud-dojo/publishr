@@ -7,7 +7,7 @@ import type { Persona } from "@publishr/shared-schema";
 
 import { Topbar } from "@/components/shell/Topbar";
 import { toggleFavorite, useFavorites } from "@/data/favorites-store";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
 
 // スタイル行（例：理論派 / 組織設計 / 権限委譲）。最大3語をスラッシュ区切りで。
 function styleLine(p: Persona): string {
@@ -25,6 +25,7 @@ function credoOf(p: Persona): string {
 }
 
 function AuthorChip({ persona, isFav }: { persona: Persona; isFav: boolean }) {
+  const { notifyFavoriteAuthor } = useActions();
   const onToggle = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -33,6 +34,8 @@ function AuthorChip({ persona, isFav }: { persona: Persona; isFav: boolean }) {
       name: persona.name,
       savedAt: new Date().toISOString(),
     });
+    // 新規登録時のみ通知（読了画面と挙動を揃える・解除時は出さない）。
+    if (!isFav) notifyFavoriteAuthor(persona.id, persona.name);
   };
   return (
     <div className="author-chip">

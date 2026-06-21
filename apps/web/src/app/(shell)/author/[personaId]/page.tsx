@@ -8,7 +8,7 @@ import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { AUTHOR_BIOS } from "@/data/authorBios";
 import { toggleFavorite, useFavorites } from "@/data/favorites-store";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
 
 // アイコン文字＝苗字の頭文字（name 先頭1文字）。
 function monogramOf(name: string): string {
@@ -48,6 +48,7 @@ export default function AuthorPage() {
   const params = useParams<{ personaId: string }>();
   const provider = useProvider();
   const favorites = useFavorites();
+  const { notifyFavoriteAuthor } = useActions();
   const persona = provider.getPersona(params.personaId);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
@@ -67,12 +68,15 @@ export default function AuthorPage() {
   const books = provider.listBooks().filter((b) => b.authorPersonaId === persona.id);
   const isFav = favorites.has(persona.id);
   const bio = AUTHOR_BIOS[persona.id];
-  const onToggleFav = () =>
+  const onToggleFav = () => {
     toggleFavorite({
       personaId: persona.id,
       name: persona.name,
       savedAt: new Date().toISOString(),
     });
+    // 新規登録時のみ通知（読了画面と挙動を揃える・解除時は出さない）。
+    if (!isFav) notifyFavoriteAuthor(persona.id, persona.name);
+  };
 
   return (
     <>
