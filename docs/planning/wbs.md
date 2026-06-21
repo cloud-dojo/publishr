@@ -93,7 +93,16 @@
 
 ---
 
-## 🧭 現在地サマリ（最新: 2026-06-17）
+## 🧭 現在地サマリ（最新: 2026-06-21）
+
+> **いまどこ（2026-06-21）**: **製品は機能完成域＝本番フル稼働＋観測(Langfuse)＋プロンプト評価(CI実judge)まで整備済**。機能凍結6/30・提出7/10。残りの主役は **M5/M6（デモ/提出・鉄田主体）**。6/17サマリ以降（PR#56〜#70）の追加:
+> - **Langfuse 本番フル稼働**（PR#68/#69）: `trace_pipeline`＝①企画リーダー差し戻しループ＋grounding＋採否＋**`plan_score`/`plan_passed`(70ゲート可視化)**。さらに **ADK の各LLM呼び出しを OpenTelemetry で span 化**（`init_tracing` が global TracerProvider を張る・gemini-2.5-pro/flash・トークン計装）。手動runで全Stage着弾を実証。
+> - **CI 実judge プロンプト評価**（PR#70）: `.github/workflows/prompt-eval.yml`＝prompts/eval/planning 変更時のみ実 Gemini Pro judge（`make eval-gate-vertex`・8件7/8）。**毎push非実行＝課金限定**・手動dispatch可。CI SA `publishr-ci-deployer` に `roles/aiplatform.user` 付与。実runで **8/8 PASS**（high88-94/low8-20）。
+> - **入荷/書庫のストック型運用**（PR#63-65,#67）: 入荷保持 7→**28日**・各本に**入荷日表示**（今朝/N日前/M/D・新しい順）・**「書庫へ移動」**(shelf=library 遷移)で入荷一覧から外す動的フィルタ（本詳細＋読書ページにボタン）。**書庫＝移動した本だけのキュレーション型**（account蔵書数も一致）。
+> - **お気に入り作家の run またぎ継続**（PR#66）: from_favorite ペルソナの ID を安定化（run-token を付けない）＝再登板で `favorites.has` 一致・★認識・新刊が著者に紐づく。
+> - **UX大量修正**（PR#57-62）: 状態バッジを予約撤去後モデルへ整合・**未ログインで佐倉を出さない**(AuthGate)・**検索実装**・「最近読んだ本」を実読書時刻順(`lastReadAt`)・データ連携(/connect)の状態反映・アカウント蔵書数・読書初回進捗・map動的リンク 等。推定分量/序文は実本文ベース（arr_p1〜p4 は再計算済）。
+> - **自律run 実証**: 6/17 06:00 で実Imagen表紙＋run-uniqueID＋#53推定の新刊4冊が自動入荷（再配信ストーム無し・worker_plan ~525s/<600s）。
+> - **残**: ①**M5/M6＝デモ録画(2.5分/60秒)・ProtoPedia・公開リポ・7/10提出（鉄田主体・クリティカルパス）** ②**日曜セレンディピティ運用**（theme_kind を API→worker→mode_a 貫通＋Terraform serendipity job 有効化＋limit=1・**鉄田の serendipity プロンプト確認後**） ③**デモ品質**＝テスト本(arr_p1〜p4等)の掃除・#7「今すぐ企画」ボタン・A-3「いま執筆中」セクション整理 ④**任意**＝本文量↑(`PUBLISHR_BODY_MAX_CHAPTERS`)・実judge閾値/borderline調整(`make eval-repro/eval-sweep`)・Drive scope最終確認。詳細は [prod-live-followups.md](../infra/prod-live-followups.md)。
 
 > **いまどこ（2026-06-17）**: **本番が「実観測→実企画→実本文→実表紙」までフル稼働**。Cloud Run `publishr-api`(asia-northeast1・rev 00057)＋Firebase App Hosting(web・firestore全面)＋Firestore＋Pub/Sub＋Cloud Scheduler。デモ垢＝佐倉(5JLL…/publishr.hackathon)。
 > - **C3.3 本文GCSオフロード live**（PR#43前後）: published 本文を非公開 `publishr-contents-498123` へ退避（`PUBLISHR_BODY_STORE=gcs`・`bodyUrl`）。読書ページは `/api/books/{id}/body` でサーバ側 read して hydrate（GCSを晒さない）。runner SA `roles/storage.objectAdmin`。
