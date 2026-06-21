@@ -6,8 +6,12 @@ import Link from "next/link";
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
+import { bookChapters } from "@/data/bookText";
 import { coverSrc } from "@/data/config";
 import { useActions, useProvider } from "@/data/hooks";
+
+// 推定分量の分の係数。バックエンド persist_mapping._MINUTES_PER_CHAPTER と一致させる。
+const MINUTES_PER_CHAPTER = 8;
 
 export default function BookDetailPage() {
   const params = useParams<{ bookId: string }>();
@@ -27,6 +31,12 @@ export default function BookDetailPage() {
   const persona = provider.getPersona(book.authorPersonaId);
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
+
+  // 推定分量は本文があれば**実際に書かれた章数**で出す（計画アジェンダ数だと本文と食い違う）。
+  // 本文未取得（GCS退避hydrate前 or 下書き）は従来どおり計画値にフォールバック。分も実章数で揃える。
+  const actualChapters = book.body ? bookChapters(book.body).length : 0;
+  const chapterCount = actualChapters > 0 ? actualChapters : book.estimatedChapters;
+  const minuteCount = actualChapters > 0 ? actualChapters * MINUTES_PER_CHAPTER : book.estimatedMinutes;
 
   return (
     <>
@@ -69,7 +79,7 @@ export default function BookDetailPage() {
           <div className="detail-meta-line">
             状態：<b>{statusLabel(book.status)}</b>
             <br />
-            推定分量：<b>全{book.estimatedChapters}章・約{book.estimatedMinutes}分</b>
+            推定分量：<b>全{chapterCount}章・約{minuteCount}分</b>
             <br />
             装丁：<b>Imagen 生成</b>／企画：<b>編集会議 AI</b>
           </div>
