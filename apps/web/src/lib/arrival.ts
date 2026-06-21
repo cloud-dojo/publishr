@@ -52,6 +52,23 @@ export function arrivalLabel(now: Date = new Date()): string {
   return "先日";
 }
 
+/** hero 用：**実際に並んでいる最新入荷(createdAt)** から粗いラベルを出す。今朝/昨日/おととい/先日。
+ *  入荷スケジュールの仮定（latestArrivalDate）に依存せず実データに合わせるため、本が無い場合は ""。 */
+export function arrivalHeroLabel(createdAt: string | undefined, now: Date = new Date()): string {
+  if (!createdAt) return "";
+  const t = new Date(createdAt);
+  if (Number.isNaN(t.getTime())) return "";
+  const startToday = new Date(now);
+  startToday.setHours(0, 0, 0, 0);
+  const startThat = new Date(t);
+  startThat.setHours(0, 0, 0, 0);
+  const days = Math.round((startToday.getTime() - startThat.getTime()) / 86_400_000);
+  if (days <= 0) return "今朝";
+  if (days === 1) return "昨日";
+  if (days === 2) return "おととい";
+  return "先日";
+}
+
 /** 各本の入荷日(createdAt)を相対表記で。今朝 / 昨日 / おととい / N日前（〜6日）/ M/D（1週間以上前）。
  *  4週間保持の入荷一覧で「いつ入荷したか」を本ごとに示すために使う。 */
 export function arrivedLabel(createdAt: string | undefined, now: Date = new Date()): string {
