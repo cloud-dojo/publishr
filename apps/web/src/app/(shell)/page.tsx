@@ -30,10 +30,12 @@ export default function HomePage() {
   // 理由は plan 由来を優先し、初回カタログ本は deliveryReason をフォールバックに。
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason ?? b.deliveryReason;
 
-  // 棚＝shelf＋直近7日ウィンドウで導出（mvp-scope §5-2）。
-  // 企画したら本文まで自動執筆＝予約導線なし。draft はすぐ published になるため status は問わず
-  // 「入荷から7日以内の本」を関心/新しい出会いに並べる（published も消えずに残す）。
-  // 読了すると shelf=library に移って棚落ちする。
+  // 棚＝shelf＋直近28日ウィンドウ（ARRIVAL_WINDOW_DAYS）で導出。企画したら本文まで自動執筆＝
+  // 予約導線なし。draft はすぐ published になるため status は問わず「入荷から28日以内の本」を
+  // 関心(arrivals)/新しい出会い(odd)に並べる（published も消えずに残す）。
+  // ※読了しても shelf は変わらない（自動で棚落ちしない）。ユーザーが「📚 書庫に保存/移動」した
+  //   本だけ shelf=library になり入荷一覧から外れて書庫に残る。移動せず28日を過ぎた本は入荷から
+  //   自然に落ちる（書庫には入らない・検索からは到達可）。
   const now = new Date();
   const isFreshArrival = (b: Book) => isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
   const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
