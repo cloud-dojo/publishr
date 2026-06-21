@@ -50,9 +50,9 @@ export default function BookDetailPage() {
               いま読む →
             </Link>
             {persona && (
-              <span className="btn btn--ghost btn--block" style={{ cursor: "default" }}>
+              <Link className="btn btn--ghost btn--block" href={`/author/${persona.id}`}>
                 ✦ {persona.name} を知る
-              </span>
+              </Link>
             )}
             {/* 書庫へ移動: 入荷一覧から外し書庫に残す（動的フィルタリング）。移動後は shelf=library
                 になりこのボタンは消える（書庫には残る）。 */}
