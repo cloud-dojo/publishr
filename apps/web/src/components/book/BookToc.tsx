@@ -31,6 +31,13 @@ export function BookToc({ book }: { book: Book }) {
     );
   }
 
+  // 本文が GCS 退避済み（bodyUrl 有り）でまだ未 hydrate（body 空）の間は、後で実章一覧に
+  // 差し替わる計画アジェンダ（"全○章"）を先に出さない＝古い章立てが一瞬見えるちらつきを防ぐ。
+  // ※ bodyUrl が無い純粋な下書き（未執筆）は従来どおり計画アジェンダをプレビュー表示する。
+  if (book.bodyUrl && !book.body) {
+    return <div className="muted">目次を読み込み中…</div>;
+  }
+
   // フォールバック：本文未執筆の下書きは計画アジェンダを表示
   if (book.agenda.length === 0) {
     return <div className="muted">目次は準備中です。</div>;
