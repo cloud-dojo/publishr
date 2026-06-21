@@ -15,7 +15,7 @@ import {
   type FirstRunStatus,
 } from "@/data/user-writes";
 import { watchAuth } from "@/lib/firebase";
-import { ARRIVAL_WINDOW_DAYS, arrivalLabel, isWithinDays } from "@/lib/arrival";
+import { ARRIVAL_WINDOW_DAYS, arrivalHeroLabel, isWithinDays } from "@/lib/arrival";
 
 export default function HomePage() {
   const provider = useProvider();
@@ -26,6 +26,14 @@ export default function HomePage() {
     setAuthDisplayName(u?.displayName ?? null);
     setUid(u?.uid ?? null);
   }), []);
+  // 時刻に応じた挨拶（夜に「おはよう」を出さない）。SSR/初期は中立の「こんにちは」にして、
+  // マウント後にブラウザのローカル時刻で確定＝ハイドレーション不一致を避ける。
+  const [greeting, setGreeting] = useState("こんにちは");
+  useEffect(() => {
+    const h = new Date().getHours();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGreeting(h < 5 ? "こんばんは" : h < 11 ? "おはようございます" : h < 18 ? "こんにちは" : "こんばんは");
+  }, []);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
   // 理由は plan 由来を優先し、初回カタログ本は deliveryReason をフォールバックに。
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason ?? b.deliveryReason;
@@ -47,7 +55,14 @@ export default function HomePage() {
     .listBooks()
     .filter((b) => b.status === "writing" || b.status === "reserved")
     .sort(byNewest);
-  const arrival = arrivalLabel(); // 今朝 / 昨日 / おととい / 先日
+  // hero ラベルは「実際に並んでいる最新入荷」から導出（スケジュール仮定に依存しない）。
+  // interests/encounters は新しい順なので先頭が各々の最新。両者の新しい方を採用。
+  const newestArrival =
+    [interests[0]?.createdAt, encounters[0]?.createdAt]
+      .filter((d): d is string => Boolean(d))
+      .sort()
+      .at(-1);
+  const arrival = arrivalHeroLabel(newestArrival, now); // 今朝 / 昨日 / おととい / 先日 / ""
 
   // --- 初回体験（登録直後）：空→生成中→15冊 ---
   // localStorage 読取はハイドレーション不一致を避けるためマウント後に行う。
@@ -156,7 +171,7 @@ export default function HomePage() {
       <Topbar
         greeting={
           <>
-            おはようございます、<b>{authDisplayName ?? "ゲスト"}</b> さん。
+            {greeting}、<b>{authDisplayName ?? "ゲスト"}</b> さん。
           </>
         }
       />
@@ -164,9 +179,19 @@ export default function HomePage() {
       <section className="page-hero">
         <div className="ph-eyebrow">This morning&apos;s arrivals</div>
         <h1>
-          {arrival}、あなたの書店に
-          <br />
-          <span className="accent">新しい本</span>が並びました。
+          {arrival ? (
+            <>
+              {arrival}、あなたの書店に
+              <br />
+              <span className="accent">新しい本</span>が並びました。
+            </>
+          ) : (
+            <>
+              あなたの書店へ、
+              <br />
+              <span className="accent">ようこそ</span>。
+            </>
+          )}
         </h1>
       </section>
 
