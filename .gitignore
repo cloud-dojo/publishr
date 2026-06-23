@@ -68,6 +68,7 @@ htmlcov/
 
 # verify-prompts インナーループの被験者出力の作業場（成果物はfixturesへ別途保存）
 outputs/
+artifacts/prompt-review/
 
 # Claude Code 内部ファイル
 .agents/
