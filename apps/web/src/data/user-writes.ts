@@ -134,22 +134,32 @@ export function setSourceConnectedLocal(source: ConnectSource, enabled: boolean)
 export interface FavoriteAuthorEntry {
   personaId: string;
   name: string;
+  voiceStyle: string;
+  format: string;
   savedAt: string;
 }
+
+type FavoriteAuthorPatch = FavoriteAuthorEntry | Pick<FavoriteAuthorEntry, "personaId">;
 
 export async function addFavoriteAuthor(entry: FavoriteAuthorEntry): Promise<void> {
   const uid = currentUid();
   const db = getDb();
   if (db) {
-    await updateDoc(doc(db, "users", uid), { favoriteAuthors: arrayUnion(entry) });
+    await setDoc(doc(db, "users", uid), { favoriteAuthors: arrayUnion(entry) }, { merge: true });
   }
   // mock時はUI側のローカル状態で扱う（永続化は任意）。
 }
 
-export async function removeFavoriteAuthor(entry: FavoriteAuthorEntry): Promise<void> {
+export async function removeFavoriteAuthor(entry: FavoriteAuthorPatch): Promise<void> {
   const uid = currentUid();
   const db = getDb();
   if (db) {
-    await updateDoc(doc(db, "users", uid), { favoriteAuthors: arrayRemove(entry) });
+    const ref = doc(db, "users", uid);
+    const snap = await getDoc(ref);
+    const current = (snap.exists() ? snap.data().favoriteAuthors : []) as FavoriteAuthorEntry[];
+    const matches = current.filter((x) => x?.personaId === entry.personaId);
+    if (matches.length > 0) {
+      await updateDoc(ref, { favoriteAuthors: arrayRemove(...matches) });
+    }
   }
 }

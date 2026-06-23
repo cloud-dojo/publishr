@@ -5,8 +5,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
 
-import { watchAuth } from "@/lib/firebase";
+import { getDb, watchAuth } from "@/lib/firebase";
 
 import { DEMO_USER_ID } from "./config";
 import {
@@ -21,6 +22,8 @@ let favorites = new Set<string>();
 // なったら読み直す（同一タブでのアカウント切替に追従）。
 let hydratedUid: string | null = null;
 let authWatched = false;
+let firestoreUid: string | null = null;
+let firestoreUnsub: (() => void) | null = null;
 const listeners = new Set<() => void>();
 const EMPTY: Set<string> = new Set();
 
@@ -34,6 +37,12 @@ function emit(): void {
 function persist(): void {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(lsKey(), JSON.stringify([...favorites]));
+  }
+}
+
+function persistFor(uid: string): void {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(`publishr.favoriteAuthors.${uid}`, JSON.stringify([...favorites]));
   }
 }
 
@@ -54,18 +63,47 @@ function hydrateFor(uid: string): void {
   emit();
 }
 
+function watchFirestoreFavorites(uid: string): void {
+  const db = getDb();
+  if (!db || uid === firestoreUid) return;
+  firestoreUnsub?.();
+  firestoreUid = uid;
+  firestoreUnsub = onSnapshot(
+    doc(db, "users", uid),
+    (snap) => {
+      const favoriteAuthors = snap.exists() ? snap.data().favoriteAuthors : null;
+      if (!Array.isArray(favoriteAuthors)) return;
+      favorites = new Set(
+        favoriteAuthors
+          .map((x) => (typeof x?.personaId === "string" ? x.personaId : null))
+          .filter((x): x is string => Boolean(x))
+      );
+      persistFor(uid);
+      emit();
+    },
+    (err) => {
+      console.warn("favoriteAuthors の Firestore 購読に失敗（localStorage で継続）", err);
+    }
+  );
+}
+
 /** 初回購読時に auth を監視し、ログイン状態に応じて該当ユーザー分へ切り替える。 */
 function ensureAuthWatch(): void {
   if (authWatched || typeof window === "undefined") return;
   authWatched = true;
   hydrateFor(currentUid()); // まず現在の uid（未ログインなら DEMO）で読み込み
-  watchAuth((u) => hydrateFor(u?.uid ?? DEMO_USER_ID));
+  watchFirestoreFavorites(currentUid());
+  watchAuth((u) => {
+    const uid = u?.uid ?? DEMO_USER_ID;
+    hydrateFor(uid);
+    watchFirestoreFavorites(uid);
+  });
 }
 
 export function toggleFavorite(entry: FavoriteAuthorEntry): void {
   if (favorites.has(entry.personaId)) {
     favorites.delete(entry.personaId);
-    void removeFavoriteAuthor(entry);
+    void removeFavoriteAuthor({ personaId: entry.personaId });
   } else {
     favorites.add(entry.personaId);
     void addFavoriteAuthor(entry);

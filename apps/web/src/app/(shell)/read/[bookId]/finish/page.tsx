@@ -6,12 +6,14 @@ import { useState } from "react";
 
 import { StarRating } from "@/components/postread/StarRating";
 import { Topbar } from "@/components/shell/Topbar";
+import { toggleFavorite, useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 
 export default function FinishPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
   const { sendFeedback, notifyFavoriteAuthor } = useActions();
+  const favorites = useFavorites();
   const book = provider.getBook(params.bookId);
 
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
@@ -29,6 +31,7 @@ export default function FinishPage() {
   }
 
   const persona = provider.getPersona(book.authorPersonaId);
+  const isFollowing = persona ? favorites.has(persona.id) || following : following;
 
   const onRate = (n: number) => {
     setRating(n);
@@ -66,10 +69,18 @@ export default function FinishPage() {
           <div className="pr-actions">
             <button
               type="button"
-              className={following ? "btn btn--gold" : "btn btn--ghost"}
+              className={isFollowing ? "btn btn--gold" : "btn btn--ghost"}
               onClick={() => {
-                const next = !following;
-                if (next && persona) notifyFavoriteAuthor(persona.id, persona.name, book.id);
+                if (!persona) return;
+                const next = !isFollowing;
+                toggleFavorite({
+                  personaId: persona.id,
+                  name: persona.name,
+                  voiceStyle: persona.voiceStyle || persona.persona.styleNote || persona.style,
+                  format: persona.format || persona.title || "",
+                  savedAt: new Date().toISOString(),
+                });
+                if (next) notifyFavoriteAuthor(persona.id, persona.name, book.id);
                 setFollowing(next);
               }}
             >
@@ -112,7 +123,7 @@ export default function FinishPage() {
           </div>
         </div>
 
-        {following && persona && (
+        {isFollowing && persona && (
           <div className="sequel">
             <div style={{ fontSize: 26 }}>✦</div>
             <div style={{ flex: 1 }}>

@@ -71,6 +71,8 @@ export default function AuthorPage() {
     toggleFavorite({
       personaId: persona.id,
       name: persona.name,
+      voiceStyle: persona.voiceStyle || persona.persona.styleNote || persona.style,
+      format: persona.format || persona.title || "",
       savedAt: new Date().toISOString(),
     });
 
