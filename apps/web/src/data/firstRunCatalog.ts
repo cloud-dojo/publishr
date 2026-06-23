@@ -1,5 +1,6 @@
-// 初回体験用の本カタログ（決定的）。登録直後に「1週間分まとめて15冊」を
-// 時間差入荷させるためのデータ。本命10＋セレンディピティ5。
+// 初回体験用の本カタログ（決定的）。登録直後に「1週間分まとめて12冊」を
+// 時間差入荷させるためのデータ。本命8＋セレンディピティ4（予約制廃止改定 2026-06-23・
+// 週3回×4冊＝週12冊。本命2回×4冊=8冊＋日曜セレンディピティ1回×4冊=4冊）。
 // 実パイプライン（Cloud Run/Vertex）接続前のデモ・mock用。firestoreモードでは
 // 実生成に置き換わる（[[firestore-provider]] の runFirstRun → runPipeline）。
 import type { Book } from "@publishr/shared-schema";
@@ -15,7 +16,7 @@ type Spec = {
   reason: string;
 };
 
-// 本命（あなたの仕事・関心にまっすぐ応える）10冊。
+// 本命（あなたの仕事・関心にまっすぐ応える）8冊（本命2回×4冊）。
 const HONMEI: Spec[] = [
   { id: "fr_h01", persona: "p_kirishima", title: "30人を、ひとりで背負わない。", subtitle: "任せ方の設計図", cover: "b1", reason: "「全員の判断を自分が抱えている」局面に向けて、権限の設計から書き下ろしました。" },
   { id: "fr_h02", persona: "p_aoi", title: "叱らずに伝える", subtitle: "関係を壊さない指摘の作法", cover: "b2", reason: "年上部下との距離感に揺れるいま、指摘を「対立」にしない伝え方をまとめました。" },
@@ -25,17 +26,14 @@ const HONMEI: Spec[] = [
   { id: "fr_h06", persona: "p_yuki", title: "決めきる技術", subtitle: "迷いを断つ意思決定", cover: "b6", reason: "意思決定があなたに集中している局面に、決めきるための型を用意しました。" },
   { id: "fr_h07", persona: "p_azumi", title: "1on1が変わる15分", subtitle: "聞き方だけで人は動く", cover: "b7", reason: "1on1の負荷増の記述が増えています。短く深い対話に変える実践書です。" },
   { id: "fr_h08", persona: "p_mikumo", title: "はじめての評価面談", subtitle: "納得を生むフィードバック設計", cover: "b8", reason: "評価面談への不安が見えます。納得を生む準備と言葉を組み立てました。" },
-  { id: "fr_h09", persona: "p_kirishima", title: "任せる勇気", subtitle: "手放しと放任の境界線", cover: "b9", reason: "「任せる」と「丸投げ」の線引きに迷う局面に向けた一冊です。" },
-  { id: "fr_h10", persona: "p_enjoji", title: "リーダーの言葉づかい", subtitle: "信頼は語彙からはじまる", cover: "b10", reason: "チームに伝わる言葉を選び直したいいまに、語彙と姿勢を整える本です。" },
 ];
 
-// セレンディピティ（関心の少し外側から視野を広げる）5冊。
+// セレンディピティ（関心の少し外側から視野を広げる）4冊（日曜1回×4冊）。
 const SERENDIPITY: Spec[] = [
   { id: "fr_s01", persona: "p_kirishima", title: "茶室の経営学", subtitle: "\"間\"と\"余白\"の効用", cover: "b3", reason: "余白の設計という視点から、いまの忙しさを問い直す一冊です。" },
   { id: "fr_s02", persona: "p_nanao", title: "登山隊に学ぶ撤退", subtitle: "引き返す勇気の作法", cover: "b6", reason: "「やめ方」の意思決定を、別の世界の実話から学びます。" },
   { id: "fr_s03", persona: "p_sengoku", title: "戦国の人材登用", subtitle: "適材適所の古典に学ぶ", cover: "b9", reason: "人をどう配するか——歴史の決断から、いまの配置を考え直します。" },
   { id: "fr_s04", persona: "p_kuroda", title: "あえて、決めない", subtitle: "保留という戦略", cover: "b2", reason: "すぐ決める習慣の逆を行く、保留の使いどころを説いた逆張りの一冊。" },
-  { id: "fr_s05", persona: "p_enjoji", title: "問いを立てる哲学", subtitle: "答えより問いが人を成長させる", cover: "b7", reason: "答えを探す読書から、問いを増やす読書へ。視野そのものを広げます。" },
 ];
 
 const PREFACE =
@@ -66,7 +64,7 @@ function buildBook(spec: Spec, shelf: Book["shelf"], kind: string): Book {
 }
 
 /**
- * 初回の15冊（本命10＋セレンディピティ5）を返す。createdAt は付けない
+ * 初回の12冊（本命8＋セレンディピティ4）を返す。createdAt は付けない
  * （入荷時に呼び出し側で時間差スタンプする）。
  * profile があれば最初の本命の理由に関心を1つ織り込む（軽いパーソナライズ）。
  */
@@ -83,4 +81,4 @@ export function buildFirstRunBooks(profile?: InitialProfileInput | null): Book[]
   return [...honmei, ...serendipity];
 }
 
-export const FIRST_RUN_TOTAL = HONMEI.length + SERENDIPITY.length; // 15
+export const FIRST_RUN_TOTAL = HONMEI.length + SERENDIPITY.length; // 12（本命8＋セレンディピティ4）

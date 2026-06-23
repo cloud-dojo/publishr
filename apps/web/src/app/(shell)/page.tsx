@@ -31,8 +31,8 @@ export default function HomePage() {
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason ?? b.deliveryReason;
 
   // 棚＝status＋shelf(=themeKind相当)＋直近7日ウィンドウで導出（mvp-scope §5-2）。
-  // - 関心/新しい出会い：status=draft かつ 入荷から7日以内（予約すると status が変わり自動で棚落ち）
-  // - 執筆中：status=reserved/writing（予約された本がここへ移る）
+  // - 関心/新しい出会い：入荷から7日以内（書庫へ移さなければ7日で棚落ち＝予約制廃止改定 2026-06-23）
+  // - 執筆中：編集部が本文を書き継いでいる本（status=writing。予約制は廃止＝全冊バッチ内で自動執筆）
   const now = new Date();
   const isFreshDraft = (b: Book) =>
     b.status === "draft" && isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
@@ -47,7 +47,7 @@ export default function HomePage() {
   const user = provider.getUser(DEMO_USER_ID);
   const arrival = arrivalLabel(); // 今朝 / 昨日 / おととい / 先日
 
-  // --- 初回体験（登録直後）：空→生成中→15冊 ---
+  // --- 初回体験（登録直後）：空→生成中→12冊 ---
   // localStorage 読取はハイドレーション不一致を避けるためマウント後に行う。
   const [firstRun, setFirstRun] = useState<FirstRunStatus | null>(null);
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function HomePage() {
   }, [uid]);
   const generating = firstRun === "generating";
   const freshCount = interests.length + encounters.length;
-  // 完了判定：mock は全15冊そろったら、firestore は実本が1冊でも届いたら通常表示へ。
+  // 完了判定：mock は全12冊そろったら、firestore は実本が1冊でも届いたら通常表示へ。
   const firstRunTarget = dataSource === "mock" ? FIRST_RUN_TOTAL : 1;
 
   // 生成の開始（1回だけ）。mockは時間差入荷、firestoreはパイプライン起動。
@@ -234,7 +234,7 @@ export default function HomePage() {
                 いま、<span className="accent">執筆中</span>の本
               </div>
               <div className="section-sub">
-                あなたが予約した一冊を、作家が書き継いでいます。明朝には書庫へ届きます。
+                編集部が本文を書き継いでいる本です。仕上がり次第、棚に並びます。
               </div>
             </div>
           </div>

@@ -68,7 +68,7 @@ export class MockProvider extends BaseProvider {
       {
         id: "ntf_seed_delivery",
         kind: "delivery",
-        title: lib ? `『${lib.title}』が書庫に届きました` : "予約した本が書庫に届きました",
+        title: lib ? `『${lib.title}』が書庫に届きました` : "新しい本が書庫に届きました",
         body: "執筆が完了しました。まずは本の概要をご覧いただけます。",
         createdAt: new Date(now - 3 * 3_600_000).toISOString(),
         read: true,
@@ -165,7 +165,7 @@ export class MockProvider extends BaseProvider {
 
   /**
    * 初回体験（mock）：新規ユーザーの「最初の本棚」を決定的に時間差入荷する。
-   * 既存のデモ本を一旦すべて消して空状態にし、本命10＋セレンディピティ5を
+   * 既存のデモ本を一旦すべて消して空状態にし、本命8＋セレンディピティ4を
    * 1冊ずつ入荷させる（onSnapshot 相当の notify で棚が埋まっていく）。
    */
   async runFirstRun(_userId: string, profile?: unknown): Promise<void> {
