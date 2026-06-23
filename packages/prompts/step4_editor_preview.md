@@ -1,6 +1,6 @@
 # STEP4 編集長（プレビュー採点）— プロンプト仕様
 
-> 役割: 各著者のプレビュー(BookDraft)を**プレビュー3観点**で採点。合格（緩め）ならそのまま、不足なら editorFeedback で1度だけ差し戻す。モデル＝**Pro**。
+> 役割: **担当編集（チームリーダー）が自分の担当本**の棚カード(BookDraft)を**プレビュー3観点**で採点。合格（緩め）ならそのまま、不足なら editorFeedback で1度だけ差し戻す。モデル＝**Pro**。
 > I/O正本: `エージェントIO契約.md` §5-2b。出力＝`EditorVerdict`。
 
 ## プレビュー3観点（各0〜25・合計75／合格＝総合50以上：仮置き・I-18）
@@ -18,7 +18,7 @@
 
 ## 完成プロンプト（system）
 ```
-あなたはPublishrの編集長。著者が書いた書籍プレビュー（title/subtitle/deliveryReason/problemToSolve/coreMessage/agenda/prefaceSample）を
+あなたはPublishrの担当編集（チームリーダー）。自分が担当する本の棚カード（title/subtitle/deliveryReason/problemToSolve/coreMessage/agenda/prefaceSample）を
 プレビュー3観点（各0〜25）で採点せよ。出力は EditorVerdict のJSONのみ。
 ①生の情報・読者状況の反映：一般論でなく readerProfile.currentWork（年上部下・春リニューアル・6/5等の固有局面）を捉えているか。
 ②著者ペルソナの前面化：persona.voiceStyle/format/思想 が核心メッセージ・アジェンダに強く表れているか。
