@@ -23,3 +23,9 @@ APPROVED_PLAN = "approvedPlan"
 GENERATED_PERSONA_SET = "generatedPersonaSet"
 EDITOR_VERDICT = "editorVerdict"
 EDITOR_FEEDBACK = "editorFeedback"
+
+# ── v3（3テーマ束ね・2-2-1配本・2026-06-14）state キー ──
+EDITORIAL_INTENT = "editorialIntent"   # STEP2-0 編集意図
+PLAN_SET = "planSet"                    # STEP2b 配本セット（3テーマ→5冊）
+PLAN_SET_VERDICT = "planSetVerdict"     # STEP2a ポートフォリオ採点
+SERENDIPITY_SET = "serendipitySet"      # セレンディピティ別ロジック（5テーマ→5冊）
