@@ -47,14 +47,18 @@ _SUB_MARKET_INPUTS = """# 仮テーマ
 
 _SUB_THEME_INPUTS = """# 仮テーマ
 {{tentativeTheme}}
+# 読者(base・ドメイン文脈＝業界/職種。テーマ語が曖昧なとき検索をこの圏に錨で留める)
+{{readerBase}}
 出力: 章立ての根拠になる keyPoints（出典URLを可能な限り付す）。"""
 
 _LEADER_INPUTS = """# 企画書(PlanProposal)
 {{planDraft}}
 # 読者プロファイル(3層)
 {{readerProfile}}
-# 市場調査(subMarket・差別化と調査反映の判定材料)
+# 市場調査(subMarket・差別化と③調査反映の判定材料)
 {{subMarket}}
+# テーマ知見調査(subThemeInsight・③調査反映の論点反映の判定材料。空/拒否/一般論なら③を足切り)
+{{subThemeInsight}}
 # themeKind
 {{themeKind}}
 # threshold

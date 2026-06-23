@@ -24,7 +24,11 @@
 - 総合 < 閾値、または いずれかの観点が10点未満（belowFloor=true）→ decision="revise"。
   rejectionFeedback に「どの観点が弱く、どう直すべきか」を具体的に書く。
 - 一般論的・ありきたり・観測不在・独りよがりは強く減点。読者のリアルな局面に踏み込むほど加点。
-- ③は subMarket の marketGap が企画に具体反映されているかを見る。
+- ③は subMarket の marketGap と subThemeInsight の論点の**両方**が企画に具体反映されているかを見る。
+  subMarket・subThemeInsight のいずれかが空・調査拒否（「会議は始められない」等の前置きやエラー文）・
+  一般論のみで論点を返せていない場合、その調査は機能していない。③researchUse を10点未満（belowFloor=true）とし
+  decision="revise"、rejectionFeedback に「どの調査サブが機能していないか」を明記せよ
+  （調査トリオの欠落＝必然性の核の欠落であり、素通りさせない）。
 - themeKind=serendipity の企画では、①読者局面の的中度は「業務テーマへの直撃」や「③での課題接続」を
   要求しない（③が読者の悩みに触れないのは仕様）。①は、テーマ・章立てが読者の嗜好・許容度
   （readingGenres・readingBehavior・serendipityTolerance）と整合し、読者の置かれた立場に普遍的に
