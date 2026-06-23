@@ -13,11 +13,15 @@ from typing import Optional, Type
 from publishr_schema import (
     BodyVerdict,
     BookDraft,
+    EditorialIntent,
     EditorVerdict,
     GeneratedPersonaSet,
     LeaderVerdict,
     PlanProposal,
+    PlanSet,
+    PlanSetVerdict,
     ReaderProfile3Layer,
+    SerendipitySet,
     SubMarket,
     SubReaderContext,
     SubThemeInsight,
@@ -55,6 +59,12 @@ REGISTRY: dict[str, StepSpec] = {
         "sub_theme_insight", "step2_research_subs", "sub_theme_insight",
         False, False, SubThemeInsight, K.SUB_THEME_INSIGHT,
     ),
+    # v3（4テーマ1-1-1-1）：editorial_intent → 調査3サブ → plan_owner(PlanProposal×4) → plan_leader(LeaderVerdict)
+    # PlanSet/PlanSetVerdict は v3移行完了後に使用予定（プロンプト・テスト整備後）
+    "editorial_intent": StepSpec(
+        "editorial_intent", "step2_editorial_intent", "editorial_intent",
+        False, False, EditorialIntent, K.EDITORIAL_INTENT,
+    ),
     "plan_owner": StepSpec(
         "plan_owner", "step2_plan_owner", "plan_owner",
         False, False, PlanProposal, K.PLAN_DRAFT,
@@ -62,6 +72,10 @@ REGISTRY: dict[str, StepSpec] = {
     "plan_leader": StepSpec(
         "plan_leader", "step2_plan_leader", "plan_leader",
         True, True, LeaderVerdict, K.LEADER_VERDICT,
+    ),
+    "serendipity_themes": StepSpec(
+        "serendipity_themes", "step2_serendipity_themes", "serendipity_themes",
+        False, False, SerendipitySet, K.SERENDIPITY_SET,
     ),
     "persona_generator": StepSpec(
         "persona_generator", "step3_casting_editor", "persona_generator",
