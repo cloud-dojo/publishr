@@ -117,9 +117,13 @@ def run_mode_a_set_pipeline(
     favorites = list(user.favorite_authors or [])
     out: list[ModeABook] = []
     for plan in plans:
-        # 1テーマ=1冊：author_casting で3候補→1選抜。chosen が担当著者（personaId は plan スコープで衝突回避）。
+        # 1テーマ=1冊：author_casting で3候補→1選抜。
         casting = cast_author(plan, reader_profile=profile, favorite_authors=favorites, llm=llm)
-        chosen = [casting.chosen] if casting.chosen else []
+        chosen = []
+        if casting.chosen:
+            # vertex casting は候補IDを c1/c2/c3 等で返し4冊間で衝突する。plan スコープに再id し、
+            # book id = arr_<personaId> の4冊一意性を保証（mock/vertex どちらでも安全）。
+            chosen = [casting.chosen.model_copy(update={"persona_id": f"cast_{plan.proposal_id}"})]
         drafts = run_preview(plan, chosen, reader_profile=profile, limit=1, llm=preview_llm)
         shelved = design_covers(drafts, chosen, llm=cover_llm, enable_imagen=enable_imagen)
         out.append(ModeABook(plan=plan, shelved=shelved, personas=chosen))
