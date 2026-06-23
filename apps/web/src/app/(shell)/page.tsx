@@ -30,8 +30,8 @@ export default function HomePage() {
   // 理由は plan 由来を優先し、初回カタログ本は deliveryReason をフォールバックに。
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason ?? b.deliveryReason;
 
-  // 棚＝status＋shelf(=themeKind相当)＋直近7日ウィンドウで導出（mvp-scope §5-2）。
-  // - 関心/新しい出会い：入荷から7日以内（書庫へ移さなければ7日で棚落ち＝予約制廃止改定 2026-06-23）
+  // 棚＝status＋shelf(=themeKind相当)＋直近30日ウィンドウで導出（mvp-scope §5-2）。
+  // - 関心/新しい出会い：入荷から30日以内（書庫へ移さなければ30日で棚落ち）
   // - 執筆中：編集部が本文を書き継いでいる本（status=writing。予約制は廃止＝全冊バッチ内で自動執筆）
   const now = new Date();
   const isFreshArrival = (b: Book) =>

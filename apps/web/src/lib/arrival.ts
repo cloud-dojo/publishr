@@ -20,9 +20,9 @@ export function latestArrivalDate(now: Date = new Date()): Date {
   return base;
 }
 
-/** "今週の入荷"棚の保持期間（日）。これより古い未保存（書庫へ移していない）本は棚落ち。
- *  予約制廃止改定 2026-06-23: 28日化は撤回し7日を維持。書庫へ移した本だけ永久保存。 */
-export const ARRIVAL_WINDOW_DAYS = 7;
+/** 入荷棚の保持期間（日）。これより古い未保存（書庫へ移していない）本は棚落ち。
+ *  2026-06-24: 体験上の見落としを避けるため30日保持に更新。書庫へ移した本だけ永久保存。 */
+export const ARRIVAL_WINDOW_DAYS = 30;
 
 /** createdAt(ISO) が now から指定日数以内か。未設定(undefined)は true（棚から消さない）。 */
 export function isWithinDays(

@@ -19,7 +19,7 @@ const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 export class MockProvider extends BaseProvider {
   private firstRunStarted = false;
   protected async load(): Promise<void> {
-    // デモが常に新鮮になるよう、draft の入荷日時(createdAt)を実行時に直近7日内へ生成。
+    // デモが常に新鮮になるよう、draft の入荷日時(createdAt)を実行時に直近30日内へ生成。
     // 旧「press棚の draft（もうすぐ）」概念は廃止し、関心(arrivals)の draft として扱う。
     const now = Date.now();
     fixtures.books.forEach((b, i) => {
@@ -27,7 +27,7 @@ export class MockProvider extends BaseProvider {
       const createdAt =
         b.status === "draft"
           ? new Date(now - (i % 6) * 86_400_000).toISOString()
-          : new Date(now - 30 * 86_400_000).toISOString();
+          : new Date(now - 31 * 86_400_000).toISOString();
       this.books.set(b.id, { ...b, shelf, createdAt });
     });
     // 読書ページ検証用：追加蔵書をマージ＋薄い body を複数章ダミーに差し替え（mock専用）。
