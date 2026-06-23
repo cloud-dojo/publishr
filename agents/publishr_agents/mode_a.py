@@ -102,7 +102,7 @@ def run_mode_a_set_pipeline(
 
     各 *_llm は "mock" | "vertex"。1テーマ=1著者=1冊（多様性は配本属性＋テーマ別著者で担保）。
     """
-    from .casting import cast_personas
+    from .casting import cast_author
     from .cover import design_covers
     from .observe import collect_observation
     from .planning import run_planning_set
@@ -116,12 +116,10 @@ def run_mode_a_set_pipeline(
 
     favorites = list(user.favorite_authors or [])
     out: list[ModeABook] = []
-    for i, plan in enumerate(plans):
-        persona_set = cast_personas(plan, reader_profile=profile, favorite_authors=favorites, llm=llm)
-        # 1テーマ=1著者：テーマ順に別軸の著者を割り当て、4冊で著者・文体を散らす（personaId も別々＝book id 衝突回避）。
-        authors = list(persona_set.personas)
-        author = authors[i % len(authors)] if authors else None
-        chosen = [author] if author else []
+    for plan in plans:
+        # 1テーマ=1冊：author_casting で3候補→1選抜。chosen が担当著者（personaId は plan スコープで衝突回避）。
+        casting = cast_author(plan, reader_profile=profile, favorite_authors=favorites, llm=llm)
+        chosen = [casting.chosen] if casting.chosen else []
         drafts = run_preview(plan, chosen, reader_profile=profile, limit=1, llm=preview_llm)
         shelved = design_covers(drafts, chosen, llm=cover_llm, enable_imagen=enable_imagen)
         out.append(ModeABook(plan=plan, shelved=shelved, personas=chosen))
