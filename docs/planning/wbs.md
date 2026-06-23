@@ -95,7 +95,7 @@
 
 ## 🧭 現在地サマリ（最新: 2026-06-18）
 
-> **【2026-06-18 定例MTG・仕様変更確定】** 開発スピードは計画より前倒しで順調（Ahead of schedule）。MTGで以下のスペック変更を決定—①**入荷ロジック刷新**: 旧「週15冊（本命5+5・セレンディピティ5）・7日保持」→**新「4冊×週3回=週12冊（本命2回×4冊=8冊＋日曜セレンディピティ1回×4冊）・過去4週間保持・最大約48冊」**（I-29/I-17更新）。②**動的フィルタリング**: 書庫移動済みの本を入荷一覧から非表示（I-30）。③**デモ用即時入荷トリガーボタン**追加＋デモ環境ID/Password認証（I-31/I-32）。④**本文生成ボリュームのパラメータ化**（3000文字以上へ拡張・I-35）。⑤**favoriteAuthorsバグ修正**（状態保持不具合・優先度高・I-33）。⑥**GitHub公開用新規パブリックリポ作成**（PII除去・履歴クリーン・I-34）。カバー画像「青い四角」プレースホルダーは現行維持確定。現コードとの主な乖離: `arrival.ts` の `ARRIVAL_WINDOW_DAYS=7`→28日・スケジューラの入荷冊数（5冊→4冊）変更・動的フィルタリング未実装。
+> **【2026-06-18 定例MTG・仕様変更確定】** 開発スピードは計画より前倒しで順調（Ahead of schedule）。MTGで以下のスペック変更を決定—①**入荷ロジック刷新**: 旧「週15冊（本命5+5・セレンディピティ5）・7日保持」→**新「4冊×週3回=週12冊（本命2回×4冊=8冊＋日曜セレンディピティ1回×4冊）」**（I-29/I-17更新）。 **【予約制廃止改定 2026-06-23で保持方針を再反転】~~過去4週間保持・最大約48冊~~ → 7日棚落ちを維持（`ARRIVAL_WINDOW_DAYS=7`・28日化は撤回）＋書庫移動分のみ永久保存。**②**動的フィルタリング**: 書庫移動済みの本を入荷一覧から非表示（I-30）。③**デモ用即時入荷トリガーボタン**追加＋デモ環境ID/Password認証（I-31/I-32）。④**本文生成ボリュームのパラメータ化**（3000文字以上へ拡張・I-35）。⑤**favoriteAuthorsバグ修正**（状態保持不具合・優先度高・I-33）。⑥**GitHub公開用新規パブリックリポ作成**（PII除去・履歴クリーン・I-34）。カバー画像「青い四角」プレースホルダーは現行維持確定。現コードとの主な乖離: ~~`arrival.ts` の `ARRIVAL_WINDOW_DAYS=7`→28日~~（**予約制廃止改定で撤回＝7日のまま維持**）・スケジューラの入荷冊数（5冊→4冊）変更・動的フィルタリング（＝書庫保存した本のみ永続・未保存は7日で棚落ち）未実装。
 
 ## 🧭 現在地サマリ（履歴: 2026-06-12）
 
@@ -337,7 +337,7 @@ Publishr MVP（カテゴリWBS）
 
 ## C1. エージェント・モードA（自律企画）★
 
-> Cloud Scheduler 週3回×4冊/回で起動し、観測→読者分析→企画→著者生成→編集→装丁を回して棚に4冊 draft で並べる。週内訳: 本命2回×4冊=8冊＋日曜セレンディピティ1回×4冊=4冊=週12冊。保持期間=過去4週間（最大約48冊）。**【2026-06-18 MTG変更: 旧「土/水=各5冊・日=セレンディピティ5冊・週15冊」→新「4冊×3回・週12冊・4週保持48冊」】**
+> Cloud Scheduler 週3回×4冊/回で起動し、観測→読者分析→企画→著者生成→編集→装丁→**本文編集ループ**まで一気通貫で回し、棚に4冊 **published（本文まで完成）** で並べる。週内訳: 本命2回×4冊=8冊＋日曜セレンディピティ1回×4冊=4冊=週12冊。**保持＝入荷から1週間で棚落ち（消滅・`ARRIVAL_WINDOW_DAYS=7`）。書庫へ移した本だけ永久保存。** **【2026-06-18 MTG変更: 旧「土/水=各5冊・日=セレンディピティ5冊・週15冊」→「4冊×3回・週12冊」】／【予約制廃止改定 2026-06-23: 旧「過去4週間保持≒48冊・モードBで予約した本だけ後追い執筆」→新「1週間棚落ち＋書庫永久・予約を待たず全4冊を本文まで作り切る」。詳細は agent-io-contract §1/§7】**
 > **実装メモ（C1.1–C1.6）**: STEP2フル（`vertex/step2_planning.py`・調査サブ3体＋owner/leader Pro）／STEP1+STEP0（`ReaderAnalystAgent`＋`ObservationTool`・実Drive観測はC4）／STEP3+STEP4（`PersonaGeneratorAgent`＋`PreviewEditLoop×5`）／STEP5（`CoverParallel`・Imagenは`ENABLE_IMAGEN`フラグ）。`vertex/state_bridge.py` で `LeaderVerdict` 履歴→`RejectLogEntry`／`PipelineResult` に additive で `leader_verdicts` 追加（既存契約不変）。開発runは `dev` プロファイル（1〜2冊・短文・Imagen mock・編集1R）。**C1.0.1未達なら C1.1以降の本格実装へ進まない**。各STEPの内部タスクは共通パターン（①プロンプト結線 ②エージェント定義＋モデル割当＋I/Oスキーマ ③state配線 ④単体検証）。DoDは [agent-io-contract.md](../design/agent-io-contract.md) の各§を参照。担当は全て**一瀬**（ランタイム実装）。
 >
 > **🧭 実態（2026-06-07）**: **mock経路**＝`agents/publishr_agents` に canned 出力で疎通済み（`SequentialAgent`: observe→reader→`ParallelAgent`(企画3体)→選抜ゲート→著者アジェンダ→装丁／`InMemoryRunner`・`test_pipeline.py`あり）。**C0.2 で `PUBLISHR_LLM` dispatcher・prompt loader・v2 I/O schema の差し替え口は敷設済み**。**C1.0.1（H2）**＝`agents/publishr_agents/vertex/miniloop.py` で実Vertex MiniLoop（調査サブ1体＋owner/leader Loop＋escalate）を実証済み。**フルパイプラインは未**＝調査サブ×3(C1.3.1)・キャスティング5人2軸(C1.4)・プレビュー編集ループ(C1.5)・mock `build_pipeline` の選抜ゲート実escalate化はこれから。各STEPの「実装」は**実モデル＋v2 I/O＋実ループへの作り込みが本体**＝C1.1以降は原則 🔜（**C1.0.1ゲート通過済み→C1.1着手可**）。
@@ -389,9 +389,10 @@ Publishr MVP（カテゴリWBS）
 |---|---|---|---|---|---|---|---|
 | C1.7.1 | Cloud Scheduler 曜日別トリガー（土/水/日） | 毎週決まった曜日に自動で企画が走る仕組み（Cloud Scheduler）。デモでは手動起動も可 | 一瀬 | W3（6/22–28） | C1.3.3 | 自律起動で棚更新 (旧WP1.8) | ✅**本番デプロイ済（2026-06-10）**＝Cloud Scheduler `publishr-honmei`（`0 6 * * 3,6`・Asia/Tokyo・OIDC=publishr-pubsub-push SA・audience=trigger URL）→ `POST /api/trigger/planning` → モードA(mock)→佐倉(5JLL)Firestore自律入荷。手動実行(`gcloud scheduler jobs run publishr-honmei`)で arr_p* 即更新（created更新）を実機確認＝**Scheduler→Cloud Run→自律入荷が本番成立**。IaC正本化はB4.1(`infra/terraform`)。ローカル/mock版（`scheduler.py`曜日→themeKind純粋判定＋`run_scheduler.py --once/--watch`・test_scheduler 7件）も維持。**残（小）＝serendipity(日)差別化＝trigger に themeKind param 追加＋日曜ジョブ（cron `0 6 * * 0`・TF/docにコメント用意済）。「棚更新」のFirestore永続化は入荷upsertで達成済** |
 
-## C2. エージェント・モードB（後追い執筆）
+## C2. エージェント・本文編集ループ（全4冊・予約なし）〔旧称: モードB＝後追い執筆〕
 
-> **実装メモ（段階導入）**: 手動1冊（`mode_b/` BodyEditLoop・`scripts/run_body_once.py`・本文3〜5p・1R）→ 予約API接続(C2.1) → Pub/Sub worker(C2.2) → Scheduler自律(C1.7)。**大型生成物をstateに溜めない**（章本文はGCS・stateはref+summaryのみ）。同時5冊transactionはC2.2で入れる。
+> **⚠️【予約制廃止改定 2026-06-23】**: 「ユーザーが予約した本だけ後追い執筆」モデルは廃止。本文編集ループ（`mode_b/` BodyEditLoop・編集長⇄著者・最高3R）自体は存続するが、**起動は配本バッチ内で全4冊を予約を待たず自動執筆**に変わる（C1の自律配本に統合）。**予約API（`POST /reserve`）・同時上限5冊・Pub/Sub執筆発火・`reserved` 状態は不要**。既に実装済みの予約フロー（C2.1-2.3 mock・C4.4 予約UI・M3達成分）は本改定で**要見直し**＝別途交通整理（下記🧭と open-issues 参照）。新モデル詳細は agent-io-contract §1/§7。
+> **実装メモ（旧・段階導入の記録）**: 手動1冊（`mode_b/` BodyEditLoop・`scripts/run_body_once.py`・本文3〜5p・1R）→ ~~予約API接続(C2.1) → Pub/Sub worker(C2.2)~~ → Scheduler自律(C1.7)。**大型生成物をstateに溜めない**（章本文はGCS・stateはref+summaryのみ）。~~同時5冊transactionはC2.2で入れる。~~
 >
 > **🧭 実態（2026-06-05）**: 予約フローの **mock が `apps/api` にある**（`reservation_service.reserve_now`＝`draft→reserved` の単純status遷移＋`ConflictError`／`advance`＝`reserved→writing→published` をタイマーで進める疑似ワーカー）。**ただし①同時5冊の Firestore transaction(I-20)・②Pub/Sub 実ワーカー・③本文編集ループ(編集長⇄著者・最高3R) は未**。C2.1 は mock 済み／C2.2・C2.3 は未着手。
 
