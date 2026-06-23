@@ -93,7 +93,11 @@
 
 ---
 
-## 🧭 現在地サマリ（最新: 2026-06-12）
+## 🧭 現在地サマリ（最新: 2026-06-18）
+
+> **【2026-06-18 定例MTG・仕様変更確定】** 開発スピードは計画より前倒しで順調（Ahead of schedule）。MTGで以下のスペック変更を決定—①**入荷ロジック刷新**: 旧「週15冊（本命5+5・セレンディピティ5）・7日保持」→**新「4冊/日×週3回=12冊/週・日曜はセレンディピティ1冊のみ・過去4週間保持（最大約48冊）」**（I-29/I-17更新）。②**動的フィルタリング**: 書庫移動済みの本を入荷一覧から非表示（I-30）。③**デモ用即時入荷トリガーボタン**追加＋デモ環境ID/Password認証（I-31/I-32）。④**本文生成ボリュームのパラメータ化**（3000文字以上へ拡張・I-35）。⑤**favoriteAuthorsバグ修正**（状態保持不具合・優先度高・I-33）。⑥**GitHub公開用新規パブリックリポ作成**（PII除去・履歴クリーン・I-34）。カバー画像「青い四角」プレースホルダーは現行維持確定。現コードとの主な乖離: `arrival.ts` の `ARRIVAL_WINDOW_DAYS=7`→28日・スケジューラの入荷冊数変更・動的フィルタリング未実装。
+
+## 🧭 現在地サマリ（履歴: 2026-06-12）
 
 > **いまどこ（2026-06-12）**: M0〜M3完了＋M4ほぼ完了に加え、**C4.1（Google連携の一瀬バックエンド＋Drive Picker UI フロント）と C5.4/5.5（judge再現性・閾値ツール＋実Gemini judge配線）が main 入り**（PR#23・#24）＋**I-20 予約原子性transaction・C4.9 rate limit/nonce 単回化**。`make verify` **262 passed, 9 skipped**／web typecheck+lint 緑。**C4.1 は code-complete**＝BFF `routers/auth.py`（`/api/auth/google/start`・`/callback`・`/api/connect/drive-folders`）＋`oauth_service`/`token_store`(file既定/Secret Manager)/`upsert_user`、フロント `apps/web/src/lib/googlePicker.ts`＋`(auth)/connect`統合＋型＋`config` の `NEXT_PUBLIC_GOOGLE_*`。**実judge** は `eval_gate.judge_plan(backend="vertex")`＝実Gemini Pro採点(`eval_judge.md`ルーブリック・readerProfile+plan→4観点JSON)を **gated 配線**（既定mock・$0・`scripts/eval_reproducibility.py`＋`eval_threshold_sweep.py`）。**残＝①C4.1を実際に動かす＝GCPで Picker API有効化＋OAuth Webクライアント/APIキー発行＋`apphosting.yaml`に`NEXT_PUBLIC_GOOGLE_*`投入＋ブラウザQA ②実judge閾値調整＝`PUBLISHR_RUN_VERTEX=1 PUBLISHR_EVAL_BACKEND=vertex make eval-repro/eval-sweep`（課金・ADC要）で実σ/CV→`eval_set.yaml`閾値/`eval_judge.md`微調整 ③M5/M6＝デモ録画・ProtoPedia・公開リポ・最終提出7/10（鉄田主体）④別軸ハードニング＝**I-20予約原子性＋C4.9 rate limit/nonce単回化を実装済**（`reserve_book_atomic`＝mockロック/firestore `@transactional`・owner別cap・`ownerUid+status`複合index追加／`RateLimiter`(/start・/drive-folders per-uid 429)／`NonceStore`(callback replay 403)）。残＝state ブラウザ束縛(PKCE/cookie)・nonce/RLのマルチインスタンス共有ストア・I-20 emulator/live検証・mode_b vertex live・C3.3約100p+GCS ⑤小follow-up＝C1.7 serendipity・C5.1全11プロンプト実テスト・C5.3 GEAP純正運用(任意・基準5アピール)**。運用メモ: デモ垢＝佐倉 美咲(5JLL…/publishr.hackathon)。
 >
@@ -333,7 +337,7 @@ Publishr MVP（カテゴリWBS）
 
 ## C1. エージェント・モードA（自律企画）★
 
-> Cloud Scheduler 週3回（土/水=本命・日=セレンディピティ）で起動し、観測→読者分析→企画→著者生成→編集→装丁を回して棚に5冊 draft で並べる。
+> Cloud Scheduler 週3回（月〜土の稼働日内・各回4冊）で起動し、観測→読者分析→企画→著者生成→編集→装丁を回して棚に4冊 draft で並べる。日曜日は通常入荷停止・セレンディピティ本1冊のみ生成。保持期間=過去4週間（最大約48冊）。**【2026-06-18 MTG変更: 旧「土/水=本命5冊、日=セレンディピティ5冊・週15冊」→新仕様】**
 > **実装メモ（C1.1–C1.6）**: STEP2フル（`vertex/step2_planning.py`・調査サブ3体＋owner/leader Pro）／STEP1+STEP0（`ReaderAnalystAgent`＋`ObservationTool`・実Drive観測はC4）／STEP3+STEP4（`PersonaGeneratorAgent`＋`PreviewEditLoop×5`）／STEP5（`CoverParallel`・Imagenは`ENABLE_IMAGEN`フラグ）。`vertex/state_bridge.py` で `LeaderVerdict` 履歴→`RejectLogEntry`／`PipelineResult` に additive で `leader_verdicts` 追加（既存契約不変）。開発runは `dev` プロファイル（1〜2冊・短文・Imagen mock・編集1R）。**C1.0.1未達なら C1.1以降の本格実装へ進まない**。各STEPの内部タスクは共通パターン（①プロンプト結線 ②エージェント定義＋モデル割当＋I/Oスキーマ ③state配線 ④単体検証）。DoDは [agent-io-contract.md](../design/agent-io-contract.md) の各§を参照。担当は全て**一瀬**（ランタイム実装）。
 >
 > **🧭 実態（2026-06-07）**: **mock経路**＝`agents/publishr_agents` に canned 出力で疎通済み（`SequentialAgent`: observe→reader→`ParallelAgent`(企画3体)→選抜ゲート→著者アジェンダ→装丁／`InMemoryRunner`・`test_pipeline.py`あり）。**C0.2 で `PUBLISHR_LLM` dispatcher・prompt loader・v2 I/O schema の差し替え口は敷設済み**。**C1.0.1（H2）**＝`agents/publishr_agents/vertex/miniloop.py` で実Vertex MiniLoop（調査サブ1体＋owner/leader Loop＋escalate）を実証済み。**フルパイプラインは未**＝調査サブ×3(C1.3.1)・キャスティング5人2軸(C1.4)・プレビュー編集ループ(C1.5)・mock `build_pipeline` の選抜ゲート実escalate化はこれから。各STEPの「実装」は**実モデル＋v2 I/O＋実ループへの作り込みが本体**＝C1.1以降は原則 🔜（**C1.0.1ゲート通過済み→C1.1着手可**）。
