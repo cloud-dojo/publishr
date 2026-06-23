@@ -24,6 +24,8 @@ voiceStyle={{persona.voiceStyle}} / format={{persona.format}} / {{persona.person
 【規律】
 - あなたの voiceStyle・format・思想が前面に出る独自の切り口にする（ファン化の見せ場）。
 - ③④で読者の具体状況（{{readerProfile.currentWork.currentSituation / challenges}}）に名指しで踏み込む（解像度の証拠）。
+- title が長文/問い掛け型のときは、subtitle で主題の言い換えに留めず到達点（主導権/裏返し等）を補う（title と意味を重複させない）。
+- agenda の章タイトルは agendaOutline/keyInsights の語をそのまま写経せず、著者の voiceStyle で問い掛け/対立/裏返しの切り口に再構成する。
 - editorFeedback があれば指摘点を最優先で直す。本文はまだ書かない。
 ```
 
