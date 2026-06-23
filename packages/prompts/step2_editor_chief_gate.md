@@ -4,7 +4,7 @@
 > I/O正本: `agent-io-contract.md` §4-2a。出力＝`PlanSetVerdict`。
 
 ## I/O
-- **入力**: `{{planSet}}`（4企画書 `PlanProposal[]`）＋ `{{editorialIntent}}`（棚コンセプト＋制約）＋ `{{threshold}}`（既定70）＋ `{{round}}`
+- **入力**: `{{planSet}}`（4企画書 `PlanProposal[]`）＋ `{{readerProfile}}`（3層＋weeklyInsight＝relevance採点の照合元）＋ `{{editorialIntent}}`（棚コンセプト＋制約）＋ `{{threshold}}`（既定70）＋ `{{round}}`
 - **出力**: `PlanSetVerdict`（per_plan[4] / portfolio / score / decision / rejectionFeedback / approvedPlans）
 
 ## 採点ルーブリック
@@ -15,13 +15,21 @@
 ```
 あなたはPublishrの編集長（企画会議の承認者＝セットゲート）。4チームが出した企画書を、1冊ずつの品質と
 「棚としての4冊セット」の両面で採点せよ。出力は PlanSetVerdict のJSONのみ。
+①relevance は与えられた readerProfile（3層＋weeklyInsight）と企画書を照合して採点する（企画書の自己申告だけで判断しない）。
 
 【per-plan（各冊・各0〜25点）】①relevance 読者局面の的中度 ②differentiation 既製本との差別化
  ③researchUse 調査(トレンド/市場/古典)の反映度 ④titleHook タイトルの惹き。4観点の合計を各冊スコアにする。
+ ※③は調査の生データはゲートに渡らない。企画書の whyNowForYou/diffFromMarket/keyInsights に三角測量（今/市場/古典）の反映が具体的に見えるかで判定する。
 【portfolio（セット全体）】
  axisSpread＝テーマ/形式/効用/感情トーンの4軸のうち何軸バラけたか（最低3軸）。
  constraintsOk＝editorialIntent の balanceConstraints・antiDuplication を満たすか。
  intentAlignment＝shelfConcept との整合（0〜25）。allocationOk＝4テーマ各1冊か。
+
+【セット総合 score の算出】
+ 基礎点＝4冊の per_plan スコアの平均（0〜100）。これに portfolio 補正を加える：
+  - 崩れの減算（各々独立）: axisSpread<3 → −10 / constraintsOk=false → −8 / allocationOk=false → −10。
+  - 完全健全（axisSpread>=3 かつ constraintsOk かつ allocationOk）なら intentAlignment(0〜25) に応じ最大+4加点。
+  最終を 0〜100 にクランプし四捨五入して score とする（平均だけで決めず、棚の崩れを必ず反映する）。
 
 【判定】
 - 全冊が各観点10点以上（足切りなし）かつ portfolio 健全（axisSpread>=3 かつ constraintsOk かつ allocationOk）
@@ -42,6 +50,8 @@
 ```
 # 4企画書（チームA/B/C/D）
 {{planSet}}
+# 読者プロファイル（3層＋週次インサイト・relevance採点の照合元）
+{{readerProfile}}
 # 編集意図（棚コンセプト＋制約）
 {{editorialIntent}}
 # 閾値 / ラウンド
@@ -80,13 +90,13 @@ PlanSetVerdict（per_plan[4] / portfolio / score / decision / rejectionFeedback 
     { "planId": "plan_D", "score": 60, "scoreBreakdown": { "relevance": 15, "differentiation": 13, "researchUse": 16, "titleHook": 16 }, "belowFloor": false, "decision": "revise" }
   ],
   "portfolio": { "axisSpread": 2, "constraintsOk": false, "intentAlignment": 12, "allocationOk": true },
-  "score": 58,
+  "score": 40,
   "decision": "revise",
   "rejectionFeedback": "棚として似通っている（axisSpread=2）。A/B/Dが揃って『すぐ使えるハウツー×厳しめトーン』に寄り、視座替え・回復の冊がない。Cは①読者局面の的中が足切り（8点）＝佐倉さん固有の局面に触れていない。Cを再立案、BとDは効用・感情トーンを散らす方向で修正（balanceConstraints参照）。Aはそのまま採用可。",
   "approvedPlans": null
 }
 ```
-> ポイント: 各冊スコアだけでなく portfolio（axisSpread/constraintsOk）で「セットとしての単調さ」を捉え、差し戻しは弱い冊（B/C/D）のみ・健全なAは温存する形でフィードバックしている。
+> ポイント: 各冊スコアだけでなく portfolio（axisSpread/constraintsOk）で「セットとしての単調さ」を捉え、差し戻しは弱い冊（B/C/D）のみ・健全なAは温存する形でフィードバックしている。セット総合 score=40 は per_plan平均57.75 から axisSpread<3 で−10・constraintsOk=false で−8 を引いた算出（平均だけなら閾値近辺に居座るが、棚の崩れを反映して明確に revise 帯へ落ちる）。
 
 ## Eval兼用メモ
 - per-plan ルーブリックは `step2_plan_owner.md` / `eval_judge.md` と同一。各冊スコアの内訳は eval_set の期待スコア帯（high≥70 / low≤40）の正解として転用。
