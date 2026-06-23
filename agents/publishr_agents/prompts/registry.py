@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Optional, Type
 
 from publishr_schema import (
+    AuthorCasting,
     BodyVerdict,
     BookDraft,
     EditorialIntent,
@@ -25,6 +26,8 @@ from publishr_schema import (
     SubMarket,
     SubReaderContext,
     SubThemeInsight,
+    SubTrendInsight,
+    ThemeAssignmentSet,
 )
 from pydantic import BaseModel
 
@@ -76,6 +79,32 @@ REGISTRY: dict[str, StepSpec] = {
     "serendipity_themes": StepSpec(
         "serendipity_themes", "step2_serendipity_themes", "serendipity_themes",
         False, False, SerendipitySet, K.SERENDIPITY_SET,
+    ),
+    # ── v3 4テーマ1-1-1-1（予約制廃止改定 2026-06-23）。新プロンプト群へ配線。旧roleは実パイプライン移行まで併存 ──
+    # 編集長テーマ設定 → 各チーム[調査3(今/市場/普遍)→plan_owner→plan_leader] → 編集長セットゲート → author_casting
+    "editor_chief_themes": StepSpec(
+        "editor_chief_themes", "step2_editor_chief_themes", "editor_chief_themes",
+        False, False, ThemeAssignmentSet, K.THEME_ASSIGNMENT_SET,
+    ),
+    "sub_trend": StepSpec(
+        "sub_trend", "step2_research_trend", "sub_trend",
+        False, False, SubTrendInsight, K.SUB_TREND,
+    ),
+    "sub_competitors": StepSpec(
+        "sub_competitors", "step2_research_competitors", "sub_competitors",
+        False, False, SubMarket, K.SUB_MARKET,
+    ),
+    "sub_classics": StepSpec(
+        "sub_classics", "step2_research_classics", "sub_classics",
+        False, False, SubThemeInsight, K.SUB_THEME_INSIGHT,
+    ),
+    "editor_chief_gate": StepSpec(
+        "editor_chief_gate", "step2_editor_chief_gate", "editor_chief_gate",
+        True, True, PlanSetVerdict, K.PLAN_SET_VERDICT,
+    ),
+    "author_casting": StepSpec(
+        "author_casting", "step3_author_casting", "author_casting",
+        False, False, AuthorCasting, K.AUTHOR_CASTING,
     ),
     "persona_generator": StepSpec(
         "persona_generator", "step3_casting_editor", "persona_generator",

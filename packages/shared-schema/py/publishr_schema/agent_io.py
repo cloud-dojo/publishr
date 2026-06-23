@@ -106,6 +106,19 @@ class SubThemeInsight(_Base):
     key_points: list[ThemeKeyPoint] = Field(default_factory=list)
 
 
+# ── STEP2c-1 トレンドリサーチャー（今・時間軸・v3 4テーマ）。market＝SubMarket／普遍＝SubThemeInsight と対 ──
+class TrendPoint(_Base):
+    point: str = ""   # 「最近こう変わった/こう動いている」時間軸の事実
+    source: str = ""  # grounding 出典URL
+
+
+class SubTrendInsight(_Base):
+    theme: str = ""
+    queries: list[str] = Field(default_factory=list)
+    trends: list[TrendPoint] = Field(default_factory=list)
+    era_shift: str = ""  # 潮流の根（何が変わって今の関心になったか）
+
+
 # ── STEP2-0 編集意図（編集長・棚コンセプト＋制約・v3） ──
 class EditorialIntent(_Base):
     shelf_concept: str = ""          # 今週の棚コンセプト（世界観）
@@ -114,14 +127,26 @@ class EditorialIntent(_Base):
     balance_constraints: list[str] = Field(default_factory=list)  # バランス制約
 
 
-# ── STEP2b テーマ群（3テーマ・役割つき・v3） ──
+# ── STEP2 テーマ群（4テーマ 1-1-1-1・役割つき・v3） ──
 class ThemeSpec(_Base):
     theme_id: Optional[str] = None
     name: str
-    role: str = ""               # 主力 | 準主力 | 実験（例示・自由文字列）
+    role: str = ""               # 主軸 | 実務補助 | 視座替え | 回復・内省 等（例示・自由文字列）
     target_reader: str = ""      # 想定読者
     value: str = ""              # 提供価値
     forbidden_overlap: str = ""  # 禁止重複条件
+
+
+# ── STEP2-0 編集長テーマ設定（4チームA/B/Dに1サブテーマずつ割当・v3）。出力＝ThemeAssignmentSet ──
+class ThemeAssignment(_Base):
+    team_id: str = ""                 # A | B | C | D
+    theme: ThemeSpec                  # 割り当てたサブテーマ
+
+
+class ThemeAssignmentSet(_Base):
+    theme_kind: Optional[ThemeKind] = None
+    editorial_intent: Optional[EditorialIntent] = None
+    assignments: list[ThemeAssignment] = Field(default_factory=list)  # 4チーム＝4テーマ
 
 
 # ── STEP2b 企画担当者: PlanProposal（企画書8項目＋配本属性5・v3） ──
@@ -129,7 +154,7 @@ class PlanProposal(_Base):
     proposal_id: Optional[str] = None
     theme_kind: Optional[ThemeKind] = None
     round: int = 1
-    # ── 配本属性（v3・3テーマ束ね 2-2-1。多様性4軸＝theme/bookRole/utility/emotionalTone） ──
+    # ── 配本属性（v3・4テーマ 1-1-1-1。多様性4軸＝theme/bookRole/utility/emotionalTone） ──
     theme: str = ""              # どのテーマか（ThemeSpec.name）
     theme_role: str = ""         # 主力 | 準主力 | 実験
     book_role: str = ""          # 形式: ハンドブック/ケース・ストーリー/哲学・内省/具体ノウハウ/感情エッセイ/対話・問答 等
@@ -147,13 +172,13 @@ class PlanProposal(_Base):
     recommended_author_types: list[str] = Field(default_factory=list)
 
 
-# ── STEP2b 配本セット（3テーマ→2-2-1で5冊・v3） ──
+# ── STEP2 配本セット（4テーマ→1-1-1-1で4冊・v3） ──
 class PlanSet(_Base):
     theme_kind: Optional[ThemeKind] = None
     editorial_intent: Optional[EditorialIntent] = None
-    themes: list[ThemeSpec] = Field(default_factory=list)    # 3テーマ
-    plans: list[PlanProposal] = Field(default_factory=list)  # 5冊（2-2-1）
-    allocation: str = "2-2-1"
+    themes: list[ThemeSpec] = Field(default_factory=list)    # 4テーマ
+    plans: list[PlanProposal] = Field(default_factory=list)  # 4冊（1-1-1-1）
+    allocation: str = "1-1-1-1"
     portfolio_reason: str = ""
 
 
@@ -188,7 +213,7 @@ class PortfolioScore(_Base):
     axis_spread: int = 0          # 多様性4軸の分散数（最低3軸でバラける）
     constraints_ok: bool = False  # 配本制約（同テーマ/セグメント/形式 最大2冊・同トーン連続2冊）充足
     intent_alignment: int = 0     # 編集意図との整合（0〜25）
-    allocation_ok: bool = False   # 2-2-1 充足
+    allocation_ok: bool = False   # 1-1-1-1 充足（4テーマ各1冊）
 
 
 class PlanSetVerdict(_Base):
@@ -201,7 +226,7 @@ class PlanSetVerdict(_Base):
     approved_plans: Optional[list[PlanProposal]] = None
 
 
-# ── STEP3 キャスティング: GeneratedPersonaSet（v3＝5冊それぞれに1著者・著者間非重複） ──
+# ── STEP3 キャスティング: GeneratedPersonaSet（v3＝4冊それぞれに1著者・著者間非重複） ──
 class GeneratedPersona(_Base):
     persona_id: str
     plan_id: Optional[str] = None  # ★v3: 担当する冊（PlanProposal.proposalId）
@@ -222,7 +247,16 @@ class GeneratedPersonaSet(_Base):
     reason: str = ""
 
 
-# ── セレンディピティ: 別ロジック（隣接/反対/飛躍/ニッチで5テーマ→5冊・v3） ──
+# ── STEP3 著者キャスティング（v3・4テーマ）: AuthorCasting（1企画＝3候補生成→1人選抜・選抜証跡） ──
+# チームリーダーが承認企画ごとに架空著者3候補を生成し最適1人を chosen に選ぶ。GeneratedPersonaSet（1コール集合）とは別形。
+class AuthorCasting(_Base):
+    plan_id: Optional[str] = None                                      # 対象企画（PlanProposal.proposalId）
+    candidates: list[GeneratedPersona] = Field(default_factory=list)   # 候補3人（voiceStyle×format×価値の核で散らす）
+    chosen: Optional[GeneratedPersona] = None                          # 選抜した1人（candidates の personaId と一致）
+    selection_reason: str = ""                                         # なぜ他候補でなくこれか（書店で見える証跡）
+
+
+# ── セレンディピティ: 別ロジック（隣接/反対/飛躍/ニッチで4テーマ→4冊・v3） ──
 class SerendipityTheme(_Base):
     theme_id: Optional[str] = None
     name: str
@@ -231,7 +265,7 @@ class SerendipityTheme(_Base):
 
 
 class SerendipitySet(_Base):
-    themes: list[SerendipityTheme] = Field(default_factory=list)  # 5テーマ→5冊
+    themes: list[SerendipityTheme] = Field(default_factory=list)  # 4テーマ→4冊
     reason: str = ""
 
 

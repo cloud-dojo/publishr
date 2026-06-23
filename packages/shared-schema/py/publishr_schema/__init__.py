@@ -46,6 +46,7 @@ from .models import (
 )
 from .agent_io import (
     AgendaEntry,
+    AuthorCasting,
     BodyScoreBreakdown,
     BodyVerdict,
     BookDraft,
@@ -73,9 +74,13 @@ from .agent_io import (
     SubMarket,
     SubReaderContext,
     SubThemeInsight,
+    SubTrendInsight,
+    ThemeAssignment,
+    ThemeAssignmentSet,
     ThemeKeyPoint,
     ThemeKind,
     ThemeSpec,
+    TrendPoint,
     UpcomingEvent,
     WeeklyInsight,
 )
@@ -147,14 +152,19 @@ __all__ = [
     "ThemeKeyPoint",
     "ThemeKind",
     "UpcomingEvent",
-    # v3 エージェントI/O（3テーマ束ね・2-2-1配本・2026-06-14）
+    # v3 エージェントI/O（4テーマ束ね・1-1-1-1配本・2026-06-23 予約制廃止改定）
     "WeeklyInsight",
     "EditorialIntent",
     "ThemeSpec",
+    "ThemeAssignment",
+    "ThemeAssignmentSet",
+    "TrendPoint",
+    "SubTrendInsight",
     "PlanSet",
     "PerPlanScore",
     "PortfolioScore",
     "PlanSetVerdict",
+    "AuthorCasting",
     "SerendipityTheme",
     "SerendipitySet",
 ]
