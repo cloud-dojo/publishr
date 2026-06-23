@@ -211,6 +211,7 @@ export const bookSchema = z.object({
   coreMessage: z.string().default(""),
   editRound: z.number().default(0),
   bodyUrl: z.string().nullable().optional(),
+  archivedAt: z.string().nullable().optional(),
 });
 
 export const rejectLogEntrySchema = z.object({

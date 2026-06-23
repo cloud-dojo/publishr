@@ -117,6 +117,12 @@ export class FirestoreProvider extends BaseProvider {
   }
 
   // --- 読書状態: Firestore 直書き ---
+  async saveToLibrary(id: string): Promise<void> {
+    await updateDoc(doc(this.db, "books", id), {
+      archivedAt: new Date().toISOString(),
+    });
+  }
+
   async removeFromLibrary(id: string): Promise<void> {
     const book = this.books.get(id);
     await updateDoc(doc(this.db, "books", id), {

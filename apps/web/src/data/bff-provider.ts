@@ -90,6 +90,13 @@ export class BffProvider extends BaseProvider {
     this.notify();
   }
 
+  async saveToLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, { ...book, archivedAt: new Date().toISOString() });
+    this.notify();
+  }
+
   async removeFromLibrary(id: string): Promise<void> {
     const book = await jpost<Book>(`/books/${id}/feedback`, { dropped: true });
     this.books.set(id, book);

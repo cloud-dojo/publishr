@@ -6,6 +6,7 @@ import type { Book } from "@publishr/shared-schema";
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { useActions, useProvider } from "@/data/hooks";
+import { isArchivedBook } from "@/lib/arrival";
 
 export default function LibraryPage() {
   const provider = useProvider();
@@ -13,7 +14,9 @@ export default function LibraryPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
-  const library = provider.booksByShelf("library").filter((b) => !b.feedback.dropped);
+  const library = provider
+    .listBooks()
+    .filter((b) => isArchivedBook(b) && !b.feedback.dropped);
 
   const handleRemove = async (book: Book) => {
     if (!window.confirm(`『${book.title}』を書庫から外しますか？`)) return;

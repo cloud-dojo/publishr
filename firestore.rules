@@ -60,7 +60,7 @@ service cloud.firestore {
       // status / title / bodyUrl / coverUrl / planId / ownerUid 等は変更不可。
       allow update: if isSignedIn()
                     && resource.data.ownerUid == request.auth.uid
-                    && onlyChanged(['feedback', 'annotations', 'granularity']);
+                    && onlyChanged(['feedback', 'annotations', 'granularity', 'archivedAt']);
 
       // ── ハイライト（サブコレクション）──
       match /highlights/{hid} {

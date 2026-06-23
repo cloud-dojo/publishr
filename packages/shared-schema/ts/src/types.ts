@@ -205,6 +205,7 @@ export interface ReadingAnnotation {
 
 export interface Book {
   id: string;
+  archivedAt?: string | null; // 書庫保存日時。設定済みなら棚落ち対象から除外
   planId: string;
   status: BookStatus;
   authorPersonaId: string;

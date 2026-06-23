@@ -6,11 +6,13 @@ import { useParams } from "next/navigation";
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
+import { isArchivedBook } from "@/lib/arrival";
 
 export default function BookDetailPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
+  const { saveToLibrary } = useActions();
 
   const book = provider.getBook(params.bookId);
   if (!book) {
@@ -26,6 +28,7 @@ export default function BookDetailPage() {
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
   const canRead = book.status === "published" || Boolean(book.body);
+  const archived = isArchivedBook(book);
 
   return (
     <>
@@ -56,6 +59,16 @@ export default function BookDetailPage() {
             ) : (
               <button className="btn btn--gold btn--block" disabled>
                 まもなく入荷
+              </button>
+            )}
+            {canRead && (
+              <button
+                type="button"
+                className="btn btn--ghost btn--block"
+                disabled={archived}
+                onClick={() => void saveToLibrary(book.id)}
+              >
+                {archived ? "書庫に保存済み" : "書庫に残す"}
               </button>
             )}
             {persona && (

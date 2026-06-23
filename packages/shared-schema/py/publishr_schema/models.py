@@ -397,6 +397,7 @@ class EditorVerdict(_Base):
 # ---------------------------------------------------------------------------
 class Book(_Base):
     id: str
+    archived_at: Optional[str] = None  # 書庫保存日時。設定済みなら棚落ち対象から除外
     plan_id: str
     status: BookStatus
     author_persona_id: str

@@ -22,7 +22,13 @@ export function latestArrivalDate(now: Date = new Date()): Date {
 
 /** "今週の入荷"棚の保持期間（日）。これより古い未保存（書庫へ移していない）本は棚落ち。
  *  予約制廃止改定 2026-06-23: 28日化は撤回し7日を維持。書庫へ移した本だけ永久保存。 */
-export const ARRIVAL_WINDOW_DAYS = 7;
+export const ARRIVAL_WINDOW_DAYS = 30;
+
+export interface ArrivalBookLike {
+  createdAt?: string;
+  archivedAt?: string | null;
+  shelf?: string;
+}
 
 /** createdAt(ISO) が now から指定日数以内か。未設定(undefined)は true（棚から消さない）。 */
 export function isWithinDays(
@@ -34,6 +40,18 @@ export function isWithinDays(
   const t = new Date(createdAt).getTime();
   if (Number.isNaN(t)) return true;
   return now.getTime() - t <= days * 86_400_000;
+}
+
+export function isArchivedBook(book: ArrivalBookLike): boolean {
+  return Boolean(book.archivedAt) || book.shelf === "library";
+}
+
+export function isVisibleArrival(
+  book: ArrivalBookLike,
+  days: number = ARRIVAL_WINDOW_DAYS,
+  now: Date = new Date()
+): boolean {
+  return !isArchivedBook(book) && isWithinDays(book.createdAt, days, now);
 }
 
 /** 直近入荷からの相対表現。今朝 / 昨日 / おととい / 先日。 */
