@@ -89,7 +89,10 @@ _TRIGGER = {
     "sub_theme_insight": "調査（テーマ知見）を実施してください",
     "plan_owner": "企画書を作成してください",
     "plan_leader": "企画書を採点してください",
-    "persona_generator": "この企画に合う著者を5人キャスティングしてください",
+    "persona_generator": "この企画に合う著者を4人キャスティングしてください",
+    "editor_chief_themes": "今週の棚の編集意図と4サブテーマ（各チーム割当）を決めてください",
+    "serendipity_themes": "セレンディピティの4テーマを選んでください",
+    "author_casting": "この企画に合う著者候補を3人生成し、最適な1人を選抜してください",
 }
 
 
@@ -217,6 +220,16 @@ def build_state(
             "readerProfile": profile,
             "favoriteAuthors": favorite_authors or [],
         }
+    # v3 4テーマ1-1-1-1（2026-06-23）: 編集長テーマ設定 / セレンディピティ / 著者キャスティング。
+    # 入力は各 .md の user_template（loaderが抽出＝本番I/O正本）を使う＝vertex_agent写しに依存しない。
+    if role in ("editor_chief_themes", "serendipity_themes"):
+        return {"readerProfile": profile, "themeKind": theme_kind}
+    if role == "author_casting":
+        return {
+            "approvedPlan": _plan(persona, theme_kind),
+            "readerProfile": profile,
+            "favoriteAuthors": favorite_authors or [],
+        }
     raise KeyError(f"unsupported role for matrix: {role!r}")
 
 
@@ -225,6 +238,9 @@ def _input_template(role: str) -> str:
         return loader.load_prompt("step1_reader_analyst").user_template or ""
     if role == "plan_owner":
         return loader.load_prompt("step2_plan_owner").user_template or ""
+    # 新STEP2-0/3 role は各 .md の user_template を正本に使う（vertex_agent 写しに依存しない）
+    if role in ("editor_chief_themes", "serendipity_themes", "author_casting"):
+        return loader.load_prompt(spec_for(role).prompt_file).user_template or ""
     return {
         "sub_reader_context": _SUB_READER_INPUTS,
         "sub_market": _SUB_MARKET_INPUTS,
