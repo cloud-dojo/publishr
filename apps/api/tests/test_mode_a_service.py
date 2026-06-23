@@ -52,3 +52,23 @@ def test_run_is_deterministic_in_mock():
 def test_run_unknown_user_raises():
     with pytest.raises(NotFoundError):
         mode_a_service.run(MockRepository(), "u_does_not_exist")
+
+
+# ── v3 4テーマ配本（予約制廃止改定 2026-06-23・既定 set_pipeline=True）──
+def test_run_set_pipeline_yields_four_books():
+    repo = MockRepository()
+    result = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+    assert len(result.books) == 4                       # 4テーマ＝4冊（1-1-1-1）
+    assert len(set(result.approved_plan_ids)) == 4      # 4企画が承認
+    assert len({b.id for b in result.books}) == 4       # book id が4冊で別
+    # セットゲートの差し戻し→承認（編集長）の証跡。
+    assert any(e.round == 1 and e.verdict == "却下" and e.persona == "編集長" for e in result.reject_log)
+    assert any(e.round == 2 and e.verdict == "採用" for e in result.reject_log)
+
+
+def test_run_legacy_flag_falls_back_to_single_theme(monkeypatch):
+    """キルスイッチ PUBLISHR_SET_PIPELINE=0 で旧・単一テーマ経路に戻る（ロールバック可）。"""
+    monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)
+    result = mode_a_service.run(MockRepository(), "u_sakura", owner_uid="uid_demo")
+    assert len(result.approved_plan_ids) == 1           # 旧経路＝単一企画
+    assert all(b.model_dump(by_alias=True)["shelf"] == "arrivals" for b in result.books)

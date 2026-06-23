@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     body_pages_min: int = Field(default=3, validation_alias="PUBLISHR_BODY_PAGES_MIN")
     max_body_pages: int = Field(default=5, validation_alias="PUBLISHR_MAX_BODY_PAGES")
     enable_imagen: bool = False
+    # 配本パイプライン: True=4テーマ1-1-1-1のセット企画（予約制廃止改定 2026-06-23・既定）/
+    # False=旧・単一テーマ（ロールバック用キルスイッチ）。
+    set_pipeline: bool = Field(default=True, validation_alias="PUBLISHR_SET_PIPELINE")
     editor_rounds: int = Field(default=1, validation_alias="PUBLISHR_EDITOR_ROUNDS")
     # モードB本文編集ループの最高改稿ラウンド数（§6-2「最高3R」）。worker が mode_b に渡す。
     body_edit_rounds: int = Field(default=3, validation_alias="PUBLISHR_BODY_EDIT_ROUNDS")
