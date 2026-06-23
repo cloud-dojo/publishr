@@ -36,22 +36,19 @@
         "no": "03",
         "title": "権限の設計図",
         "desc": "あなたの現場に合わせた委譲の三層モデル",
-        "locked": false,
-        "note": "★ いちおし"
+        "locked": false
       },
       {
         "no": "04",
         "title": "失敗を許容する仕組み",
         "desc": "任せた後に手を出さないための装置",
-        "locked": true,
-        "note": "🔒 執筆後"
+        "locked": true
       },
       {
         "no": "終",
         "title": "あなたが現場を離れる日",
         "desc": "7名が自走するチームのかたち",
-        "locked": true,
-        "note": "🔒 執筆後"
+        "locked": true
       }
     ],
     "body": null,
@@ -101,15 +98,13 @@
         "no": "02",
         "title": "朝会を、問いの場に変える",
         "desc": "5分でできる転換",
-        "locked": true,
-        "note": "🔒 執筆後"
+        "locked": true
       },
       {
         "no": "終",
         "title": "問いが文化になるとき",
         "desc": "あなたが黙っても回る現場へ",
-        "locked": true,
-        "note": "🔒 執筆後"
+        "locked": true
       }
     ],
     "body": null,
@@ -159,15 +154,13 @@
         "no": "02",
         "title": "標準化の最小単位",
         "desc": "やりすぎない仕組み化",
-        "locked": true,
-        "note": "🔒 執筆後"
+        "locked": true
       },
       {
         "no": "終",
         "title": "増員に耐える仕組み",
         "desc": "+5名でも崩れない設計",
-        "locked": true,
-        "note": "🔒 執筆後"
+        "locked": true
       }
     ],
     "body": null,
@@ -217,8 +210,7 @@
         "no": "終",
         "title": "数字で語るリーダーへ",
         "desc": "経営会議で戦う言葉",
-        "locked": true,
-        "note": "🔒 執筆後"
+        "locked": true
       }
     ],
     "body": null,

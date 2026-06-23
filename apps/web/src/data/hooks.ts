@@ -100,6 +100,7 @@ export function useActions() {
   const provider = getProvider();
   return {
     sendFeedback: provider.sendFeedback.bind(provider),
+    removeFromLibrary: provider.removeFromLibrary.bind(provider),
     updateReadingState: provider.updateReadingState.bind(provider),
     runPipeline: (userId: string) => provider.runPipeline(userId),
     notifyFavoriteAuthor: (personaId: string, personaName: string, excludeBookId?: string) =>

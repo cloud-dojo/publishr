@@ -128,6 +128,7 @@ export default function HomePage() {
                 authorName={authorName(b)}
                 reason={reason(b)}
                 showWhy
+                showStatusBadge={false}
                 layout="row"
               />
             ))}
@@ -195,6 +196,7 @@ export default function HomePage() {
               authorName={authorName(b)}
               reason={reason(b)}
               showWhy
+              showStatusBadge={false}
               layout="row"
             />
           ))}
@@ -217,6 +219,7 @@ export default function HomePage() {
                   authorName={authorName(b)}
                   reason={reason(b)}
                   showWhy
+                  showStatusBadge={false}
                   layout="row"
                 />
               ))}

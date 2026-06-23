@@ -1,16 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import type { Book } from "@publishr/shared-schema";
 
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
 
 export default function LibraryPage() {
   const provider = useProvider();
+  const { removeFromLibrary } = useActions();
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
-  const library = provider.booksByShelf("library");
+  const library = provider.booksByShelf("library").filter((b) => !b.feedback.dropped);
+
+  const handleRemove = async (book: Book) => {
+    if (!window.confirm(`『${book.title}』を書庫から外しますか？`)) return;
+    setRemovingId(book.id);
+    try {
+      await removeFromLibrary(book.id);
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   return (
     <>
@@ -32,7 +45,17 @@ export default function LibraryPage() {
       <section className="page section">
         <div className="book-grid">
           {library.map((b) => (
-            <BookCard key={b.id} book={b} authorName={authorName(b)} />
+            <div key={b.id} className="library-book">
+              <BookCard book={b} authorName={authorName(b)} />
+              <button
+                type="button"
+                className="library-remove"
+                disabled={removingId === b.id}
+                onClick={() => void handleRemove(b)}
+              >
+                {removingId === b.id ? "外しています..." : "書庫から外す"}
+              </button>
+            </div>
           ))}
           {library.length === 0 && (
             <div className="muted">{provider.ready ? "まだ蔵書がありません。" : "読み込み中…"}</div>

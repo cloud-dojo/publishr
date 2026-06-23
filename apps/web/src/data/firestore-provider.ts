@@ -117,6 +117,13 @@ export class FirestoreProvider extends BaseProvider {
   }
 
   // --- 読書状態: Firestore 直書き ---
+  async removeFromLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    await updateDoc(doc(this.db, "books", id), {
+      feedback: { ...book?.feedback, dropped: true },
+    });
+  }
+
   async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
     const patch: Record<string, unknown> = {};
     if (state.granularity !== undefined) patch.granularity = state.granularity;

@@ -7,9 +7,9 @@ function spec(status: Book["status"], shelf: Book["shelf"]): BadgeSpec {
   if (shelf === "odd") return { cls: "badge--odd", label: "新しい出会い", pulse: false };
   switch (status) {
     case "writing":
-      return { cls: "badge--writing", label: "執筆中", pulse: true };
+      return { cls: "badge--writing", label: "入荷準備中", pulse: true };
     case "reserved":
-      return { cls: "badge--writing", label: "予約中", pulse: false };
+      return { cls: "badge--writing", label: "入荷待ち", pulse: false };
     case "published":
       return { cls: "badge--done", label: shelf === "library" ? "読了" : "入荷", pulse: false };
     case "draft":

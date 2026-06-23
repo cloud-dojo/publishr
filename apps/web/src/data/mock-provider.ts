@@ -107,6 +107,13 @@ export class MockProvider extends BaseProvider {
     this.notify();
   }
 
+  async removeFromLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, { ...book, feedback: { ...book.feedback, dropped: true } });
+    this.notify();
+  }
+
   async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
     const book = this.books.get(id);
     if (!book) return;

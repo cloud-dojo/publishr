@@ -29,7 +29,7 @@ export default function WritingPage() {
   const provider = useProvider();
   const debate = useDebate();
   const { candidates, approvedPlanIds } = usePlanningCandidates();
-  const { observation, readerProfile } = useReaderAnalysis();
+  const { readerProfile } = useReaderAnalysis();
   const book = provider.getBook(params.bookId);
 
   useEffect(() => {
@@ -52,25 +52,21 @@ export default function WritingPage() {
   const s = stepStates(book.status);
   const isPublished = book.status === "published";
   const pct =
-    book.feedback.readPercent > 0 ? `${book.feedback.readPercent}%` : isPublished ? "100%" : "執筆中";
+    book.feedback.readPercent > 0 ? `${book.feedback.readPercent}%` : isPublished ? "100%" : "準備中";
   const readerRole = readerProfile?.role || user?.profile.role || "読者";
   const readerSituation = readerProfile?.situation || plan?.readerSituation || "企画に紐づく局面を分析中。";
   const readerInterests = readerProfile?.interests.length
     ? readerProfile.interests
     : user?.profile.estimatedInterests ?? [];
-  const readerSignals = readerProfile?.signals.length
-    ? readerProfile.signals
-    : observation?.signals ?? [];
-
   return (
     <>
       <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
       <div className="page-hero" style={{ paddingBottom: 6 }}>
         <div className="ph-eyebrow">Now in the press</div>
         <h1>
-          あなたの一冊を、<span className="accent">{isPublished ? "書き上げました" : "執筆中"}</span>です。
+          あなたの一冊は、<span className="accent">{isPublished ? "書庫に届きました" : "入荷準備中"}</span>です。
         </h1>
-        <p>あなたが選んだ瞬間、専属の編集部が動き出しました。企画から執筆までの工程をお見せします。</p>
+        <p>専属の編集部が、企画から仕上げまでを整えています。入荷までの流れをお見せします。</p>
       </div>
 
       <div className="stage">
@@ -80,7 +76,7 @@ export default function WritingPage() {
             <i />
           </div>
           <div className="writing-status">
-            {persona?.name} が{isPublished ? "書き上げました" : "執筆しています…"}
+            {persona?.name} が{isPublished ? "書庫に届けました" : "仕上げています…"}
           </div>
           <div className="writing-pct">{pct}</div>
         </div>
@@ -89,9 +85,9 @@ export default function WritingPage() {
           <div className="step done">
             <div className="dot">✓</div>
             <div className="st-title">
-              観測<span className="st-actor">Sense</span>
+              読書テーマ<span className="st-actor">Sense</span>
             </div>
-            <div className="st-desc">指定フォルダ（Keepメモ）の業務メモ・読書のあしあとを収集。</div>
+            <div className="st-desc">仕事の関心や読書の傾向から、いま扱うべきテーマを整理。</div>
           </div>
 
           <div className="step done">
@@ -100,11 +96,10 @@ export default function WritingPage() {
               読者分析<span className="st-actor">Reader Profile</span>
             </div>
             <div className="st-desc">
-              いまの局面を推定。
+              いま読むべきテーマを整理。
               <span className="quote">
                 役職：{readerRole}／局面：{readerSituation}
                 {readerInterests.length > 0 ? `／関心：${readerInterests.join("・")}` : ""}
-                {readerSignals.length > 0 ? `／観測シグナル：${readerSignals.join("・")}` : ""}
               </span>
             </div>
           </div>
@@ -155,7 +150,7 @@ export default function WritingPage() {
             <div className="st-title">
               納本<span className="st-actor">Delivery</span>
             </div>
-            <div className="st-desc">書き上がり次第、あなたの書庫へ届きます。</div>
+            <div className="st-desc">準備が整い次第、あなたの書庫へ届きます。</div>
           </div>
         </div>
       </div>

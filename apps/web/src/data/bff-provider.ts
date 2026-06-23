@@ -90,6 +90,12 @@ export class BffProvider extends BaseProvider {
     this.notify();
   }
 
+  async removeFromLibrary(id: string): Promise<void> {
+    const book = await jpost<Book>(`/books/${id}/feedback`, { dropped: true });
+    this.books.set(id, book);
+    this.notify();
+  }
+
   async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
     const book = await jpost<Book>(`/books/${id}/reading-state`, state);
     this.books.set(id, book);

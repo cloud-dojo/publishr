@@ -47,15 +47,15 @@ export default function BookDetailPage() {
           <div className="detail-actions">
             {canRead ? (
               <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
-                いま読む
+                この本を手に取る
               </Link>
             ) : book.status === "reserved" || book.status === "writing" ? (
               <Link className="btn btn--gold btn--block" href={`/writing/${book.id}`}>
-                執筆の様子を見る
+                入荷を待つ
               </Link>
             ) : (
               <button className="btn btn--gold btn--block" disabled>
-                本文を準備中
+                まもなく入荷
               </button>
             )}
             {persona && (
@@ -83,12 +83,8 @@ export default function BookDetailPage() {
           {plan && (
             <div className="frame">
               <div className="frame-row spot">
-                <div className="fr-key">なぜ、いまあなたに</div>
+                <div className="fr-key">この本で解けること</div>
                 <div className="fr-val">{plan.reason}</div>
-              </div>
-              <div className="frame-row">
-                <div className="fr-key">想定する局面</div>
-                <div className="fr-val">{plan.readerSituation}</div>
               </div>
               <div className="frame-row">
                 <div className="fr-key">核心メッセージ</div>
@@ -104,7 +100,7 @@ export default function BookDetailPage() {
               <div>
                 <div className="eyebrow">Table of contents</div>
                 <div className="section-title">
-                  アジェンダ<span className="accent">・目次</span>
+                  本の<span className="accent">目次</span>
                 </div>
               </div>
             </div>
@@ -132,10 +128,10 @@ export default function BookDetailPage() {
               {canRead && (
                 <div className="row gap12" style={{ marginTop: 24 }}>
                   <Link className="btn btn--gold" href={`/read/${book.id}`}>
-                    続きを読む
+                    本文を読む
                   </Link>
                   <span className="muted" style={{ fontSize: 12.5 }}>
-                    {persona?.name} が本文まで書き上げた一冊です。
+                    書庫に残して、いつでも読み返せる一冊です。
                   </span>
                 </div>
               )}
@@ -148,14 +144,14 @@ export default function BookDetailPage() {
 }
 
 function statusLabel(status: string, canRead: boolean): string {
-  if (canRead) return "入荷済み・読めます";
+  if (canRead) return "書店に入荷済み";
   switch (status) {
     case "reserved":
-      return "執筆待ち";
+      return "入荷待ち";
     case "writing":
-      return "執筆中";
+      return "入荷準備中";
     case "draft":
-      return "本文準備中";
+      return "まもなく入荷";
     default:
       return status;
   }

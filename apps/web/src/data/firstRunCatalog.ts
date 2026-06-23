@@ -18,22 +18,22 @@ type Spec = {
 
 // 本命（あなたの仕事・関心にまっすぐ応える）8冊（本命2回×4冊）。
 const HONMEI: Spec[] = [
-  { id: "fr_h01", persona: "p_kirishima", title: "30人を、ひとりで背負わない。", subtitle: "任せ方の設計図", cover: "b1", reason: "「全員の判断を自分が抱えている」局面に向けて、権限の設計から書き下ろしました。" },
-  { id: "fr_h02", persona: "p_aoi", title: "叱らずに伝える", subtitle: "関係を壊さない指摘の作法", cover: "b2", reason: "年上部下との距離感に揺れるいま、指摘を「対立」にしない伝え方をまとめました。" },
-  { id: "fr_h03", persona: "p_azumi", title: "\"問い\"で動かす現場", subtitle: "指示を減らし、自走を増やす", cover: "b3", reason: "指示より「問い」が効く局面だと読みました。現場が自分で動き出す設計です。" },
-  { id: "fr_h04", persona: "p_yuki", title: "指示ゼロでも回る仕組み", subtitle: "属人化からの脱出", cover: "b4", reason: "任せられない状態が続くシグナルが見えます。仕組みで回す道筋を描きました。" },
-  { id: "fr_h05", persona: "p_shiraishi", title: "数字で語るリーダー", subtitle: "感覚を、根拠に変える", cover: "b5", reason: "上申・報告の準備メモが気になっています。方向性を定量で語る準備の一冊です。" },
-  { id: "fr_h06", persona: "p_yuki", title: "決めきる技術", subtitle: "迷いを断つ意思決定", cover: "b6", reason: "意思決定があなたに集中している局面に、決めきるための型を用意しました。" },
-  { id: "fr_h07", persona: "p_azumi", title: "1on1が変わる15分", subtitle: "聞き方だけで人は動く", cover: "b7", reason: "1on1の負荷増の記述が増えています。短く深い対話に変える実践書です。" },
-  { id: "fr_h08", persona: "p_mikumo", title: "はじめての評価面談", subtitle: "納得を生むフィードバック設計", cover: "b8", reason: "評価面談への不安が見えます。納得を生む準備と言葉を組み立てました。" },
+  { id: "fr_h01", persona: "p_kirishima", title: "30人を、ひとりで背負わない。", subtitle: "任せ方の設計図", cover: "b1", reason: "判断や相談が一人に集まりがちなチームで、任せる基準と権限の渡し方を整える一冊です。" },
+  { id: "fr_h02", persona: "p_aoi", title: "叱らずに伝える", subtitle: "関係を壊さない指摘の作法", cover: "b2", reason: "相手との関係を守りながら、言いにくいことを具体的な改善につなげる伝え方を扱います。" },
+  { id: "fr_h03", persona: "p_azumi", title: "\"問い\"で動かす現場", subtitle: "指示を減らし、自走を増やす", cover: "b3", reason: "指示待ちが増えた現場で、メンバーが自分で考え始める問いの作り方を整理します。" },
+  { id: "fr_h04", persona: "p_yuki", title: "指示ゼロでも回る仕組み", subtitle: "属人化からの脱出", cover: "b4", reason: "人に頼りきった運用を、誰が見ても動ける仕組みに変えるための道筋を描きます。" },
+  { id: "fr_h05", persona: "p_shiraishi", title: "数字で語るリーダー", subtitle: "感覚を、根拠に変える", cover: "b5", reason: "感覚や経験で語っていた判断を、数字と根拠で伝えられる形に変えていきます。" },
+  { id: "fr_h06", persona: "p_yuki", title: "決めきる技術", subtitle: "迷いを断つ意思決定", cover: "b6", reason: "迷いが残る判断を、比較基準と撤退条件まで含めて決めきるための型に落とします。" },
+  { id: "fr_h07", persona: "p_azumi", title: "1on1が変わる15分", subtitle: "聞き方だけで人は動く", cover: "b7", reason: "確認だけで終わりがちな1on1を、相手の考えと次の行動が見える時間に変えます。" },
+  { id: "fr_h08", persona: "p_mikumo", title: "はじめての評価面談", subtitle: "納得を生むフィードバック設計", cover: "b8", reason: "評価の場を一方的な通達にせず、納得と次の成長につながる対話に整えます。" },
 ];
 
 // セレンディピティ（関心の少し外側から視野を広げる）4冊（日曜1回×4冊）。
 const SERENDIPITY: Spec[] = [
-  { id: "fr_s01", persona: "p_kirishima", title: "茶室の経営学", subtitle: "\"間\"と\"余白\"の効用", cover: "b3", reason: "余白の設計という視点から、いまの忙しさを問い直す一冊です。" },
-  { id: "fr_s02", persona: "p_nanao", title: "登山隊に学ぶ撤退", subtitle: "引き返す勇気の作法", cover: "b6", reason: "「やめ方」の意思決定を、別の世界の実話から学びます。" },
-  { id: "fr_s03", persona: "p_sengoku", title: "戦国の人材登用", subtitle: "適材適所の古典に学ぶ", cover: "b9", reason: "人をどう配するか——歴史の決断から、いまの配置を考え直します。" },
-  { id: "fr_s04", persona: "p_kuroda", title: "あえて、決めない", subtitle: "保留という戦略", cover: "b2", reason: "すぐ決める習慣の逆を行く、保留の使いどころを説いた逆張りの一冊。" },
+  { id: "fr_s01", persona: "p_kirishima", title: "茶室の経営学", subtitle: "\"間\"と\"余白\"の効用", cover: "b3", reason: "予定や判断を詰め込みすぎる日々に、余白を戦略として取り戻す視点をくれます。" },
+  { id: "fr_s02", persona: "p_nanao", title: "登山隊に学ぶ撤退", subtitle: "引き返す勇気の作法", cover: "b6", reason: "続けるか退くかで迷う判断に、損切りではなく次を守る撤退の考え方を渡します。" },
+  { id: "fr_s03", persona: "p_sengoku", title: "戦国の人材登用", subtitle: "適材適所の古典に学ぶ", cover: "b9", reason: "人をどう活かすかを、役割・場・タイミングの組み合わせから考え直します。" },
+  { id: "fr_s04", persona: "p_kuroda", title: "あえて、決めない", subtitle: "保留という戦略", cover: "b2", reason: "すぐに結論を出すほど粗くなる問題に、あえて保留する判断の使いどころを示します。" },
 ];
 
 const PREFACE =
@@ -75,7 +75,7 @@ export function buildFirstRunBooks(profile?: InitialProfileInput | null): Book[]
   if (top && honmei[0]) {
     honmei[0] = {
       ...honmei[0],
-      deliveryReason: `直近のメモに「${top}」への関心が見えます。${honmei[0].deliveryReason}`,
+      deliveryReason: `${top}に向き合う人へ。${honmei[0].deliveryReason}`,
     };
   }
   return [...honmei, ...serendipity];

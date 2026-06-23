@@ -44,7 +44,6 @@ export function BookToc({ book }: { book: Book }) {
             <div className="ag-t">{item.title}</div>
             <div className="ag-d">{item.desc}</div>
           </div>
-          {item.note && <div className="ag-lock">{item.note}</div>}
         </div>
       ))}
     </>

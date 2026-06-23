@@ -26,12 +26,14 @@ export function BookCard({
   authorName,
   reason,
   showWhy = false,
+  showStatusBadge = true,
   layout = "grid",
 }: {
   book: Book;
   authorName: string;
   reason?: string;
   showWhy?: boolean;
+  showStatusBadge?: boolean;
   layout?: "grid" | "row";
 }) {
   // 横長レイアウト（書店トップ）：カバー左＋本文右にタグ・タイトル・著者・なぜカード
@@ -47,9 +49,11 @@ export function BookCard({
           titleSize={13}
         />
         <div className="book-body">
-          <div className="book-badges">
-            <StatusBadge status={book.status} shelf={book.shelf} floating={false} />
-          </div>
+          {showStatusBadge ? (
+            <div className="book-badges">
+              <StatusBadge status={book.status} shelf={book.shelf} floating={false} />
+            </div>
+          ) : null}
           <div className="bm-title">{book.title}</div>
           <div className="bm-author">
             {authorName} 著{authorSuffix(book)}
@@ -68,7 +72,7 @@ export function BookCard({
         title={book.title}
         subtitle={book.subtitle}
         author={authorName}
-        badge={<StatusBadge status={book.status} shelf={book.shelf} floating={false} />}
+        badge={showStatusBadge ? <StatusBadge status={book.status} shelf={book.shelf} floating={false} /> : undefined}
       />
       <div className="book-meta">
         <div className="bm-title">{book.title}</div>

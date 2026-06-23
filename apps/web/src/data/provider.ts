@@ -165,6 +165,7 @@ export abstract class BaseProvider {
   }
 
   abstract sendFeedback(id: string, feedback: FeedbackInput): Promise<void>;
+  abstract removeFromLibrary(id: string): Promise<void>;
   abstract updateReadingState(id: string, state: ReadingStateInput): Promise<void>;
   abstract runPipeline(userId: string): Promise<void>;
 
