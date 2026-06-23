@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
 import { MOCK_HIGHLIGHTS } from "@/data/mock-highlights";
 import {
@@ -289,11 +289,14 @@ function ProfileEditor({ user }: { user: User }) {
 
 export default function AccountPage() {
   const provider = useProvider();
+  const actions = useActions();
   const router = useRouter();
   // Firebase Auth UID・email・displayName を取得。未ログイン or mock 時は DEMO_USER_ID にフォールバック
   const [uid, setUid] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
+  const [triggering, setTriggering] = useState(false);
+  const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
   useEffect(() => watchAuth((u) => {
     setUid(u?.uid ?? null);
     setAuthEmail(u?.email ?? null);
@@ -319,6 +322,19 @@ export default function AccountPage() {
   const onLogout = async () => {
     await signOutUser();
     router.push("/login");
+  };
+  const onTriggerArrivals = async () => {
+    setTriggering(true);
+    setTriggerMsg(null);
+    try {
+      await actions.runPipeline(uid ?? DEMO_USER_ID);
+      setTriggerMsg("入荷トリガーを実行しました。書店に反映されるまで少し待ってください。");
+    } catch (err) {
+      console.error(err);
+      setTriggerMsg("入荷トリガーに失敗しました。少し待ってから再実行してください。");
+    } finally {
+      setTriggering(false);
+    }
   };
   const total = provider.listBooks().filter((b) => b.shelf === "library").length;
   // ハイライト数：mockデモ時のみシード件数、本番（firestore/bff）は実注釈のみ集計。
@@ -392,6 +408,30 @@ export default function AccountPage() {
           })}
         </div>
       </section>
+
+      {dataSource !== "mock" && (
+        <section className="page section">
+          <div className="acct-savebox">
+            <div className="asb-text">
+              <div className="asb-title">デモ用の即時入荷</div>
+              <div className="asb-sub">
+                週次バッチを待たずに、現在のユーザー向けの入荷処理を手動で実行します。
+              </div>
+            </div>
+            <div className="asb-action">
+              {triggerMsg && <span className="acct-saved-msg">{triggerMsg}</span>}
+              <button
+                type="button"
+                className="btn btn--gold"
+                onClick={onTriggerArrivals}
+                disabled={triggering}
+              >
+                {triggering ? "入荷処理中..." : "今すぐ入荷を実行"}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ログアウト */}
       <section className="page section">

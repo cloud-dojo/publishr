@@ -3,7 +3,6 @@ import type {
   Book,
   FeedbackInput,
   Persona,
-  PipelineResult,
   Plan,
   ReadingStateInput,
   User,
@@ -110,14 +109,7 @@ export class BffProvider extends BaseProvider {
   }
 
   async runPipeline(userId: string): Promise<void> {
-    const result = await jpost<PipelineResult>("/pipeline/run", { userId });
-    result.plans.forEach((p) => this.plans.set(p.id, p));
-    result.books.forEach((b) => this.books.set(b.id, b));
-    this.observation = result.observation;
-    this.readerProfile = result.readerProfile;
-    this.candidates = result.candidates;
-    this.approvedPlanIds = result.approvedPlanIds;
-    this.debate = result.rejectLog;
-    this.notify();
+    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", { userId });
+    await this.refreshBooks();
   }
 }
