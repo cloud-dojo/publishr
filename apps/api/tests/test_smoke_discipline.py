@@ -141,9 +141,9 @@ def test_reader_analyst_unbound_challenges_violation():
     assert any("evidence" in v for v in rep.violations)
 
 
-# ── STEP3 persona: 員数5・2軸分散・薄さ・fromFavorite・人物名衝突 ──────────
+# ── STEP3 persona: 員数4（1人/冊・1-1-1-1）・2軸分散・薄さ・fromFavorite・人物名衝突 ──────────
 def _good_personas() -> dict:
-    """voiceStyle×format が5通りユニーク・persona がリッチ・衝突名なしの正例。"""
+    """voiceStyle×format が4通りユニーク・persona がリッチ・衝突名なしの正例（4テーマ＝4冊）。"""
     bodies = [
         ("結城 遼太", "ロジカル・構造化", "ストレートな自己啓発書",
          "元・大手電機メーカーの事業部長。30名の組織を任され半年で離職を3名出した原体験を持つ。口癖は『で、それは誰の意思決定？』。感情論を嫌い必ず構造に落とす。"),
@@ -153,8 +153,6 @@ def _good_personas() -> dict:
          "大学で組織論を講じる研究者。学説を一方的に説かず問いを重ねて読者自身に発見させる対話を好む。『なぜそう言えるのか』を必ず問い返すのが口癖。"),
         ("梶原 鉄平", "泥臭い・現場", "エッセイ形式",
          "町工場の叩き上げ工場長を30年。現場の油と汗の手触りでしか語れないと信じ、理論より一つの失敗談を出す。出身は中卒、夜間高校を経て独学で学んだ。"),
-        ("東堂 静観", "思想的・哲学的", "対話・問答形式",
-         "東洋思想を学びリーダー論に接続する元・僧侶。答えを与えず問答で迷いを解く。『主人公は誰か』が口癖で、原体験は寺の世代交代にある。"),
     ]
     return {
         "planId": "plan_test", "themeKind": "honmei",
@@ -166,7 +164,7 @@ def _good_personas() -> dict:
             }
             for i, (nm, vs, fmt, body) in enumerate(bodies)
         ],
-        "reason": "voiceStyle×format を5通りに散らし、読者の実務的嗜好へ主軸を寄せた",
+        "reason": "voiceStyle×format を4通りに散らし、読者の実務的嗜好へ主軸を寄せた",
     }
 
 
@@ -174,14 +172,14 @@ def test_good_persona_set_passes():
     rep = sd.run_discipline_checks("persona_generator", _good_personas())
     assert rep.schema_ok is True
     assert rep.violations == []
-    assert rep.metrics.get("axisUnique") == "5/5"
+    assert rep.metrics.get("axisUnique") == "4/4"
 
 
-def test_persona_count_not_five_violation():
+def test_persona_count_not_four_violation():
     raw = _good_personas()
-    raw["personas"] = raw["personas"][:4]  # 4人に削る
+    raw["personas"] = raw["personas"][:3]  # 3人に削る（員数4厳守違反）
     rep = sd.run_discipline_checks("persona_generator", raw)
-    assert any("員数が5人でない" in v for v in rep.violations)
+    assert any("員数が4人でない" in v for v in rep.violations)
 
 
 def test_persona_axis_not_distributed_violation():
@@ -213,7 +211,7 @@ def test_from_favorite_with_favorites_metric_no_violation():
     favs = [{"personaId": "f1", "name": "架空の師匠", "voiceStyle": "ロジカル", "format": "自己啓発"}]
     rep = sd.run_discipline_checks("persona_generator", raw, context={"favorite_authors": favs})
     assert all("fromFavorite=true" not in v for v in rep.violations)
-    assert rep.metrics.get("fromFavoriteAdopted") == "1/5"
+    assert rep.metrics.get("fromFavoriteAdopted") == "1/4"
 
 
 def test_known_name_collision_flag():
@@ -229,6 +227,90 @@ def test_fewshot_surname_leak_flag():
     raw["personas"][0]["name"] = "里見 ほのか"
     rep = sd.run_discipline_checks("persona_generator", raw)
     assert any("既知人物名との衝突" in f for f in rep.flags)
+
+
+# ── STEP3 author_casting（4テーマ）: 候補3・chosen整合・選抜証跡 ──────────
+def _good_casting() -> dict:
+    """candidates が3通りユニーク・chosen が候補の1人・選抜理由ありの正例。"""
+    cands = [
+        {"personaId": "c1", "name": "結城 遼太", "voiceStyle": "ロジカル・構造化", "format": "ストレートな自己啓発書",
+         "persona": "元・事業部長。30名を任され離職3名を出した原体験を持つ。口癖は『で、それは誰の意思決定？』。", "expertise": ["組織"], "pastBooks": [], "fromFavorite": False, "ephemeral": True},
+        {"personaId": "c2", "name": "葉山 みのり", "voiceStyle": "感覚的・情緒的", "format": "小説・物語形式",
+         "persona": "元・百貨店フロア長から作家へ。年上の販売員に囲まれ若くして売場を任された日々を物語に書く。信条は『正しさより隣に立つ』。", "expertise": ["接客"], "pastBooks": [], "fromFavorite": False, "ephemeral": True},
+        {"personaId": "c3", "name": "梶原 鉄平", "voiceStyle": "泥臭い・現場", "format": "エッセイ形式",
+         "persona": "町工場の叩き上げ工場長を30年。理論より一つの失敗談を出す。出身は中卒、夜間高校を経て独学で学んだ。", "expertise": ["製造"], "pastBooks": [], "fromFavorite": False, "ephemeral": True},
+    ]
+    return {"planId": "plan_test", "candidates": cands, "chosen": dict(cands[0]),
+            "selectionReason": "bookRole=ハンドブックと読者の論理志向に最も合うため、他2候補でなくc1を選んだ"}
+
+
+def test_good_casting_passes():
+    rep = sd.run_discipline_checks("author_casting", _good_casting())
+    assert rep.schema_ok is True
+    assert rep.violations == []
+    assert rep.metrics.get("axisUnique") == "3/3"
+
+
+def test_casting_candidate_count_violation():
+    raw = _good_casting()
+    raw["candidates"] = raw["candidates"][:2]  # 候補2人（員数3違反）
+    raw["chosen"] = dict(raw["candidates"][0])
+    rep = sd.run_discipline_checks("author_casting", raw)
+    assert any("候補員数が3人でない" in v for v in rep.violations)
+
+
+def test_casting_chosen_mismatch_violation():
+    raw = _good_casting()
+    raw["chosen"] = dict(raw["chosen"]); raw["chosen"]["personaId"] = "cX"  # 候補に無いID
+    rep = sd.run_discipline_checks("author_casting", raw)
+    assert any("chosen.personaId が candidates に無い" in v for v in rep.violations)
+
+
+def test_casting_missing_selection_reason_violation():
+    raw = _good_casting()
+    raw["selectionReason"] = ""  # 証跡なし
+    rep = sd.run_discipline_checks("author_casting", raw)
+    assert any("selectionReason が空" in v for v in rep.violations)
+
+
+# ── serendipity_themes: 員数4・adjacency分散・棚書き文法 ──────────
+def _good_serendipity() -> dict:
+    return {
+        "themes": [
+            {"name": "指揮者はなぜ一言も発さず100人を束ねるのか", "adjacency": "隣接",
+             "whyForReader": "率いるという関心の隣で、言葉を使わず束ねる所作を覗くと別の語彙が手に入る。"},
+            {"name": "あえて指示しない――女将の察しの場づくり", "adjacency": "反対",
+             "whyForReader": "細かく命じる通念の逆側に触れ、自分の率い方を相対化する余白が生まれる。"},
+            {"name": "南極で28人を生きて連れ帰った男・シャクルトン", "adjacency": "飛躍",
+             "whyForReader": "現代のオフィスから氷の海へ跳ぶ越境が、束ねることの根への想像を広げる。"},
+            {"name": "棋士はなぜ負けた直後に感想戦をするのか", "adjacency": "ニッチ",
+             "whyForReader": "負けをその場で言葉にする一点の作法が、内省への静かな関心に接続する。"},
+        ],
+        "reason": "隣接/反対/飛躍/ニッチで領域・時代を散らし、潜在関心に課題直撃せず接続した",
+    }
+
+
+def test_good_serendipity_passes():
+    rep = sd.run_discipline_checks("serendipity_themes", _good_serendipity())
+    assert rep.schema_ok is True
+    assert rep.violations == []
+    assert rep.metrics.get("adjacencyUnique") == "4/4"
+
+
+def test_serendipity_adjacency_not_distributed_flag():
+    raw = _good_serendipity()
+    for t in raw["themes"]:
+        t["adjacency"] = "隣接"  # 全部同じ＝非分散
+    rep = sd.run_discipline_checks("serendipity_themes", raw)
+    assert any("adjacency" in f and "分散していない" in f for f in rep.flags)
+
+
+def test_serendipity_shelf_grammar_flag():
+    raw = _good_serendipity()
+    raw["themes"][0]["whyForReader"] = "あなたの課題をすぐ使えるハウツーで解決する"
+    rep = sd.run_discipline_checks("serendipity_themes", raw)
+    assert any("棚書き文法違反" in f for f in rep.flags)
+    assert any("ハウツー化" in f for f in rep.flags)
 
 
 # ── CLI ─────────────────────────────────────────────────
