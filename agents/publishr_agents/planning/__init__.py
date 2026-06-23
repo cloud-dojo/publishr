@@ -56,9 +56,9 @@ def run_planning_set(
     if mode == "mock":
         return run_planning_set_deterministic(profile, theme_kind=theme_kind, threshold=threshold)
     if mode == "vertex":
-        raise NotImplementedError(
-            "4テーマ・セット企画の実Vertex orchestration は PR-5 で実装（build_planning_set）"
-        )
+        from .vertex_set import run_planning_set_vertex
+
+        return run_planning_set_vertex(profile, theme_kind=theme_kind, threshold=threshold)
     raise ValueError(f"unknown PUBLISHR_LLM={mode!r}")
 
 
