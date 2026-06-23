@@ -4,7 +4,7 @@
   uv run python -m scripts.seed_arrivals --owner-uid <uid> --apply    # 実投入（DATA_SOURCE で mock/firestore）
   DATA_SOURCE=firestore uv run python -m scripts.seed_arrivals --owner-uid <uid> --apply   # 実Firestoreへ
 
-パイプラインは mock 既定＝LLM課金ゼロ。Book は shelf=arrivals/status=draft/ownerUid付き・
+パイプラインは mock 既定＝LLM課金ゼロ。既定のセット配本では Book は shelf=arrivals/status=published/ownerUid付き・
 ID は `arr_<personaId>`（冪等上書き・既存 b_*/_sakura 非破壊）。著者は personas へ upsert。
 前提（firestore時）: gcloud auth application-default login 済み。
 """
@@ -64,9 +64,16 @@ def _generate(user, *, theme, theme_kind: str, llm: str, limit, threshold: int, 
 
 
 def _generate_set(user, *, theme_kind: str, llm: str, threshold: int, enable_imagen: bool, now, owner_uid: str):
-    """4テーマ1-1-1-1のセット縦串（既定）→ (Book[], Persona[], headerラベル) を返す。"""
+    """4テーマ1-1-1-1のセット縦串（既定）→ (Book[], Persona[], headerラベル) を返す。
+
+    予約制廃止改定: 配本 run で全4冊を本文まで作り切って published にする（seed したデモ本も読める）。
+    """
     from publishr_agents.observe import FixtureObservationSource
-    from publishr_agents.mode_a import run_mode_a_set_pipeline, map_mode_a_set_to_books
+    from publishr_agents.mode_a import (
+        make_published_books,
+        map_mode_a_set_to_books,
+        run_mode_a_set_pipeline,
+    )
 
     res = run_mode_a_set_pipeline(
         user,
@@ -83,6 +90,7 @@ def _generate_set(user, *, theme_kind: str, llm: str, threshold: int, enable_ima
     books, personas = map_mode_a_set_to_books(
         res, owner_uid=owner_uid, created_at=datetime.now(JST).isoformat()
     )
+    books = make_published_books(books, personas, llm=llm, rounds=3)
     pv = res.planning.get("planSetVerdict") or {}
     header = f"4テーマ・1-1-1-1（セットゲート {pv.get('decision')}・総合{pv.get('score')}・{res.planning.get('rounds')}R）"
     return books, personas, header
@@ -139,7 +147,8 @@ def main() -> int:
 
     repo, backend = _build_repo(apply=True, owner_uid=args.owner_uid)
     n = persist_arrivals(repo, books, mapped_personas)
-    print(f"\n✅ {backend} に {n} 冊＋著者 {len(mapped_personas)} 名 を投入（arrivals/draft・owner={args.owner_uid}）")
+    shelf_status = books[0].status if books else "draft"
+    print(f"\n✅ {backend} に {n} 冊＋著者 {len(mapped_personas)} 名 を投入（arrivals/{shelf_status}・owner={args.owner_uid}）")
     return 0
 
 

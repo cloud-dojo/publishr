@@ -8,7 +8,7 @@ import { WhyBubble } from "./WhyBubble";
 
 function hrefFor(book: Book): string {
   if (book.status === "writing" || book.status === "reserved") return `/writing/${book.id}`;
-  if (book.status === "published") return `/read/${book.id}`;
+  if (book.status === "published" || book.body) return `/read/${book.id}`;
   return `/books/${book.id}`;
 }
 

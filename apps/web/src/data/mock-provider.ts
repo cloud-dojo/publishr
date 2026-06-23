@@ -8,9 +8,7 @@ import {
   CANNED_DEBATE,
   CANNED_OBSERVATION,
   CANNED_READER_PROFILE,
-  cannedBody,
 } from "./canned";
-import { timing } from "./config";
 import { buildFirstRunBooks } from "./firstRunCatalog";
 import type { InitialProfileInput } from "./profileOptions";
 import { BaseProvider } from "./provider";
@@ -28,7 +26,7 @@ export class MockProvider extends BaseProvider {
       const shelf = b.shelf === "press" && b.status === "draft" ? "arrivals" : b.shelf;
       const createdAt =
         b.status === "draft"
-          ? new Date(now - (i % 6) * 86_400_000).toISOString() // 0〜5日前（ウィンドウ内）
+          ? new Date(now - (i % 6) * 86_400_000).toISOString()
           : new Date(now - 30 * 86_400_000).toISOString();
       this.books.set(b.id, { ...b, shelf, createdAt });
     });
@@ -49,7 +47,7 @@ export class MockProvider extends BaseProvider {
     this.seedNotifications();
   }
 
-  /** デモ初期表示用に、4種の通知を決定的にシードする（mock専用）。 */
+  /** デモ初期表示用に、3種の通知を決定的にシードする（mock専用）。 */
   private seedNotifications(): void {
     const now = Date.now();
     const all = [...this.books.values()];
@@ -100,40 +98,6 @@ export class MockProvider extends BaseProvider {
         href: "/",
       },
     ];
-  }
-
-  async reserve(id: string): Promise<void> {
-    const book = this.books.get(id);
-    if (!book || book.status !== "draft") return;
-    this.books.set(id, { ...book, status: "reserved" });
-    this.notify();
-
-    setTimeout(() => {
-      const b = this.books.get(id);
-      if (!b || b.status !== "reserved") return;
-      this.books.set(id, { ...b, status: "writing" });
-      this.notify();
-
-      setTimeout(() => {
-        const b2 = this.books.get(id);
-        if (!b2 || b2.status !== "writing") return;
-        this.books.set(id, {
-          ...b2,
-          status: "published",
-          body: b2.body ?? cannedBody(id),
-        });
-        this.notify();
-        // 執筆完了 → 書庫着 の通知（ライブ生成）。まず本の概要ページへ誘導する。
-        this.pushNotification({
-          kind: "delivery",
-          title: `『${b2.title}』が書き上がりました`,
-          body: "書庫に届きました。まずは本の概要をご覧いただけます。",
-          createdAt: new Date().toISOString(),
-          href: `/books/${id}`,
-          bookId: id,
-        });
-      }, timing.writingToPublished);
-    }, timing.reserveToWriting);
   }
 
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {

@@ -20,7 +20,6 @@ def test_run_persists_arrivals_and_returns_reject_log():
     for book in result.books:
         b = book.model_dump(by_alias=True)
         assert b["shelf"] == "arrivals"
-        assert b["status"] == "draft"
         assert b["ownerUid"] == "uid_demo"
 
     # 永続（冪等 upsert）されている＝ get_book で引ける。
@@ -64,6 +63,22 @@ def test_run_set_pipeline_yields_four_books():
     # セットゲートの差し戻し→承認（編集長）の証跡。
     assert any(e.round == 1 and e.verdict == "却下" and e.persona == "編集長" for e in result.reject_log)
     assert any(e.round == 2 and e.verdict == "採用" for e in result.reject_log)
+
+
+def test_run_set_pipeline_books_are_published_with_body():
+    """予約制廃止改定: set pipeline は全4冊を本文付き published で配本する（予約不要・一気通貫）。"""
+    repo = MockRepository()
+    result = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+    for book in result.books:
+        assert book.status == "published", f"{book.id}: status should be published, got {book.status}"
+        assert book.body, f"{book.id}: body should be non-empty"
+        assert book.edit_round >= 1, f"{book.id}: edit_round should be >= 1"
+    # repo に格納された本も published になっている（persist は after publish）
+    for book in result.books:
+        stored = repo.get_book(book.id)
+        assert stored is not None
+        assert stored.status == "published"
+        assert stored.body
 
 
 def test_run_legacy_flag_falls_back_to_single_theme(monkeypatch):

@@ -179,28 +179,15 @@ def run_e2e_flow(web_base: str) -> None:
         raise SmokeError("pipeline did not return the reject-then-resubmit log")
     print(f"Pipeline ok: books={len(books)} rejectLog={len(reject_log)}")
 
-    draft_books = request_json("GET", "/books?status=draft")
-    if not draft_books:
-        raise SmokeError("no draft book available after pipeline run")
-    book_id = draft_books[0]["id"]
-    reserved = request_json("POST", f"/books/{book_id}/reserve")
-    if reserved.get("status") != "reserved":
-        raise SmokeError(f"reserve did not move to reserved: {reserved}")
-    print(f"Reserve ok: {book_id}")
-
-    deadline = time.monotonic() + 15
-    published: dict[str, Any] | None = None
-    while time.monotonic() < deadline:
-        book = request_json("GET", f"/books/{book_id}")
-        if book.get("status") == "published":
-            published = book
-            break
-        time.sleep(0.75)
-    if published is None:
-        raise SmokeError(f"book did not become published in time: {book_id}")
+    published_books = request_json("GET", "/books?status=published")
+    published_arrivals = [b for b in published_books if b.get("shelf") == "arrivals"]
+    if not published_arrivals:
+        raise SmokeError("no published arrival book available after pipeline run")
+    published = published_arrivals[0]
+    book_id = published["id"]
     if not published.get("body"):
         raise SmokeError(f"published book has no body: {book_id}")
-    print(f"State machine ok: {book_id} -> published")
+    print(f"Published arrival ok: {book_id}")
 
     feedback = request_json(
         "POST",

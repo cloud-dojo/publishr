@@ -130,6 +130,46 @@ def run_mode_a_set_pipeline(
     return ModeASetResult(books=out, planning=planning)
 
 
+def make_published_books(
+    books: list[Book],
+    personas: list[Persona],
+    *,
+    llm: str = "mock",
+    rounds: int = 1,
+) -> list[Book]:
+    """各 draft 入荷本に modeB 本文編集ループで本文を書き切り published にする（配本runの仕上げ）。
+
+    予約制廃止改定（2026-06-23）: 配本 run で全冊を本文まで作り切って published にする一気通貫。
+    旧・予約→Pub/Sub worker（`reservation_service.process_write_job`）と同じ遷移をオフラインで行う
+    ＝`status=published`／`body`（編集ループ後の本文）／`edit_round`／`feedback.read_percent=0`。
+    著者は personas から `author_persona_id` で引く（無ければ modeB 側で汎用著者に縮退）。
+    `llm` は "mock"|"vertex"・`rounds` は本文の最高改稿ラウンド。冪等: すでに本文付き published は素通し。
+    """
+    from .mode_b import write_body_loop
+
+    by_id = {p.id: p for p in personas}
+    out: list[Book] = []
+    for book in books:
+        if book.status == "published" and book.body:
+            out.append(book)
+            continue
+        result = write_body_loop(
+            book, persona=by_id.get(book.author_persona_id), rounds=rounds, llm=llm
+        )
+        fb = book.feedback.model_copy(update={"read_percent": 0})
+        out.append(
+            book.model_copy(
+                update={
+                    "status": "published",
+                    "body": result.body,
+                    "edit_round": result.edit_rounds,
+                    "feedback": fb,
+                }
+            )
+        )
+    return out
+
+
 def map_mode_a_set_to_books(
     result: ModeASetResult, *, owner_uid: str, created_at: str = ""
 ) -> tuple[list[Book], list[Persona]]:

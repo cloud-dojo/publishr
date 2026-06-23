@@ -34,12 +34,13 @@ export default function HomePage() {
   // - 関心/新しい出会い：入荷から7日以内（書庫へ移さなければ7日で棚落ち＝予約制廃止改定 2026-06-23）
   // - 執筆中：編集部が本文を書き継いでいる本（status=writing。予約制は廃止＝全冊バッチ内で自動執筆）
   const now = new Date();
-  const isFreshDraft = (b: Book) =>
-    b.status === "draft" && isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
+  const isFreshArrival = (b: Book) =>
+    (b.status === "published" || b.status === "draft") &&
+    isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
   const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
 
-  const interests = provider.booksByShelf("arrivals").filter(isFreshDraft).sort(byNewest);
-  const encounters = provider.booksByShelf("odd").filter(isFreshDraft).sort(byNewest);
+  const interests = provider.booksByShelf("arrivals").filter(isFreshArrival).sort(byNewest);
+  const encounters = provider.booksByShelf("odd").filter(isFreshArrival).sort(byNewest);
   const press = provider
     .listBooks()
     .filter((b) => b.status === "writing" || b.status === "reserved")

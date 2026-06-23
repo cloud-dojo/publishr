@@ -32,12 +32,13 @@ def get_book(book_id: str, repo: RepositoryProtocol = Depends(get_repository)) -
     return book
 
 
-@router.post("/{book_id}/reserve", response_model=Book)
+@router.post("/{book_id}/reserve", response_model=Book, deprecated=True)
 async def reserve_book(
     book_id: str,
     repo: RepositoryProtocol = Depends(get_repository),
     _uid: str = Depends(require_reserve_uid),  # fail-closed: 課金時は認証必須
 ) -> Book:
+    """旧予約モデルの互換エンドポイント（通常配本では使用しない）。"""
     book = reservation_service.reserve_now(repo, book_id, owner_uid=_uid)
     write_queue.enqueue(repo, book_id)
     return book

@@ -77,14 +77,6 @@ export class BffProvider extends BaseProvider {
     setTimeout(tick, timing.pollInterval);
   }
 
-  async reserve(id: string): Promise<void> {
-    const book = await jpost<Book>(`/books/${id}/reserve`);
-    this.books.set(id, book);
-    this.trackedBookIds.add(id);
-    this.notify();
-    this.startPolling();
-  }
-
   watchBook(id: string): void {
     const book = this.books.get(id);
     if (!book || (book.status !== "reserved" && book.status !== "writing")) return;

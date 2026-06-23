@@ -1,27 +1,23 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useParams } from "next/navigation";
 
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
-import { useActions, useProvider } from "@/data/hooks";
+import { useProvider } from "@/data/hooks";
 
 export default function BookDetailPage() {
   const params = useParams<{ bookId: string }>();
-  const router = useRouter();
   const provider = useProvider();
-  const { reserve } = useActions();
-  const [busy, setBusy] = useState(false);
 
   const book = provider.getBook(params.bookId);
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
-        <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
+        <Topbar back={{ href: "/", label: "< あなたの書店にもどる" }} />
+        <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中..."}</div>
       </>
     );
   }
@@ -29,16 +25,11 @@ export default function BookDetailPage() {
   const persona = provider.getPersona(book.authorPersonaId);
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
-
-  const onReserve = async () => {
-    setBusy(true);
-    await reserve(book.id);
-    router.push(`/writing/${book.id}`);
-  };
+  const canRead = book.status === "published" || Boolean(book.body);
 
   return (
     <>
-      <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
+      <Topbar back={{ href: "/", label: "< あなたの書店にもどる" }} />
       <div className="page-hero" style={{ paddingBottom: 0 }}>
         <div className="ph-eyebrow">Today&apos;s arrival · curated for you</div>
       </div>
@@ -54,33 +45,31 @@ export default function BookDetailPage() {
             titleSize={25}
           />
           <div className="detail-actions">
-            {book.status === "draft" && (
-              <button className="btn btn--gold btn--block" onClick={onReserve} disabled={busy}>
-                {busy ? "依頼を送っています…" : "この本を執筆依頼する →"}
-              </button>
-            )}
-            {(book.status === "reserved" || book.status === "writing") && (
-              <Link className="btn btn--gold btn--block" href={`/writing/${book.id}`}>
-                執筆の様子を見る →
-              </Link>
-            )}
-            {book.status === "published" && (
+            {canRead ? (
               <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
-                いま読む →
+                いま読む
               </Link>
+            ) : book.status === "reserved" || book.status === "writing" ? (
+              <Link className="btn btn--gold btn--block" href={`/writing/${book.id}`}>
+                執筆の様子を見る
+              </Link>
+            ) : (
+              <button className="btn btn--gold btn--block" disabled>
+                本文を準備中
+              </button>
             )}
             {persona && (
               <span className="btn btn--ghost btn--block" style={{ cursor: "default" }}>
-                ✦ {persona.name} を知る
+                {persona.name} を知る
               </span>
             )}
           </div>
           <div className="detail-meta-line">
-            状態：<b>{statusLabel(book.status)}</b>
+            状態: <b>{statusLabel(book.status, canRead)}</b>
             <br />
-            推定分量：<b>全{book.estimatedChapters}章・約{book.estimatedMinutes}分</b>
+            推定分量: <b>全{book.estimatedChapters}章・約{book.estimatedMinutes}分</b>
             <br />
-            装丁：<b>Imagen 生成</b>／企画：<b>編集会議 AI</b>
+            装丁: <b>Imagen 生成</b> / 企画: <b>編集会議 AI</b>
           </div>
         </div>
 
@@ -88,7 +77,7 @@ export default function BookDetailPage() {
           <div className="pitch-title">{book.title}</div>
           <div className="pitch-author">
             {persona?.name}
-            {persona && <span> ― {persona.title}／{persona.style}</span>}
+            {persona && <span> - {persona.title}・{persona.style}</span>}
           </div>
 
           {plan && (
@@ -115,7 +104,7 @@ export default function BookDetailPage() {
               <div>
                 <div className="eyebrow">Table of contents</div>
                 <div className="section-title">
-                  アジェンダ<span className="accent">（目次）</span>
+                  アジェンダ<span className="accent">・目次</span>
                 </div>
               </div>
             </div>
@@ -126,9 +115,9 @@ export default function BookDetailPage() {
             <div className="section" style={{ marginTop: 40 }}>
               <div className="section-head">
                 <div>
-                  <div className="eyebrow">A glimpse before you reserve</div>
+                  <div className="eyebrow">Opening pages</div>
                   <div className="section-title">
-                    序文の<span className="accent">サンプル</span>
+                    本文の<span className="accent">はじめに</span>
                   </div>
                 </div>
               </div>
@@ -140,13 +129,13 @@ export default function BookDetailPage() {
                   </p>
                 ))}
               </div>
-              {book.status === "draft" && (
+              {canRead && (
                 <div className="row gap12" style={{ marginTop: 24 }}>
-                  <button className="btn btn--gold" onClick={onReserve} disabled={busy}>
-                    続きを執筆依頼する →
-                  </button>
+                  <Link className="btn btn--gold" href={`/read/${book.id}`}>
+                    続きを読む
+                  </Link>
                   <span className="muted" style={{ fontSize: 12.5 }}>
-                    {persona?.name} が本文を書き始めます（明朝に入荷）
+                    {persona?.name} が本文まで書き上げた一冊です。
                   </span>
                 </div>
               )}
@@ -158,16 +147,15 @@ export default function BookDetailPage() {
   );
 }
 
-function statusLabel(status: string): string {
+function statusLabel(status: string, canRead: boolean): string {
+  if (canRead) return "入荷済み・読めます";
   switch (status) {
-    case "draft":
-      return "企画段階（本文は未執筆）";
     case "reserved":
-      return "執筆依頼中";
+      return "執筆待ち";
     case "writing":
       return "執筆中";
-    case "published":
-      return "入荷済み（読めます）";
+    case "draft":
+      return "本文準備中";
     default:
       return status;
   }

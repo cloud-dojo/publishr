@@ -127,13 +127,13 @@ def main() -> int:
             print(json.dumps(shelved, ensure_ascii=False, indent=2))
             return 0
         print(f"採用企画: {plan.tentative_title}")
-        print(f"\n📚 棚に並ぶ {len(shelved)} 冊（draft＋装丁）")
+        print(f"\n📚 棚に並ぶ {len(shelved)} 冊（legacy draft＋装丁）")
         for b in shelved:
             url = b.get("coverUrl")
             print(f"  ◆ {b['bookDraft']['title']}")
             print(f"      装丁: variant={b['coverVariant']} cover={'(Imagen) ' + url if url else '(CSS)'}")
         ok = len(shelved) >= 1 and all(b.get("coverVariant") for b in shelved)
-        print(f"\n判定: {'OK（棚に draft＋装丁）' if ok else 'WEAK'}")
+        print(f"\n判定: {'OK（legacy draft＋装丁）' if ok else 'WEAK'}")
         return 0 if ok else 1
 
     res = _run_mode_a_set(
@@ -147,7 +147,7 @@ def main() -> int:
 
     pv = res.planning.get("planSetVerdict") or {}
     print(f"セットゲート: {pv.get('decision')} （セット総合{pv.get('score')}・{res.planning.get('rounds')}R）")
-    print(f"\n📚 棚に並ぶ {len(res.books)} 冊（4テーマ・1-1-1-1・draft＋装丁）")
+    print(f"\n📚 棚に並ぶ {len(res.books)} 冊（4テーマ・1-1-1-1・本文生成前プレビュー）")
     for mb in res.books:
         bd = mb.shelved[0]["bookDraft"] if mb.shelved else {"title": "（無）"}
         author = mb.personas[0].name if mb.personas else "（無）"
@@ -155,7 +155,7 @@ def main() -> int:
         print(f"  ◆ [{mb.plan.theme_role}] {bd['title']}（著者: {author}）")
         print(f"      装丁: cover={'(Imagen) ' + url if url else '(CSS)'}")
     ok = len(res.books) == 4 and all(mb.shelved for mb in res.books)
-    print(f"\n判定: {'OK（4テーマ・4冊が棚に draft＋装丁）' if ok else 'WEAK'}")
+    print(f"\n判定: {'OK（4テーマ・4冊のプレビュー生成）' if ok else 'WEAK'}")
     return 0 if ok else 1
 
 

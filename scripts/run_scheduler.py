@@ -51,7 +51,7 @@ def _print_cycle(now: datetime, theme_kind: str, result) -> None:
         f"[{now.isoformat()}] 自律起動 themeKind={theme_kind} → セットゲート {pv.get('decision')}"
         f"（総合{pv.get('score')}・{result.planning.get('rounds')}R）"
     )
-    print(f"  棚に {len(result.books)} 冊（4テーマ・1-1-1-1・draft＋装丁）:")
+    print(f"  棚に {len(result.books)} 冊（4テーマ・1-1-1-1・本文生成前プレビュー）:")
     for mb in result.books:
         bd = mb.shelved[0]["bookDraft"] if mb.shelved else {"title": "（無題）"}
         author = mb.personas[0].name if mb.personas else "（著者なし）"

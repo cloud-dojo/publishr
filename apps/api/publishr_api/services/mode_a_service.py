@@ -1,8 +1,10 @@
 """モードA: 観測→読者→企画→キャスティング→プレビュー→装丁 を実行し arrivals へ永続する BFFサービス。
 
 旧 canned v1（`run_pipeline`）を置き換える本実装。LLM は `settings.publishr_llm`（既定 mock＝課金ゼロ・
-決定的）、観測は fixture（M2 縦通し優先・実Google接続は別経路）。成果は Book[arrivals/draft/ownerUid] と
-著者 Persona として repo に upsert し、企画会議の却下→採用を `reject_log` に載せた `PipelineResult` を返す。
+決定的）、観測は fixture（M2 縦通し優先・実Google接続は別経路）。成果は Book と著者 Persona として repo に
+upsert し、企画会議の却下→採用を `reject_log` に載せた `PipelineResult` を返す。
+予約制廃止改定（2026-06-23）: set_pipeline 経路は配本 run で全4冊を本文まで作り切って
+Book[arrivals/published/ownerUid] にする（予約不要・閲覧は直接可）。旧・単一テーマ経路は draft のまま。
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from typing import Any, Optional
 
 from publishr_agents import PipelineResult, RejectLogEntry
 from publishr_agents.mode_a import (
+    make_published_books,
     map_mode_a_set_to_books,
     run_mode_a_pipeline,
     run_mode_a_set_pipeline,
@@ -130,6 +133,10 @@ def run(
             threshold=70,
         )
         books, personas = map_mode_a_set_to_books(set_result, owner_uid=owner, created_at=created)
+        # 予約制廃止改定: 配本 run で全4冊を本文まで作り切って published にする（一気通貫・予約不要）。
+        books = make_published_books(
+            books, personas, llm=mode_llm, rounds=settings.body_edit_rounds
+        )
         persist_arrivals(repo, books, personas)
         return PipelineResult(
             books=books,

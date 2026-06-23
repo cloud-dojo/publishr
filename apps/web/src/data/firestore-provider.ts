@@ -108,12 +108,6 @@ export class FirestoreProvider extends BaseProvider {
     );
   }
 
-  // --- 予約: Cloud Run API（IDトークン付与）。状態遷移は Firestore 購読で受け取る ---
-  async reserve(id: string): Promise<void> {
-    await this.apiPost("/api/reserve", { bookId: id });
-    // status は books 購読で draft→reserved→writing→published と流れてくる（ポーリング不要）。
-  }
-
   // --- 簡易FB: Firestore 直書き（books/{id}.feedback） ---
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
     const book = this.books.get(id);

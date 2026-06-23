@@ -11,7 +11,11 @@ from datetime import datetime, timedelta, timezone
 
 from publishr_schema import Book, load_users
 
-from publishr_agents.mode_a import map_mode_a_set_to_books, run_mode_a_set_pipeline
+from publishr_agents.mode_a import (
+    make_published_books,
+    map_mode_a_set_to_books,
+    run_mode_a_set_pipeline,
+)
 from publishr_agents.observe import FixtureObservationSource
 from publishr_api.repositories.mock_repository import MockRepository
 from publishr_agents.persist_mapping import persist_arrivals
@@ -84,6 +88,32 @@ def test_set_persist_to_repo_idempotent():
     assert before == after  # 冪等（再upsertで増えない）
     arrival_ids = {b.id for b in repo.list_books(status="draft", shelf="arrivals")}
     assert {b.id for b in books} <= arrival_ids  # 投入した4冊が棚に居る
+
+
+# ── 本文生成・published 仕上げ ────────────────────────────────
+def test_make_published_books_all_published_with_body():
+    """予約制廃止改定: make_published_books が全4冊を本文付き published にする（一気通貫の仕上げ）。"""
+    res = _run()
+    books, personas = map_mode_a_set_to_books(res, owner_uid="u_x", created_at=NOW.isoformat())
+    # 変換直後はまだ draft（マッピング層は変更なし）。
+    assert all(b.status == "draft" for b in books)
+
+    published = make_published_books(books, personas, llm="mock", rounds=1)
+    assert len(published) == 4
+    for b in published:
+        assert b.status == "published", f"{b.id}: expected published"
+        assert b.body, f"{b.id}: body must be non-empty"
+        assert b.edit_round >= 1
+
+
+def test_make_published_books_idempotent():
+    """すでに published+body な本は素通しされる（冪等）。"""
+    res = _run()
+    books, personas = map_mode_a_set_to_books(res, owner_uid="u_x", created_at=NOW.isoformat())
+    first_pass = make_published_books(books, personas, llm="mock", rounds=1)
+    second_pass = make_published_books(first_pass, personas, llm="mock", rounds=1)
+    assert [b.id for b in first_pass] == [b.id for b in second_pass]
+    assert [b.body for b in first_pass] == [b.body for b in second_pass]
 
 
 # ── 決定性 ─────────────────────────────────────────────────
