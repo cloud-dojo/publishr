@@ -48,7 +48,7 @@ eval-gate:
 	uv run python -m scripts.eval_gate
 
 eval-gate-vertex:
-	uv run python -m scripts.eval_gate --backend vertex
+	uv run --with truststore python -m scripts.eval_gate --backend vertex
 
 eval-repro:
 	uv run python -m scripts.eval_reproducibility

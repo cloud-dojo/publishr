@@ -25,6 +25,7 @@ import argparse
 import json
 import math
 import os
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
@@ -298,6 +299,24 @@ def run_gate(eval_set: dict[str, Any], *, backend: str = "mock") -> dict[str, An
     }
 
 
+def _harden_windows_tls() -> None:
+    """企業TLS検査プロキシ下の Windows 機向け TLS 対策（memory: publishr-windows-vertex-ssl）。
+
+    1) SSLKEYLOGFILE を外す（OpenSSL native crash 回避）。2) truststore を注入（社内CAの厳格X.509拒否回避）。
+    実Vertex（google.genai HTTPS）を叩く --backend vertex 経路でのみ必要（mock は不要）。
+    """
+    os.environ.pop("SSLKEYLOGFILE", None)
+    try:
+        import truststore  # noqa: PLC0415
+
+        truststore.inject_into_ssl()
+    except ImportError:
+        sys.stderr.write(
+            "[注意] truststore 未インストール。社内プロキシ下では証明書検証に失敗する可能性。\n"
+            "        次で再実行: uv run --with truststore python -m scripts.eval_gate --backend vertex\n"
+        )
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="C5.3 Eval judge ゲート")
     parser.add_argument(
@@ -306,6 +325,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         choices=["mock", "vertex"],
     )
     args = parser.parse_args(argv)
+    if args.backend == "vertex":
+        _harden_windows_tls()  # Windows企業TLS回避（実Vertex呼び出し前・mockは不要）
 
     rep = run_gate(load_eval_set(), backend=args.backend)
     print(
