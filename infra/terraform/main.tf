@@ -234,23 +234,29 @@ resource "google_cloud_scheduler_job" "honmei" {
   }
 }
 
-# セレンディピティ（日 06:00）は trigger に themeKind param を足してから有効化（C1.7 残）。
-# resource "google_cloud_scheduler_job" "serendipity" {
-#   name      = "publishr-serendipity"
-#   region    = var.region
-#   schedule  = "0 6 * * 0"
-#   time_zone = "Asia/Tokyo"
-#   http_target {
-#     uri         = local.trigger_url
-#     http_method = "POST"
-#     headers     = { "Content-Type" = "application/json" }
-#     body        = base64encode(jsonencode({ userId = "u_sakura", themeKind = "serendipity" }))
-#     oidc_token {
-#       service_account_email = google_service_account.pubsub_push.email
-#       audience              = local.trigger_url
-#     }
-#   }
-# }
+# セレンディピティ＝日 06:00 JST。themeKind は API→worker→mode_a まで貫通済み（7f6ddae）なので有効化（C1.7）。
+# body の themeKind=serendipity が editor_chief_themes の serendipity 分岐を駆動する。
+resource "google_cloud_scheduler_job" "serendipity" {
+  name             = "publishr-serendipity"
+  region           = var.region
+  schedule         = "0 6 * * 0"
+  time_zone        = "Asia/Tokyo"
+  attempt_deadline = "300s"
+  depends_on       = [google_project_service.apis]
+
+  http_target {
+    uri         = local.trigger_url
+    http_method = "POST"
+    headers = {
+      "Content-Type" = "application/json"
+    }
+    body = base64encode(jsonencode({ userId = "u_sakura", themeKind = "serendipity" }))
+    oidc_token {
+      service_account_email = google_service_account.pubsub_push.email
+      audience              = local.trigger_url
+    }
+  }
+}
 
 # ───────────────────────── IAM ─────────────────────────
 # runner: Firestore 読み書き

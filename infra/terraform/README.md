@@ -9,7 +9,7 @@
 |---|---|---|
 | Cloud Run | `publishr-api` | BFF＋執筆ワーカー（`/api/worker/write`）＋自律トリガー（`/api/trigger/planning`） |
 | Pub/Sub | topic `publishr-writing` ＋ push sub `publishr-writing-push` | 予約→執筆ジョブ。push は OIDC で Cloud Run を叩く |
-| Cloud Scheduler | `publishr-honmei`（水/土 06:00 JST） | 自律入荷（C1.7）。OIDC で trigger を叩く |
+| Cloud Scheduler | `publishr-honmei`（水/土 06:00 JST）／`publishr-serendipity`（日 06:00 JST・`themeKind=serendipity`） | 自律入荷（C1.7）。OIDC で trigger を叩く |
 | Service Account | `publishr-runner` / `publishr-pubsub-push` | 実行用 / push・scheduler invoker |
 | Artifact Registry | `cloud-run-source-deploy` | `gcloud run deploy --source` の push 先 |
 | IAM | datastore.user・pubsub.publisher・aiplatform.user・run.invoker・tokenCreator | 上記を結ぶ最小権限 |
