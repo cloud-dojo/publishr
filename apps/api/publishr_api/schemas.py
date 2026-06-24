@@ -45,6 +45,7 @@ class ReserveInput(_Camel):
 
 class TriggerPlanningInput(_Camel):
     user_id: str = "u_sakura"
+    theme_kind: str = "honmei"
 
 
 class DriveFolderLabelInput(_Camel):

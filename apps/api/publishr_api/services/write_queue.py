@@ -25,7 +25,12 @@ def enqueue(repo: RepositoryProtocol, book_id: str) -> None:
 
 
 def enqueue_planning(
-    repo: RepositoryProtocol, *, user_id: str, owner_uid: str, observe_uid: str | None
+    repo: RepositoryProtocol,
+    *,
+    user_id: str,
+    owner_uid: str,
+    observe_uid: str | None,
+    theme_kind: str = "honmei",
 ) -> bool:
     """企画ジョブ（モードA）を投入する。pubsub なら publish して True（非同期・即返し）。
 
@@ -36,10 +41,12 @@ def enqueue_planning(
         from .pubsub_queue import publish_planning_job
 
         publish_planning_job(
-            {"userId": user_id, "owner": owner_uid, "observeUid": observe_uid or ""}
+            {"userId": user_id, "owner": owner_uid, "observeUid": observe_uid or "",
+             "themeKind": theme_kind}
         )
         return True
     from . import mode_a_service
 
-    mode_a_service.run(repo, user_id, owner_uid=owner_uid, observe_uid=observe_uid)
+    mode_a_service.run(repo, user_id, owner_uid=owner_uid, observe_uid=observe_uid,
+                       theme_kind=theme_kind)
     return False

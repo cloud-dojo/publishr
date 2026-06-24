@@ -203,7 +203,8 @@ def api_trigger_planning(
         # 生成本はフロントが Firestore 購読で受け取る。mock は in-process 即実行（決定的・オフライン）。
         # observe_uid=検証済み uid（実Google観測の per-uid トークン解決に使う）。
         queued = write_queue.enqueue_planning(
-            repo, user_id=user_id, owner_uid=owner, observe_uid=uid
+            repo, user_id=user_id, owner_uid=owner, observe_uid=uid,
+            theme_kind=payload.theme_kind,
         )
     finally:
         # 例外時もロックを解放（恒久 409 を防ぐ）。

@@ -79,6 +79,7 @@ def _planning_job_from_envelope(envelope: dict[str, Any]) -> dict[str, str] | No
         "user_id": str(user_id),
         "owner": str(payload.get("owner") or user_id),
         "observe_uid": str(payload.get("observeUid") or ""),
+        "theme_kind": str(payload.get("themeKind") or "honmei"),
     }
 
 
@@ -132,6 +133,7 @@ async def worker_plan(
             job["user_id"],
             owner_uid=job["owner"],
             observe_uid=job["observe_uid"] or None,
+            theme_kind=job["theme_kind"],
         )
     except Exception as exc:  # noqa: BLE001 — 再配信ストーム防止のため握って ack
         logger.exception("worker(plan): run failed, acking to avoid redelivery: %s", type(exc).__name__)
