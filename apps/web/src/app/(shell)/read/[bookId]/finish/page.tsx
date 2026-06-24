@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -12,14 +12,15 @@ import { useActions, useProvider } from "@/data/hooks";
 export default function FinishPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { sendFeedback, notifyFavoriteAuthor } = useActions();
+  const { sendFeedback, notifyFavoriteAuthor, saveToLibrary } = useActions();
+  // お気に入りは /authors と同じ正本ストア（localStorage＋Firestore favoriteAuthors）を読む。
   const favorites = useFavorites();
   const book = provider.getBook(params.bookId);
 
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
-  const [following, setFollowing] = useState(false);
-  const [impression, setImpression] = useState("");
+  const [impression, setImpression] = useState(book?.feedback.impression ?? "");
   const [saved, setSaved] = useState(false);
+  const [savedToLibrary, setSavedToLibrary] = useState(false);
 
   if (!book) {
     return (
@@ -31,17 +32,25 @@ export default function FinishPage() {
   }
 
   const persona = provider.getPersona(book.authorPersonaId);
-  const isFollowing = persona ? favorites.has(persona.id) || following : following;
+  const isFav = persona ? favorites.has(persona.id) : false;
+  // 書庫保存：移動済み(shelf=library) か、この画面で押した直後なら「保存済み」。一方向。
+  const inLibrary = book.shelf === "library" || savedToLibrary;
+
+  const onSaveToLibrary = () => {
+    if (inLibrary) return;
+    void saveToLibrary(book.id); // shelf=library に。入荷一覧から外れ、書庫に残る。
+    setSavedToLibrary(true);
+  };
 
   const onRate = (n: number) => {
     setRating(n);
     void sendFeedback(book.id, { rating: n, readPercent: 100 });
   };
   const onSaveImpression = () => {
-    // mock: 自由記入の感想をローカル保存（フェーズ3で Firestore 直書きに差し替え）。
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(`publishr.impression.${book.id}`, impression);
-    }
+    const text = impression.trim();
+    if (!text) return;
+    // 自由記述感想を Firestore に保存（feedback.impression・サーバ側で制御文字除去＋長さ制限）。
+    void sendFeedback(book.id, { impression: text });
     setSaved(true);
   };
 
@@ -69,22 +78,21 @@ export default function FinishPage() {
           <div className="pr-actions">
             <button
               type="button"
-              className={isFollowing ? "btn btn--gold" : "btn btn--ghost"}
+              className={isFav ? "btn btn--gold" : "btn btn--ghost"}
               onClick={() => {
                 if (!persona) return;
-                const next = !isFollowing;
+                const wasFav = favorites.has(persona.id);
+                // 正本ストアへ登録/解除（/authors の★と一致・Firestore favoriteAuthors にも反映）。
                 toggleFavorite({
                   personaId: persona.id,
                   name: persona.name,
-                  voiceStyle: persona.voiceStyle || persona.persona.styleNote || persona.style,
-                  format: persona.format || persona.title || "",
                   savedAt: new Date().toISOString(),
                 });
-                if (next) notifyFavoriteAuthor(persona.id, persona.name, book.id);
-                setFollowing(next);
+                // 新規登録時のみ通知を出す（解除時は出さない）。
+                if (!wasFav) notifyFavoriteAuthor(persona.id, persona.name, book.id);
               }}
             >
-              {following ? "♥ お気に入りの作家に登録済み" : `♡ ${persona?.name} をお気に入りに`}
+              {isFav ? "♥ お気に入りの作家に登録済み" : `♡ ${persona?.name} をお気に入りに`}
             </button>
           </div>
         </div>
@@ -123,7 +131,7 @@ export default function FinishPage() {
           </div>
         </div>
 
-        {isFollowing && persona && (
+        {isFav && persona && (
           <div className="sequel">
             <div style={{ fontSize: 26 }}>✦</div>
             <div style={{ flex: 1 }}>
@@ -131,6 +139,26 @@ export default function FinishPage() {
               <div className="sq-d">
                 あなたがお気に入り登録した {persona.name} は、次回作を検討しています。新しい一冊が入荷した際はご案内します。
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 書庫に保存：読了したこの本を蔵書に残す導線。押さないと28日で入荷から落ち書庫にも
+            入らない（curation型・手動キュレーション）。移動は一方向。 */}
+        {book.status === "published" && (
+          <div className="panel" style={{ textAlign: "center" }}>
+            <button
+              type="button"
+              className={inLibrary ? "btn btn--gold btn--block" : "btn btn--ghost btn--block"}
+              onClick={onSaveToLibrary}
+              disabled={inLibrary}
+            >
+              {inLibrary ? "📚 書庫に保存しました" : "📚 この本を書庫に保存する"}
+            </button>
+            <div className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
+              {inLibrary
+                ? "「わたしの書庫」からいつでも読み返せます。"
+                : "保存すると「わたしの書庫」に残ります。しなければ入荷一覧から自然に消えます。"}
             </div>
           </div>
         )}

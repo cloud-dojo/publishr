@@ -1,0 +1,62 @@
+name: Prompt Eval (real judge)
+
+# 実 Gemini Pro judge で「企画プロンプト」の品質を採点するゲート（C5.3 の vertex 版）。
+# 毎push では回さない＝プロンプト/評価/企画ロジックを変えた PR・push のときだけ走る
+# （on.*.paths で限定）。手動 dispatch でも実行可。コストは「プロンプトをいじった時」に限定される。
+#
+# 認証: WIF keyless で CI SA(publishr-ci-deployer)を借りる。**この SA に roles/aiplatform.user が必要**
+#   （未付与だと Vertex 403 で失敗）。付与コマンドは docs/infra/prod-live-followups.md 参照。
+# 判定: eval_set 8件を実 judge で採点し 7/8 で PASS（scripts/eval_gate.py）。現状スコアは
+#   high=88〜94 / low=8〜20 と余裕があり、LLM のばらつき(±数点)では合否は揺れない想定。
+
+on:
+  pull_request:
+    paths:
+      - "packages/prompts/**"
+      - "eval/**"
+      - "agents/publishr_agents/planning/**"
+      - "scripts/eval_gate.py"
+      - ".github/workflows/prompt-eval.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/prompts/**"
+      - "eval/**"
+      - "agents/publishr_agents/planning/**"
+      - "scripts/eval_gate.py"
+  workflow_dispatch: {}
+
+jobs:
+  prompt-eval:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GOOGLE_CLOUD_PROJECT: publishr-498123
+      GOOGLE_CLOUD_LOCATION: us-central1 # Pro クォータのある region（asia-northeast1 は 429 回避）
+      GOOGLE_GENAI_USE_VERTEXAI: "TRUE"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv (Python 3.12)
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install Python deps
+        run: make setup-py
+
+      - name: Auth to GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: publishr-498123
+          workload_identity_provider: projects/355143691286/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: publishr-ci-deployer@publishr-498123.iam.gserviceaccount.com
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Eval judge gate (real Gemini Pro · cases 7/8)
+        run: make eval-gate-vertex

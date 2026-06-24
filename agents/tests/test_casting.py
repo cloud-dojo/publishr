@@ -6,9 +6,9 @@
 
 from __future__ import annotations
 
-from publishr_schema import AuthorCasting, GeneratedPersonaSet, PlanProposal
+from publishr_schema import AuthorCasting, GeneratedPersona, GeneratedPersonaSet, PlanProposal
 
-from publishr_agents.casting import cast_author, cast_personas
+from publishr_agents.casting import cast_author, cast_personas, reconcile_favorite_ids
 from publishr_agents.casting.deterministic import (
     cast_author_deterministic,
     cast_personas_deterministic,
@@ -136,3 +136,75 @@ def test_author_casting_deterministic_and_dispatcher(monkeypatch):
     assert a.model_dump(by_alias=True) == b.model_dump(by_alias=True)  # 決定的
     monkeypatch.delenv("PUBLISHR_LLM", raising=False)
     assert isinstance(cast_author(_plan()), AuthorCasting)  # dispatcher 既定 mock
+
+
+# ── お気に入りID整合（reconcile_favorite_ids・cross-run 継続のかなめ） ──────────
+def _vertex_like_set(fav_slot: dict) -> GeneratedPersonaSet:
+    """vertex の LLM 出力を模す: from_favorite を立てつつ personaId は新規生成(p1..)。"""
+    base = [
+        GeneratedPersona(
+            persona_id=f"p{i}", name=f"生成{i}", voice_style="v", format="f",
+            persona="x", expertise=["e"], from_favorite=False, ephemeral=True,
+        )
+        for i in range(1, 6)
+    ]
+    base[0] = GeneratedPersona(
+        persona_id=fav_slot["persona_id"], name=fav_slot["name"], voice_style="v",
+        format="f", persona="x", expertise=["e"], from_favorite=True, ephemeral=True,
+    )
+    return GeneratedPersonaSet(plan_id="pl", theme_kind="honmei", personas=base, reason="r")
+
+
+def test_reconcile_stamps_registered_favorite_id_over_llm_generated():
+    """登録IDが run-unique でも、from_favorite 枠の personaId をそれへ固定する（★継続のかなめ）。"""
+    pset = _vertex_like_set({"persona_id": "p1", "name": "推し 作家"})
+    favs = [{"personaId": "arr20260617_p3", "name": "推し 作家", "savedAt": "t"}]
+    out = reconcile_favorite_ids(pset, favs)
+    fav = next(p for p in out.personas if p.from_favorite)
+    assert fav.persona_id == "arr20260617_p3"  # front の favorites.has(id) と一致する
+    assert fav.name == "推し 作家"
+    assert len(out.personas) == 5
+
+
+def test_reconcile_matches_by_order_when_name_differs():
+    """LLM が名前を変えても、登録順で personaId を割り当てて拾う。"""
+    pset = _vertex_like_set({"persona_id": "p1", "name": "別名にされた"})
+    favs = [{"personaId": "favX", "name": "本来の名"}]
+    out = reconcile_favorite_ids(pset, favs)
+    fav = next(p for p in out.personas if p.from_favorite)
+    assert fav.persona_id == "favX"
+    assert fav.name == "本来の名"
+
+
+def test_reconcile_demotes_unbacked_favorite_to_normal():
+    """お気に入りが無いのに from_favorite が立った枠は通常枠へ降格（安定IDを誤付与しない）。"""
+    pset = _vertex_like_set({"persona_id": "p1", "name": "幻のお気に入り"})
+    out = reconcile_favorite_ids(pset, [])
+    assert all(p.from_favorite is False for p in out.personas)
+
+
+def test_reconcile_is_noop_without_favorite_slots():
+    pset = cast_personas_deterministic(_plan(), favorite_authors=[])
+    out = reconcile_favorite_ids(pset, [])
+    assert out.model_dump(by_alias=True) == pset.model_dump(by_alias=True)
+
+
+def test_reconcile_does_not_mutate_input():
+    pset = _vertex_like_set({"persona_id": "p1", "name": "推し"})
+    favs = [{"personaId": "favY", "name": "推し"}]
+    reconcile_favorite_ids(pset, favs)
+    assert pset.personas[0].persona_id == "p1"  # 入力は不変
+
+
+def test_cast_personas_vertex_path_fixes_favorite_id(monkeypatch):
+    """dispatcher 経由でも（vertex を模した結果に）reconcile が掛かりIDが固定される。"""
+    fake = _vertex_like_set({"persona_id": "p1", "name": "推し 作家"})
+    monkeypatch.setenv("PUBLISHR_LLM", "vertex")
+    monkeypatch.setattr(
+        "publishr_agents.casting.vertex_agent.cast_personas_vertex",
+        lambda *a, **k: fake,
+    )
+    favs = [{"personaId": "arr20260617_p3", "name": "推し 作家"}]
+    out = cast_personas(_plan(), favorite_authors=favs)
+    fav = next(p for p in out.personas if p.from_favorite)
+    assert fav.persona_id == "arr20260617_p3"

@@ -103,7 +103,12 @@ export class MockProvider extends BaseProvider {
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
     const book = this.books.get(id);
     if (!book) return;
-    this.books.set(id, { ...book, feedback: { ...book.feedback, ...feedback } });
+    // 読了率の更新時に「最後に読んだ時刻」を刻む（「最近読んだ本」の並び順）。
+    const stamped: FeedbackInput =
+      feedback.readPercent !== undefined
+        ? { ...feedback, lastReadAt: new Date().toISOString() }
+        : feedback;
+    this.books.set(id, { ...book, feedback: { ...book.feedback, ...stamped } });
     this.notify();
   }
 

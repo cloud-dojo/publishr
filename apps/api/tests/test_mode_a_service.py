@@ -12,7 +12,8 @@ from publishr_api.repositories.mock_repository import MockRepository
 from publishr_api.services import mode_a_service
 
 
-def test_run_persists_arrivals_and_returns_reject_log():
+def test_run_writes_books_published_with_body_and_returns_reject_log():
+    """企画したら本文まで自動執筆（mock は同期）＝ books は published＋body 付きで入荷される。"""
     repo = MockRepository()
     result = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
 
@@ -20,11 +21,14 @@ def test_run_persists_arrivals_and_returns_reject_log():
     for book in result.books:
         b = book.model_dump(by_alias=True)
         assert b["shelf"] == "arrivals"
+        assert b["status"] == "published"  # 自動執筆で draft→published
+        assert b["body"]  # 本文が書かれている（手動予約なし）
         assert b["ownerUid"] == "uid_demo"
 
-    # 永続（冪等 upsert）されている＝ get_book で引ける。
+    # 永続（冪等 upsert）されている＝ get_book で published・body 付きで引ける。
     first = result.books[0]
-    assert repo.get_book(first.id).id == first.id
+    persisted = repo.get_book(first.id)
+    assert persisted.id == first.id and persisted.status == "published" and persisted.body
 
     # 採用企画ID と本の planId が整合。
     assert result.approved_plan_ids
@@ -87,3 +91,99 @@ def test_run_legacy_flag_falls_back_to_single_theme(monkeypatch):
     result = mode_a_service.run(MockRepository(), "u_sakura", owner_uid="uid_demo")
     assert len(result.approved_plan_ids) == 1           # 旧経路＝単一企画
     assert all(b.model_dump(by_alias=True)["shelf"] == "arrivals" for b in result.books)
+
+
+def test_autowrite_failure_degrades_to_draft(monkeypatch):
+    """自動執筆の投入失敗（cap 超過等）は握って draft のまま＝企画全体は成功する（旧単一テーマ経路）。"""
+    from publishr_api.errors import ConflictError
+    from publishr_api.services import reservation_service
+
+    monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)
+
+    def boom(*args, **kwargs):
+        raise ConflictError("同時予約上限")
+
+    monkeypatch.setattr(reservation_service, "reserve_now", boom)
+    repo = MockRepository()
+    result = mode_a_service.run(repo, "u_sakura", owner_uid="u")
+    assert len(result.books) >= 1  # 企画自体は成功
+    assert repo.get_book(result.books[0].id).status == "draft"  # 執筆未投入＝draft 据え置き
+
+
+# --- C1.1: 観測ソースの選択（実Google ⇄ fixture フォールバック）-------------------
+
+from publishr_schema import ConnectedSources, DriveConnection, User, load_users  # noqa: E402
+
+
+def _user_with_drive(folder_ids: list[str]) -> User:
+    base = next(u for u in load_users() if u.id == "u_sakura")
+    cs = ConnectedSources(drive=DriveConnection(enabled=True, folder_ids=folder_ids))
+    return base.model_copy(update={"connected_sources": cs})
+
+
+def _user_no_sources() -> User:
+    base = next(u for u in load_users() if u.id == "u_sakura")
+    return base.model_copy(update={"connected_sources": None})
+
+
+def test_source_is_fixture_by_default(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "fixture")
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), "uid1")
+    assert type(src).__name__ == "FixtureObservationSource"  # 既定は常に fixture（mock不変）
+
+
+def test_source_is_google_when_connected_with_token(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    monkeypatch.setattr(mode_a_service, "_google_credentials", lambda uid: object())
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), "uid1")
+    assert type(src).__name__ == "GoogleObservationSource"
+
+
+def test_source_falls_back_to_fixture_without_token(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    monkeypatch.setattr(mode_a_service, "_google_credentials", lambda uid: None)  # 連携トークン無し
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), "uid1")
+    assert type(src).__name__ == "FixtureObservationSource"
+
+
+def test_source_falls_back_to_fixture_when_not_connected(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    monkeypatch.setattr(mode_a_service, "_google_credentials", lambda uid: object())
+    src = mode_a_service._observation_source(_user_no_sources(), "uid1")
+    assert type(src).__name__ == "FixtureObservationSource"  # 未接続→fixture
+
+
+def test_source_falls_back_when_no_observe_uid(monkeypatch):
+    from publishr_api import config
+
+    monkeypatch.setattr(config.settings, "observe", "google")
+    src = mode_a_service._observation_source(_user_with_drive(["f1"]), None)
+    assert type(src).__name__ == "FixtureObservationSource"  # uid 無し→fixture
+
+
+def test_run_emits_langfuse_pipeline_trace(monkeypatch):
+    """企画 run が Langfuse の trace_pipeline を planning_rounds（差し戻し→採用の証跡）付きで呼ぶ（旧単一テーマ経路）。"""
+    import publishr_agents.observability as obs
+
+    monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)
+
+    captured: dict = {}
+
+    def fake_trace(payload, **_kw):
+        captured["payload"] = payload
+        return "sent"
+
+    monkeypatch.setattr(obs, "trace_pipeline", fake_trace)
+    mode_a_service.run(MockRepository(), "u_sakura", owner_uid="u")
+    assert "payload" in captured  # 計装が結線されている
+    p = captured["payload"]
+    assert p["approved"] is True
+    assert isinstance(p["planning_rounds"], list) and len(p["planning_rounds"]) >= 1

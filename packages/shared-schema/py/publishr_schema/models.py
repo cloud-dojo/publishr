@@ -232,6 +232,8 @@ class Feedback(_Base):
     rating: Optional[int] = None
     wants_sequel: bool = False
     reading_reaction: Optional[str] = None
+    last_read_at: Optional[str] = None  # 最後に読んだ時刻(ISO8601)。「最近読んだ本」の並び順に使う
+    impression: Optional[str] = None  # 読了時の自由記述感想（untrusted。学習ループ利用時は要正規化）
 
 
 class ReadingAnnotation(_Base):

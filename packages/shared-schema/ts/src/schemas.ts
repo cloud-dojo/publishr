@@ -174,6 +174,8 @@ export const feedbackSchema = z.object({
   rating: z.number().nullable(),
   wantsSequel: z.boolean(),
   readingReaction: z.string().nullish(),
+  lastReadAt: z.string().nullish(), // 最後に読んだ時刻(ISO8601)
+  impression: z.string().nullish(), // 読了時の自由記述感想
 });
 
 export const readingAnnotationSchema = z.object({

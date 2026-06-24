@@ -28,3 +28,15 @@ def publish_write_job(book_id: str) -> str:
     data = json.dumps({"bookId": book_id}).encode("utf-8")
     future = publisher.publish(topic, data)
     return future.result(timeout=10)
+
+
+def publish_planning_job(payload: dict) -> str:
+    """企画ジョブ（{userId, owner, observeUid}）を企画トピックへ publish。messageId を返す。"""
+    from google.cloud import pubsub_v1  # noqa: PLC0415
+
+    publisher = pubsub_v1.PublisherClient()
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "publishr-498123")
+    topic = pubsub_v1.PublisherClient.topic_path(project, settings.pubsub_planning_topic)
+    data = json.dumps(payload).encode("utf-8")
+    future = publisher.publish(topic, data)
+    return future.result(timeout=10)

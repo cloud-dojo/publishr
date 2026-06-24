@@ -11,6 +11,7 @@ from typing import Any, Optional
 from publishr_schema import AuthorCasting, GeneratedPersonaSet, PlanProposal, ReaderProfile3Layer
 
 from .deterministic import cast_author_deterministic, cast_personas_deterministic
+from .favorites import reconcile_favorite_ids
 
 
 def cast_personas(
@@ -20,19 +21,25 @@ def cast_personas(
     favorite_authors: Optional[list[dict[str, Any]]] = None,
     llm: Optional[str] = None,
 ) -> GeneratedPersonaSet:
-    """STEP3 の入口。llm 未指定なら PUBLISHR_LLM で解決（mock=決定的 / vertex=実Pro）。"""
+    """STEP3 の入口。llm 未指定なら PUBLISHR_LLM で解決（mock=決定的 / vertex=実Pro）。
+
+    backend に関わらず最後に reconcile_favorite_ids で from_favorite 枠のIDを登録済み
+    お気に入りへ固定する（vertex の LLM が personaId を新規生成しても★継続が成立する）。
+    """
     mode = (llm or os.environ.get("PUBLISHR_LLM", "mock")).lower()
     if mode == "mock":
-        return cast_personas_deterministic(
+        result = cast_personas_deterministic(
             plan, reader_profile=reader_profile, favorite_authors=favorite_authors
         )
-    if mode == "vertex":
+    elif mode == "vertex":
         from .vertex_agent import cast_personas_vertex
 
-        return cast_personas_vertex(
+        result = cast_personas_vertex(
             plan, reader_profile=reader_profile, favorite_authors=favorite_authors
         )
-    raise ValueError(f"unknown PUBLISHR_LLM={mode!r}")
+    else:
+        raise ValueError(f"unknown PUBLISHR_LLM={mode!r}")
+    return reconcile_favorite_ids(result, favorite_authors)
 
 
 def cast_author(
@@ -69,4 +76,5 @@ __all__ = [
     "cast_personas_deterministic",
     "cast_author",
     "cast_author_deterministic",
+    "reconcile_favorite_ids",
 ]

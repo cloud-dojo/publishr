@@ -129,6 +129,18 @@ def test_loads_judge_response_rejects_empty():
             eval_gate._loads_judge_response(bad)
 
 
+def test_judge_user_content_serializes_dates():
+    """eval_set.yaml の readerProfile は YAML date を含む＝default=str で JSON 化できる。"""
+    import datetime
+
+    content = eval_gate._judge_user_content(
+        {"title": "x", "due": datetime.date(2026, 6, 5)},
+        {"currentWork": {"reportDate": datetime.date(2026, 6, 5)}},
+    )
+    assert "2026-06-05" in content  # date が文字列化されている
+    assert "読者プロファイル" in content and "PlanProposal" in content
+
+
 def test_vertex_backend_dispatches_to_vertex_judge(monkeypatch):
     """backend=vertex は judge_plan_vertex に委譲し reader_profile を渡す（実呼び出しはしない）。"""
     seen: dict[str, object] = {}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import type { Book } from "@publishr/shared-schema";
@@ -6,7 +6,6 @@ import type { Book } from "@publishr/shared-schema";
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { useActions, useProvider } from "@/data/hooks";
-import { isArchivedBook } from "@/lib/arrival";
 
 export default function LibraryPage() {
   const provider = useProvider();
@@ -14,12 +13,15 @@ export default function LibraryPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
+  // 書庫＝ユーザーが「書庫へ移動」した本だけのキュレーション集（shelf==="library"）。
+  // 入荷(arrivals/odd)は直近28日の新着ビュー。移動しないと28日で入荷から落ち、書庫にも入らない
+  // （検索からは到達可）。新しい順。
   const library = provider
     .listBooks()
-    .filter((b) => isArchivedBook(b) && !b.feedback.dropped);
-
+    .filter((b) => b.status === "published" && b.shelf === "library")
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   const handleRemove = async (book: Book) => {
-    if (!window.confirm(`『${book.title}』を書庫から外しますか？`)) return;
+    if (!window.confirm(「\」を書庫から外しますか？)) return;
     setRemovingId(book.id);
     try {
       await removeFromLibrary(book.id);
@@ -33,7 +35,7 @@ export default function LibraryPage() {
       <Topbar
         greeting={
           <>
-            <b>わたしの書庫</b>　― これまでに届いた、あなたのための本。
+            <b>わたしの書庫</b>　― あなたが書庫に集めた、お気に入りの蔵書。
           </>
         }
       />
@@ -47,7 +49,7 @@ export default function LibraryPage() {
 
       <section className="page section">
         <div className="book-grid">
-          {library.map((b) => (
+                    {library.map((b) => (
             <div key={b.id} className="library-book">
               <BookCard book={b} authorName={authorName(b)} />
               <button
@@ -61,7 +63,11 @@ export default function LibraryPage() {
             </div>
           ))}
           {library.length === 0 && (
-            <div className="muted">{provider.ready ? "まだ蔵書がありません。" : "読み込み中…"}</div>
+            <div className="muted">
+              {provider.ready
+                ? "まだ蔵書がありません。入荷で気に入った本を「📚 書庫へ移動」すると、ここに集まります。"
+                : "読み込み中…"}
+            </div>
           )}
         </div>
       </section>

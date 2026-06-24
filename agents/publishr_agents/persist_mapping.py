@@ -7,6 +7,7 @@ ownerUid付き）＋ Persona（生成著者）へ変換する。永続化（upse
 
 from __future__ import annotations
 
+import re
 from typing import Any, Optional, Protocol
 
 from publishr_schema import (
@@ -18,9 +19,27 @@ from publishr_schema import (
     PlanProposal,
 )
 
-# 既存 b_* / _sakura と衝突しない入荷本の接頭辞（personaId 単位で冪等上書き）。
+# 既存 b_* / _sakura と衝突しない入荷本の接頭辞。run トークン（入荷時刻）を挟んで
+# **run ごとにユニーク**にする（arr_<YYYYMMDDHHMMSS>_<personaId>）＝自律入荷を重ねても
+# 過去の本を上書きせず書庫に積み上がる。著者IDにも同じトークンを付け、本→著者の参照を保つ。
 _BOOK_ID_PREFIX = "arr_"
 _MINUTES_PER_CHAPTER = 8
+
+
+def _run_token(created_at: str) -> str:
+    """入荷時刻(ISO)から ID 用の run トークン（YYYYMMDDHHMMSS）。空なら "0"。"""
+    digits = re.sub(r"\D", "", created_at or "")
+    return digits[:14] if digits else "0"
+
+
+def _persona_uid(gp: GeneratedPersona, run_token: str) -> str:
+    """著者IDの安定化方針。
+    - お気に入り再登板（from_favorite）＝run をまたいで **同一ID** を保つ。casting が
+      `persona_id` に登録時のお気に入りIDをそのまま入れるので、run-token を付けずに維持すれば
+      毎runの再登板でも `favorites.has(id)` が一致し「お気に入り作家が書き続ける」が成立する。
+    - それ以外＝run ごとユニーク（書庫に積み上げ・上書きしない）。
+    """
+    return gp.persona_id if gp.from_favorite else f"{run_token}_{gp.persona_id}"
 
 
 def _agenda(raw: list[dict[str, Any]]) -> list[AgendaItem]:
@@ -30,15 +49,20 @@ def _agenda(raw: list[dict[str, Any]]) -> list[AgendaItem]:
     ]
 
 
-def _book(plan_id: str, theme_kind: str, owner_uid: str, entry: dict[str, Any], created_at: str) -> Book:
+def _book(
+    plan_id: str, theme_kind: str, owner_uid: str, entry: dict[str, Any], created_at: str,
+    run_token: str, author_uid: str,
+) -> Book:
     bd = entry.get("bookDraft", {})
     agenda = _agenda(bd.get("agenda", []))
     persona_id = entry.get("personaId", "")
     return Book(
-        id=f"{_BOOK_ID_PREFIX}{persona_id}",
+        # 本IDは run ごとユニーク＝積み上げ（お気に入り著者でも毎runの本は別冊）。
+        id=f"{_BOOK_ID_PREFIX}{run_token}_{persona_id}",
         plan_id=plan_id,
         status="draft",
-        author_persona_id=persona_id,
+        # 著者参照はお気に入りなら安定ID（run またぎで同一）・それ以外は run-unique。
+        author_persona_id=author_uid,
         title=bd.get("title", "（無題）"),
         subtitle=bd.get("subtitle", ""),
         cover_variant=entry.get("coverVariant", "b1"),
@@ -57,11 +81,11 @@ def _book(plan_id: str, theme_kind: str, owner_uid: str, entry: dict[str, Any], 
     )
 
 
-def _persona(gp: GeneratedPersona) -> Persona:
+def _persona(gp: GeneratedPersona, run_token: str) -> Persona:
     desc = gp.persona or ""
     monogram = gp.name.strip()[:1] if gp.name.strip() else "著"
     return Persona(
-        id=gp.persona_id,
+        id=_persona_uid(gp, run_token),  # 本の author_persona_id と一致（お気に入りは安定ID）
         name=gp.name,
         name_reading="",
         monogram=monogram,
@@ -98,11 +122,21 @@ def map_mode_a_to_books(
     """
     pid = plan_id or plan.proposal_id or "plan_arrivals"
     theme_kind = str(plan.theme_kind or "honmei")
-
-    books = [_book(pid, theme_kind, owner_uid, e, created_at) for e in shelved]
+    token = _run_token(created_at)  # run ごとに本/著者IDをユニーク化＝書庫に積み上げ（上書きしない）
 
     by_id = {p.persona_id: p for p in personas}
-    out_personas = [_persona(by_id[i]) for i in (e.get("personaId") for e in shelved) if i in by_id]
+
+    def _author_uid(entry: dict[str, Any]) -> str:
+        # 本の著者ID。お気に入り再登板は安定ID・それ以外は run-unique（persona と一致させる）。
+        gp = by_id.get(entry.get("personaId", ""))
+        return _persona_uid(gp, token) if gp is not None else f"{token}_{entry.get('personaId', '')}"
+
+    books = [
+        _book(pid, theme_kind, owner_uid, e, created_at, token, _author_uid(e)) for e in shelved
+    ]
+    out_personas = [
+        _persona(by_id[i], token) for i in (e.get("personaId") for e in shelved) if i in by_id
+    ]
     # 重複著者は1人に（personaId 単位）。
     seen: set[str] = set()
     deduped: list[Persona] = []

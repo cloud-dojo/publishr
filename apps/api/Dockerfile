@@ -20,11 +20,15 @@ COPY packages/prompts                packages/prompts
 COPY agents                          agents
 COPY apps/api                        apps/api
 
-# pip で依存順にインストール（publishr-schema → publishr-agents → publishr-api）
+# pip で依存順にインストール（publishr-schema → publishr-agents → publishr-api）。
+# 本番の任意機能は extra で同梱:
+#  - agents[google] = 実Google連携（観測の Drive/Calendar/Tasks ＋ OAuth code 交換 google-auth-oauthlib
+#    ＋ Office本文抽出）。DATA_SOURCE=firestore＋C4.1 OAuth callback に必須。
+#  - apps/api[gcs,secret-manager] = 本文GCSオフロード(C3.3)・OAuthトークン保存(C4.1)。
 RUN pip install --no-cache-dir \
     ./packages/shared-schema/py \
-    ./agents \
-    ./apps/api
+    "./agents[google]" \
+    "./apps/api[gcs,secret-manager]"
 
 # publishr_schema.loader は repo レイアウト基準で fixtures を探す。pip install 後は
 # その相対パスが壊れるため、コンテナ内の COPY 先を明示する（これが無いと起動時 500）。

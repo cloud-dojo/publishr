@@ -37,11 +37,13 @@ def run_mode_a_pipeline(
     theme_kind: str = "honmei",
     threshold: int = 70,
     limit: Optional[int] = None,
+    past_books: Optional[list[Book]] = None,
 ) -> ModeAResult:
     """観測→読者→企画→キャスティング→プレビュー→装丁 を一気通貫で回す。
 
     source は ObservationSource（FixtureObservationSource / GoogleObservationSource）。
     各 *_llm は "mock" | "vertex"。limit はプレビューで生成する冊数（コスト制御）。
+    past_books＝ユーザの過去公開本（C1.8 学習ループ＝反応/選択を読者分析に反映・無ければ no-op）。
     """
     from .casting import cast_personas
     from .cover import design_covers
@@ -51,7 +53,7 @@ def run_mode_a_pipeline(
     from .reader import analyze_reader
 
     bundle = collect_observation(user, now=now, source=source)
-    profile = analyze_reader(bundle, user=user, llm=reader_llm)
+    profile = analyze_reader(bundle, user=user, past_books=past_books, llm=reader_llm)
     planning = run_planning(
         profile, theme=theme, theme_kind=theme_kind, threshold=threshold, llm=llm
     )

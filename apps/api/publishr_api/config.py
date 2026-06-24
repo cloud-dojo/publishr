@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     # mock = インメモリ(MVP) / firestore = 実Firestore(将来)
     data_source: str = "mock"
+    # 観測ソース: fixture（既定・佐倉のキャンド観測＝決定的） / google（実Drive/Calendar/Tasks）。
+    # google でも、ユーザー未接続・トークン無し・取得失敗時は fixture へ自動フォールバック（C1.1）。
+    observe: str = Field(default="fixture", validation_alias="PUBLISHR_OBSERVE")
     # mock = 決定的キャンド(MVP) / vertex = Vertex Gemini(将来)
     publishr_llm: str = "mock"
     # プロンプトの few-shot 注入: on(既定) / off(dev コスト節約)。採点系は常時ON固定（render.py）。
@@ -46,6 +49,14 @@ class Settings(BaseSettings):
     # Pub/Sub push の OIDC 検証用（worker endpoint の audience＝自URL・許可する push SA email）。
     pubsub_push_audience: str = Field(default="", validation_alias="PUBSUB_PUSH_AUDIENCE")
     pubsub_push_sa: str = Field(default="", validation_alias="PUBSUB_PUSH_SA")
+    # 企画(モードA)の非同期キュー（重い実Vertex企画を /trigger/planning から切り離す）。
+    pubsub_planning_topic: str = Field(
+        default="publishr-planning", validation_alias="PUBSUB_PLANNING_TOPIC"
+    )
+    # 企画 worker（/api/worker/plan）push の OIDC audience（＝その push_endpoint URL）。
+    pubsub_plan_push_audience: str = Field(
+        default="", validation_alias="PUBSUB_PLAN_PUSH_AUDIENCE"
+    )
 
     # 予約後の状態遷移タイマー（秒）。デモ用に短く。
     reserve_to_writing_sec: float = 2.0
@@ -100,6 +111,24 @@ class Settings(BaseSettings):
     # secret_manager 利用時の GCP プロジェクト。
     secret_manager_project: str = Field(
         default="", validation_alias="PUBLISHR_SECRET_MANAGER_PROJECT"
+    )
+
+    # ── モードB本文(body)の保存先（C3.3・GCSオフロード）─────────────────────────
+    # inline（既定）= body を books ドキュメントにそのまま持つ（mock/dev・課金ゼロ・従来挙動）。
+    # gcs = 本文を非公開バケットへ退避し、ドキュメントには bodyUrl だけ残す（本番・実GCP）。
+    body_store: str = Field(default="inline", validation_alias="PUBLISHR_BODY_STORE")
+    # gcs 退避先（非公開バケット・docs/infra/gcp-setup-log.md）。
+    body_bucket: str = Field(
+        default="publishr-contents-498123", validation_alias="PUBLISHR_BODY_BUCKET"
+    )
+    # 直接ダウンロード用 署名URL の有効秒（既定15分・通常はサーバ側readで本文を返す）。
+    body_signed_url_ttl_sec: int = Field(
+        default=900, validation_alias="PUBLISHR_BODY_SIGNED_URL_TTL_SEC"
+    )
+    # 表紙画像(Imagen)の退避先 GCS バケット（本文と同バケット・prefix covers/）。空なら
+    # cover 配信エンドポイントは無効（GCS read 不可）。本文と同方針＝非公開・サーバ側 read。
+    cover_bucket: str = Field(
+        default="publishr-contents-498123", validation_alias="PUBLISHR_COVER_BUCKET"
     )
 
 

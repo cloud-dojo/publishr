@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import type { Book } from "@publishr/shared-schema";
@@ -15,7 +15,7 @@ import {
   type FirstRunStatus,
 } from "@/data/user-writes";
 import { watchAuth } from "@/lib/firebase";
-import { arrivalLabel, isVisibleArrival } from "@/lib/arrival";
+import { ARRIVAL_WINDOW_DAYS, arrivalHeroLabel, isWithinDays } from "@/lib/arrival";
 
 export default function HomePage() {
   const provider = useProvider();
@@ -26,28 +26,45 @@ export default function HomePage() {
     setAuthDisplayName(u?.displayName ?? null);
     setUid(u?.uid ?? null);
   }), []);
+  // 時刻に応じた挨拶（夜に「おはよう」を出さない）。SSR/初期は中立の「こんにちは」にして、
+  // マウント後にブラウザのローカル時刻で確定＝ハイドレーション不一致を避ける。
+  const [greeting, setGreeting] = useState("こんにちは");
+  useEffect(() => {
+    const h = new Date().getHours();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGreeting(h < 5 ? "こんばんは" : h < 11 ? "おはようございます" : h < 18 ? "こんにちは" : "こんばんは");
+  }, []);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
   // 理由は plan 由来を優先し、初回カタログ本は deliveryReason をフォールバックに。
   const reason = (b: Book) => provider.getPlan(b.planId)?.reason ?? b.deliveryReason;
 
-  // 棚＝status＋shelf(=themeKind相当)＋直近30日ウィンドウで導出（mvp-scope §5-2）。
-  // - 関心/新しい出会い：入荷から30日以内（書庫へ移さなければ30日で棚落ち＝2026-06-24確認）
-  // - 執筆中：編集部が本文を書き継いでいる本（status=writing。予約制は廃止＝全冊バッチ内で自動執筆）
+  // 棚＝shelf＋直近28日ウィンドウ（ARRIVAL_WINDOW_DAYS）で導出。企画したら本文まで自動執筆＝
+  // 予約導線なし。draft はすぐ published になるため status は問わず「入荷から28日以内の本」を
+  // 関心(arrivals)/新しい出会い(odd)に並べる（published も消えずに残す）。
+  // ※読了しても shelf は変わらない（自動で棚落ちしない）。ユーザーが「📚 書庫に保存/移動」した
+  //   本だけ shelf=library になり入荷一覧から外れて書庫に残る。移動せず28日を過ぎた本は入荷から
+  //   自然に落ちる（書庫には入らない・検索からは到達可）。
   const now = new Date();
-  const isFreshArrival = (b: Book) =>
-    (b.status === "published" || b.status === "draft") && isVisibleArrival(b, undefined, now);
+  const isFreshArrival = (b: Book) => isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
   const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
 
   const interests = provider.booksByShelf("arrivals").filter(isFreshArrival).sort(byNewest);
   const encounters = provider.booksByShelf("odd").filter(isFreshArrival).sort(byNewest);
+  // 執筆中（自動執筆の短時間遷移）：reserved/writing をさりげなく表示。
   const press = provider
     .listBooks()
     .filter((b) => b.status === "writing" || b.status === "reserved")
     .sort(byNewest);
-  const user = provider.getUser(DEMO_USER_ID);
-  const arrival = arrivalLabel(); // 今朝 / 昨日 / おととい / 先日
+  // hero ラベルは「実際に並んでいる最新入荷」から導出（スケジュール仮定に依存しない）。
+  // interests/encounters は新しい順なので先頭が各々の最新。両者の新しい方を採用。
+  const newestArrival =
+    [interests[0]?.createdAt, encounters[0]?.createdAt]
+      .filter((d): d is string => Boolean(d))
+      .sort()
+      .at(-1);
+  const arrival = arrivalHeroLabel(newestArrival, now); // 今朝 / 昨日 / おととい / 先日 / ""
 
-  // --- 初回体験（登録直後）：空→生成中→12冊 ---
+  // --- 初回体験（登録直後）：空→生成中→15冊 ---
   // localStorage 読取はハイドレーション不一致を避けるためマウント後に行う。
   const [firstRun, setFirstRun] = useState<FirstRunStatus | null>(null);
   useEffect(() => {
@@ -56,15 +73,18 @@ export default function HomePage() {
   }, [uid]);
   const generating = firstRun === "generating";
   const freshCount = interests.length + encounters.length;
-  // 完了判定：mock は全12冊そろったら、firestore は実本が1冊でも届いたら通常表示へ。
+  // 完了判定：mock は全15冊そろったら、firestore は実本が1冊でも届いたら通常表示へ。
   const firstRunTarget = dataSource === "mock" ? FIRST_RUN_TOTAL : 1;
 
-  // 生成の開始（1回だけ）。mockは時間差入荷、firestoreはパイプライン起動。
-  const startedRef = useRef(false);
+  // 生成の開始（uid ごとに1回だけ）。mockは時間差入荷、firestoreはパイプライン起動。
+  // 旧実装は boolean ref で「最初の uid」が消費すると、後から確定した実 uid で発火しない/
+  // 取り違える恐れがあった（#8）。uid をキーにして各ユーザーで確実に1回だけ起動する。
+  const startedForRef = useRef<string | null>(null);
   useEffect(() => {
-    if (generating && !startedRef.current) {
-      startedRef.current = true;
-      void provider.runFirstRun(uid ?? DEMO_USER_ID, getInitialProfile());
+    const u = uid ?? DEMO_USER_ID;
+    if (generating && startedForRef.current !== u) {
+      startedForRef.current = u;
+      void provider.runFirstRun(u, getInitialProfile());
     }
   }, [generating, provider, uid]);
 
@@ -96,7 +116,7 @@ export default function HomePage() {
         <Topbar
           greeting={
             <>
-              ようこそ、<b>{authDisplayName ?? user?.name ?? "あなた"}</b> さん。
+              ようこそ、<b>{authDisplayName ?? "あなた"}</b> さん。
             </>
           }
         />
@@ -127,7 +147,6 @@ export default function HomePage() {
                 authorName={authorName(b)}
                 reason={reason(b)}
                 showWhy
-                showStatusBadge={false}
                 layout="row"
               />
             ))}
@@ -152,7 +171,7 @@ export default function HomePage() {
       <Topbar
         greeting={
           <>
-            おはようございます、<b>{authDisplayName ?? user?.name ?? "佐倉 美咲"}</b> さん。
+            {greeting}、<b>{authDisplayName ?? "ゲスト"}</b> さん。
           </>
         }
       />
@@ -160,9 +179,19 @@ export default function HomePage() {
       <section className="page-hero">
         <div className="ph-eyebrow">This morning&apos;s arrivals</div>
         <h1>
-          {arrival}、あなたの書店に
-          <br />
-          <span className="accent">新しい本</span>が並びました。
+          {arrival ? (
+            <>
+              {arrival}、あなたの書店に
+              <br />
+              <span className="accent">新しい本</span>が並びました。
+            </>
+          ) : (
+            <>
+              あなたの書店へ、
+              <br />
+              <span className="accent">ようこそ</span>。
+            </>
+          )}
         </h1>
       </section>
 
@@ -195,7 +224,6 @@ export default function HomePage() {
               authorName={authorName(b)}
               reason={reason(b)}
               showWhy
-              showStatusBadge={false}
               layout="row"
             />
           ))}
@@ -218,7 +246,6 @@ export default function HomePage() {
                   authorName={authorName(b)}
                   reason={reason(b)}
                   showWhy
-                  showStatusBadge={false}
                   layout="row"
                 />
               ))}

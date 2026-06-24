@@ -1,33 +1,22 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import type { User } from "@publishr/shared-schema";
 import { useRouter } from "next/navigation";
 
+import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
-import { MOCK_HIGHLIGHTS } from "@/data/mock-highlights";
+import { annotationsToHighlights, mergeHighlights } from "@/data/mock-highlights";
 import {
   optionsFor,
   serendipityOptions,
   type InitialProfileInput,
 } from "@/data/profileOptions";
-import {
-  getConnectedSources,
-  getInitialProfile,
-  saveInitialProfile,
-  setSourceConnectedLocal,
-  type ConnectSource,
-} from "@/data/user-writes";
-
-const CONNECTED: { key: ConnectSource; name: string; icon: string }[] = [
-  { key: "drive", name: "Google Drive", icon: "📁" },
-  { key: "calendar", name: "Google Calendar", icon: "📅" },
-  { key: "tasks", name: "Google Tasks", icon: "✓" },
-];
+import { getInitialProfile, saveInitialProfile } from "@/data/user-writes";
 
 const INDUSTRY = optionsFor("industry");
 const JOBTYPE = optionsFor("jobType");
@@ -304,25 +293,6 @@ export default function AccountPage() {
   }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
-  // データ連携の状態（デモ・localStorage）。初期は全て未連携。
-  const [connected, setConnected] = useState<Record<ConnectSource, boolean>>({
-    drive: false,
-    calendar: false,
-    tasks: false,
-  });
-  // uid 確定後（auth解決後）にそのユーザーの連携状態を読み込む。
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setConnected(getConnectedSources()), [uid]);
-  const toggleSource = (key: ConnectSource) => {
-    const next = !connected[key];
-    setSourceConnectedLocal(key, next);
-    setConnected((c) => ({ ...c, [key]: next }));
-  };
-
-  const onLogout = async () => {
-    await signOutUser();
-    router.push("/login");
-  };
   const onTriggerArrivals = async () => {
     setTriggering(true);
     setTriggerMsg(null);
@@ -336,12 +306,20 @@ export default function AccountPage() {
       setTriggering(false);
     }
   };
-  const total = provider.listBooks().filter((b) => b.shelf === "library").length;
-  // ハイライト数：mockデモ時のみシード件数、本番（firestore/bff）は実注釈のみ集計。
-  const highlightCount =
+  const onLogout = async () => {
+    await signOutUser();
+    router.push("/login");
+  };
+  // 蔵書＝ユーザーが「書庫へ移動」した本（書庫ページと一致＝published かつ shelf==="library"）。
+  const total = provider
+    .listBooks()
+    .filter((b) => b.status === "published" && b.shelf === "library").length;
+  // ハイライト数：ハイライト画面(visibleItems)と完全に同じソース・同じ除外条件で数える
+  // （note=付箋は表示しないので集計からも除外）。account 8 vs 画面 6 の食い違いを解消。
+  const highlightCount = mergeHighlights(
+    annotationsToHighlights(provider.listBooks()),
     dataSource === "mock"
-      ? MOCK_HIGHLIGHTS.length
-      : provider.listBooks().reduce((n, b) => n + (b.annotations?.length ?? 0), 0);
+  ).filter((h) => h.kind !== "note").length;
   // お気に入り作家数：お気に入りストア（localStorage＋Firestore）の実数。
   const favoriteCount = useFavorites().size;
 
@@ -388,25 +366,7 @@ export default function AccountPage() {
             <div className="section-title">データ連携</div>
           </div>
         </div>
-        <div className="acct-sources">
-          {CONNECTED.map((s) => {
-            const on = connected[s.key];
-            return (
-              <div key={s.key} className="acct-source panel">
-                <span className="as-icon">{s.icon}</span>
-                <span className="as-name">{s.name}</span>
-                {on && <span className="as-state">✓ 連携済み</span>}
-                <button
-                  type="button"
-                  className={`as-connect ${on ? "is-on" : ""}`}
-                  onClick={() => toggleSource(s.key)}
-                >
-                  {on ? "連携を解除" : "連携する"}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+        <ConnectSources initial={user.connectedSources} />
       </section>
 
       {dataSource !== "mock" && (
@@ -450,3 +410,5 @@ export default function AccountPage() {
     </>
   );
 }
+
+

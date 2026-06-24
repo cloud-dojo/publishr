@@ -1,4 +1,4 @@
-# Publishr WBS（Work Breakdown Structure・実装正本・2026-06-07）
+﻿# Publishr WBS（Work Breakdown Structure・実装正本・2026-06-07）
 
 > 📑 関連: [正本マップ](../README.md)／[kickoff-checklist.md](kickoff-checklist.md)（着手ゲート）／[roles-and-ops.md](roles-and-ops.md)（週次・役割）／[open-issues.md](open-issues.md)（未決論点）。
 > **本書の位置づけ（単一正本）**: **作業分解（A/B/C）＋実装順序（WBS IDの直列）＋ゲート＋検証**を1枚に統合した**エージェント実施の正本**。Claude Code / Cursor エージェントは**本書を読み込んで実施**する。MVPローカルスコープの骨格は [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)（ローカル一まわり）を補助参照。
@@ -93,7 +93,26 @@
 
 ---
 
-## 🧭 現在地サマリ（最新: 2026-06-18）
+## 🧭 現在地サマリ（最新: 2026-06-24）
+
+> **いまどこ（2026-06-21）**: **製品は機能完成域＝本番フル稼働＋観測(Langfuse)＋プロンプト評価(CI実judge)まで整備済**。機能凍結6/30・提出7/10。残りの主役は **M5/M6（デモ/提出・鉄田主体）**。6/17サマリ以降（PR#56〜#70）の追加:
+> - **Langfuse 本番フル稼働**（PR#68/#69）: `trace_pipeline`＝①企画リーダー差し戻しループ＋grounding＋採否＋**`plan_score`/`plan_passed`(70ゲート可視化)**。さらに **ADK の各LLM呼び出しを OpenTelemetry で span 化**（`init_tracing` が global TracerProvider を張る・gemini-2.5-pro/flash・トークン計装）。手動runで全Stage着弾を実証。
+> - **CI 実judge プロンプト評価**（PR#70）: `.github/workflows/prompt-eval.yml`＝prompts/eval/planning 変更時のみ実 Gemini Pro judge（`make eval-gate-vertex`・8件7/8）。**毎push非実行＝課金限定**・手動dispatch可。CI SA `publishr-ci-deployer` に `roles/aiplatform.user` 付与。実runで **8/8 PASS**（high88-94/low8-20）。
+> - **入荷/書庫のストック型運用**（PR#63-65,#67）: 入荷保持 7→**28日**・各本に**入荷日表示**（今朝/N日前/M/D・新しい順）・**「書庫へ移動」**(shelf=library 遷移)で入荷一覧から外す動的フィルタ（本詳細＋読書ページにボタン）。**書庫＝移動した本だけのキュレーション型**（account蔵書数も一致）。
+> - **お気に入り作家の run またぎ継続**（PR#66）: from_favorite ペルソナの ID を安定化（run-token を付けない）＝再登板で `favorites.has` 一致・★認識・新刊が著者に紐づく。
+> - **UX大量修正**（PR#57-62）: 状態バッジを予約撤去後モデルへ整合・**未ログインで佐倉を出さない**(AuthGate)・**検索実装**・「最近読んだ本」を実読書時刻順(`lastReadAt`)・データ連携(/connect)の状態反映・アカウント蔵書数・読書初回進捗・map動的リンク 等。推定分量/序文は実本文ベース（arr_p1〜p4 は再計算済）。
+> - **自律run 実証**: 6/17 06:00 で実Imagen表紙＋run-uniqueID＋#53推定の新刊4冊が自動入荷（再配信ストーム無し・worker_plan ~525s/<600s）。
+> - **残**: ①**M5/M6＝デモ録画(2.5分/60秒)・ProtoPedia・公開リポ・7/10提出（鉄田主体・クリティカルパス）** ②**日曜セレンディピティ運用**（theme_kind を API→worker→mode_a 貫通＋Terraform serendipity job 有効化＋limit=1・**鉄田の serendipity プロンプト確認後**） ③**デモ品質**＝テスト本(arr_p1〜p4等)の掃除・#7「今すぐ企画」ボタン・A-3「いま執筆中」セクション整理 ④**任意**＝本文量↑(`PUBLISHR_BODY_MAX_CHAPTERS`)・実judge閾値/borderline調整(`make eval-repro/eval-sweep`)・Drive scope最終確認。詳細は [prod-live-followups.md](../infra/prod-live-followups.md)。
+
+> **いまどこ（2026-06-17）**: **本番が「実観測→実企画→実本文→実表紙」までフル稼働**。Cloud Run `publishr-api`(asia-northeast1・rev 00057)＋Firebase App Hosting(web・firestore全面)＋Firestore＋Pub/Sub＋Cloud Scheduler。デモ垢＝佐倉(5JLL…/publishr.hackathon)。
+> - **C3.3 本文GCSオフロード live**（PR#43前後）: published 本文を非公開 `publishr-contents-498123` へ退避（`PUBLISHR_BODY_STORE=gcs`・`bodyUrl`）。読書ページは `/api/books/{id}/body` でサーバ側 read して hydrate（GCSを晒さない）。runner SA `roles/storage.objectAdmin`。
+> - **C4.1 OAuth/実観測 live**（PR#44）: `/api/auth/google/start`→`/callback` のトークン交換が本番で実動。接続済みユーザーの**実 Drive(選択folder)/Calendar/Tasks** から企画。redirect_uri・client secret 配線完了。`PUBLISHR_OBSERVE=google`＋`PUBLISHR_OAUTH_TOKEN_STORE=secret_manager`。未接続/失敗は fixture へ自動フォールバック。
+> - **企画の Pub/Sub 非同期化**（PR#47前後・`/api/worker/plan`・ack 600s）＋**企画→本文の自動執筆統合**（PR#50-53）: 手動「予約」を撤去し、**企画した本を 1冊=1ジョブで自動 enqueue→worker→write_body_loop→published**（per-book 並列・各<600s）。書庫は read 直行・予約導線なし。本の推定分量/序文は**実本文から算出**（#53）。書庫は published を新しい順で永続表示＝消えない（#52）。
+> - **入荷本の run-uniqueID**（PR#54）: `arr_<YYYYMMDDHHMMSS>_<personaId>`＝run ごとに積み上げ（旧 `arr_<personaId>` の上書き廃止）。著者IDも同トークン。
+> - **表紙 Imagen GCS化＋ENABLE_IMAGEN ON live**（PR#55・rev 00057）: 各本に Imagen 表紙→非公開GCS `covers/<id>_<uuid8>.png`→`Book.cover_url`。配信は `GET /api/books/{id}/cover`（本文C3.3と同型のサーバ側 read・所有者チェック無し＝書影は非機微・未生成は404→CSS装丁にフォールバック）。フロントは `coverSrc()`(web/data/config.ts) で結線。
+> - **自律 Scheduler 稼働**（C1.7）: `publishr-honmei`＝cron `0 6 * * 3,6`(水・土 06:00 JST)・ENABLED・`PUBLISHR_MAX_BOOKS_PER_RUN=4`。次回 2026-06-17 06:00 JST から実表紙＋run-uniqueID で自律入荷。
+> - **セキュリティ/運用ハードニング**: OAuth secrets を Secret Manager 化＋client secret ローテ（#4）・runner SA を `secretmanager.admin`→カスタムロール `publishrTokenStore` に scope-down（#5）・本番 INFO ログ（#6）・予約/トリガーの fail-closed 認証（C4.9）。
+> - **残**: ①UIからの企画再実行導線（#7・未）②`make eval` 実judge閾値調整（課金）③M5/M6＝デモ録画・ProtoPedia・公開リポ・最終提出7/10（鉄田主体）④Pub/Sub 同一job再配信時の重複本（trigger_guard＋ack-on-error で稀・MVP許容）。詳細は [prod-live-followups.md](../infra/prod-live-followups.md)。
 
 > **【2026-06-18 定例MTG・仕様変更確定】** 開発スピードは計画より前倒しで順調（Ahead of schedule）。MTGで以下のスペック変更を決定—①**入荷ロジック刷新**: 旧「週15冊（本命5+5・セレンディピティ5）・7日保持」→**新「4冊×週3回=週12冊（本命2回×4冊=8冊＋日曜セレンディピティ1回×4冊）」**（I-29/I-17更新）。 **【2026-06-24確認】保持方針＝30日棚落ち（`ARRIVAL_WINDOW_DAYS=30`）＋書庫移動分のみ永久保存。**②**動的フィルタリング**: 書庫移動済みの本を入荷一覧から非表示（I-30）。③**デモ用即時入荷トリガーボタン**追加＋デモ環境ID/Password認証（I-31/I-32）。④**本文生成ボリュームのパラメータ化**（3000文字以上へ拡張・I-35）。⑤**favoriteAuthorsバグ修正**（状態保持不具合・優先度高・I-33）。⑥**GitHub公開用新規パブリックリポ作成**（PII除去・履歴クリーン・I-34）。カバー画像「青い四角」プレースホルダーは現行維持確定。現コードとの主な乖離: スケジューラの入荷冊数（5冊→4冊）変更は実装済み。I-29/I-30/I-31/I-33/G1-16-C5.8 は実装済みで、実Cloud Run/Firestore環境の確認が残る。
 

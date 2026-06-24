@@ -1,13 +1,18 @@
-"use client";
+﻿"use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
-import { useActions, useProvider } from "@/data/hooks";
+import { bookChapters } from "@/data/bookText";
 import { isArchivedBook } from "@/lib/arrival";
+import { coverSrc } from "@/data/config";
+import { useActions, useProvider } from "@/data/hooks";
+
+// 推定分量の分の係数。バックエンド persist_mapping._MINUTES_PER_CHAPTER と一致させる。
+const MINUTES_PER_CHAPTER = 8;
 
 export default function BookDetailPage() {
   const params = useParams<{ bookId: string }>();
@@ -18,8 +23,8 @@ export default function BookDetailPage() {
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: "/", label: "< あなたの書店にもどる" }} />
-        <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中..."}</div>
+        <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
+        <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
       </>
     );
   }
@@ -27,12 +32,18 @@ export default function BookDetailPage() {
   const persona = provider.getPersona(book.authorPersonaId);
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
-  const canRead = book.status === "published" || Boolean(book.body);
+
   const archived = isArchivedBook(book);
+
+  // 推定分量は本文があれば**実際に書かれた章数**で出す（計画アジェンダ数だと本文と食い違う）。
+  // 本文未取得（GCS退避hydrate前 or 下書き）は従来どおり計画値にフォールバック。分も実章数で揃える。
+  const actualChapters = book.body ? bookChapters(book.body).length : 0;
+  const chapterCount = actualChapters > 0 ? actualChapters : book.estimatedChapters;
+  const minuteCount = actualChapters > 0 ? actualChapters * MINUTES_PER_CHAPTER : book.estimatedMinutes;
 
   return (
     <>
-      <Topbar back={{ href: "/", label: "< あなたの書店にもどる" }} />
+      <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
       <div className="page-hero" style={{ paddingBottom: 0 }}>
         <div className="ph-eyebrow">Today&apos;s arrival · curated for you</div>
       </div>
@@ -41,27 +52,22 @@ export default function BookDetailPage() {
         <div className="detail-cover-col">
           <BookCover
             variant={book.coverVariant}
-            coverUrl={book.coverUrl}
+            coverUrl={coverSrc(book.id, book.coverUrl)}
             title={book.title}
             subtitle={book.subtitle}
             author={persona?.name}
             titleSize={25}
           />
           <div className="detail-actions">
-            {canRead ? (
-              <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
-                この本を手に取る
+            <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
+              いま読む →
+            </Link>
+            {persona && (
+              <Link className="btn btn--ghost btn--block" href={`/author/${persona.id}`}>
+                ✦ {persona.name} を知る
               </Link>
-            ) : book.status === "reserved" || book.status === "writing" ? (
-              <Link className="btn btn--gold btn--block" href={`/writing/${book.id}`}>
-                入荷を待つ
-              </Link>
-            ) : (
-              <button className="btn btn--gold btn--block" disabled>
-                まもなく入荷
-              </button>
             )}
-            {canRead && (
+            {book.status === "published" && (
               <button
                 type="button"
                 className="btn btn--ghost btn--block"
@@ -70,19 +76,13 @@ export default function BookDetailPage() {
               >
                 {archived ? "書庫に保存済み" : "書庫に残す"}
               </button>
-            )}
-            {persona && (
-              <span className="btn btn--ghost btn--block" style={{ cursor: "default" }}>
-                {persona.name} を知る
-              </span>
-            )}
-          </div>
+            )}</div>
           <div className="detail-meta-line">
-            状態: <b>{statusLabel(book.status, canRead)}</b>
+            状態：<b>{statusLabel(book.status)}</b>
             <br />
-            推定分量: <b>全{book.estimatedChapters}章・約{book.estimatedMinutes}分</b>
+            推定分量：<b>全{chapterCount}章・約{minuteCount}分</b>
             <br />
-            装丁: <b>Imagen 生成</b> / 企画: <b>編集会議 AI</b>
+            装丁：<b>Imagen 生成</b>／企画：<b>編集会議 AI</b>
           </div>
         </div>
 
@@ -90,14 +90,18 @@ export default function BookDetailPage() {
           <div className="pitch-title">{book.title}</div>
           <div className="pitch-author">
             {persona?.name}
-            {persona && <span> - {persona.title}・{persona.style}</span>}
+            {persona && <span> ― {persona.title}／{persona.style}</span>}
           </div>
 
           {plan && (
             <div className="frame">
               <div className="frame-row spot">
-                <div className="fr-key">この本で解けること</div>
+                <div className="fr-key">なぜ、いまあなたに</div>
                 <div className="fr-val">{plan.reason}</div>
+              </div>
+              <div className="frame-row">
+                <div className="fr-key">想定する局面</div>
+                <div className="fr-val">{plan.readerSituation}</div>
               </div>
               <div className="frame-row">
                 <div className="fr-key">核心メッセージ</div>
@@ -113,7 +117,7 @@ export default function BookDetailPage() {
               <div>
                 <div className="eyebrow">Table of contents</div>
                 <div className="section-title">
-                  本の<span className="accent">目次</span>
+                  アジェンダ<span className="accent">（目次）</span>
                 </div>
               </div>
             </div>
@@ -124,9 +128,9 @@ export default function BookDetailPage() {
             <div className="section" style={{ marginTop: 40 }}>
               <div className="section-head">
                 <div>
-                  <div className="eyebrow">Opening pages</div>
+                  <div className="eyebrow">A glimpse before you read</div>
                   <div className="section-title">
-                    本文の<span className="accent">はじめに</span>
+                    序文の<span className="accent">サンプル</span>
                   </div>
                 </div>
               </div>
@@ -138,16 +142,11 @@ export default function BookDetailPage() {
                   </p>
                 ))}
               </div>
-              {canRead && (
-                <div className="row gap12" style={{ marginTop: 24 }}>
-                  <Link className="btn btn--gold" href={`/read/${book.id}`}>
-                    本文を読む
-                  </Link>
-                  <span className="muted" style={{ fontSize: 12.5 }}>
-                    書庫に残して、いつでも読み返せる一冊です。
-                  </span>
-                </div>
-              )}
+              <div className="row gap12" style={{ marginTop: 24 }}>
+                <Link className="btn btn--gold" href={`/read/${book.id}`}>
+                  全文を読む →
+                </Link>
+              </div>
             </div>
           )}
         </div>
@@ -156,15 +155,15 @@ export default function BookDetailPage() {
   );
 }
 
-function statusLabel(status: string, canRead: boolean): string {
-  if (canRead) return "書店に入荷済み";
+function statusLabel(status: string): string {
   switch (status) {
-    case "reserved":
-      return "入荷待ち";
-    case "writing":
-      return "入荷準備中";
+    // 予約撤去・自動執筆後は draft/reserved/writing は数十秒〜数分の一時状態＝「準備中」に集約。
     case "draft":
-      return "まもなく入荷";
+    case "reserved":
+    case "writing":
+      return "準備中（まもなく全文が読めます）";
+    case "published":
+      return "読めます";
     default:
       return status;
   }

@@ -192,6 +192,16 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 }
 ```
 
+> **【実装 C1.8・学習ループ】** ③ readingBehavior の学習シグナルは `agents/publishr_agents/reader/preferences.py`（純関数）で集約する:
+> - `feedbackSummary` ← 過去公開本の `Book.feedback`（rating≥4 / readingReaction=`"good"`〔`"good:理由"`含む〕＝刺さった、wantsSequel＝続編希望、dropped / 読了率<20% / `"bad"`＝離脱・不発）を題名で要約。
+> - `stylePreference` ← `favoriteAuthors` の voiceStyle×format ＋ `initialProfile.readingGenres`（読み口）。
+> - `recentReads` ← 既読題名（次企画の被り回避）。
+>
+> これらは reader（`deterministic`/`vertex`）が `readingBehavior` に載せ、**STEP2企画は `readerProfile` 経由で受領**（配線を増やさない）。STEP2 プロンプト（`step2_plan_owner`）は「刺さった軸を強め・不発/既読の被りを避け・stylePreference に寄せる」を指示。
+> 入力経路は `run_mode_a_pipeline(past_books=…)`／BFF `mode_a_service` が published・反応あり・owner一致の本を渡す。**反応/選択が無ければ全シグナルは空＝STEP1出力は従来どおり（mock決定的・eval/pipeline不変）**。お気に入り作家はキャスティング15%混入（STEP3a）にも別途反映され、本機能は企画軸まで拡張する位置づけ。残＝実Vertexでの嗜好反映 live実証（gated）。
+>
+> **【アカウント選択の反映・2026-06-14】** `initialProfile` の各項目を reader が反映: 業界/職種/役職 → `base`、好みの読み口 `readingGenres` → `base`＋`stylePreference`、**今の関心 `recentInterests` → `currentWork.activeWorkThemes`（候補テーマに合流・evidence=`initialProfile:recentInterests`）**、**新しい出会いの幅（4語: いつもの専門を深く/ときどき寄り道/バランス重視/広く新しい刺激を）→ `_serendipity()` が low/mid/high に写像 → `readingBehavior.serendipityTolerance`**。⚠️ ただし(1) account の 4語は現状 `serendipity` キー保存で `serendipityTolerance` と分断＝web 側で `serendipityTolerance` へ保存する結線が要る、(2) BFF は今 fixtures からユーザを読むため、アカウント編集が pipeline に届くのは **C4.9（per-request Firestore ユーザロード）** 後。reader 側の受け皿は実装済み＝C4.9 が繋がれば流れる。
+
 ### プロンプト骨子
 ```
 あなたは読者分析の専任エージェント。出力は3層構造（base / currentWork / readingBehavior）。

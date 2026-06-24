@@ -10,7 +10,12 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from publishr_agents.observability import grounding_urls_from_events, trace_pipeline
+from publishr_agents.observability import (
+    flush,
+    grounding_urls_from_events,
+    init_tracing,
+    trace_pipeline,
+)
 
 
 class _FakeSpan:
@@ -116,3 +121,52 @@ def test_grounding_urls_extracted_deduped_ordered():
 def test_grounding_urls_empty_on_no_events():
     assert grounding_urls_from_events(None) == []
     assert grounding_urls_from_events([SimpleNamespace()]) == []
+
+
+def test_trace_pipeline_attaches_plan_score():
+    """Stage B: 採用企画の総合スコア（最終ラウンド）を Langfuse score として付与する。"""
+    scores: list[dict] = []
+
+    class _Span:
+        def start_span(self, name, **kw):
+            return self
+
+        def update(self, **kw):
+            pass
+
+        def end(self):
+            pass
+
+        def score(self, **kw):
+            scores.append(kw)
+
+    class _Client:
+        def start_span(self, name, **kw):
+            return _Span()
+
+        def flush(self):
+            pass
+
+    payload = {
+        "theme": "t",
+        "approved": True,
+        "planning_rounds": [
+            {"round": 1, "score": 58, "decision": "revise"},
+            {"round": 2, "score": 73, "decision": "approve"},
+        ],
+    }
+    assert trace_pipeline(payload, client=_Client()) == "sent"
+    names = {s["name"] for s in scores}
+    assert "plan_score" in names and "plan_passed" in names
+    ps = next(s for s in scores if s["name"] == "plan_score")
+    assert ps["value"] == 73.0  # 最終ラウンドのスコア
+    pp = next(s for s in scores if s["name"] == "plan_passed")
+    assert pp["value"] == "pass"  # 73 >= 70
+
+
+def test_init_tracing_and_flush_noop_without_keys(monkeypatch):
+    """Stage C: キー未設定なら init_tracing は False・flush は no-op（例外なし）。"""
+    monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
+    monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
+    assert init_tracing() is False
+    flush()  # 例外を出さない

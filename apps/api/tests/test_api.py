@@ -136,6 +136,19 @@ def test_feedback_updates():
     assert fb["readingReaction"] == "helpful"
 
 
+def test_feedback_impression_saved_sanitized_and_capped():
+    published = client.get("/books", params={"status": "published"}).json()[0]
+    bid = published["id"]
+    # 制御文字（\x00）は除去・改行は残す・2000字で打ち切り。
+    raw = "良かった\x00\x07\n次も読みたい" + "あ" * 3000
+    res = client.post(f"/books/{bid}/feedback", json={"impression": raw})
+    assert res.status_code == 200
+    imp = res.json()["feedback"]["impression"]
+    assert "\x00" not in imp and "\x07" not in imp  # 制御文字除去
+    assert "良かった\n次も読みたい" in imp  # 改行は保持
+    assert len(imp) == 2000  # 上限カット
+
+
 def test_reading_state_updates_granularity_and_annotations():
     published = client.get("/books", params={"status": "published"}).json()[0]
     bid = published["id"]
@@ -165,6 +178,7 @@ def test_pipeline_run_returns_reject_log():
     """新モードA: 入荷(arrivals/published)を生成し、却下→採用の証跡を返す。
 
     予約制廃止改定（2026-06-23）: set pipeline は全冊を本文付き published で配本する（予約不要）。
+    企画したら本文まで自動執筆＝mock は published＋body。
     """
     res = client.post("/pipeline/run", json={"userId": "u_sakura"})
     assert res.status_code == 200
@@ -172,7 +186,8 @@ def test_pipeline_run_returns_reject_log():
     assert len(data["books"]) >= 1
     for b in data["books"]:
         assert b["shelf"] == "arrivals"
-        assert b["status"] == "published"
+        assert b["status"] == "published"  # 自動執筆
+        assert b["body"]
     # 採用企画ID と本の planId が整合。
     assert data["approvedPlanIds"]
     assert {b["planId"] for b in data["books"]} <= set(data["approvedPlanIds"])
@@ -182,12 +197,18 @@ def test_pipeline_run_returns_reject_log():
 
 
 def test_trigger_planning_adds_books():
-    """手動トリガー（モードA）で入荷が増える＝『押す→本ができる』。"""
+    """手動トリガー（モードA）で入荷が増える＝『押す→本ができる』。
+
+    mock キュー（既定）は enqueue_planning が in-process 即実行＝queued は False だが本はできる。
+    """
+    repo = get_repository()
+    before = len(repo.list_books(shelf="arrivals"))
     res = client.post("/api/trigger/planning", json={"userId": "u_sakura"})
     assert res.status_code == 200
     data = res.json()
     assert data["ok"] is True
-    assert data["booksAdded"] >= 1
+    assert data["queued"] is False  # mock は同期実行
+    assert len(repo.list_books(shelf="arrivals")) > before  # 入荷が増えた
 
 
 def test_trigger_planning_rate_limited_on_immediate_repeat():
@@ -213,3 +234,86 @@ def test_advance_state_machine():
     book = repo.get_book("b_makasekata")
     assert book.status == "published"
     assert book.body and "権限の設計図" in book.body
+
+
+# --- 表紙画像配信（Imagen・GET /api/books/{id}/cover）-------------------------
+
+
+def _set_cover_url(cover_url):
+    """cached repo の既存本に coverUrl を載せ、その id を返す（テスト用）。"""
+    repo = get_repository()
+    b = repo.get_book("b_makasekata")
+    repo.upsert_book(b.model_copy(update={"cover_url": cover_url}))
+    return "b_makasekata"
+
+
+def test_get_cover_404_when_no_cover_url():
+    # fixtures の本は coverUrl=None → 表紙なし → 404（フロントは CSS 装丁にフォールバック）。
+    assert client.get("/api/books/b_makasekata/cover").status_code == 404
+
+
+def test_get_cover_404_for_missing_book():
+    assert client.get("/api/books/does_not_exist/cover").status_code == 404
+
+
+def test_get_cover_redirects_external_url():
+    _set_cover_url("https://example.com/c.png")
+    res = client.get("/api/books/b_makasekata/cover", follow_redirects=False)
+    assert res.status_code in (302, 307)
+    assert res.headers["location"] == "https://example.com/c.png"
+
+
+def test_get_cover_streams_gcs_bytes(monkeypatch):
+    _set_cover_url("covers/arr_x_p1_ab12cd34.png")
+    import publishr_api.services.cover_store as cover_store
+
+    class _FakeStore:
+        def get_bytes(self, book_id, cover_url):
+            assert cover_url == "covers/arr_x_p1_ab12cd34.png"  # 保存済 object パスをそのまま読む
+            return b"\x89PNG\r\n\x1a\nFAKEDATA"
+
+    monkeypatch.setattr(cover_store, "get_cover_store", lambda: _FakeStore())
+    res = client.get("/api/books/b_makasekata/cover")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "image/png"
+    assert res.content.startswith(b"\x89PNG")
+
+
+def test_get_cover_404_when_not_offloaded(monkeypatch):
+    _set_cover_url("covers/missing.png")
+    import publishr_api.services.cover_store as cover_store
+
+    class _EmptyStore:
+        def get_bytes(self, *_a):
+            return None
+
+    monkeypatch.setattr(cover_store, "get_cover_store", lambda: _EmptyStore())
+    assert client.get("/api/books/b_makasekata/cover").status_code == 404
+
+
+# --- 書庫へ移動（動的フィルタリング・POST /api/books/{id}/move-to-library）-------------
+
+
+def test_move_to_library_sets_shelf():
+    res = client.post("/api/books/b_makasekata/move-to-library")
+    assert res.status_code == 200
+    assert res.json()["shelf"] == "library"  # 入荷(shelf=arrivals/odd)から外れる
+    assert get_repository().get_book("b_makasekata").shelf == "library"
+
+
+def test_move_to_library_404_for_missing_book():
+    assert client.post("/api/books/does_not_exist/move-to-library").status_code == 404
+
+
+def test_move_to_library_forbidden_for_other_owner(monkeypatch):
+    repo = get_repository()
+    b = repo.get_book("b_makasekata")
+    repo.upsert_book(b.model_copy(update={"owner_uid": "u_other"}))
+    from publishr_api.routers import api as api_mod
+
+    monkeypatch.setattr(api_mod, "_verify_uid", lambda _auth: "u_me")
+    res = client.post(
+        "/api/books/b_makasekata/move-to-library", headers={"Authorization": "Bearer x"}
+    )
+    assert res.status_code == 403
+    assert repo.get_book("b_makasekata").shelf != "library"  # 移動していない

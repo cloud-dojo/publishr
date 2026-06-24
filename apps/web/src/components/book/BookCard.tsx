@@ -1,14 +1,17 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import type { Book } from "@publishr/shared-schema";
+
+import { coverSrc } from "@/data/config";
+import { arrivedLabel } from "@/lib/arrival";
 
 import { BookCover } from "./BookCover";
 import { StatusBadge } from "./StatusBadge";
 import { WhyBubble } from "./WhyBubble";
 
 function hrefFor(book: Book): string {
-  if (book.status === "writing" || book.status === "reserved") return `/writing/${book.id}`;
-  if (book.status === "published" || book.body) return `/read/${book.id}`;
+  // 本を選んだら一旦「概要」へ（いきなり本文に飛ばさない）。なぜこの本か・目次・序文サンプルを
+  // 見せ、概要の「いま読む」で /read へ。予約導線は無し（企画したら自動執筆済み）。
   return `/books/${book.id}`;
 }
 
@@ -26,14 +29,12 @@ export function BookCard({
   authorName,
   reason,
   showWhy = false,
-  showStatusBadge = true,
   layout = "grid",
 }: {
   book: Book;
   authorName: string;
   reason?: string;
   showWhy?: boolean;
-  showStatusBadge?: boolean;
   layout?: "grid" | "row";
 }) {
   // 横長レイアウト（書店トップ）：カバー左＋本文右にタグ・タイトル・著者・なぜカード
@@ -42,18 +43,21 @@ export function BookCard({
       <Link className="book book--row reveal" href={hrefFor(book)}>
         <BookCover
           variant={book.coverVariant}
-          coverUrl={book.coverUrl}
+          coverUrl={coverSrc(book.id, book.coverUrl)}
           title={book.title}
           subtitle={book.subtitle}
           author={authorName}
           titleSize={13}
         />
         <div className="book-body">
-          {showStatusBadge ? (
-            <div className="book-badges">
-              <StatusBadge status={book.status} shelf={book.shelf} floating={false} />
-            </div>
-          ) : null}
+          <div className="book-badges">
+            <StatusBadge book={book} floating={false} />
+            {book.createdAt && (
+              <span className="bm-arrived" title={`入荷: ${book.createdAt.slice(0, 10)}`}>
+                🕓 {arrivedLabel(book.createdAt)}入荷
+              </span>
+            )}
+          </div>
           <div className="bm-title">{book.title}</div>
           <div className="bm-author">
             {authorName} 著{authorSuffix(book)}
@@ -69,18 +73,25 @@ export function BookCard({
     <Link className="book reveal" href={hrefFor(book)}>
       <BookCover
         variant={book.coverVariant}
+        coverUrl={coverSrc(book.id, book.coverUrl)}
         title={book.title}
         subtitle={book.subtitle}
         author={authorName}
-        badge={showStatusBadge ? <StatusBadge status={book.status} shelf={book.shelf} floating={false} /> : undefined}
+        badge={<StatusBadge book={book} floating={false} />}
       />
       <div className="book-meta">
         <div className="bm-title">{book.title}</div>
         <div className="bm-author">
           {authorName} 著{authorSuffix(book)}
         </div>
+        {book.createdAt && (
+          <div className="bm-arrived" title={`入荷: ${book.createdAt.slice(0, 10)}`}>
+            🕓 {arrivedLabel(book.createdAt)}入荷
+          </div>
+        )}
       </div>
       {showWhy && reason ? <WhyBubble reason={reason} /> : null}
     </Link>
   );
 }
+
