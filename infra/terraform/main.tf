@@ -441,6 +441,46 @@ resource "google_project_iam_member" "runner_aiplatform" {
   member  = "serviceAccount:${google_service_account.runner.email}"
 }
 
+# runner: モードB本文/表紙の GCS オフロード（PUBLISHR_BODY_STORE=gcs・C3.3）
+resource "google_project_iam_member" "runner_storage" {
+  project = var.project_id
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# runner: OAuth secret・Langfuse secret 等の読取（PUBLISHR_OBSERVE=google / 連携）
+resource "google_project_iam_member" "runner_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# runner: 自分自身（同SA実行の worker / 内部呼び出し）を invoke
+resource "google_project_iam_member" "runner_run_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# per-uid OAuth トークン保存用の最小権限カスタムロール（secret作成＋版追加。読取は secretAccessor）。
+resource "google_project_iam_custom_role" "publishr_token_store" {
+  role_id     = "publishrTokenStore"
+  title       = "Publishr per-uid token store"
+  description = "OAuth per-uid token 保存に必要な最小権限（secret作成＋版追加）。読取は secretAccessor。"
+  stage       = "GA"
+  permissions = [
+    "secretmanager.secrets.create",
+    "secretmanager.versions.add",
+  ]
+}
+
+# runner: per-uid トークン secret を作成・版追加できる（上記カスタムロール）
+resource "google_project_iam_member" "runner_token_store" {
+  project = var.project_id
+  role    = google_project_iam_custom_role.publishr_token_store.id
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
 # push SA: Cloud Run を呼べる（Pub/Sub push と Scheduler の両方がこの SA を使う）
 resource "google_cloud_run_v2_service_iam_member" "push_invoker" {
   name     = google_cloud_run_v2_service.api.name
