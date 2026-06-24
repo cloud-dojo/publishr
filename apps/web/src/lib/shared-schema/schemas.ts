@@ -174,6 +174,8 @@ export const feedbackSchema = z.object({
   rating: z.number().nullable(),
   wantsSequel: z.boolean(),
   readingReaction: z.string().nullish(),
+  impression: z.string().nullish(),
+  lastReadAt: z.string().nullish(),
 });
 
 export const readingAnnotationSchema = z.object({

@@ -189,6 +189,8 @@ export interface Feedback {
   rating: number | null;
   wantsSequel: boolean;
   readingReaction?: string | null;
+  impression?: string | null;
+  lastReadAt?: string | null;
 }
 
 export interface ReadingAnnotation {
@@ -260,6 +262,8 @@ export interface FeedbackInput {
   rating?: number | null;
   wantsSequel?: boolean;
   readingReaction?: string | null;
+  impression?: string | null;
+  lastReadAt?: string | null;
 }
 
 export interface ReadingStateInput {

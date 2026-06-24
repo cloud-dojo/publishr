@@ -21,7 +21,7 @@ export default function LibraryPage() {
     .filter((b) => b.status === "published" && b.shelf === "library")
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   const handleRemove = async (book: Book) => {
-    if (!window.confirm(「\」を書庫から外しますか？)) return;
+    if (!window.confirm(`『${book.title}』を書庫から外しますか？`)) return;
     setRemovingId(book.id);
     try {
       await removeFromLibrary(book.id);

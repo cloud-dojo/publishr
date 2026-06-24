@@ -49,3 +49,13 @@ export const timing = {
 };
 
 export const DEMO_USER_ID = "u_sakura";
+
+/**
+ * 表紙画像の URL を返す。
+ * - coverUrl が設定済みなら（Imagen 生成済み）そのまま返す。
+ * - 未設定（null/空）なら bookId ベースのプレースホルダー画像パスを返す。
+ */
+export function coverSrc(bookId: string, coverUrl: string | null | undefined): string {
+  if (coverUrl) return coverUrl;
+  return `/covers/${bookId}.png`;
+}

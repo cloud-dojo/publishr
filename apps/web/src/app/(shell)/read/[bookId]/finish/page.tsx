@@ -86,6 +86,8 @@ export default function FinishPage() {
                 toggleFavorite({
                   personaId: persona.id,
                   name: persona.name,
+                  voiceStyle: persona.voiceStyle ?? "",
+                  format: persona.format ?? "",
                   savedAt: new Date().toISOString(),
                 });
                 // 新規登録時のみ通知を出す（解除時は出さない）。
