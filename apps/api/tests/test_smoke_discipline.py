@@ -313,6 +313,87 @@ def test_serendipity_shelf_grammar_flag():
     assert any("ハウツー化" in f for f in rep.flags)
 
 
+# ── STEP4 editor_preview（EditorVerdict・3観点） ──────────
+def _good_editor_verdict() -> dict:
+    bd = {"rawInsight": 21, "personaForward": 20, "catchiness": 19}
+    return {
+        "bookId": "book_test_p1", "round": 1, "score": sum(bd.values()),
+        "scoreBreakdown": bd, "decision": "approve",
+        "editorFeedback": "approve。次に上げるなら③タイトルの惹き。",
+    }
+
+
+def test_good_editor_preview_passes():
+    rep = sd.run_discipline_checks("editor_preview", _good_editor_verdict())
+    assert rep.schema_ok is True
+    assert rep.violations == []
+
+
+def test_editor_preview_approve_without_feedback_violation():
+    v = _good_editor_verdict()
+    v["editorFeedback"] = None  # approve でも feedback 必須（6/23校正・ラバースタンプ禁止）
+    rep = sd.run_discipline_checks("editor_preview", v)
+    assert any("ラバースタンプ" in x for x in rep.violations)
+
+
+def test_editor_preview_sum_mismatch_violation():
+    v = _good_editor_verdict()
+    v["score"] = 75  # 3観点和(60)と不一致
+    rep = sd.run_discipline_checks("editor_preview", v)
+    assert any("3観点合計" in x for x in rep.violations)
+
+
+# ── modeB modeb_editor（BodyVerdict・5観点） ──────────
+def _good_body_verdict() -> dict:
+    bd = {"coherence": 17, "hook": 16, "relevance": 18, "personaConsistency": 17, "actionability": 16}
+    return {
+        "score": sum(bd.values()), "scoreBreakdown": bd, "decision": "approve",
+        "weakChapters": [], "editorFeedback": None,  # modeB は approve→null 許容
+    }
+
+
+def test_good_body_verdict_passes():
+    rep = sd.run_discipline_checks("modeb_editor", _good_body_verdict())
+    assert rep.schema_ok is True
+    assert rep.violations == []
+
+
+def test_body_verdict_sum_mismatch_violation():
+    v = _good_body_verdict()
+    v["score"] = 90  # 5観点和(84)と不一致
+    rep = sd.run_discipline_checks("modeb_editor", v)
+    assert any("本文5観点合計" in x for x in rep.violations)
+
+
+def test_body_verdict_revise_without_feedback_violation():
+    bd = {"coherence": 8, "hook": 6, "relevance": 4, "personaConsistency": 7, "actionability": 6}
+    v = {"score": sum(bd.values()), "scoreBreakdown": bd, "decision": "revise",
+         "weakChapters": [1], "editorFeedback": ""}
+    rep = sd.run_discipline_checks("modeb_editor", v)
+    assert any("editorFeedback が空" in x for x in rep.violations)
+
+
+# ── STEP5 cover（coverPrompt・装丁メタ） ──────────
+def _good_cover() -> dict:
+    return {"bookId": "book_test_p1", "coverPrompt": (
+        "Minimalist editorial business-book cover. A single navy triangle on off-white, "
+        "geometric precision, generous negative space. Flat vector style. "
+        "No text, no lettering, no logos, no real human faces.")}
+
+
+def test_good_cover_passes():
+    rep = sd.run_discipline_checks("cover", _good_cover())
+    assert rep.violations == []
+
+
+def test_cover_missing_no_text_and_textburn_flag():
+    c = _good_cover()
+    c["coverPrompt"] = "A colorful cover with the title written in big gold letters, no real human faces."
+    rep = sd.run_discipline_checks("cover", c)
+    assert any("no-text" in x for x in rep.violations)
+    assert any("焼き込み" in f for f in rep.flags)
+
+
 # ── CLI ─────────────────────────────────────────────────
 def test_main_returns_nonzero_on_violation(tmp_path):
     bad = {"theme": "x", "concreteTroublePoints": ["創作"], "decisions": [], "evidence": []}

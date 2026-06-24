@@ -422,6 +422,114 @@ def check_serendipity_set(parsed: BaseModel) -> tuple[list[str], list[str], dict
     return violations, flags, metrics
 
 
+# ── STEP4 プレビュー採点 / modeB 本文採点 / STEP5 装丁 固有規律 ──────────
+_BODY_THRESHOLD = 70    # modeb_editor 合格（本文5観点×0〜20＝100）
+_PREVIEW_THRESHOLD = 50  # editor_preview 合格（プレビュー3観点×0〜25＝75）
+_PREVIEW_FLOOR = 10      # editor_preview 各観点の足切り
+
+
+def check_body_verdict(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[str, Any]]:
+    """modeb_editor（BodyVerdict）固有：5観点合計の自己整合・weakChapters整合・revise時feedback。
+
+    本文ルーブリック5観点（coherence/hook/relevance/personaConsistency/actionability・各0〜20）。
+    approve は総合>=70・weakChapters空。revise は弱章列挙＋editorFeedback必須。
+    （modeB は合格例で approve→editorFeedback=null を許容するため approve時のfeedbackは要求しない）
+    """
+    violations: list[str] = []
+    flags: list[str] = []
+    metrics: dict[str, Any] = {}
+    bd = raw.get("scoreBreakdown") or {}
+    comps = ["coherence", "hook", "relevance", "personaConsistency", "actionability"]
+    vals = [bd.get(c) for c in comps]
+    score = raw.get("score")
+    if all(isinstance(v, (int, float)) for v in vals):
+        total = sum(int(v) for v in vals)
+        metrics["breakdownSum"] = f"{total} (score={score})"
+        if isinstance(score, (int, float)) and int(score) != total:
+            violations.append(f"score({score})が本文5観点合計({total})と不一致")
+        for c, v in zip(comps, vals):
+            if not (0 <= int(v) <= 20):
+                violations.append(f"{c}が0〜20の範囲外（{v}）")
+    decision = raw.get("decision")
+    weak = raw.get("weakChapters") or []
+    fb = raw.get("editorFeedback")
+    if decision == "approve":
+        if isinstance(score, (int, float)) and int(score) < _BODY_THRESHOLD:
+            violations.append(f"approve なのに総合{score} < {_BODY_THRESHOLD}")
+        if weak:
+            violations.append(f"approve なのに weakChapters 非空（{weak}）")
+    elif decision == "revise":
+        if not weak:
+            flags.append("revise なのに weakChapters が空（弱章未指定の候補）")
+        if not (fb and str(fb).strip()):
+            violations.append("revise なのに editorFeedback が空（差し戻し理由欠如）")
+    return violations, flags, metrics
+
+
+def check_editor_verdict(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[str, Any]]:
+    """editor_preview（EditorVerdict）固有：3観点合計の自己整合・足切り整合・approveでもfeedback必須。
+
+    プレビュー3観点（rawInsight/personaForward/catchiness・各0〜25）。approve は総合>=50 かつ
+    全観点>=10。**approve でも editorFeedback を null にしない**（ラバースタンプ禁止・I-18 6/23校正）。
+    """
+    violations: list[str] = []
+    flags: list[str] = []
+    metrics: dict[str, Any] = {}
+    bd = raw.get("scoreBreakdown") or {}
+    comps = ["rawInsight", "personaForward", "catchiness"]
+    vals = [bd.get(c) for c in comps]
+    score = raw.get("score")
+    numeric = all(isinstance(v, (int, float)) for v in vals)
+    if numeric:
+        total = sum(int(v) for v in vals)
+        metrics["breakdownSum"] = f"{total} (score={score})"
+        if isinstance(score, (int, float)) and int(score) != total:
+            violations.append(f"score({score})がプレビュー3観点合計({total})と不一致")
+        for c, v in zip(comps, vals):
+            if not (0 <= int(v) <= 25):
+                violations.append(f"{c}が0〜25の範囲外（{v}）")
+        if all(int(v) == 25 for v in vals):
+            flags.append("3観点すべて満点（満点アンカー張り付きの候補）")
+    decision = raw.get("decision")
+    fb = raw.get("editorFeedback")
+    if decision == "approve":
+        if isinstance(score, (int, float)) and int(score) < _PREVIEW_THRESHOLD:
+            violations.append(f"approve なのに総合{score} < {_PREVIEW_THRESHOLD}")
+        if numeric and any(int(v) < _PREVIEW_FLOOR for v in vals):
+            violations.append(f"approve なのに足切り観点あり（<{_PREVIEW_FLOOR}）")
+        if not (fb and str(fb).strip()):
+            violations.append("approve でも editorFeedback を残す規律に違反（ラバースタンプ・6/23校正）")
+    elif decision == "revise":
+        if not (fb and str(fb).strip()):
+            violations.append("revise なのに editorFeedback が空（差し戻し理由欠如）")
+    return violations, flags, metrics
+
+
+_COVER_NOTEXT = ("no text", "no lettering")
+_COVER_NOFACE = ("no real face", "no human face", "no real human face")
+_COVER_TEXTBURN = ("with the title", "title text", "letters spelling", "text reading", "title written")
+
+
+def check_cover_prompt(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[str, Any]]:
+    """cover（coverPrompt）固有：装丁メタ規律（文字を焼かない・実在人物の顔を避ける）。"""
+    violations: list[str] = []
+    flags: list[str] = []
+    metrics: dict[str, Any] = {}
+    cp = str(raw.get("coverPrompt", "") or "")
+    if not cp.strip():
+        violations.append("coverPrompt が空")
+        return violations, flags, metrics
+    low = cp.lower()
+    if not any(k in low for k in _COVER_NOTEXT):
+        violations.append("coverPrompt に no-text 指示（no text / no lettering）が無い（文字焼き込みの恐れ）")
+    if not any(k in low for k in _COVER_NOFACE):
+        violations.append("coverPrompt に no-faces 指示（no real faces 等）が無い（実在人物の顔の恐れ）")
+    for kw in _COVER_TEXTBURN:
+        if kw in low:
+            flags.append(f"タイトル文字焼き込みの候補表現: '{kw}'")
+    return violations, flags, metrics
+
+
 @dataclass
 class DisciplineReport:
     role: str
@@ -511,6 +619,27 @@ def run_discipline_checks(role: str, raw: dict[str, Any], *, context: Optional[d
     # serendipity_themes（別ロジック）固有：員数4・adjacency分散・棚書き文法
     if role == "serendipity_themes" and parsed is not None:
         v, f, m = check_serendipity_set(parsed)
+        rep.violations += v
+        rep.flags += f
+        rep.metrics.update(m)
+
+    # modeb_editor（BodyVerdict）固有：5観点合計の自己整合・weakChapters整合・revise時feedback
+    if role == "modeb_editor":
+        v, f, m = check_body_verdict(raw)
+        rep.violations += v
+        rep.flags += f
+        rep.metrics.update(m)
+
+    # editor_preview（EditorVerdict）固有：3観点合計の自己整合・足切り整合・approveでもfeedback必須
+    if role == "editor_preview":
+        v, f, m = check_editor_verdict(raw)
+        rep.violations += v
+        rep.flags += f
+        rep.metrics.update(m)
+
+    # cover（coverPrompt）固有：装丁メタ規律（文字焼かない・実在人物の顔回避）
+    if role == "cover":
+        v, f, m = check_cover_prompt(raw)
         rep.violations += v
         rep.flags += f
         rep.metrics.update(m)
