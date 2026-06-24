@@ -230,6 +230,16 @@ def build_state(
             "readerProfile": profile,
             "favoriteAuthors": favorite_authors or [],
         }
+    # 編集長セットゲート（PlanSetVerdict）。4企画書＋編集意図は前段出力(--prev)で注入する
+    # （planSet=4 PlanProposal[] / editorialIntent=editor_chief_themes の editorialIntent）。
+    if role == "editor_chief_gate":
+        return {
+            "planSet": prev.get("planSet"),
+            "readerProfile": profile,
+            "editorialIntent": prev.get("editorialIntent"),
+            "threshold": threshold,
+            "round": round,
+        }
     raise KeyError(f"unsupported role for matrix: {role!r}")
 
 
@@ -239,7 +249,7 @@ def _input_template(role: str) -> str:
     if role == "plan_owner":
         return loader.load_prompt("step2_plan_owner").user_template or ""
     # 新STEP2-0/3 role は各 .md の user_template を正本に使う（vertex_agent 写しに依存しない）
-    if role in ("editor_chief_themes", "serendipity_themes", "author_casting"):
+    if role in ("editor_chief_themes", "serendipity_themes", "author_casting", "editor_chief_gate"):
         return loader.load_prompt(spec_for(role).prompt_file).user_template or ""
     return {
         "sub_reader_context": _SUB_READER_INPUTS,
