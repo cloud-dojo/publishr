@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.eval_gate import judge_plan, load_eval_set  # noqa: E402
+from scripts.eval_gate import _harden_windows_tls, judge_plan, load_eval_set  # noqa: E402
 
 
 def _all_cases(eval_set: dict[str, Any]) -> list[dict[str, Any]]:
@@ -135,6 +135,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="採点呼び出し間の待機秒（実Vertex Pro の低RPM対策・429回避。例: 6）",
     )
     args = parser.parse_args(argv)
+    if args.backend == "vertex":
+        _harden_windows_tls()  # Windows企業TLS回避（実Vertex呼び出し前・mockは不要）
 
     try:
         rows = run_reproducibility(
