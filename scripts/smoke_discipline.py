@@ -524,6 +524,9 @@ _COVER_3D_KW = ("isometric", "3d render", "3d-render", "3-d render", "photoreali
                 "octane render", "ray traced", "ray-traced")
 # Imagen が文字/タイトルを描き出す誘発語（"book cover"/"poster"/"magazine" 等）。抽象アートワークとして記述する。
 _COVER_TEXTTRIGGER = ("book cover", "editorial layout", "magazine layout", "magazine cover", "poster", "lorem")
+# ベストセラー・ビジネス書装画らしさのスタイル語（メトリクス・装画の上質さの目安）。
+_COVER_PREMIUM_KW = ("premium", "sophisticated", "high-end", "nonfiction", "refined", "editorial illustration",
+                     "commercial-ready", "business book artwork", "fine grain", "subtle gradient")
 
 
 def check_cover_prompt(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[str, Any]]:
@@ -551,6 +554,8 @@ def check_cover_prompt(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[
     trig = [kw for kw in _COVER_TEXTTRIGGER if low.count(kw) > low.count("no " + kw)]
     if trig:
         flags.append(f"文字/タイトル誘発語の候補（抽象アートワークとして記述・文字組み語を避ける）: {trig}")
+    # ベストセラー装画らしさ（premium/editorial 等のスタイル語があるか）＝メトリクス（情報・違反ではない）。
+    metrics["premiumStyle"] = "yes" if any(k in low for k in _COVER_PREMIUM_KW) else "no"
     return violations, flags, metrics
 
 

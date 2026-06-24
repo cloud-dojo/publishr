@@ -506,14 +506,19 @@ def test_body_verdict_revise_without_feedback_violation():
 # ── STEP5 cover（coverPrompt・装丁メタ） ──────────
 def _good_cover() -> dict:
     return {"bookId": "book_test_p1", "coverPrompt": (
-        "Minimalist editorial business-book cover. A single navy triangle on off-white, "
-        "geometric precision, generous negative space. Flat vector style. "
-        "No text, no lettering, no logos, no real human faces.")}
+        "Premium business book artwork, sophisticated high-end nonfiction aesthetic. "
+        "A refined abstract composition: a single navy motif on a calm off-white field resolving into "
+        "a deep navy band across the lower third, subtle gradient with fine grain, generous negative space, "
+        "visual weight in the upper two-thirds. Completely text-free. "
+        "No text, no lettering, no words, no logos, no real human faces, no 3D render, no isometric, "
+        "no photorealistic product shot.")}
 
 
 def test_good_cover_passes():
     rep = sd.run_discipline_checks("cover", _good_cover())
     assert rep.violations == []
+    assert rep.metrics.get("premiumStyle") == "yes"
+    assert not any("文字/タイトル誘発" in f for f in rep.flags)
 
 
 def test_cover_missing_no_text_and_textburn_flag():

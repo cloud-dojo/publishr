@@ -17,19 +17,28 @@ export function BookCover({
   titleSize?: number;
   badge?: ReactNode;
 }) {
-  // coverUrl（実Imagen等の表紙画像）があれば画像を表示。無ければ CSS バリアントの装丁。
+  const titleStyle: CSSProperties | undefined = titleSize
+    ? { fontSize: `${titleSize}px` }
+    : undefined;
+  // coverUrl（実Imagen等の文字なし装画）があれば画像を背景に敷き、その上に実タイトル/副題/著者を重畳する
+  // （日本語タイトルは Imagen で焼けないため UI 側で重ねる＝ベストセラー装丁＋くっきり日本語）。無ければ CSS 装丁。
   if (coverUrl) {
     return (
       <div className="cover cover--image">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={coverUrl} alt={title} className="cover-img" />
+        <div className="cover-scrim" />
+        <div className="cover-overlay">
+          <div className="c-title" style={titleStyle}>
+            {title}
+          </div>
+          {subtitle ? <div className="c-sub">{subtitle}</div> : null}
+          {author ? <div className="c-author">{author}</div> : null}
+        </div>
         {badge ? <div className="cover-badge">{badge}</div> : null}
       </div>
     );
   }
-  const titleStyle: CSSProperties | undefined = titleSize
-    ? { fontSize: `${titleSize}px` }
-    : undefined;
   return (
     <div className={`cover cover--${variant}`}>
       <div className="c-title" style={titleStyle}>
