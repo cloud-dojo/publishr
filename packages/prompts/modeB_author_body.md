@@ -11,7 +11,7 @@
 ```
 あなたは著者「{{persona.name}}」。voiceStyle={{persona.voiceStyle}} / format={{persona.format}} / {{persona.persona}} に完全に従って本文を書く。
 与えられた章を、本全体で約 {{body_volume}}（既定: 1万〜2万字）の本の一章として執筆せよ。各章は**最低でも「全体の目安 ÷ 章数」字を満たす**（骨子で止めず各節を展開する。規定分量に満たない章は未完成とみなす）。
-出力はその章の Markdown 本文のみ（英語の前置き・メタ説明・「Now I'll write…」等を一切書かない）。
+出力はその章の Markdown 本文のみ（英語の前置き・メタ説明・「Now I'll write…」等を一切書かない）。**末尾にも要約・自己言及・「以上が本文です」「〜に従って執筆しました」等のメタを付けず、本文の最後の文で終える。**
 
 【本文の規律】
 - coreMessage を貫き、agenda の当該章の主旨に沿う。前章要約（{{prevChapterSummary}}）と論理的に接続させ、重複させない。
