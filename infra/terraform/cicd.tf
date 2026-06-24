@@ -3,7 +3,8 @@
 
 resource "google_service_account" "ci_deployer" {
   account_id   = "publishr-ci-deployer"
-  display_name = "Publishr CI deployer (GitHub Actions -> Cloud Run)"
+  display_name = "publishr-ci-deployer"
+  description  = "CI/CD deploy SA"
 }
 
 # gcloud run deploy --source（Cloud Build でビルド→Artifact Registry→Cloud Run）に必要な最小ロール

@@ -1,9 +1,9 @@
 locals {
   # Cloud Run の project-number URL（自己参照を避けるため決定的に組み立てる）
   base_url        = "https://${var.service_name}-${var.project_number}.${var.region}.run.app"
-  worker_url      = "${local.base_url}/api/worker/write"      # Pub/Sub push 先（執筆ワーカー）
-  plan_worker_url = "${local.base_url}/api/worker/plan"       # Pub/Sub push 先（企画ワーカー・C2非同期）
-  trigger_url     = "${local.base_url}/api/trigger/planning"  # Scheduler 起動先（自律入荷）
+  worker_url      = "${local.base_url}/api/worker/write"     # Pub/Sub push 先（執筆ワーカー）
+  plan_worker_url = "${local.base_url}/api/worker/plan"      # Pub/Sub push 先（企画ワーカー・C2非同期）
+  trigger_url     = "${local.base_url}/api/trigger/planning" # Scheduler 起動先（自律入荷）
   # Pub/Sub サービスエージェント（push 用 OIDC トークン生成に tokenCreator が要る）
   pubsub_agent = "serviceAccount:service-${var.project_number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
@@ -30,13 +30,14 @@ resource "google_project_service" "apis" {
 # BFF/ワーカーの実行 SA（Firestore 読み書き・Pub/Sub 発行・Vertex/Imagen）
 resource "google_service_account" "runner" {
   account_id   = "publishr-runner"
-  display_name = "Publishr Cloud Run runtime"
+  display_name = "publishr-runner"
+  description  = "Publishr Cloud Run SA"
 }
 
 # Pub/Sub push と Cloud Scheduler が Cloud Run を OIDC で叩くための SA
 resource "google_service_account" "pubsub_push" {
   account_id   = "publishr-pubsub-push"
-  display_name = "Publishr Pub/Sub push & Scheduler invoker"
+  display_name = "Pub/Sub push invoker"
 }
 
 # ───────────────────────── Artifact Registry ─────────────────────────
@@ -45,7 +46,7 @@ resource "google_artifact_registry_repository" "cloud_run_source" {
   location      = var.region
   repository_id = "cloud-run-source-deploy"
   format        = "DOCKER"
-  description   = "Cloud Run source deploy images"
+  description   = "Cloud Run Source Deployments"
   depends_on    = [google_project_service.apis]
 }
 
@@ -53,12 +54,12 @@ resource "google_artifact_registry_repository" "cloud_run_source" {
 resource "google_cloud_run_v2_service" "api" {
   name                = var.service_name
   location            = var.region
-  deletion_protection = false
+  deletion_protection = true
   ingress             = "INGRESS_TRAFFIC_ALL"
 
   template {
     service_account = google_service_account.runner.email
-    timeout         = "300s"
+    timeout         = "3600s"
 
     scaling {
       max_instance_count = 3
@@ -72,17 +73,18 @@ resource "google_cloud_run_v2_service" "api" {
           cpu    = "1000m"
           memory = "1Gi"
         }
+        cpu_idle          = true
+        startup_cpu_boost = true
       }
 
-      # 切替シーム: firestore + mock LLM（既定＝決定的・課金ゼロ）。
-      # 実 LLM/Imagen を回す場合のみ PUBLISHR_LLM=vertex に手動更新（課金ゲート）。
+      # 切替シーム: firestore + LLM。live は実 Vertex（PUBLISHR_LLM=vertex・課金）。
       env {
         name  = "DATA_SOURCE"
         value = "firestore"
       }
       env {
         name  = "PUBLISHR_LLM"
-        value = "mock"
+        value = "vertex"
       }
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
@@ -114,6 +116,138 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "PUBSUB_PUSH_SA"
         value = google_service_account.pubsub_push.email
       }
+      # 手動トリガー（POST /api/trigger/planning）のサーバ側ロック（実 Vertex 企画＝課金）。
+      # 空 = 全許可(dev)。本番はデモの佐倉 uid のみ許可し、非許可 uid は 403（routers/api.py の
+      # TriggerGuard）。フロントの NEXT_PUBLIC_TRIGGER_UIDS（apphosting.yaml）と対で多層防御。
+      # pydantic の list[str]＝JSON 配列文字列で渡す（jsonencode で ["uid",...] を生成）。
+      env {
+        name  = "ALLOWED_TRIGGER_UIDS"
+        value = jsonencode(var.allowed_trigger_uids)
+      }
+
+      # ── 以下は live（gcloud 運用更新）の実態に整合させた env。terraform を実態の正本に
+      #    するため describe をそのまま反映（plan ゼロ）。値変更は本コードか gcloud で。──
+      # 観測ソース＝実 Google / 予約=実執筆は認証必須（fail-closed）。
+      env {
+        name  = "PUBLISHR_OBSERVE"
+        value = "google"
+      }
+      env {
+        name  = "PUBLISHR_REQUIRE_RESERVE_AUTH"
+        value = "1"
+      }
+      # モードB本文＝GCS オフロード（C3.3）。
+      env {
+        name  = "PUBLISHR_BODY_STORE"
+        value = "gcs"
+      }
+      env {
+        name  = "PUBLISHR_BODY_BUCKET"
+        value = "publishr-contents-498123"
+      }
+      env {
+        name  = "PUBLISHR_COVER_BUCKET"
+        value = "publishr-contents-498123"
+      }
+      env {
+        name  = "PUBLISHR_BODY_CHARS_PER_CHAPTER"
+        value = "1500"
+      }
+      env {
+        name  = "PUBLISHR_BODY_MAX_CHAPTERS"
+        value = "3"
+      }
+      env {
+        name  = "PUBLISHR_BODY_EDIT_ROUNDS"
+        value = "1"
+      }
+      # 表紙 Imagen ＋ Vertex 経由（us-central1）。
+      env {
+        name  = "ENABLE_IMAGEN"
+        value = "true"
+      }
+      env {
+        name  = "GOOGLE_GENAI_USE_VERTEXAI"
+        value = "TRUE"
+      }
+      env {
+        name  = "GOOGLE_CLOUD_LOCATION"
+        value = "us-central1"
+      }
+      # 企画(モードA)非同期 worker の push audience（C2）。
+      env {
+        name  = "PUBSUB_PLAN_PUSH_AUDIENCE"
+        value = local.plan_worker_url
+      }
+      # OAuth(C4.1) 連携。client_id は公開値、戻り先 URL は live のサービス URL。
+      env {
+        name  = "PUBLISHR_WEB_APP_URL"
+        value = "https://publishr--publishr-498123.asia-east1.hosted.app"
+      }
+      env {
+        name  = "PUBLISHR_OAUTH_REDIRECT_URI"
+        value = "https://publishr-api-24ru3hr7fq-an.a.run.app/api/auth/google/callback"
+      }
+      env {
+        name  = "PUBLISHR_OAUTH_TOKEN_STORE"
+        value = "secret_manager"
+      }
+      env {
+        name  = "PUBLISHR_SECRET_MANAGER_PROJECT"
+        value = "publishr-498123"
+      }
+      env {
+        name  = "GOOGLE_OAUTH_CLIENT_ID"
+        value = "355143691286-cv63k6bouj2plhgs93qkkas3b9t6ndd7.apps.googleusercontent.com"
+      }
+
+      # ── 秘密は値を持たず Secret Manager 参照（terraform は箱を作らず参照のみ。
+      #    箱と値は別管理＝git に秘密を置かない）。──
+      env {
+        name = "GOOGLE_OAUTH_CLIENT_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = "GOOGLE_OAUTH_CLIENT_SECRET"
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "PUBLISHR_OAUTH_STATE_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = "PUBLISHR_OAUTH_STATE_SECRET"
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "LANGFUSE_HOST"
+        value_source {
+          secret_key_ref {
+            secret  = "LANGFUSE_HOST"
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "LANGFUSE_PUBLIC_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "LANGFUSE_PUBLIC_KEY"
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "LANGFUSE_SECRET_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "LANGFUSE_SECRET_KEY"
+            version = "latest"
+          }
+        }
+      }
     }
   }
 
@@ -121,8 +255,12 @@ resource "google_cloud_run_v2_service" "api" {
 
   lifecycle {
     # イメージは gcloud run deploy --source / CI(B3.2) が更新するため terraform 管理外。
+    # build_config は --source デプロイの一時成果物（ビルドID/ソースzip URL・毎回変わる）。
+    # サービスレベル scaling は API が既定値（min/manual=0）を自動補完するため無視。
     ignore_changes = [
       template[0].containers[0].image,
+      build_config,
+      scaling,
       client,
       client_version,
     ]
@@ -146,15 +284,11 @@ resource "google_pubsub_topic" "writing" {
 
 # push サブスクリプション → Cloud Run /api/worker/write（OIDC 付き）
 resource "google_pubsub_subscription" "writing_push" {
-  name                 = "${var.pubsub_topic}-push"
-  topic                = google_pubsub_topic.writing.id
-  ack_deadline_seconds = 120
-
-  # 一過性の失敗はリトライ、毒メッセージは指数バックオフで沈める（冪等ガード I-20 が前提）
-  retry_policy {
-    minimum_backoff = "10s"
-    maximum_backoff = "600s"
-  }
+  name  = "${var.pubsub_topic}-push"
+  topic = google_pubsub_topic.writing.id
+  # live は ack 600（執筆は実 Vertex で長め・gcloud 運用更新で 120→600 済）。retry_policy は
+  # live に未設定（既定リトライ）＝実態に合わせて宣言しない。冪等ガード I-20 が前提。
+  ack_deadline_seconds = 600
 
   push_config {
     push_endpoint = local.worker_url
@@ -220,6 +354,15 @@ resource "google_cloud_scheduler_job" "honmei" {
   attempt_deadline = "300s"
   depends_on       = [google_project_service.apis]
 
+  # live が保持する既定 retry（Cloud Scheduler のデフォルト値）を明示＝plan ゼロ。
+  retry_config {
+    retry_count          = 0
+    max_retry_duration   = "0s"
+    min_backoff_duration = "5s"
+    max_backoff_duration = "3600s"
+    max_doublings        = 5
+  }
+
   http_target {
     uri         = local.trigger_url
     http_method = "POST"
@@ -241,8 +384,17 @@ resource "google_cloud_scheduler_job" "serendipity" {
   region           = var.region
   schedule         = "0 6 * * 0"
   time_zone        = "Asia/Tokyo"
-  attempt_deadline = "300s"
+  attempt_deadline = "180s"
   depends_on       = [google_project_service.apis]
+
+  # live が保持する既定 retry（Cloud Scheduler のデフォルト値）を明示＝plan ゼロ。
+  retry_config {
+    retry_count          = 0
+    max_retry_duration   = "0s"
+    min_backoff_duration = "5s"
+    max_backoff_duration = "3600s"
+    max_doublings        = 5
+  }
 
   http_target {
     uri         = local.trigger_url
@@ -250,7 +402,9 @@ resource "google_cloud_scheduler_job" "serendipity" {
     headers = {
       "Content-Type" = "application/json"
     }
-    body = base64encode(jsonencode({ userId = "u_sakura", themeKind = "serendipity" }))
+    # live の実 body（gcloud 設定時の挿入順＋先頭空白）をそのまま固定＝plan ゼロ。
+    # 復号: ` {"userId":"u_sakura","themeKind":"serendipity"}`（jsonencode はキー順が変わり一致しない）。
+    body = "IHsidXNlcklkIjoidV9zYWt1cmEiLCJ0aGVtZUtpbmQiOiJzZXJlbmRpcGl0eSJ9"
     oidc_token {
       service_account_email = google_service_account.pubsub_push.email
       audience              = local.trigger_url
@@ -259,10 +413,10 @@ resource "google_cloud_scheduler_job" "serendipity" {
 }
 
 # ───────────────────────── IAM ─────────────────────────
-# runner: Firestore 読み書き
+# runner: Firestore 読み書き（実態は datastore.editor＝import 時のライブ値に整合）
 resource "google_project_iam_member" "runner_datastore" {
   project = var.project_id
-  role    = "roles/datastore.user"
+  role    = "roles/datastore.editor"
   member  = "serviceAccount:${google_service_account.runner.email}"
 }
 
@@ -284,6 +438,46 @@ resource "google_pubsub_topic_iam_member" "runner_publisher_planning" {
 resource "google_project_iam_member" "runner_aiplatform" {
   project = var.project_id
   role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# runner: モードB本文/表紙の GCS オフロード（PUBLISHR_BODY_STORE=gcs・C3.3）
+resource "google_project_iam_member" "runner_storage" {
+  project = var.project_id
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# runner: OAuth secret・Langfuse secret 等の読取（PUBLISHR_OBSERVE=google / 連携）
+resource "google_project_iam_member" "runner_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# runner: 自分自身（同SA実行の worker / 内部呼び出し）を invoke
+resource "google_project_iam_member" "runner_run_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.runner.email}"
+}
+
+# per-uid OAuth トークン保存用の最小権限カスタムロール（secret作成＋版追加。読取は secretAccessor）。
+resource "google_project_iam_custom_role" "publishr_token_store" {
+  role_id     = "publishrTokenStore"
+  title       = "Publishr per-uid token store"
+  description = "OAuth per-uid token 保存に必要な最小権限（secret作成＋版追加）。読取は secretAccessor。"
+  stage       = "GA"
+  permissions = [
+    "secretmanager.secrets.create",
+    "secretmanager.versions.add",
+  ]
+}
+
+# runner: per-uid トークン secret を作成・版追加できる（上記カスタムロール）
+resource "google_project_iam_member" "runner_token_store" {
+  project = var.project_id
+  role    = google_project_iam_custom_role.publishr_token_store.id
   member  = "serviceAccount:${google_service_account.runner.email}"
 }
 
