@@ -19,11 +19,11 @@ voiceStyle={{persona.voiceStyle}} / format={{persona.format}} / {{persona.person
 ④problemToSolve「解決する課題」（読者の局面・challenges を著者の言葉で）
 ⑤coreMessage「核心メッセージ」（この本が変える1つのこと）
 ⑥agenda（章タイトル＋一行サマリーを{{chapter_count}}章程度＝後段の本文執筆の章アウトラインになる）
-⑦prefaceSample「はじめに」（★品質傾斜配分の担保箇所＝ここは特に作り込む。読者の状況に名指しで語りかける）
+⑦prefaceSample「はじめに」（★品質傾斜配分の担保箇所＝ここは特に作り込む。読者の状況の型に語りかける＝「はじめに」は書籍本体なので固有の生情報は出さない）
 
 【規律】
 - あなたの voiceStyle・format・思想が前面に出る独自の切り口にする（ファン化の見せ場）。
-- ③④で読者の具体状況（{{readerProfile.currentWork.currentSituation / challenges}}）に名指しで踏み込む（解像度の証拠）。
+- ③deliveryReason（入荷理由）では読者の具体状況（{{readerProfile.currentWork.currentSituation / challenges}}）に名指しで踏み込んでよい（解像度の証拠＝的中の見せ場）。**ただし ④problemToSolve・⑤coreMessage・⑥agenda・⑦prefaceSample は書籍本体に流れるため、固有の生情報（固有の日付・実イベント名・顧客名・実在人物名）を出さず局面の型で書く**（例『佐藤さん』→『経験豊富な年上の部下』、『6/5の役員報告』→『重要な報告を控えた局面』）。生情報に触れてよいのは deliveryReason に限定する。
 - title が長文/問い掛け型のときは、subtitle で主題の言い換えに留めず到達点（主導権/裏返し等）を補う（title と意味を重複させない）。
 - agenda の章タイトルは agendaOutline/keyInsights の語をそのまま写経せず、著者の voiceStyle で問い掛け/対立/裏返しの切り口に再構成する。
 - editorFeedback があれば指摘点を最優先で直す。本文はまだ書かない。
@@ -35,7 +35,7 @@ voiceStyle={{persona.voiceStyle}} / format={{persona.format}} / {{persona.person
   "title": "7人を、ひとりで背負わない。",
   "subtitle": "年上の部下への、任せ方の設計図",
   "deliveryReason": "最近、年上の佐藤さんとの距離感に悩んでいるようなので。Driveの1on1メモと、6/5の役員報告を控えたカレンダーから、『任せ方』を構造で設計する一冊をお届けします。",
-  "problemToSolve": "初めて7名を率い、経験19年のベテラン佐藤さんにどこまで・どう任せるか。抱え込みと丸投げのあいだで揺れている、その線引きを引けるようにする。",
+  "problemToSolve": "初めて7名を率い、経験19年のベテランの年上部下にどこまで・どう任せるか。抱え込みと丸投げのあいだで揺れている、その線引きを引けるようにする。",
   "coreMessage": "任せるとは、仕事を渡すことではなく設計すること。権限は『気分』ではなく『構造』で配る。",
   "agenda": [
     { "chapter": "01 なぜ、あなたは抱え込むのか", "summary": "能力の問題ではなく、設計の不在" },
@@ -45,10 +45,10 @@ voiceStyle={{persona.voiceStyle}} / format={{persona.format}} / {{persona.person
     { "chapter": "05 権限の設計図", "summary": "7人それぞれの一枚の地図を描く" },
     { "chapter": "06 任せたあとの、関わり方", "summary": "口は出さない、目は離さない" }
   ],
-  "prefaceSample": "はじめに——\nあなたはいま、自分より長くこの仕事をしてきた人に、指示を出さなければならない。佐藤さん、と仮に呼ぶ。彼に任せたいのに、任せ方が分からない。本書はその一点だけのために書いた。…"
+  "prefaceSample": "はじめに——\nあなたはいま、自分より長くこの仕事をしてきた人に、指示を出さなければならない。経験豊富な、年上の部下。彼に任せたいのに、任せ方が分からない。本書はその一点だけのために書いた。…"
 }
 ```
-> 良い理由: ①人数を base.orgScale=7名に整合（モックの「30人」を流用しない）②③が観測ソース名指し ⑤がロジカル型の文体 ⑥が三層モデル＝keyInsights由来。
+> 良い理由: ①人数を base.orgScale=7名に整合（モックの「30人」を流用しない）③deliveryReason が観測ソース名指し（入荷理由＝的中の見せ場・固有OK）④⑦は固有の生情報を出さず局面の型で書く（書籍本体）⑤がロジカル型の文体 ⑥が三層モデル＝keyInsights由来。
 
 ## ❌ 悪い出力例 ＋ NG理由
 ```jsonc

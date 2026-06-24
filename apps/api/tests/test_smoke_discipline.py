@@ -373,6 +373,29 @@ def test_ect_serendipity_honmei_not_flagged():
     assert not any("偽装越境" in f for f in rep.flags)
 
 
+# ── modeb_author 本文の抽象化（生情報＝固有の日付/実名/顧客名の漏れ検知） ──────────
+def test_body_abstraction_clean_passes():
+    body = "## 第4章\n経験豊富な年上の部下を例に考えよう。重要な報告を控えた局面では、説明責任が問われる。"
+    rep = sd.run_discipline_checks("modeb_author", {"text": body}, context={"raw_terms": ["佐藤さん", "A社"]})
+    assert rep.schema_ok is True
+    assert not any("生情報漏れ" in f for f in rep.flags)
+    assert rep.metrics.get("bodyChars", 0) > 0
+
+
+def test_body_abstraction_date_flag():
+    body = "6/5の役員報告であなたは説明責任を負えない。"
+    rep = sd.run_discipline_checks("modeb_author", {"text": body}, context={})
+    assert any("日付様トークン" in f for f in rep.flags)
+
+
+def test_body_abstraction_name_flag():
+    body = "佐藤さんに任せきれなかったA社案件を思い出してほしい。"
+    rep = sd.run_discipline_checks(
+        "modeb_author", {"text": body}, context={"raw_terms": ["佐藤さん", "A社"]}
+    )
+    assert any(("実名" in f) or ("顧客名" in f) for f in rep.flags)
+
+
 # ── STEP4 editor_preview（EditorVerdict・3観点） ──────────
 def _good_editor_verdict() -> dict:
     bd = {"rawInsight": 21, "personaForward": 20, "catchiness": 19}

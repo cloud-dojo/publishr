@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -591,6 +592,38 @@ def check_editor_chief_serendipity(parsed: BaseModel) -> tuple[list[str], list[s
     return violations, flags, metrics
 
 
+# modeb_author（本文）: 固有の生情報（日付・実名・顧客名）の本文漏れ検知。
+# 本文は型で書く＝固有値を出さない（生情報に触れてよいのは入荷理由＝deliveryReason のみ）。
+_BODY_DATE_PATS = [
+    re.compile(r"\d{1,2}\s*[/／]\s*\d{1,2}"),   # 6/5・06／05
+    re.compile(r"\d{1,2}月\d{1,2}日"),           # 6月5日
+]
+
+
+def check_body_abstraction(body_text: str, context: dict[str, Any]) -> tuple[list[str], list[str], dict[str, Any]]:
+    """本文（modeb_author）の生情報漏れを拾う。固有の日付・実名・顧客名・固有イベント名を本文に
+    そのまま貼ったらフラグ（型へ一般化すべき）。候補フラグのみ（最終判定はLLM採点役・実Gemini）。
+    context.raw_terms: 本文に出してはいけない固有語のリスト（reader profile の人物名・顧客名・イベント名等）。
+    """
+    flags: list[str] = []
+    metrics: dict[str, Any] = {}
+    text = body_text or ""
+    metrics["bodyChars"] = len(text)
+
+    dates: list[str] = []
+    for pat in _BODY_DATE_PATS:
+        dates += pat.findall(text)
+    if dates:
+        flags.append(f"本文に固有の日付様トークン（生情報漏れ候補・型へ一般化）: {sorted(set(dates))[:5]}")
+
+    raw_terms = [t for t in (context.get("raw_terms") or []) if t]
+    hit = sorted({t for t in raw_terms if t in text})
+    if hit:
+        flags.append(f"本文に固有の実名/顧客名/イベント名（生情報漏れ候補・型へ一般化）: {hit[:5]}")
+
+    return [], flags, metrics
+
+
 @dataclass
 class DisciplineReport:
     role: str
@@ -709,6 +742,16 @@ def run_discipline_checks(role: str, raw: dict[str, Any], *, context: Optional[d
     # cover（coverPrompt）固有：装丁メタ規律（文字焼かない・実在人物の顔回避）
     if role == "cover":
         v, f, m = check_cover_prompt(raw)
+        rep.violations += v
+        rep.flags += f
+        rep.metrics.update(m)
+
+    # modeb_author（本文）固有：本文の生情報漏れ（固有の日付・実名・顧客名）を型へ。
+    if role == "modeb_author":
+        body_text = raw.get("text") or raw.get("body") or ""
+        if not body_text:
+            body_text = "\n".join(str(v) for v in raw.values() if isinstance(v, str))
+        v, f, m = check_body_abstraction(body_text, context)
         rep.violations += v
         rep.flags += f
         rep.metrics.update(m)
