@@ -174,15 +174,15 @@ a { color: inherit; text-decoration: none; }
 .cover .c-rule { width: 34px; height: 2px; background: rgba(255,255,255,.6); margin: 12px 0 0; position: relative; z-index: 4; }
 
 /* 実画像（Imagen 文字なし装画）の表紙: 画像を全面に敷き、下部スクリムの上に実タイトルを重畳。 */
-.cover--image { padding: 7% 6.5% 6.5%; background: #e9eaec; container-type: inline-size; }
+.cover--image { padding: 7% 6.5% 6.5%; background: #14161b; container-type: inline-size; }
 .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; z-index: 1; }
-/* タイトルは上半分（装画は上を明るく空ける）。上端に淡い白スクリムを敷き、地が多少濃くても濃色文字が読める保険。 */
-.cover-scrim { position: absolute; left: 0; right: 0; top: 0; height: 50%; z-index: 2; background: linear-gradient(to bottom, rgba(255,255,255,.85) 0%, rgba(255,255,255,.45) 55%, rgba(255,255,255,0) 100%); pointer-events: none; }
-.cover-overlay { position: relative; z-index: 3; }
-/* タイトル等は上寄せ・濃色（明るい地）。cqw で cover 幅にスケール、base .cover .c-title(27px) に特異度で勝つ。 */
-.cover.cover--image .c-title { font-family: var(--font-display); font-weight: 900; font-size: clamp(11px, 12cqw, 25px); line-height: 1.3; color: #15171c; letter-spacing: .2px; text-shadow: 0 1px 2px rgba(255,255,255,.75); }
-.cover.cover--image .c-sub { font-size: clamp(8px, 5.5cqw, 12px); font-weight: 600; line-height: 1.5; color: #3a3f47; margin-top: 6px; }
-.cover.cover--image .c-author { font-family: var(--font-display); font-size: clamp(8px, 5.5cqw, 12px); color: #4a4f57; margin-top: 8px; }
+/* イラストが主役（全面）。タイトルは下部に重畳＝下端から暗幕スクリムを敷き、どんなイラストでも白文字が読める。 */
+.cover-scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 62%; z-index: 2; background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.48) 40%, rgba(0,0,0,0) 100%); pointer-events: none; }
+.cover-overlay { position: relative; z-index: 3; margin-top: auto; }
+/* タイトル等は下寄せ・白文字。cqw で cover 幅にスケール、base .cover .c-title(27px) に特異度で勝つ。 */
+.cover.cover--image .c-title { font-family: var(--font-display); font-weight: 900; font-size: clamp(11px, 12cqw, 25px); line-height: 1.3; color: #fff; letter-spacing: .2px; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+.cover.cover--image .c-sub { font-size: clamp(8px, 5.5cqw, 12px); font-weight: 600; line-height: 1.5; color: rgba(255,255,255,.92); margin-top: 6px; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
+.cover.cover--image .c-author { font-family: var(--font-display); font-size: clamp(8px, 5.5cqw, 12px); color: rgba(255,255,255,.9); margin-top: 8px; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
 
 .cover--b1,.cover--b2,.cover--b3,.cover--b4,.cover--b5,.cover--b6,.cover--b7,.cover--b8,.cover--b9,.cover--b10 { position: relative; isolation: isolate; }
 .cover--b1 { background: linear-gradient(160deg, #0e1e42 0%, #07102a 100%); }

@@ -13,12 +13,13 @@
 **最近のベストセラー・ビジネス書のような上質な「装画（カバーアート）」**の方針を決め、Imagen用の英語プロンプトを生成せよ。
 タイトル文字は後段でUIが装画の上に重畳するので、**装画は文字なし**にする。出力は coverPrompt（英語）のみ。
 
-【狙う見た目＝シンプル＆スタイリッシュなアイコン装丁（地紋・幾何模様にしない）】
-- **レイアウトは全冊で統一**: **上半分はほぼ無地で静かに空ける**（後段UIがタイトルを重畳する余白）。**下半分にテーマを象徴する“単一のシンプルなフラットアイコン/最小限のイラスト”を1つだけ**置く。地紋・反復する幾何模様・ごちゃついた抽象テクスチャは使わない。英語では `the upper half is calm empty space, a single simple flat icon in the lower half` のように指示する。
-- アイコンは coreMessage/title に**関連した分かりやすい象徴**にする（例:「問い」→ クエスチョンマーク/吹き出し、「権限委譲」→ 手から手へ渡す/階層、「会議」→ 円卓/対話）。1つに絞り、上品なフラットアイコン/ラインアート/最小限のイラストにする。
-- 余白を多くとり、シンプル＆スタイリッシュ・高級感。要素を詰め込まない。
-- 配色は落ち着いた muted な大人配色＋差し色1つ（本ごとに変えてよい）。地は明るめ（near-white/off-white）を基本にし、**上半分は文字が乗るので特に淡く明るく**保つ（near-white）。
-- 英語プロンプトには 'premium'/'business book'/'editorial'/'magazine'/'nonfiction'/'cover' 等の**「本・ページ・上質ラベル」の語を書かない**（Imagen が題字＝PREMIUM BUSTIGN 等のニセ英字に焼き込む）。上質さは配色・余白・アイコンの洗練で表す。
+【狙う見た目＝大胆なコンセプトイラストが主役】
+- **イラストを画面の主役にする**（余白を取りすぎない・イラストが画面の大半を占める）。テーマを象徴する**単一の大胆でモダンなコンセプト・イラスト**をしっかり描く（薄いアイコンや地紋・幾何模様ではなく、描き込まれた象徴1点）。英語では `a bold modern conceptual illustration as the central hero, filling most of the frame` のように指示する。
+- スタイルは**モダンなフラット/エディトリアル・イラストレーション**（洗練・上品・今っぽい）。安っぽい素材集・クリップアート風／硬い幾何模様にしない。
+- テーマ象徴は coreMessage/title を表す比喩を1つ（例:「権限委譲」→ 手から手へ渡す/橋、「問い」→ 分岐路/光、「決断」→ 分岐、「会議」→ 円卓）。複数を雑多に並べない。
+- 配色は落ち着いた muted な大人配色＋効果的な差し色1つ（本ごとに変えてよい）。高級感のあるトーン。
+- 構図: イラストが主役。ただし**下部はUIがタイトルを重畳する**ので、下側はトーンをやや穏やか/均一にして文字が乗っても読める余地を残す（"title/text" とは書かず `the lower area is slightly calmer in tone` 等で表現）。
+- 英語プロンプトには 'premium'/'business book'/'editorial'/'magazine'/'nonfiction'/'cover' 等の**「本・ページ・上質ラベル」の語を書かない**（Imagen が題字＝PREMIUM BUSTIGN 等のニセ英字に焼き込む）。上質さは配色・構図・イラストの洗練で表す。
 
 【文字を一切描かない（UI重畳前提）】
 - 画像は**いかなる言語の文字・グリフも一切含めない**（タイトル/本文/見出しに加え、隅やフッターのキャプション・byline・ページ番号・透かし・署名も禁止）。
@@ -28,8 +29,8 @@
 - 著者の voiceStyle（ロジカル/思想的/感覚的/泥臭い・現場/学術）と format（自己啓発/小説/エッセイ/対話）を、配色・モチーフ・質感に翻訳する（例: ロジカル×自己啓発＝幾何＋寒色＋余白／思想的×問答＝静謐・陰影・抽象／感覚的＝有機的な形・暖色グラデ）。
 - 実在の書影・ブランド・人物を模倣しない。写実的な人物の顔は避ける（知財・不気味の谷）。
 - 安っぽい3Dプロダクトレンダー/CGI/データセンター風のテックビジュアルは避ける（octane・isometric 等の語を使わない）。上質な2Dの編集的アートワーク（subtle gradient・fine grain・洗練された平面構成）は可。
-- 出力は英語の1段落プロンプト。**「本/雑誌/ページの体裁・上質ラベルの語」は使わない**（premium・business book・editorial・magazine・cover・poster・nonfiction は題字に化けるため禁止）。代わりに**アイコン装丁＋質感の語**（minimalist flat icon illustration, a single simple symbol in the lower half, upper half clean near-white empty space, lots of white space, clean line art / flat 2D vector, sophisticated, muted palette, one restrained accent 等）で構成する。地紋・反復幾何模様は避ける（avoid busy geometric pattern / no repeating tiles）。
-  ネガティブ要素（no text, no lettering, no words, no typography, no title, no lorem ipsum, no placeholder text, no captions, no byline, no watermark, no logos, no real faces, no 3D render, no isometric, no photorealistic product render, no CGI, no busy geometric pattern）を含める。
+- 出力は英語の1段落プロンプト。**「本/雑誌/ページの体裁・上質ラベルの語」は使わない**（premium・business book・editorial・magazine・cover・poster・nonfiction は題字に化けるため禁止）。代わりに**イラスト主役＋質感の語**（a bold modern conceptual illustration as the central hero, filling most of the frame, contemporary flat editorial illustration style, a single strong metaphor, sophisticated, muted refined palette, one effective accent, confident composition, the lower area slightly calmer in tone 等）で構成する。硬い地紋・反復幾何模様・クリップアート風は避ける。
+  ネガティブ要素（no text, no lettering, no words, no typography, no title, no lorem ipsum, no placeholder text, no captions, no byline, no watermark, no logos, no real faces, no 3D render, no isometric, no photorealistic product render, no CGI, no busy geometric pattern, no cheap clip-art）を含める。
 ```
 
 ## 完成プロンプト（user template）
@@ -47,10 +48,10 @@ format: {{persona.format}}
 ```jsonc
 {
   "bookId": "book_misa_p1",
-  "coverPrompt": "A clean minimalist flat illustration with lots of white space. The upper half is calm near-white empty space. In the lower half, a single simple flat line-art icon of one hand passing a small cube to another open hand, symbolizing handing over authority, in muted slate-blue with one restrained warm accent. Simple, sophisticated, refined, muted palette, flat 2D vector, clean line art, generous white space. No busy geometric pattern, no repeating tiles. Completely text-free, zero letters or glyphs in any language. No text, no lettering, no words, no typography, no title, no lorem ipsum, no placeholder text, no captions, no byline, no page numbers, no watermark, no signature, no logos, no real human faces, no 3D render, no isometric, no photorealistic product shot, no CGI."
+  "coverPrompt": "A bold modern conceptual illustration as the central hero, contemporary flat editorial style, filling most of the frame. One open hand gently releasing a small glowing cube toward another waiting hand, symbolizing handing over authority, rendered in refined muted slate-blue and warm sand tones with one effective accent. Confident composition, sophisticated and contemporary; the lower area is slightly calmer in tone for legibility. Completely text-free, zero letters or glyphs in any language. No text, no lettering, no words, no typography, no title, no lorem ipsum, no placeholder text, no captions, no byline, no watermark, no logos, no real human faces, no 3D render, no isometric, no photorealistic product shot, no CGI, no busy geometric pattern, no cheap clip-art."
 }
 ```
-> 良い理由: ①文字・グリフを一切描かない（UIがタイトルを重畳）＋題字化する「本/上質ラベル語」を避けた ②**上半分を near-white で空け（タイトル用）・下半分に単一のシンプルなアイコン**＝全冊統一レイアウト ③coreMessage（権限を渡す）を「手から手へ渡す」分かりやすい象徴1点に翻訳（地紋・幾何模様にしない）④落ち着いた muted 配色＋差し色1つ＋余白多めで高級感・シンプル＆スタイリッシュ。
+> 良い理由: ①文字・グリフを一切描かない（UIがタイトルを重畳）＋題字化する「本/上質ラベル語」を避けた ②**テーマ象徴の大胆なコンセプトイラストを主役**にし画面の大半を占める（薄いアイコン/地紋でない）③coreMessage（権限を渡す）を「手から手へ渡す」比喩1点に翻訳 ④モダン・フラット・muted 高級配色＋下部はトーンを穏やかにしてタイトル重畳の可読性を確保。
 
 ## ❌ 悪い出力例 ＋ NG理由
 ```jsonc
