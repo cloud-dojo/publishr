@@ -37,6 +37,12 @@ variable "demo_uid" {
   default     = "5JLLGOc3rpXiGN9KXmsISBNAKty2"
 }
 
+variable "allowed_trigger_uids" {
+  type        = list(string)
+  description = "手動トリガー（POST /api/trigger/planning）を実行できる uid の allowlist。実 Vertex 企画＝課金のサーバ側ロック。空 = 全許可(dev)。本番はデモの佐倉 uid のみ。フロントの NEXT_PUBLIC_TRIGGER_UIDS（apphosting.yaml）と対で多層防御。"
+  default     = ["5JLLGOc3rpXiGN9KXmsISBNAKty2"]
+}
+
 variable "pubsub_topic" {
   type        = string
   description = "執筆ジョブ用 Pub/Sub トピック名。"
@@ -51,8 +57,8 @@ variable "pubsub_planning_topic" {
 
 variable "max_books_per_run" {
   type        = string
-  description = "1回の自律入荷で予約する最大冊数（C2.1 予約上限）。"
-  default     = "5"
+  description = "1回の自律入荷で予約する最大冊数（C2.1 予約上限）。live 実態は 4。"
+  default     = "4"
 }
 
 variable "honmei_schedule" {

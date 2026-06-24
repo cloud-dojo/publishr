@@ -9,5 +9,9 @@ region         = "asia-northeast1"
 # デモ垢（佐倉 美咲 / publishr.hackathon）。別環境では各自の uid に。
 demo_uid = "5JLLGOc3rpXiGN9KXmsISBNAKty2"
 
+# 手動トリガー（「今すぐ企画」）を実行できる uid。実 Vertex 企画＝課金のサーバ側ロック。
+# 空 = 全許可(dev)。本番はデモの佐倉のみ。別環境では各自の uid に。
+allowed_trigger_uids = ["5JLLGOc3rpXiGN9KXmsISBNAKty2"]
+
 # 初期イメージ（以後は gcloud run deploy --source / CI が更新＝terraform は ignore）
 # image = "asia-northeast1-docker.pkg.dev/publishr-498123/cloud-run-source-deploy/publishr-api:latest"
