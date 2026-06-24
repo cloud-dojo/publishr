@@ -18,7 +18,7 @@ import urllib.request
 
 PROJECT = "publishr-498123"
 BASE_URL = f"https://firestore.googleapis.com/v1/projects/{PROJECT}/databases/(default)/documents"
-OWNER = "WW1j4mkYC0VzuzDdQ0OQ4Ff8zFd2"
+OWNER = "5JLLGOc3rpXiGN9KXmsISBNAKty2"
 SUFFIX = "_sakura"
 
 

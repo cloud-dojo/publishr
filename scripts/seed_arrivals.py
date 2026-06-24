@@ -21,8 +21,8 @@ from publishr_agents.persist_mapping import map_mode_a_to_books, persist_arrival
 
 JST = timezone(timedelta(hours=9))
 DEMO_NOW = datetime(2026, 6, 3, 6, 0, tzinfo=JST)
-# 佐倉 美咲 の Firebase Auth UID（seed_sakura_library.py と同一）。
-SAKURA_UID = "WW1j4mkYC0VzuzDdQ0OQ4Ff8zFd2"
+# 佐倉 美咲 の Firebase Auth UID（publishr.hackathon@gmail.com 実デモ垢）。
+SAKURA_UID = "5JLLGOc3rpXiGN9KXmsISBNAKty2"
 
 
 def _ensure_vertex_env() -> None:

@@ -29,7 +29,7 @@ FIXTURES = ROOT / "packages" / "shared-schema" / "fixtures" / "books.json"
 SAMPLE_LIBRARY = ROOT / "apps" / "web" / "src" / "data" / "sampleLibrary.ts"
 PROJECT = "publishr-498123"
 BASE_URL = f"https://firestore.googleapis.com/v1/projects/{PROJECT}/databases/(default)/documents"
-SAKURA_UID = "WW1j4mkYC0VzuzDdQ0OQ4Ff8zFd2"
+SAKURA_UID = "5JLLGOc3rpXiGN9KXmsISBNAKty2"
 ID_SUFFIX = "_sakura"
 DAY = 86_400  # 秒
 
