@@ -186,6 +186,59 @@ class FirestoreRepository:
         self._db.collection(self._USERS).document(user.id).set(data, merge=True)
         return user
 
+    # ── 企画 run の冪等ロック（I-38: 再配信ストーム対策）──────────────────────
+    _PLANNING_JOBS = "planningJobs"
+
+    def begin_planning_run(self, run_id: str, owner_uid: str, user_id: str) -> bool:
+        """planningJobs/{runId} を transaction で「無ければ作成し True／既存なら False」。
+
+        重い planning worker が ack_deadline 超過で Pub/Sub 再配信されても、同一 run_id の2回目
+        以降は False＝即 ack（204）で skip し、重複入荷（storm）を止める。サーバ専用コレクション
+        （クライアント read 無し＝Admin がルールをバイパス・rules 追加不要）。
+        """
+        if not run_id:
+            return False
+        from firebase_admin import firestore as fb_firestore  # noqa: PLC0415
+
+        ref = self._db.collection(self._PLANNING_JOBS).document(run_id)
+
+        @fb_firestore.transactional
+        def _txn(txn) -> bool:
+            snap = ref.get(transaction=txn)
+            if snap.exists:
+                return False  # 既に running/completed/failed → 再配信は skip
+            txn.set(ref, {
+                "runId": run_id, "ownerUid": owner_uid, "userId": user_id,
+                "status": "running",
+                "createdAt": fb_firestore.SERVER_TIMESTAMP,
+                "startedAt": fb_firestore.SERVER_TIMESTAMP,
+            })
+            return True
+
+        return _txn(self._db.transaction())
+
+    def complete_planning_run(self, run_id: str, book_ids: list[str]) -> None:
+        if not run_id:
+            return
+        from firebase_admin import firestore as fb_firestore  # noqa: PLC0415
+
+        self._db.collection(self._PLANNING_JOBS).document(run_id).set(
+            {"status": "completed", "bookIds": list(book_ids),
+             "completedAt": fb_firestore.SERVER_TIMESTAMP},
+            merge=True,
+        )
+
+    def fail_planning_run(self, run_id: str, error_type: str) -> None:
+        if not run_id:
+            return
+        from firebase_admin import firestore as fb_firestore  # noqa: PLC0415
+
+        self._db.collection(self._PLANNING_JOBS).document(run_id).set(
+            {"status": "failed", "errorType": error_type,
+             "completedAt": fb_firestore.SERVER_TIMESTAMP},
+            merge=True,
+        )
+
     # ── private helpers ────────────────────────────────────────────────────
 
     @staticmethod

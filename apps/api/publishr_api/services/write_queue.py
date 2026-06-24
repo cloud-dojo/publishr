@@ -31,19 +31,24 @@ def enqueue_planning(
     owner_uid: str,
     observe_uid: str | None,
     theme_kind: str = "honmei",
+    run_id: str | None = None,
 ) -> bool:
     """企画ジョブ（モードA）を投入する。pubsub なら publish して True（非同期・即返し）。
 
     mock（既定）は in-process で即実行し False（＝同期実行済み・オフライン/テストは従来どおり
     決定的に本が作られる）。pubsub は worker（/api/worker/plan）が後で消費する。
+
+    run_id（I-38）は **pubsub 経路のみ** payload に載せ、再配信時の冪等ロック/決定的ID に使う。
+    mock 経路は run_id を mode_a_service.run へ渡さない＝従来動作（zero-diff）を厳守する。
     """
     if settings.queue == "pubsub":
         from .pubsub_queue import publish_planning_job
 
-        publish_planning_job(
-            {"userId": user_id, "owner": owner_uid, "observeUid": observe_uid or "",
-             "themeKind": theme_kind}
-        )
+        payload = {"userId": user_id, "owner": owner_uid, "observeUid": observe_uid or "",
+                   "themeKind": theme_kind}
+        if run_id:
+            payload["runId"] = run_id
+        publish_planning_job(payload)
         return True
     from . import mode_a_service
 

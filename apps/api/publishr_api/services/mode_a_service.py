@@ -161,6 +161,7 @@ def run(
     llm: Optional[str] = None,
     now: Optional[datetime] = None,
     theme_kind: str = "honmei",
+    run_id: Optional[str] = None,
 ) -> PipelineResult:
     """モードAを1回実行し、生成本を arrivals へ upsert して PipelineResult を返す。
 
@@ -173,6 +174,9 @@ def run(
     owner = owner_uid or user_id
     mode_llm = llm or settings.publishr_llm
     created = datetime.now(JST).isoformat()
+    # I-38: run_id があれば book/persona ID を run 単位で決定的にする（Pub/Sub 再配信で同一IDに
+    # upsert＝重複入荷を防ぐ）。run_id 無し（mock/直呼び）は run_token=None＝created_at 由来で従来不変。
+    run_token = ("r" + "".join(c for c in run_id if c.isalnum())[-24:]) if run_id else None
 
     # 観測ソース: 実Google（接続済み）か fixture（既定/フォールバック）。
     source = _observation_source(user, observe_uid)
@@ -193,7 +197,9 @@ def run(
             theme_kind=theme_kind,
             threshold=70,
         )
-        books, personas = map_mode_a_set_to_books(set_result, owner_uid=owner, created_at=created)
+        books, personas = map_mode_a_set_to_books(
+            set_result, owner_uid=owner, created_at=created, run_token=run_token
+        )
         # 予約制廃止改定: 配本 run で全4冊を本文まで作り切って published にする（一気通貫・予約不要）。
         books = make_published_books(
             books, personas, llm=mode_llm, rounds=settings.body_edit_rounds
@@ -202,7 +208,9 @@ def run(
         return PipelineResult(
             books=books,
             reject_log=_reject_log_set(set_result.planning),
-            approved_plan_ids=[mb.plan.proposal_id for mb in set_result.books],
+            # I-39 保険: proposal_id は vertex_set で必ず採番されるが、万一 None が混じっても
+            # PipelineResult(list[str]) を落とさないよう除去する。
+            approved_plan_ids=[mb.plan.proposal_id for mb in set_result.books if mb.plan.proposal_id],
         )
 
     # ── 旧・単一テーマ（ロールバック用キルスイッチ PUBLISHR_SET_PIPELINE=0）──
@@ -237,6 +245,7 @@ def run(
         result.personas,
         owner_uid=owner,
         created_at=created,
+        run_token=run_token,
     )
     persist_arrivals(repo, books, personas)
 

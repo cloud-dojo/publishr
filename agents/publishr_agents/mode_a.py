@@ -173,9 +173,13 @@ def make_published_books(
 
 
 def map_mode_a_set_to_books(
-    result: ModeASetResult, *, owner_uid: str, created_at: str = ""
+    result: ModeASetResult, *, owner_uid: str, created_at: str = "",
+    run_token: Optional[str] = None,
 ) -> tuple[list[Book], list[Persona]]:
-    """セット成果（4冊）を (Book[], Persona[]) に集約。各テーマ冊を既存 map_mode_a_to_books で変換し統合。"""
+    """セット成果（4冊）を (Book[], Persona[]) に集約。各テーマ冊を既存 map_mode_a_to_books で変換し統合。
+
+    run_token（I-38）は再配信冪等用の決定的 ID トークン。指定時は book ID を run 単位で固定する。
+    """
     from .persist_mapping import map_mode_a_to_books
 
     all_books: list[Book] = []
@@ -183,7 +187,8 @@ def map_mode_a_set_to_books(
     seen: set[str] = set()
     for mb in result.books:
         bks, ps = map_mode_a_to_books(
-            mb.plan, mb.shelved, mb.personas, owner_uid=owner_uid, created_at=created_at
+            mb.plan, mb.shelved, mb.personas, owner_uid=owner_uid,
+            created_at=created_at, run_token=run_token,
         )
         all_books.extend(bks)
         for p in ps:

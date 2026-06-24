@@ -72,6 +72,10 @@ def test_planning_set_vertex_yields_four_plans():
     assert len(tas.assignments) == 4, "編集長が4テーマを割り当てる"
     ps = PlanSet.model_validate(result["planSet"])
     assert len(ps.plans) == 4, "4冊が承認される（最高3R・棚を空にしない）"
+    # I-39: 各 plan は proposal_id を必ず持つ（None だと PipelineResult が落ち cast_None になる）。
+    pids = [p.proposal_id for p in ps.plans]
+    assert all(pids), f"proposal_id must be non-None on vertex path: {pids}"
+    assert len(set(pids)) == 4, "proposal_id は4冊で一意"
     PlanSetVerdict.model_validate(result["planSetVerdict"])
     assert result["verdictHistory"], "セットゲートの採点遷移が記録される"
     assert result["rounds"] <= 3

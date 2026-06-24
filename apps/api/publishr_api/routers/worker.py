@@ -65,7 +65,8 @@ def _book_id_from_envelope(envelope: dict[str, Any]) -> str | None:
 
 
 def _planning_job_from_envelope(envelope: dict[str, Any]) -> dict[str, str] | None:
-    data_b64 = (envelope.get("message") or {}).get("data")
+    message = envelope.get("message") or {}
+    data_b64 = message.get("data")
     if not data_b64:
         return None
     try:
@@ -75,11 +76,15 @@ def _planning_job_from_envelope(envelope: dict[str, Any]) -> dict[str, str] | No
     user_id = payload.get("userId")
     if not user_id:
         return None
+    # I-38: 冪等ロック用の安定 run_id。payload.runId（trigger 生成）を最優先、無ければ
+    # Pub/Sub の messageId（再配信でも同一）にフォールバック。
+    run_id = payload.get("runId") or message.get("messageId") or ""
     return {
         "user_id": str(user_id),
         "owner": str(payload.get("owner") or user_id),
         "observe_uid": str(payload.get("observeUid") or ""),
         "theme_kind": str(payload.get("themeKind") or "honmei"),
+        "run_id": str(run_id),
     }
 
 
@@ -123,20 +128,38 @@ async def worker_plan(
     if not job:
         logger.warning("worker(plan): bad/empty message, acking")
         return Response(status_code=204)  # ack（再配信ループ防止）
+    # I-38: 重い run（実Vertex 数分）は ack_deadline(600s) を超えて Pub/Sub 再配信され得る。
+    # run_id を鍵に冪等ロックを取り、最初の1回だけ処理する。既存（running/completed）なら即 204＝
+    # **ack されるので再配信自体が止まる**（storm 撲滅）。run_id が無い旧 payload は従来どおり処理。
+    run_id = job["run_id"]
+    if run_id and not await run_in_threadpool(
+        repo.begin_planning_run, run_id, job["owner"], job["user_id"]
+    ):
+        logger.info("worker(plan): run_id=%s already in progress/done, skip+ack", run_id)
+        return Response(status_code=204)
     # 企画は高価（実Vertex 数分）。失敗を 5xx で返すと Pub/Sub が同じジョブを再配信＝企画の連打
     # （コスト/クォータ事故）になる。例外はログに残して **常に 204 で ack**（自動リトライしない＝
-    # 必要なら手動で再トリガー）。重複実行も book ID 決定的 upsert で同スロット上書き。
+    # 必要なら手動で再トリガー）。run_id で book ID も決定的＝ロックすり抜けレースでも上書き。
     try:
-        await run_in_threadpool(
+        result = await run_in_threadpool(
             mode_a_service.run,
             repo,
             job["user_id"],
             owner_uid=job["owner"],
             observe_uid=job["observe_uid"] or None,
             theme_kind=job["theme_kind"],
+            run_id=run_id or None,
         )
+        if run_id:
+            book_ids = [b.id for b in getattr(result, "books", []) or []]
+            await run_in_threadpool(repo.complete_planning_run, run_id, book_ids)
     except Exception as exc:  # noqa: BLE001 — 再配信ストーム防止のため握って ack
         logger.exception("worker(plan): run failed, acking to avoid redelivery: %s", type(exc).__name__)
+        if run_id:
+            try:
+                await run_in_threadpool(repo.fail_planning_run, run_id, type(exc).__name__)
+            except Exception:  # noqa: BLE001 — ロック更新失敗は致命でない
+                pass
     _flush_traces()  # 企画中の ADK span を Langfuse へ確実に送る（trace_pipeline と二重でも安全）
     return Response(status_code=204)
 

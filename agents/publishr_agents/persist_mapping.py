@@ -115,14 +115,19 @@ def map_mode_a_to_books(
     owner_uid: str,
     plan_id: Optional[str] = None,
     created_at: str = "",
+    run_token: Optional[str] = None,
 ) -> tuple[list[Book], list[Persona]]:
     """モードA成果を (Book[], Persona[]) に変換。Book は arrivals/draft、Persona は使用著者のみ。
 
     created_at は入荷時刻（ISO8601）。書店UIの「今朝の入荷」ラベル・新着ソートに使う。
+    run_token（I-38）は book/persona ID 用の run 識別子。指定時はこれを ID トークンに使い、
+    Pub/Sub 再配信（同一 run_id）でも **同じ book ID に upsert**＝重複入荷を防ぐ。未指定なら
+    従来どおり created_at 由来（wall-clock）＝mock/直呼びは zero-diff。
     """
     pid = plan_id or plan.proposal_id or "plan_arrivals"
     theme_kind = str(plan.theme_kind or "honmei")
-    token = _run_token(created_at)  # run ごとに本/著者IDをユニーク化＝書庫に積み上げ（上書きしない）
+    # run ごとに本/著者IDをユニーク化。run_token 明示時は決定的（再配信で同一ID）、無指定は created_at 由来。
+    token = run_token or _run_token(created_at)
 
     by_id = {p.persona_id: p for p in personas}
 

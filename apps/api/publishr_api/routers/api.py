@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import logging
 import time
+import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -198,16 +200,22 @@ def api_trigger_planning(
         trigger_guard.acquire(key, now=time.monotonic())
     except TriggerError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.message) from exc
+    # I-38: 安定 run_id（trigger 1回で確定）。Pub/Sub 再配信では payload が同一＝run_id も同一なので、
+    # worker 側の冪等ロック/決定的 book ID が「同じ論理 run」を1回だけ処理できる。手動検証用に
+    # payload.run_id 指定も許容（未指定なら生成）。
+    run_id = payload.run_id or (
+        f"planning_{owner}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    )
     try:
         # 企画は重い（実Vertex数分）。pubsub なら enqueue して即返し（worker /api/worker/plan が実行）、
         # 生成本はフロントが Firestore 購読で受け取る。mock は in-process 即実行（決定的・オフライン）。
         # observe_uid=検証済み uid（実Google観測の per-uid トークン解決に使う）。
         queued = write_queue.enqueue_planning(
             repo, user_id=user_id, owner_uid=owner, observe_uid=uid,
-            theme_kind=payload.theme_kind,
+            theme_kind=payload.theme_kind, run_id=run_id,
         )
     finally:
         # 例外時もロックを解放（恒久 409 を防ぐ）。
         trigger_guard.release(key, now=time.monotonic())
-    logger.info("trigger ok key=%s queued=%s llm=%s", key, queued, settings.publishr_llm)
+    logger.info("trigger ok key=%s queued=%s llm=%s run_id=%s", key, queued, settings.publishr_llm, run_id)
     return {"ok": True, "queued": queued}

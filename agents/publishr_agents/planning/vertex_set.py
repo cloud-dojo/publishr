@@ -218,7 +218,14 @@ async def _run_team(
         _APP_OWNER,
         {**base_state, **subs, K.REJECTION_FEEDBACK: rejection_feedback},
     )
-    return _norm_plan(owner_state.get(K.PLAN_DRAFT))
+    plan = _norm_plan(owner_state.get(K.PLAN_DRAFT))
+    # I-39: LLM が proposalId を返さない場合があり、None のまま下流へ流れると
+    # PipelineResult(approved_plan_ids) が pydantic で落ち、persona_id も "cast_None" になる。
+    # 決定的経路（deterministic.py: plan_det_{team_id}）に倣い team_id で必ず採番する。
+    if plan is not None and not plan.get("proposalId"):
+        team_id = assignment.get("team_id") or assignment.get("theme", {}).get("theme_id") or "x"
+        plan["proposalId"] = f"plan_vertex_{team_id}"
+    return plan
 
 
 async def _run_set_gate(

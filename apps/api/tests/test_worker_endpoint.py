@@ -112,3 +112,78 @@ def test_worker_plan_acks_even_on_run_failure(monkeypatch):
     monkeypatch.setattr(mode_a_service, "run", boom)
     res = client.post("/api/worker/plan", json=_plan_push("u_sakura"))
     assert res.status_code == 204
+
+
+# --- I-38: 再配信冪等（runId ロック・決定的ID）----------------------------------
+
+def _plan_push_run(user_id: str, run_id: str, message_id: str = "p1") -> dict:
+    payload = {"userId": user_id, "owner": user_id, "observeUid": "", "runId": run_id}
+    data = base64.b64encode(json.dumps(payload).encode()).decode()
+    return {"message": {"data": data, "messageId": message_id}, "subscription": "sub"}
+
+
+def test_planning_envelope_parses_run_id():
+    """payload.runId を最優先・無ければ messageId にフォールバック（worker の冪等鍵）。"""
+    from publishr_api.routers.worker import _planning_job_from_envelope
+
+    job = _planning_job_from_envelope(_plan_push_run("u_sakura", "run-123"))
+    assert job and job["run_id"] == "run-123"
+    # runId 無し → messageId フォールバック
+    job2 = _planning_job_from_envelope(_plan_push("u_sakura"))  # messageId="p1"
+    assert job2 and job2["run_id"] == "p1"
+
+
+def test_begin_planning_run_is_idempotent():
+    """MockRepository: 同一 run_id は初回 True・2回目 False（complete/fail で状態更新）。"""
+    repo = get_repository()
+    assert repo.begin_planning_run("r1", "u_sakura", "u_sakura") is True
+    assert repo.begin_planning_run("r1", "u_sakura", "u_sakura") is False  # 再配信は skip
+    repo.complete_planning_run("r1", ["arr_x_a", "arr_x_b"])
+    assert repo.begin_planning_run("r1", "u_sakura", "u_sakura") is False  # completed も skip
+
+
+def test_worker_plan_skips_redelivery_same_run_id(monkeypatch):
+    """同一 runId の再配信では mode_a_service.run は1回だけ＝重複入荷ストームを止める。"""
+    import types
+
+    from publishr_api.services import mode_a_service
+
+    calls = {"n": 0}
+
+    def counting_run(*args, **kwargs):
+        calls["n"] += 1
+        return types.SimpleNamespace(books=[])
+
+    monkeypatch.setattr(mode_a_service, "run", counting_run)
+    env = _plan_push_run("u_sakura", "run-dup")
+    assert client.post("/api/worker/plan", json=env).status_code == 204
+    assert client.post("/api/worker/plan", json=env).status_code == 204  # 再配信
+    assert calls["n"] == 1, "同一 run_id の2回目はロックで skip される"
+
+
+def test_worker_plan_redelivery_does_not_increase_books():
+    """同一 runId を2回 push しても入荷数は増えない（ロックで2回目 skip・決定的IDも保険）。"""
+    repo = get_repository()
+    before = len(repo.list_books(shelf="arrivals"))
+    env = _plan_push_run("u_sakura", "run-once")
+    assert client.post("/api/worker/plan", json=env).status_code == 204
+    after_first = len(repo.list_books(shelf="arrivals"))
+    assert after_first > before  # 初回は入荷
+    assert client.post("/api/worker/plan", json=env).status_code == 204  # 再配信
+    assert len(repo.list_books(shelf="arrivals")) == after_first  # 増えない
+
+
+def test_enqueue_planning_puts_run_id_in_pubsub_payload(monkeypatch):
+    """pubsub 経路は runId を payload に載せる（再配信で同一→冪等鍵になる）。mock 経路は載せない。"""
+    from publishr_api.config import settings
+    from publishr_api.services import pubsub_queue, write_queue
+
+    captured = {}
+    monkeypatch.setattr(settings, "queue", "pubsub")
+    monkeypatch.setattr(pubsub_queue, "publish_planning_job", lambda payload: captured.update(payload) or "mid")
+    write_queue.enqueue_planning(
+        get_repository(), user_id="u_sakura", owner_uid="u_sakura",
+        observe_uid=None, theme_kind="honmei", run_id="run-xyz",
+    )
+    assert captured.get("runId") == "run-xyz"
+    assert captured.get("themeKind") == "honmei"

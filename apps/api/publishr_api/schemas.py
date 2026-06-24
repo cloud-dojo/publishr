@@ -46,6 +46,8 @@ class ReserveInput(_Camel):
 class TriggerPlanningInput(_Camel):
     user_id: str = "u_sakura"
     theme_kind: str = "honmei"
+    # I-38: 安定 run_id（任意）。未指定なら API 側で生成。手動検証で再配信冪等を試すために受け取る。
+    run_id: Optional[str] = None
 
 
 class DriveFolderLabelInput(_Camel):

@@ -33,6 +33,9 @@ class MockRepository:
         # 予約の原子性（I-20）: sync エンドポイントはスレッドプールで並行に走るため、
         # count確認→draft→reserved を1ロック下で実行してレース（cap超え/二重遷移）を防ぐ。
         self._reserve_lock = threading.Lock()
+        # 企画 run の冪等ロック（I-38）。mock は worker を介さず in-process 即実行なので実害は
+        # ないが、契約/テスト（同一 run_id 2回目は False）を満たすため dict を持つ。
+        self._planning_runs: dict[str, dict] = {}
 
     def list_books(
         self, status: Optional[str] = None, shelf: Optional[str] = None
@@ -103,3 +106,26 @@ class MockRepository:
         """connectedSources 等の更新（イミュータブル差し替え）。"""
         self._users[user.id] = user
         return user
+
+    # ── 企画 run の冪等ロック（I-38）──────────────────────────────────────────
+    def begin_planning_run(self, run_id: str, owner_uid: str, user_id: str) -> bool:
+        """初回のみ True（running 登録）。既存（running/completed/failed）なら False＝skip。"""
+        with self._reserve_lock:
+            if not run_id or run_id in self._planning_runs:
+                return False
+            self._planning_runs[run_id] = {
+                "ownerUid": owner_uid, "userId": user_id, "status": "running",
+            }
+            return True
+
+    def complete_planning_run(self, run_id: str, book_ids: list[str]) -> None:
+        with self._reserve_lock:
+            rec = self._planning_runs.get(run_id)
+            if rec is not None:
+                rec.update(status="completed", bookIds=list(book_ids))
+
+    def fail_planning_run(self, run_id: str, error_type: str) -> None:
+        with self._reserve_lock:
+            rec = self._planning_runs.get(run_id)
+            if rec is not None:
+                rec.update(status="failed", errorType=error_type)

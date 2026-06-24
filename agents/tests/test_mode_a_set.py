@@ -37,8 +37,10 @@ def _run():
 def test_set_pipeline_produces_four_books():
     res = _run()
     assert len(res.books) == 4
-    # 4テーマ＝4つの別企画
+    # 4テーマ＝4つの別企画。proposal_id は全て非None かつ一意（I-39: None だと
+    # PipelineResult が落ち persona_id が cast_None になる＝決定的/vertex 両経路で担保）。
     plan_ids = [mb.plan.proposal_id for mb in res.books]
+    assert all(plan_ids), f"proposal_id must be non-None: {plan_ids}"
     assert len(set(plan_ids)) == 4
     # 各冊に装丁付きBookDraftが1つ
     for mb in res.books:
