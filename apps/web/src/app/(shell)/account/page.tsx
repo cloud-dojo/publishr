@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
-import { DEMO_USER_ID, dataSource } from "@/data/config";
+import { DEMO_USER_ID, canManualTrigger, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
@@ -373,7 +373,10 @@ export default function AccountPage() {
         <ConnectSources initial={user.connectedSources} />
       </section>
 
-      {dataSource !== "mock" && (
+      {/* 方針A（prod-live-followups #7）: 「今すぐ企画」は実 Vertex 企画＝課金を発火するため、
+          allowlist 一致の uid（＝デモの佐倉）にのみ表示する。バックエンドの ALLOWED_TRIGGER_UIDS
+          が実際のガード（一般ユーザーは 403）で、ここは UI を見せない側の多層防御。 */}
+      {dataSource !== "mock" && canManualTrigger(uid) && (
         <section className="page section">
           <div className="acct-savebox">
             <div className="asb-text">

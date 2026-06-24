@@ -50,6 +50,21 @@ export const timing = {
 
 export const DEMO_USER_ID = "u_sakura";
 
+// 「今すぐ企画」手動トリガーを表示してよい uid の allowlist（方針A・デモ限定）。
+// バックエンドの ALLOWED_TRIGGER_UIDS と対。実 Vertex 企画＝課金なので一般ユーザーには出さない。
+// build 時に NEXT_PUBLIC_TRIGGER_UIDS（カンマ区切り）で佐倉の実 Firebase UID を投入する。
+// 未設定なら DEMO_USER_ID のみ（＝本番は実質非表示／ローカル dev は u_sakura で表示される安全側）。
+const triggerUids: string[] = (process.env.NEXT_PUBLIC_TRIGGER_UIDS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/** 手動企画トリガーをこの uid に見せてよいか（方針A: allowlist 一致のみ）。 */
+export function canManualTrigger(uid: string | null | undefined): boolean {
+  const allow = triggerUids.length > 0 ? triggerUids : [DEMO_USER_ID];
+  return allow.includes(uid ?? DEMO_USER_ID);
+}
+
 /**
  * 表紙画像の URL を返す。
  * - coverUrl が設定済みなら（Imagen 生成済み）そのまま返す。

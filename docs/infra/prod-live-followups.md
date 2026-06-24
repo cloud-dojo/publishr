@@ -76,7 +76,8 @@ mock 既定だった本番を「実 GCS 本文退避（C3.3）・実 OAuth/Drive
 ## 残タスク（2026-06-17 時点）
 ほぼクローズ。**#1（非同期化＝MAX_BOOKS=4 で live）・#2・#3・#4・#5・#6・#8 は対応済**。
 
-- **#7 企画の再実行導線（✅2026-06-24）**: アカウントページに「今すぐ企画」を追加。本命/セレンディピティを `runPipeline(userId, themeKind)` で手動トリガー（`dataSource!==mock` 時表示・実行中は種別ごとに無効化）。`themeKind` は API→Pub/Sub→worker→`mode_a_service.run` まで伝播済み（同日コミット）。
+- **#7 企画の再実行導線（✅2026-06-24・方針A=デモUID限定ゲート）**: アカウントページに「今すぐ企画」を追加。本命/セレンディピティを `runPipeline(userId, themeKind)` で手動トリガー（実行中は種別ごとに無効化）。`themeKind` は API→Pub/Sub→worker→`mode_a_service.run` まで伝播済み（同日コミット）。
+  - **方針A（2026-06-24 決定）**: 実 Vertex 企画を発火＝課金するため**デモの佐倉 UID にのみ表示**する。フロントは `dataSource!==mock && canManualTrigger(uid)`（config.ts の allowlist `NEXT_PUBLIC_TRIGGER_UIDS`・カンマ区切り。未設定なら `DEMO_USER_ID` のみ）で UI を隠し、**バックエンドの `ALLOWED_TRIGGER_UIDS` が実ガード**（一般ユーザーは 403）＝多層防御。**一瀬対応**: 本番デプロイで両 env に佐倉 UID `5JLLGOc3rpXiGN9KXmsISBNAKty2` を設定する（フロント=build時 `NEXT_PUBLIC_TRIGGER_UIDS`／BFF=`ALLOWED_TRIGGER_UIDS`）。未設定だと佐倉にも出ない（安全側）。
 - **#11 署名URL直リンク（任意）**: server-side read 運用のため通常不要。
 - **Pub/Sub 同一job再配信時の重複本**: run-uniqueID 化で `created_at` が変わると別IDの重複本になりうる。trigger_guard＋ack-on-error で再配信は稀＝MVP許容（長期は job-id 安定化/保持ポリシー）。
 
