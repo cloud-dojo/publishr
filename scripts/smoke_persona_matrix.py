@@ -76,7 +76,7 @@ _CASTING_INPUTS = """# 承認企画(PlanProposal・8項目)
 {{readerProfile}}
 # お気に入り著者（任意・約15%で1枠採用・空なら採用なし）
 {{favoriteAuthors}}
-GeneratedPersonaSet（personas[5]＋reason）のJSONのみを出力せよ。"""
+GeneratedPersonaSet（personas[4]＋reason）のJSONのみを出力せよ。"""
 
 # grounding（google_search）併用ロール＝被験者には WebSearch を許可（結果は Gemini grounding の近似）。
 _GROUNDING_ROLES = {"sub_market", "sub_theme_insight"}
