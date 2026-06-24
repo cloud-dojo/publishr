@@ -15,7 +15,7 @@ import {
   type FirstRunStatus,
 } from "@/data/user-writes";
 import { watchAuth } from "@/lib/firebase";
-import { ARRIVAL_WINDOW_DAYS, arrivalHeroLabel, isWithinDays } from "@/lib/arrival";
+import { ARRIVAL_WINDOW_DAYS, arrivalHeroLabel, isVisibleArrival } from "@/lib/arrival";
 
 export default function HomePage() {
   const provider = useProvider();
@@ -45,7 +45,10 @@ export default function HomePage() {
   //   本だけ shelf=library になり入荷一覧から外れて書庫に残る。移動せず28日を過ぎた本は入荷から
   //   自然に落ちる（書庫には入らない・検索からは到達可）。
   const now = new Date();
-  const isFreshArrival = (b: Book) => isWithinDays(b.createdAt, ARRIVAL_WINDOW_DAYS, now);
+  // 入荷一覧は「30日以内 かつ 未書庫(archivedAt 無し)」のみ。書庫へ移した本は isVisibleArrival が
+  // 除外する（I-30 動的フィルタ）。生 shelf ではなく archivedAt を見るのが正（saveToLibrary は
+  // archivedAt のみ更新＝Firestore rules 許可フィールド）。
+  const isFreshArrival = (b: Book) => isVisibleArrival(b, ARRIVAL_WINDOW_DAYS, now);
   const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
 
   const interests = provider.booksByShelf("arrivals").filter(isFreshArrival).sort(byNewest);

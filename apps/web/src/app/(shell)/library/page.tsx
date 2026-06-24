@@ -6,6 +6,7 @@ import type { Book } from "@publishr/shared-schema";
 import { BookCard } from "@/components/book/BookCard";
 import { Topbar } from "@/components/shell/Topbar";
 import { useActions, useProvider } from "@/data/hooks";
+import { isArchivedBook } from "@/lib/arrival";
 
 export default function LibraryPage() {
   const provider = useProvider();
@@ -16,9 +17,12 @@ export default function LibraryPage() {
   // 書庫＝ユーザーが「書庫へ移動」した本だけのキュレーション集（shelf==="library"）。
   // 入荷(arrivals/odd)は直近28日の新着ビュー。移動しないと28日で入荷から落ち、書庫にも入らない
   // （検索からは到達可）。新しい順。
+  // 書庫＝「書庫へ移動」した本（archivedAt セット or shelf=library）。saveToLibrary は archivedAt のみ
+  // 更新するため生 shelf ではなく isArchivedBook で判定する（I-30）。書庫から外した本（feedback.dropped）
+  // は除外。新しい順。
   const library = provider
     .listBooks()
-    .filter((b) => b.status === "published" && b.shelf === "library")
+    .filter((b) => b.status === "published" && isArchivedBook(b) && !b.feedback?.dropped)
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   const handleRemove = async (book: Book) => {
     if (!window.confirm(`『${book.title}』を書庫から外しますか？`)) return;
