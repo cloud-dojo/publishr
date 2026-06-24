@@ -35,7 +35,7 @@ mock 既定だった本番を「実 GCS 本文退避（C3.3）・実 OAuth/Drive
 | 4 | 中 | セキュリティ | `GOOGLE_OAUTH_CLIENT_SECRET`・`PUBLISHR_OAUTH_STATE_SECRET` が**平文 env**（コンソール権限者は閲覧可・作業中に露出） | Secret Manager 移行＋**ローテーション** | ✅2026-06-15 SM移行・平文env削除・state は新値ローテ・ci.yml `--update-secrets` 明記。✅2026-06-16 **client secret もローテ完了**＝コンソールで新 secret 発行→SM 新版で更新→**露出した旧版は SM で disable**（ユーザー実施） |
 | 5 | 中 | セキュリティ | per-uid トークン保存のため runner SA に **`roles/secretmanager.admin`**（広い＝全 secret 読み書き可） | カスタムロール（`secrets.create`＋`versions.add/access` のみ）へ scope-down | ✅2026-06-15 カスタムロール `publishrTokenStore`（`secrets.create`＋`versions.add`）付与＋`secretAccessor` 維持＋**admin 剥奪** |
 | 6 | 中 | 運用/可観測性 | 本番で **INFO ログが出ない**（`main.py` に logging 構成無し＝root 既定 WARNING）。`observe:`/`trigger ok` が見えず切り分けに難。WARNING/ERROR は出る | `logging.basicConfig(level=INFO)` 等を追加 | ✅2026-06-15 `main.py` で `logging.basicConfig(level=INFO)`（`LOG_LEVEL` 上書き可） |
-| 7 | 中 | UX | UI から**企画を再実行できない**（`runPipeline` は first-run 状態でのみ発火＝localStorage gated）。既存ユーザー（佐倉=ready）は再生成不可・手動「今すぐ企画」ボタン無し | 再生成アクション追加 or first-run リセット導線 | 未 |
+| 7 | 中 | UX | UI から**企画を再実行できない**（`runPipeline` は first-run 状態でのみ発火＝localStorage gated）。既存ユーザー（佐倉=ready）は再生成不可・手動「今すぐ企画」ボタン無し | 再生成アクション追加 or first-run リセット導線 | ✅2026-06-24 アカウントに「今すぐ企画」追加（本命/セレンディピティの2ボタン・`runPipeline(userId, themeKind)`・`dataSource!==mock`時表示）。C1.7 serendipity Schedulerと同じthemeKind導線を手動でも叩ける |
 | 8 | 中 | ビルド | `gcloud run deploy --source .` は**ルート `Dockerfile`** を使うが `apps/api/Dockerfile` の同名コピーが存在。誤って後者を編集すると**本番に反映されない**（実際に extra 同梱が空振りし `google-auth-oauthlib` 欠落 → token 交換 ModuleNotFoundError が発生） | ルートを正本化（コメント済）／将来は1本化 | ✅原因対応済（重複は残） |
 | 9 | 低 | デモ品質 | 実観測は**佐倉の実 Google の中身**を「今」基準±14日で読む。アカウントが空だと本が薄くなる | publishr.hackathon の Drive(選択フォルダ)/Calendar/Tasks にデモ用コンテンツを直近日付で投入 | 運用 |
 | 10 | 低 | デモ運用 | web を firestore 全面切替したため**匿名訪問者はログイン要求/空棚**（mock時は公開閲覧できた） | デモは佐倉でログインして提示 | 運用 |
@@ -76,7 +76,7 @@ mock 既定だった本番を「実 GCS 本文退避（C3.3）・実 OAuth/Drive
 ## 残タスク（2026-06-17 時点）
 ほぼクローズ。**#1（非同期化＝MAX_BOOKS=4 で live）・#2・#3・#4・#5・#6・#8 は対応済**。
 
-- **#7 企画の再実行導線（未）**: 既存ユーザーは UI から再企画できない（暫定＝`POST /api/trigger/planning`＋`userId` 直叩き、または自律 run を待つ）。デモ前に「今すぐ企画」ボタンか first-run リセットがあると安心。
+- **#7 企画の再実行導線（✅2026-06-24）**: アカウントページに「今すぐ企画」を追加。本命/セレンディピティを `runPipeline(userId, themeKind)` で手動トリガー（`dataSource!==mock` 時表示・実行中は種別ごとに無効化）。`themeKind` は API→Pub/Sub→worker→`mode_a_service.run` まで伝播済み（同日コミット）。
 - **#11 署名URL直リンク（任意）**: server-side read 運用のため通常不要。
 - **Pub/Sub 同一job再配信時の重複本**: run-uniqueID 化で `created_at` が変わると別IDの重複本になりうる。trigger_guard＋ack-on-error で再配信は稀＝MVP許容（長期は job-id 安定化/保持ポリシー）。
 
