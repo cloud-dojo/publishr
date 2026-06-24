@@ -82,7 +82,11 @@ export default function HomePage() {
   const startedForRef = useRef<string | null>(null);
   useEffect(() => {
     const u = uid ?? DEMO_USER_ID;
-    if (generating && startedForRef.current !== u) {
+    // mock は uid が常に null なので DEMO_USER_ID で即発火。Firestore は uid 確定後に1回だけ。
+    // uid=null のまま DEMO_USER_ID で打つと watchAuth 後に uid が確定した際に2回目が発火し、
+    // BFF 側で 409（パイプライン実行中）が返ってコンソールエラーになる。
+    const uidReady = uid !== null || dataSource === "mock";
+    if (generating && uidReady && startedForRef.current !== u) {
       startedForRef.current = u;
       void provider.runFirstRun(u, getInitialProfile());
     }
