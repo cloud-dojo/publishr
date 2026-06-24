@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -7,6 +7,7 @@ import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
 import { Topbar } from "@/components/shell/Topbar";
 import { bookChapters } from "@/data/bookText";
+import { isArchivedBook } from "@/lib/arrival";
 import { coverSrc } from "@/data/config";
 import { useActions, useProvider } from "@/data/hooks";
 
@@ -16,7 +17,7 @@ const MINUTES_PER_CHAPTER = 8;
 export default function BookDetailPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { moveToLibrary } = useActions();
+  const { saveToLibrary } = useActions();
 
   const book = provider.getBook(params.bookId);
   if (!book) {
@@ -31,6 +32,8 @@ export default function BookDetailPage() {
   const persona = provider.getPersona(book.authorPersonaId);
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
+
+  const archived = isArchivedBook(book);
 
   // 推定分量は本文があれば**実際に書かれた章数**で出す（計画アジェンダ数だと本文と食い違う）。
   // 本文未取得（GCS退避hydrate前 or 下書き）は従来どおり計画値にフォールバック。分も実章数で揃える。
@@ -64,18 +67,16 @@ export default function BookDetailPage() {
                 ✦ {persona.name} を知る
               </Link>
             )}
-            {/* 書庫へ移動: 入荷一覧から外し書庫に残す（動的フィルタリング）。移動後は shelf=library
-                になりこのボタンは消える（書庫には残る）。 */}
-            {book.status === "published" && book.shelf !== "library" && (
+            {book.status === "published" && (
               <button
                 type="button"
                 className="btn btn--ghost btn--block"
-                onClick={() => void moveToLibrary(book.id)}
+                disabled={archived}
+                onClick={() => void saveToLibrary(book.id)}
               >
-                📚 書庫へ移動
+                {archived ? "書庫に保存済み" : "書庫に残す"}
               </button>
-            )}
-          </div>
+            )}</div>
           <div className="detail-meta-line">
             状態：<b>{statusLabel(book.status)}</b>
             <br />

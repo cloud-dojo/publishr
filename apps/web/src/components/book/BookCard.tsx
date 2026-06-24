@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import type { Book } from "@publishr/shared-schema";
 
@@ -94,3 +94,4 @@ export function BookCard({
     </Link>
   );
 }
+

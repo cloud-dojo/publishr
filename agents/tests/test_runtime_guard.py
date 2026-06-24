@@ -28,7 +28,7 @@ def test_prod_profile_requires_explicit_env():
     profile = profile_from_env({"PUBLISHR_RUN_PROFILE": "prod"})
 
     assert profile.name == "prod"
-    assert profile.max_books_per_run == 5
+    assert profile.max_books_per_run == 4
     assert profile.body_pages_max >= 100
     assert profile.editor_rounds == 3
     assert profile.enable_imagen is True

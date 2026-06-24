@@ -1,4 +1,4 @@
-import type { Book } from "@publishr/shared-schema";
+﻿import type { Book } from "@publishr/shared-schema";
 
 import { ARRIVAL_WINDOW_DAYS, isWithinDays } from "@/lib/arrival";
 
@@ -41,3 +41,4 @@ export function StatusBadge({ book, floating = true }: { book: Book; floating?: 
     </span>
   );
 }
+

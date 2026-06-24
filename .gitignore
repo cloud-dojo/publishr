@@ -68,6 +68,10 @@ htmlcov/
 # ローカル起動スクリプト(make smoke / make dev)の子プロセスログ
 .dev-logs/
 
+# verify-prompts インナーループの被験者出力の作業場（成果物はfixturesへ別途保存）
+outputs/
+artifacts/prompt-review/
+
 # Claude Code 内部ファイル
 .agents/
 skills-lock.json

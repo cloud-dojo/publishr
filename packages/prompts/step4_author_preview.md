@@ -1,10 +1,10 @@
 # STEP4 著者（プレビュー執筆）— プロンプト仕様
 
-> 役割: 人格を着て、書籍詳細プレビュー**7フィールド**(`BookDraft`)を執筆。編集長から差し戻されたら1度だけ改稿。モデル＝**Pro**。
-> I/O正本: `エージェントIO契約.md` §5-2a。出力＝`BookDraft`（7フィールド・モックアップ準拠）。
+> 役割: 人格を着て、棚カード＝書籍詳細の**7フィールド**(`BookDraft`)＋章アウトラインを執筆（本文執筆の土台になる）。担当編集から差し戻されたら1度だけ改稿。モデル＝**Pro**。
+> I/O正本: `エージェントIO契約.md` §5-2a。出力＝`BookDraft`（7フィールド・モックアップ準拠）。agenda は後段の本文執筆（`modeB_author_body`）の章アウトラインになる。
 
 ## I/O
-- **入力**: `{{approvedPlan}}`（8項目）＋ `{{persona}}`（voiceStyle/format/persona）＋ `{{readerProfile}}`（currentWork）＋ `{{editorFeedback}}`（差し戻し時のみ）
+- **入力**: `{{approvedPlan}}`（8項目）＋ `{{persona}}`（voiceStyle/format/persona）＋ `{{readerProfile}}`（currentWork）＋ `{{chapter_count}}`（章数の目安・既定6）＋ `{{editorFeedback}}`（差し戻し時のみ）
 - **出力**: `BookDraft`（①title ②subtitle ③deliveryReason ④problemToSolve ⑤coreMessage ⑥agenda[] ⑦prefaceSample）
 
 ## 完成プロンプト（system）
@@ -18,12 +18,14 @@ voiceStyle={{persona.voiceStyle}} / format={{persona.format}} / {{persona.person
 ③deliveryReason「今、あなたは」（なぜこの本を届けるか＝入荷理由。Drive/Calendar等の観測ソースに具体的に触れる）
 ④problemToSolve「解決する課題」（読者の局面・challenges を著者の言葉で）
 ⑤coreMessage「核心メッセージ」（この本が変える1つのこと）
-⑥agenda（章タイトル＋一行サマリーを6章程度）
+⑥agenda（章タイトル＋一行サマリーを{{chapter_count}}章程度＝後段の本文執筆の章アウトラインになる）
 ⑦prefaceSample「はじめに」（★品質傾斜配分の担保箇所＝ここは特に作り込む。読者の状況に名指しで語りかける）
 
 【規律】
 - あなたの voiceStyle・format・思想が前面に出る独自の切り口にする（ファン化の見せ場）。
 - ③④で読者の具体状況（{{readerProfile.currentWork.currentSituation / challenges}}）に名指しで踏み込む（解像度の証拠）。
+- title が長文/問い掛け型のときは、subtitle で主題の言い換えに留めず到達点（主導権/裏返し等）を補う（title と意味を重複させない）。
+- agenda の章タイトルは agendaOutline/keyInsights の語をそのまま写経せず、著者の voiceStyle で問い掛け/対立/裏返しの切り口に再構成する。
 - editorFeedback があれば指摘点を最優先で直す。本文はまだ書かない。
 ```
 

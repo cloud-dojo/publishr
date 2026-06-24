@@ -1,4 +1,4 @@
-// firestoreプロバイダ: 読み取りは onSnapshot 購読、低リスク書き込みは Firestore 直、
+﻿// firestoreプロバイダ: 読み取りは onSnapshot 購読、低リスク書き込みは Firestore 直、
 // 予約/手動トリガーは Cloud Run API（Firebase IDトークン付与）。
 // 方針の正本: docs/design/api-contract.md §1 / docs/design/tech-architecture.md §3。
 //
@@ -124,22 +124,6 @@ export class FirestoreProvider extends BaseProvider {
     );
   }
 
-  // --- 予約: Cloud Run API（IDトークン付与）。状態遷移は Firestore 購読で受け取る ---
-  async reserve(id: string): Promise<void> {
-    await this.apiPost("/api/reserve", { bookId: id });
-    // status は books 購読で draft→reserved→writing→published と流れてくる（ポーリング不要）。
-  }
-
-  // --- 書庫へ移動: Cloud Run API でサーバ側が shelf=library に。購読で反映＋即時に楽観更新 ---
-  async moveToLibrary(id: string): Promise<void> {
-    await this.apiPost(`/api/books/${id}/move-to-library`, {});
-    const cur = this.books.get(id);
-    if (cur) {
-      this.books.set(id, { ...cur, shelf: "library" });
-      this.notify(); // onSnapshot が最終的に同期するが、入荷一覧から即消すため楽観更新
-    }
-  }
-
   // --- 簡易FB: Firestore 直書き（books/{id}.feedback） ---
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
     const book = this.books.get(id);
@@ -154,6 +138,19 @@ export class FirestoreProvider extends BaseProvider {
   }
 
   // --- 読書状態: Firestore 直書き ---
+  async saveToLibrary(id: string): Promise<void> {
+    await updateDoc(doc(this.db, "books", id), {
+      archivedAt: new Date().toISOString(),
+    });
+  }
+
+  async removeFromLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    await updateDoc(doc(this.db, "books", id), {
+      feedback: { ...book?.feedback, dropped: true },
+    });
+  }
+
   async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
     const patch: Record<string, unknown> = {};
     if (state.granularity !== undefined) patch.granularity = state.granularity;
@@ -257,3 +254,5 @@ export class FirestoreProvider extends BaseProvider {
     return res.json().catch(() => ({}));
   }
 }
+
+

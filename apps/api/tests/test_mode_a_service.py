@@ -57,10 +57,48 @@ def test_run_unknown_user_raises():
         mode_a_service.run(MockRepository(), "u_does_not_exist")
 
 
+# ── v3 4テーマ配本（予約制廃止改定 2026-06-23・既定 set_pipeline=True）──
+def test_run_set_pipeline_yields_four_books():
+    repo = MockRepository()
+    result = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+    assert len(result.books) == 4                       # 4テーマ＝4冊（1-1-1-1）
+    assert len(set(result.approved_plan_ids)) == 4      # 4企画が承認
+    assert len({b.id for b in result.books}) == 4       # book id が4冊で別
+    # セットゲートの差し戻し→承認（編集長）の証跡。
+    assert any(e.round == 1 and e.verdict == "却下" and e.persona == "編集長" for e in result.reject_log)
+    assert any(e.round == 2 and e.verdict == "採用" for e in result.reject_log)
+
+
+def test_run_set_pipeline_books_are_published_with_body():
+    """予約制廃止改定: set pipeline は全4冊を本文付き published で配本する（予約不要・一気通貫）。"""
+    repo = MockRepository()
+    result = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+    for book in result.books:
+        assert book.status == "published", f"{book.id}: status should be published, got {book.status}"
+        assert book.body, f"{book.id}: body should be non-empty"
+        assert book.edit_round >= 1, f"{book.id}: edit_round should be >= 1"
+    # repo に格納された本も published になっている（persist は after publish）
+    for book in result.books:
+        stored = repo.get_book(book.id)
+        assert stored is not None
+        assert stored.status == "published"
+        assert stored.body
+
+
+def test_run_legacy_flag_falls_back_to_single_theme(monkeypatch):
+    """キルスイッチ PUBLISHR_SET_PIPELINE=0 で旧・単一テーマ経路に戻る（ロールバック可）。"""
+    monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)
+    result = mode_a_service.run(MockRepository(), "u_sakura", owner_uid="uid_demo")
+    assert len(result.approved_plan_ids) == 1           # 旧経路＝単一企画
+    assert all(b.model_dump(by_alias=True)["shelf"] == "arrivals" for b in result.books)
+
+
 def test_autowrite_failure_degrades_to_draft(monkeypatch):
-    """自動執筆の投入失敗（cap 超過等）は握って draft のまま＝企画全体は成功する。"""
+    """自動執筆の投入失敗（cap 超過等）は握って draft のまま＝企画全体は成功する（旧単一テーマ経路）。"""
     from publishr_api.errors import ConflictError
     from publishr_api.services import reservation_service
+
+    monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)
 
     def boom(*args, **kwargs):
         raise ConflictError("同時予約上限")
@@ -132,8 +170,10 @@ def test_source_falls_back_when_no_observe_uid(monkeypatch):
 
 
 def test_run_emits_langfuse_pipeline_trace(monkeypatch):
-    """企画 run が Langfuse の trace_pipeline を planning_rounds（差し戻し→採用の証跡）付きで呼ぶ。"""
+    """企画 run が Langfuse の trace_pipeline を planning_rounds（差し戻し→採用の証跡）付きで呼ぶ（旧単一テーマ経路）。"""
     import publishr_agents.observability as obs
+
+    monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)
 
     captured: dict = {}
 

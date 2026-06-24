@@ -164,14 +164,17 @@ def api_get_book_cover(
     )
 
 
-@router.post("/reserve", response_model=Book)
+@router.post("/reserve", response_model=Book, deprecated=True)
 async def api_reserve(
     payload: ReserveInput,
     repo: RepositoryProtocol = Depends(get_repository),
     _uid: str = Depends(require_reserve_uid),
 ) -> Book:
-    """本を予約する（draft → reserved → writing → published タイマー起動）。
-    フロント: firestore-provider.ts POST /api/reserve { bookId }"""
+    """旧予約モデルの互換エンドポイント。
+
+    2026-06-23以降の通常配本は、配本バッチ内で全冊を本文つき published にする。
+    このエンドポイントは旧ワーカー/冪等性テストの退避口としてだけ残す。
+    """
     book = reservation_service.reserve_now(repo, payload.book_id, owner_uid=_uid)
     write_queue.enqueue(repo, payload.book_id)
     return book

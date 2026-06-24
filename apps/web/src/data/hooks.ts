@@ -5,8 +5,12 @@ import { useEffect, useReducer } from "react";
 import type {
   AppNotification,
   Book,
+  Observation,
   Persona,
   Plan,
+  PlanningCandidate,
+  ReaderProfile,
+  RejectLogEntry,
   User,
 } from "@publishr/shared-schema";
 
@@ -50,6 +54,32 @@ export function useUser(id: string): User | undefined {
   return provider.getUser(id);
 }
 
+export function useDebate(): RejectLogEntry[] {
+  const provider = useProvider();
+  return provider.getDebate();
+}
+
+export function usePlanningCandidates(): {
+  candidates: PlanningCandidate[];
+  approvedPlanIds: string[];
+} {
+  const provider = useProvider();
+  return {
+    candidates: provider.getCandidates(),
+    approvedPlanIds: provider.getApprovedPlanIds(),
+  };
+}
+
+export function useReaderAnalysis(): {
+  observation: Observation | null;
+  readerProfile: ReaderProfile | null;
+} {
+  const provider = useProvider();
+  return {
+    observation: provider.getObservation(),
+    readerProfile: provider.getReaderProfile(),
+  };
+}
 
 export function useNotifications(): {
   notifications: AppNotification[];
@@ -69,9 +99,9 @@ export function useNotifications(): {
 export function useActions() {
   const provider = getProvider();
   return {
-    reserve: (id: string) => provider.reserve(id),
-    moveToLibrary: (id: string) => provider.moveToLibrary(id),
     sendFeedback: provider.sendFeedback.bind(provider),
+    saveToLibrary: provider.saveToLibrary.bind(provider),
+    removeFromLibrary: provider.removeFromLibrary.bind(provider),
     updateReadingState: provider.updateReadingState.bind(provider),
     runPipeline: (userId: string) => provider.runPipeline(userId),
     notifyFavoriteAuthor: (personaId: string, personaName: string, excludeBookId?: string) =>

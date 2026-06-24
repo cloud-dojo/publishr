@@ -4,7 +4,7 @@
   uv run python -m scripts.seed_arrivals --owner-uid <uid> --apply    # 実投入（DATA_SOURCE で mock/firestore）
   DATA_SOURCE=firestore uv run python -m scripts.seed_arrivals --owner-uid <uid> --apply   # 実Firestoreへ
 
-パイプラインは mock 既定＝LLM課金ゼロ。Book は shelf=arrivals/status=draft/ownerUid付き・
+パイプラインは mock 既定＝LLM課金ゼロ。既定のセット配本では Book は shelf=arrivals/status=published/ownerUid付き・
 ID は `arr_<personaId>`（冪等上書き・既存 b_*/_sakura 非破壊）。著者は personas へ upsert。
 前提（firestore時）: gcloud auth application-default login 済み。
 """
@@ -63,15 +63,49 @@ def _generate(user, *, theme, theme_kind: str, llm: str, limit, threshold: int, 
     return result.plan, result.shelved, result.personas
 
 
+def _generate_set(user, *, theme_kind: str, llm: str, threshold: int, enable_imagen: bool, now, owner_uid: str):
+    """4テーマ1-1-1-1のセット縦串（既定）→ (Book[], Persona[], headerラベル) を返す。
+
+    予約制廃止改定: 配本 run で全4冊を本文まで作り切って published にする（seed したデモ本も読める）。
+    """
+    from publishr_agents.observe import FixtureObservationSource
+    from publishr_agents.mode_a import (
+        make_published_books,
+        map_mode_a_set_to_books,
+        run_mode_a_set_pipeline,
+    )
+
+    res = run_mode_a_set_pipeline(
+        user,
+        source=FixtureObservationSource(),
+        now=now,
+        reader_llm=llm,
+        llm=llm,
+        preview_llm=llm,
+        cover_llm=llm,
+        enable_imagen=enable_imagen,
+        theme_kind=theme_kind,
+        threshold=threshold,
+    )
+    books, personas = map_mode_a_set_to_books(
+        res, owner_uid=owner_uid, created_at=datetime.now(JST).isoformat()
+    )
+    books = make_published_books(books, personas, llm=llm, rounds=3)
+    pv = res.planning.get("planSetVerdict") or {}
+    header = f"4テーマ・1-1-1-1（セットゲート {pv.get('decision')}・総合{pv.get('score')}・{res.planning.get('rounds')}R）"
+    return books, personas, header
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="C4: モードA新刊を arrivals へ投入")
     parser.add_argument("--user", default="u_sakura")
     parser.add_argument("--owner-uid", default=SAKURA_UID, help="本の所有 Firebase Auth UID")
     parser.add_argument("--llm", default="mock", choices=["mock", "vertex"], help="既定mock＝課金ゼロ")
-    parser.add_argument("--theme", default=None, help="仮テーマ（省略時は ReaderProfile から導出）")
+    parser.add_argument("--theme", default=None, help="仮テーマ（--legacy 時のみ・省略時は導出）")
     parser.add_argument("--theme-kind", default="honmei", choices=["honmei", "serendipity"])
     parser.add_argument("--threshold", type=int, default=70)
-    parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--limit", type=int, default=None, help="冊数上限（--legacy 時のみ）")
+    parser.add_argument("--legacy", action="store_true", help="旧・単一テーマで投入（既定は4テーマ・1-1-1-1セット）")
     parser.add_argument("--enable-imagen", action="store_true")
     parser.add_argument("--now", default=None)
     parser.add_argument("--apply", action="store_true", help="実際に upsert（無いとドライラン）")
@@ -84,17 +118,23 @@ def main() -> int:
         _ensure_vertex_env()
 
     now = datetime.fromisoformat(args.now) if args.now else DEMO_NOW
-    plan, shelved, personas = _generate(
-        user, theme=args.theme, theme_kind=args.theme_kind, llm=args.llm, limit=args.limit,
-        threshold=args.threshold, enable_imagen=args.enable_imagen, now=now,
-    )
-    # created_at は実入荷時刻（新着ソート/「今朝の入荷」ラベル用）。
-    books, mapped_personas = map_mode_a_to_books(
-        plan, shelved, personas, owner_uid=args.owner_uid, created_at=datetime.now(JST).isoformat()
-    )
+    if args.legacy:
+        plan, shelved, personas = _generate(
+            user, theme=args.theme, theme_kind=args.theme_kind, llm=args.llm, limit=args.limit,
+            threshold=args.threshold, enable_imagen=args.enable_imagen, now=now,
+        )
+        books, mapped_personas = map_mode_a_to_books(
+            plan, shelved, personas, owner_uid=args.owner_uid, created_at=datetime.now(JST).isoformat()
+        )
+        header = f"旧・単一テーマ「{plan.tentative_title}」"
+    else:
+        books, mapped_personas, header = _generate_set(
+            user, theme_kind=args.theme_kind, llm=args.llm, threshold=args.threshold,
+            enable_imagen=args.enable_imagen, now=now, owner_uid=args.owner_uid,
+        )
 
     print(f"== arrivals 投入プレビュー（owner={args.owner_uid} llm={args.llm} themeKind={args.theme_kind}）==")
-    print(f"採用企画: {plan.tentative_title}")
+    print(f"配本: {header}")
     for b in books:
         author = next((p.name for p in mapped_personas if p.id == b.author_persona_id), "?")
         cover = b.cover_url or f"CSS:{b.cover_variant}"
@@ -107,7 +147,8 @@ def main() -> int:
 
     repo, backend = _build_repo(apply=True, owner_uid=args.owner_uid)
     n = persist_arrivals(repo, books, mapped_personas)
-    print(f"\n✅ {backend} に {n} 冊＋著者 {len(mapped_personas)} 名 を投入（arrivals/draft・owner={args.owner_uid}）")
+    shelf_status = books[0].status if books else "draft"
+    print(f"\n✅ {backend} に {n} 冊＋著者 {len(mapped_personas)} 名 を投入（arrivals/{shelf_status}・owner={args.owner_uid}）")
     return 0
 
 

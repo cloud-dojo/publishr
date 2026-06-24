@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -12,7 +12,7 @@ import { useActions, useProvider } from "@/data/hooks";
 export default function FinishPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { sendFeedback, notifyFavoriteAuthor, moveToLibrary } = useActions();
+  const { sendFeedback, notifyFavoriteAuthor, saveToLibrary } = useActions();
   // お気に入りは /authors と同じ正本ストア（localStorage＋Firestore favoriteAuthors）を読む。
   const favorites = useFavorites();
   const book = provider.getBook(params.bookId);
@@ -38,7 +38,7 @@ export default function FinishPage() {
 
   const onSaveToLibrary = () => {
     if (inLibrary) return;
-    void moveToLibrary(book.id); // shelf=library に。入荷一覧から外れ、書庫に残る。
+    void saveToLibrary(book.id); // shelf=library に。入荷一覧から外れ、書庫に残る。
     setSavedToLibrary(true);
   };
 

@@ -54,7 +54,7 @@ _DEV_DEFAULTS = {
 
 _PROD_DEFAULTS = {
     "max_iterations": 3,
-    "max_books_per_run": 5,
+    "max_books_per_run": 4,
     "body_pages_min": 3,
     "body_pages_max": 100,
     "enable_imagen": True,

@@ -18,20 +18,33 @@
 
 ---
 
-## ファイル一覧（パイプライン順）
+## ファイル一覧（パイプライン順・出版社モデル v4・2026-06-18）
+
+> 「小さな出版社」モデル: 編集長が4サブテーマを決め各チームA/B/C/Dへ割当 → 各チーム（リーダー＋調査3人）が企画書 → 編集長が企画会議でセット承認 → 各リーダーが著者を候補から選抜 → 著者が本文フル執筆 → 担当編集がレビュー → デザイン担当が表紙。詳細は [`agent-io-contract.md`](../../docs/design/agent-io-contract.md)。
 
 | ファイル | エージェント | モデル | 出力スキーマ（IO契約） |
 |---|---|---|---|
 | `step1_reader_analyst.md` | 読者分析 | **Pro** | `ReaderProfile`（3層）§3 |
-| `step2_research_subs.md` | 調査サブ×3（読者局面/市場/テーマ知見） | Flash（B/C grounding） | `subReaderContext`/`subMarket`/`subThemeInsight` §4-2c |
-| `step2_plan_owner.md` | 企画担当者（立案） | **Pro** | `PlanProposal`（8項目）§4-2b |
-| `step2_plan_leader.md` | 企画リーダー（スコアゲート） | **Pro** | `LeaderVerdict`（4観点）§4-2a |
-| `step3_casting_editor.md` | キャスティング編集者 | **Pro** | `GeneratedPersonaSet`（5人・2軸）§5-3a |
-| `step4_author_preview.md` | 著者（プレビュー執筆） | **Pro** | `BookDraft`（7フィールド）§5-2a |
-| `step4_editor_preview.md` | 編集長（プレビュー採点） | **Pro** | `EditorVerdict`（プレビュー3観点）§5-2b |
-| `step5_cover.md` | 装丁（カバー方針→Imagenプロンプト） | Flash＋Imagen | `coverPrompt`（英語）§6 |
-| `modeB_author_body.md` | 著者（本文執筆） | **Pro** | 本文MD §7 |
-| `modeB_editor_body.md` | 編集長（本文採点） | **Pro** | 本文ルーブリック5観点 §7 |
-| `eval_judge.md` | Eval judge | **Pro** | 企画4観点（リーダーと共通）§8 |
+| `step2_editor_chief_themes.md` | 編集長（テーマ設定・4テーマ割当） | **Pro** | `ThemeAssignmentSet` §4-0 |
+| `step2_research_trend.md` | トレンドリサーチャー（今・時間軸） | Flash grounding | `SubTrendInsight` §4-2c |
+| `step2_research_competitors.md` | 競合書籍リサーチャー（市場・競合軸） | Flash grounding | `SubMarket` §4-2c |
+| `step2_research_classics.md` | 古典・本質リサーチャー（普遍・不変軸） | Flash grounding | `SubThemeInsight` §4-2c |
+| `step2_plan_owner.md` | チームリーダー（企画立案） | **Pro** | `PlanProposal`（8項目＋配本属性）§4-2b |
+| `step2_editor_chief_gate.md` | 編集長（企画会議・セットゲート） | **Pro** | `PlanSetVerdict`（per-plan＋portfolio）§4-2a |
+| `step3_author_casting.md` | キャスティング（候補生成→1人選抜） | **Pro** | `AuthorCasting`（候補＋chosen＋理由）§5-3a |
+| `step4_author_preview.md` | 著者（棚カード＋章アウトライン） | **Pro** | `BookDraft`（7フィールド）§5-2a |
+| `step4_editor_preview.md` | 担当編集（棚カード採点） | **Pro** | `EditorVerdict`（プレビュー3観点）§5-2b |
+| `modeB_author_body.md` | 著者（本文フル執筆・Mermaid図解） | **Pro** | 本文MD（{{body_volume}}・既定1万〜2万字）§7 |
+| `modeB_editor_body.md` | 担当編集（本文採点） | **Pro** | 本文ルーブリック5観点 §7 |
+| `step5_cover.md` | デザイン担当（カバー方針→Imagenプロンプト） | Flash＋Imagen | `coverPrompt`（英語）§6 |
+| `eval_judge.md` | Eval judge | **Pro** | 企画4観点（per-planと共通）§8 |
 
-> 移植: 実リポ scaffold 時に本フォルダごと `packages/prompts/` へ。プロンプト本文は文字列定数 or テンプレファイルとして `agents/*.py` から読み込む。
+### 旧ファイル（後継へ移行・registry配線切替まで併存）
+| 旧ファイル | 後継 |
+|---|---|
+| `step2_editorial_intent.md` | → `step2_editor_chief_themes.md`（テーマ割当を統合） |
+| `step2_research_subs.md`（読者局面/市場/テーマ知見） | → `step2_research_trend` / `step2_research_competitors` / `step2_research_classics`（読者局面はSTEP1共有へ） |
+| `step2_plan_leader.md` | → `step2_editor_chief_gate.md`（per-plan＋portfolioのセット採点へ拡張） |
+| `step3_casting_editor.md` | → `step3_author_casting.md`（候補→選抜＋理由） |
+
+> registry/state_keys/orchestration の配線切替（PR-4以降）で旧ファイルは廃止。dangling だった `step2_serendipity_themes`（registry参照・実ファイル無）はセレンディピティ別ロジックの実装フェーズで新設する。

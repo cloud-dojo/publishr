@@ -3,7 +3,6 @@ import type {
   Book,
   FeedbackInput,
   Persona,
-  PipelineResult,
   Plan,
   ReadingStateInput,
   User,
@@ -77,20 +76,6 @@ export class BffProvider extends BaseProvider {
     setTimeout(tick, timing.pollInterval);
   }
 
-  async reserve(id: string): Promise<void> {
-    const book = await jpost<Book>(`/books/${id}/reserve`);
-    this.books.set(id, book);
-    this.trackedBookIds.add(id);
-    this.notify();
-    this.startPolling();
-  }
-
-  async moveToLibrary(id: string): Promise<void> {
-    const book = await jpost<Book>(`/api/books/${id}/move-to-library`);
-    this.books.set(id, book);
-    this.notify();
-  }
-
   watchBook(id: string): void {
     const book = this.books.get(id);
     if (!book || (book.status !== "reserved" && book.status !== "writing")) return;
@@ -104,6 +89,19 @@ export class BffProvider extends BaseProvider {
     this.notify();
   }
 
+  async saveToLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, { ...book, archivedAt: new Date().toISOString() });
+    this.notify();
+  }
+
+  async removeFromLibrary(id: string): Promise<void> {
+    const book = await jpost<Book>(`/books/${id}/feedback`, { dropped: true });
+    this.books.set(id, book);
+    this.notify();
+  }
+
   async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
     const book = await jpost<Book>(`/books/${id}/reading-state`, state);
     this.books.set(id, book);
@@ -111,14 +109,7 @@ export class BffProvider extends BaseProvider {
   }
 
   async runPipeline(userId: string): Promise<void> {
-    const result = await jpost<PipelineResult>("/pipeline/run", { userId });
-    result.plans.forEach((p) => this.plans.set(p.id, p));
-    result.books.forEach((b) => this.books.set(b.id, b));
-    this.observation = result.observation;
-    this.readerProfile = result.readerProfile;
-    this.candidates = result.candidates;
-    this.approvedPlanIds = result.approvedPlanIds;
-    this.debate = result.rejectLog;
-    this.notify();
+    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", { userId });
+    await this.refreshBooks();
   }
 }

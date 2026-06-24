@@ -23,3 +23,12 @@ APPROVED_PLAN = "approvedPlan"
 GENERATED_PERSONA_SET = "generatedPersonaSet"
 EDITOR_VERDICT = "editorVerdict"
 EDITOR_FEEDBACK = "editorFeedback"
+
+# ── v3（4テーマ束ね・1-1-1-1配本・2026-06-23 予約制廃止改定）state キー ──
+EDITORIAL_INTENT = "editorialIntent"        # STEP2-0 編集意図（編集長）
+THEME_ASSIGNMENT_SET = "themeAssignmentSet"  # STEP2-0 編集長テーマ設定（4チーム割当）
+SUB_TREND = "subTrend"                       # STEP2c-1 トレンド調査（今・時間軸）
+PLAN_SET = "planSet"                         # STEP2 配本セット（4テーマ→4冊）
+PLAN_SET_VERDICT = "planSetVerdict"          # STEP2 編集長セットゲート（ポートフォリオ採点）
+AUTHOR_CASTING = "authorCasting"             # STEP3 著者キャスティング（候補3→選抜1）
+SERENDIPITY_SET = "serendipitySet"           # セレンディピティ別ロジック（4テーマ→4冊）

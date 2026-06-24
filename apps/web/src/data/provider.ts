@@ -164,10 +164,9 @@ export abstract class BaseProvider {
     });
   }
 
-  abstract reserve(id: string): Promise<void>;
-  /** 入荷一覧から書庫へ移す（shelf="library"・動的フィルタリング）。 */
-  abstract moveToLibrary(id: string): Promise<void>;
   abstract sendFeedback(id: string, feedback: FeedbackInput): Promise<void>;
+  abstract saveToLibrary(id: string): Promise<void>;
+  abstract removeFromLibrary(id: string): Promise<void>;
   abstract updateReadingState(id: string, state: ReadingStateInput): Promise<void>;
   abstract runPipeline(userId: string): Promise<void>;
 

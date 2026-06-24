@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import type { User } from "@publishr/shared-schema";
@@ -8,7 +8,7 @@ import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
-import { useProvider } from "@/data/hooks";
+import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
 import { annotationsToHighlights, mergeHighlights } from "@/data/mock-highlights";
 import {
@@ -278,11 +278,14 @@ function ProfileEditor({ user }: { user: User }) {
 
 export default function AccountPage() {
   const provider = useProvider();
+  const actions = useActions();
   const router = useRouter();
   // Firebase Auth UID・email・displayName を取得。未ログイン or mock 時は DEMO_USER_ID にフォールバック
   const [uid, setUid] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
+  const [triggering, setTriggering] = useState(false);
+  const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
   useEffect(() => watchAuth((u) => {
     setUid(u?.uid ?? null);
     setAuthEmail(u?.email ?? null);
@@ -290,6 +293,19 @@ export default function AccountPage() {
   }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
+  const onTriggerArrivals = async () => {
+    setTriggering(true);
+    setTriggerMsg(null);
+    try {
+      await actions.runPipeline(uid ?? DEMO_USER_ID);
+      setTriggerMsg("入荷トリガーを実行しました。書店に反映されるまで少し待ってください。");
+    } catch (err) {
+      console.error(err);
+      setTriggerMsg("入荷トリガーに失敗しました。少し待ってから再実行してください。");
+    } finally {
+      setTriggering(false);
+    }
+  };
   const onLogout = async () => {
     await signOutUser();
     router.push("/login");
@@ -353,6 +369,30 @@ export default function AccountPage() {
         <ConnectSources initial={user.connectedSources} />
       </section>
 
+      {dataSource !== "mock" && (
+        <section className="page section">
+          <div className="acct-savebox">
+            <div className="asb-text">
+              <div className="asb-title">デモ用の即時入荷</div>
+              <div className="asb-sub">
+                週次バッチを待たずに、現在のユーザー向けの入荷処理を手動で実行します。
+              </div>
+            </div>
+            <div className="asb-action">
+              {triggerMsg && <span className="acct-saved-msg">{triggerMsg}</span>}
+              <button
+                type="button"
+                className="btn btn--gold"
+                onClick={onTriggerArrivals}
+                disabled={triggering}
+              >
+                {triggering ? "入荷処理中..." : "今すぐ入荷を実行"}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ログアウト */}
       <section className="page section">
         <div className="acct-savebox">
@@ -370,3 +410,5 @@ export default function AccountPage() {
     </>
   );
 }
+
+

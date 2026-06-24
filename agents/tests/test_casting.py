@@ -6,10 +6,13 @@
 
 from __future__ import annotations
 
-from publishr_schema import GeneratedPersona, GeneratedPersonaSet, PlanProposal
+from publishr_schema import AuthorCasting, GeneratedPersona, GeneratedPersonaSet, PlanProposal
 
-from publishr_agents.casting import cast_personas, reconcile_favorite_ids
-from publishr_agents.casting.deterministic import cast_personas_deterministic
+from publishr_agents.casting import cast_author, cast_personas, reconcile_favorite_ids
+from publishr_agents.casting.deterministic import (
+    cast_author_deterministic,
+    cast_personas_deterministic,
+)
 
 
 def _plan() -> PlanProposal:
@@ -98,6 +101,43 @@ def test_cast_personas_unknown_mode_raises(monkeypatch):
         raise AssertionError("unknown PUBLISHR_LLM で ValueError を期待")
 
 
+# ── author_casting（v3・4テーマ・3候補→1選抜）────────────────────
+def test_author_casting_three_candidates_choose_one():
+    result = cast_author_deterministic(_plan())
+    assert isinstance(result, AuthorCasting)
+    assert len(result.candidates) == 3
+    assert result.chosen is not None
+    assert result.chosen.persona_id in {c.persona_id for c in result.candidates}  # chosen∈candidates
+    assert result.selection_reason  # 選抜理由（証跡）
+    # 3候補は voiceStyle×format で散る。
+    assert len({(c.voice_style, c.format) for c in result.candidates}) >= 2
+
+
+def test_author_casting_ids_are_plan_scoped():
+    """別企画は別 personaId（book id=arr_<personaId> の4冊間衝突を防ぐ）。"""
+    a = cast_author_deterministic(_plan())
+    plan_b = _plan()
+    plan_b.proposal_id = "plan_other_99"
+    b = cast_author_deterministic(plan_b)
+    ids_a = {c.persona_id for c in a.candidates}
+    ids_b = {c.persona_id for c in b.candidates}
+    assert ids_a.isdisjoint(ids_b)  # 企画が違えば候補IDも全て別
+
+
+def test_author_casting_favorite_injected():
+    favs = [{"personaId": "fav_1", "name": "推し 作家", "voiceStyle": "思想的", "format": "エッセイ形式"}]
+    result = cast_author_deterministic(_plan(), favorite_authors=favs)
+    assert any(c.from_favorite and c.name == "推し 作家" for c in result.candidates)
+
+
+def test_author_casting_deterministic_and_dispatcher(monkeypatch):
+    a = cast_author_deterministic(_plan())
+    b = cast_author_deterministic(_plan())
+    assert a.model_dump(by_alias=True) == b.model_dump(by_alias=True)  # 決定的
+    monkeypatch.delenv("PUBLISHR_LLM", raising=False)
+    assert isinstance(cast_author(_plan()), AuthorCasting)  # dispatcher 既定 mock
+
+
 # ── お気に入りID整合（reconcile_favorite_ids・cross-run 継続のかなめ） ──────────
 def _vertex_like_set(fav_slot: dict) -> GeneratedPersonaSet:
     """vertex の LLM 出力を模す: from_favorite を立てつつ personaId は新規生成(p1..)。"""
@@ -117,7 +157,6 @@ def _vertex_like_set(fav_slot: dict) -> GeneratedPersonaSet:
 
 def test_reconcile_stamps_registered_favorite_id_over_llm_generated():
     """登録IDが run-unique でも、from_favorite 枠の personaId をそれへ固定する（★継続のかなめ）。"""
-    # LLM は fromFavorite=true・personaId="p1"（新規）で返す ＝ 登録IDが失われる失敗モード。
     pset = _vertex_like_set({"persona_id": "p1", "name": "推し 作家"})
     favs = [{"personaId": "arr20260617_p3", "name": "推し 作家", "savedAt": "t"}]
     out = reconcile_favorite_ids(pset, favs)

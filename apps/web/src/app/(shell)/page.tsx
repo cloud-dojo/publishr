@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import type { Book } from "@publishr/shared-schema";
@@ -264,7 +264,7 @@ export default function HomePage() {
                 いま、<span className="accent">執筆中</span>の本
               </div>
               <div className="section-sub">
-                あなたが予約した一冊を、作家が書き継いでいます。明朝には書庫へ届きます。
+                編集部が本文を書き継いでいる本です。仕上がり次第、棚に並びます。
               </div>
             </div>
           </div>

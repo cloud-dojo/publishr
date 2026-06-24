@@ -8,7 +8,13 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from publishr_schema import GeneratedPersona, GeneratedPersonaSet, PlanProposal, ReaderProfile3Layer
+from publishr_schema import (
+    AuthorCasting,
+    GeneratedPersona,
+    GeneratedPersonaSet,
+    PlanProposal,
+    ReaderProfile3Layer,
+)
 
 # (voiceStyle, format, name, persona_seed) — 2軸を5通りに分散（同じ組合せを重ねない）。
 _AXES: list[tuple[str, str, str, str]] = [
@@ -80,4 +86,72 @@ def cast_personas_deterministic(
         theme_kind=plan.theme_kind,
         personas=personas,
         reason=reason,
+    )
+
+
+# ── STEP3 author_casting（v3・4テーマ）: 1企画＝3候補生成→1選抜（AuthorCasting）──
+# 出版社モデルの新STEP3。GeneratedPersonaSet（5著者・選択肢）とは別形＝担当が3案出して最適1人に絞る。
+def _author_candidate(plan: PlanProposal, axis: tuple[str, str, str, str], n: int, expertise: list[str], theme: str) -> GeneratedPersona:
+    voice, fmt, name, seed = axis
+    return GeneratedPersona(
+        # plan スコープのIDで4冊間の衝突を防ぐ（book id = arr_<personaId>）。
+        persona_id=f"cast_{plan.proposal_id or 'plan'}_{n}",
+        name=name,
+        voice_style=voice,
+        format=fmt,
+        persona=f"{seed} テーマ「{theme}」を {voice} の語り口で {fmt} として書く。",
+        expertise=expertise,
+        past_books=[],
+        from_favorite=False,
+        ephemeral=True,
+    )
+
+
+def cast_author_deterministic(
+    plan: PlanProposal,
+    *,
+    reader_profile: Optional[ReaderProfile3Layer] = None,
+    favorite_authors: Optional[list[dict[str, Any]]] = None,
+) -> AuthorCasting:
+    """承認1企画に対し架空著者3候補を生成し、最適1人を chosen に選ぶ（決定的）。
+
+    候補3軸は plan ごとに開始オフセットをずらし、4冊で主著者が散るようにする（編集長の多様性設計を補強）。
+    chosen は候補先頭（offset 先頭＝企画の bookRole に寄せた軸）。実選抜の機微は実Vertexが担う。
+    """
+    favorite_authors = favorite_authors or []
+    theme = plan.tentative_title or plan.core_message or plan.theme or "本テーマ"
+    expertise = (list(plan.recommended_author_types) or ["実務"])[:2]
+    offset = sum(ord(c) for c in (plan.proposal_id or "plan")) % len(_AXES)
+    candidates = [
+        _author_candidate(plan, _AXES[(offset + k) % len(_AXES)], k + 1, expertise, theme)
+        for k in range(3)
+    ]
+    if favorite_authors:
+        fav = favorite_authors[0]
+        candidates[0] = GeneratedPersona(
+            persona_id=f"cast_{plan.proposal_id or 'plan'}_fav",
+            name=fav.get("name", "お気に入り著者"),
+            voice_style=candidates[0].voice_style,
+            format=candidates[0].format,
+            persona=f"読者のお気に入り著者として再登板。テーマ「{theme}」を持ち味の語りで書く。",
+            expertise=expertise,
+            past_books=[],
+            from_favorite=True,
+            ephemeral=True,
+        )
+    chosen = candidates[0]
+    style = ""
+    if reader_profile and reader_profile.reading_behavior:
+        style = reader_profile.reading_behavior.style_preference or ""
+    reason = (
+        f"企画の bookRole={plan.book_role or '—'}・emotionalTone={plan.emotional_tone or '—'} に最も合うのは"
+        f"{chosen.name}（{chosen.voice_style}×{chosen.format}）。他2候補は寄せ方が異なり、この企画の核から距離がある。"
+    )
+    if style:
+        reason += f"読者の stylePreference『{style}』とも整合。"
+    return AuthorCasting(
+        plan_id=plan.proposal_id,
+        candidates=candidates,
+        chosen=chosen,
+        selection_reason=reason,
     )

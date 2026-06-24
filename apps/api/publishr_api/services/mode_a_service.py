@@ -1,8 +1,10 @@
 """モードA: 観測→読者→企画→キャスティング→プレビュー→装丁 を実行し arrivals へ永続する BFFサービス。
 
 旧 canned v1（`run_pipeline`）を置き換える本実装。LLM は `settings.publishr_llm`（既定 mock＝課金ゼロ・
-決定的）、観測は fixture（M2 縦通し優先・実Google接続は別経路）。成果は Book[arrivals/draft/ownerUid] と
-著者 Persona として repo に upsert し、企画会議の却下→採用を `reject_log` に載せた `PipelineResult` を返す。
+決定的）、観測は fixture（M2 縦通し優先・実Google接続は別経路）。成果は Book と著者 Persona として repo に
+upsert し、企画会議の却下→採用を `reject_log` に載せた `PipelineResult` を返す。
+予約制廃止改定（2026-06-23）: set_pipeline 経路は配本 run で全4冊を本文まで作り切って
+Book[arrivals/published/ownerUid] にする（予約不要・閲覧は直接可）。旧・単一テーマ経路は draft のまま。
 """
 
 from __future__ import annotations
@@ -12,7 +14,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from publishr_agents import PipelineResult, RejectLogEntry
-from publishr_agents.mode_a import run_mode_a_pipeline
+from publishr_agents.mode_a import (
+    make_published_books,
+    map_mode_a_set_to_books,
+    run_mode_a_pipeline,
+    run_mode_a_set_pipeline,
+)
 from publishr_agents.observe import FixtureObservationSource
 from publishr_agents.persist_mapping import map_mode_a_to_books, persist_arrivals
 from publishr_schema import User, load_users
@@ -116,6 +123,35 @@ def _reject_log(planning: dict[str, Any], plan: Any) -> list[RejectLogEntry]:
     return out
 
 
+def _reject_log_set(planning: dict[str, Any]) -> list[RejectLogEntry]:
+    """セット企画（4テーマ）の verdictHistory を採否ログへ。round1 差し戻し→round2 承認が見える形。
+
+    候補名は「今週の4冊（ポートフォリオ）」、判定者は編集長（セットゲート）。
+    差し戻し理由は rejectLog 先頭の rejectionFeedback を使う。
+    """
+    feedback = ""
+    if planning.get("rejectLog"):
+        feedback = planning["rejectLog"][0].get("rejectionFeedback") or ""
+    candidate = "今週の4冊（ポートフォリオ）"
+    out: list[RejectLogEntry] = []
+    for v in planning.get("verdictHistory", []):
+        if v.get("decision") == "approve":
+            out.append(
+                RejectLogEntry(
+                    round=v["round"], candidate=candidate, persona="編集長",
+                    verdict="採用", reason=f"セット総合{v.get('score')}で承認",
+                )
+            )
+        else:
+            out.append(
+                RejectLogEntry(
+                    round=v["round"], candidate=candidate, persona="編集長",
+                    verdict="却下", reason=feedback or f"セット総合{v.get('score')}が基準未達",
+                )
+            )
+    return out
+
+
 def run(
     repo: RepositoryProtocol,
     user_id: str,
@@ -124,16 +160,19 @@ def run(
     observe_uid: Optional[str] = None,
     llm: Optional[str] = None,
     now: Optional[datetime] = None,
+    theme_kind: str = "honmei",
 ) -> PipelineResult:
     """モードAを1回実行し、生成本を arrivals へ upsert して PipelineResult を返す。
 
     owner_uid 省略時は user_id を所有者にする（mock/単一ユーザー）。firestore では呼び出し側が
     検証済み Firebase uid を渡す。observe_uid は実Google観測のトークン解決に使う認証uid。
     llm 省略時は settings.publishr_llm。
+    settings.set_pipeline（既定True）= 4テーマ1-1-1-1のセット配本（予約制廃止改定 2026-06-23）。
     """
     user = _load_user(repo, user_id)
     owner = owner_uid or user_id
     mode_llm = llm or settings.publishr_llm
+    created = datetime.now(JST).isoformat()
 
     # 観測ソース: 実Google（接続済み）か fixture（既定/フォールバック）。
     source = _observation_source(user, observe_uid)
@@ -141,11 +180,36 @@ def run(
     # fixture は決定的アンカー（役員報告が±14日窓内）。実Googleは「今」を基準に±14日を読む。
     anchor = now or (datetime.now(JST) if is_google else _DEMO_NOW)
 
+    if settings.set_pipeline:
+        set_result = run_mode_a_set_pipeline(
+            user,
+            source=source,
+            now=anchor,
+            reader_llm=mode_llm,
+            llm=mode_llm,
+            preview_llm=mode_llm,
+            cover_llm=mode_llm,
+            enable_imagen=settings.enable_imagen,
+            theme_kind=theme_kind,
+            threshold=70,
+        )
+        books, personas = map_mode_a_set_to_books(set_result, owner_uid=owner, created_at=created)
+        # 予約制廃止改定: 配本 run で全4冊を本文まで作り切って published にする（一気通貫・予約不要）。
+        books = make_published_books(
+            books, personas, llm=mode_llm, rounds=settings.body_edit_rounds
+        )
+        persist_arrivals(repo, books, personas)
+        return PipelineResult(
+            books=books,
+            reject_log=_reject_log_set(set_result.planning),
+            approved_plan_ids=[mb.plan.proposal_id for mb in set_result.books],
+        )
+
+    # ── 旧・単一テーマ（ロールバック用キルスイッチ PUBLISHR_SET_PIPELINE=0）──
+
     # C1.8 学習ループ: ユーザの過去公開本のうち「反応がある」ものを読者分析へ渡す。
-    # 反応ゼロなら空＝読者分析の出力は従来どおり不変（mock差分ゼロ）。
     from publishr_agents.reader.preferences import has_feedback  # noqa: PLC0415
 
-    # owner スコープ（mockのlist_booksは全件のため明示フィルタ＝firestoreと同義・他者本の混入防止）。
     past_books = [
         b
         for b in repo.list_books(status="published")
@@ -162,7 +226,7 @@ def run(
         cover_llm=mode_llm,
         enable_imagen=settings.enable_imagen,
         theme=None,
-        theme_kind="honmei",
+        theme_kind=theme_kind,
         threshold=70,
         limit=settings.max_books_per_run,
         past_books=past_books,
@@ -172,18 +236,15 @@ def run(
         result.shelved,
         result.personas,
         owner_uid=owner,
-        created_at=datetime.now(JST).isoformat(),
+        created_at=created,
     )
     persist_arrivals(repo, books, personas)
 
     # 企画したら本文まで自動で書く（手動「予約」を介さない）。1冊=1執筆ジョブで投入し、
-    # 重い本文生成は既存の Mode B 経路（worker→write_body_loop→published・C3.3）に委ねる
-    # ＝per-book 非同期で push の ack 期限(600s)に収まる・並列・新規本文コードなし。
+    # 重い本文生成は既存の Mode B 経路（worker→write_body_loop→published・C3.3）に委ねる。
     _autowrite_books(repo, [b.id for b in books], owner)
 
-    # Langfuse: 企画の「必然性の証跡」（①企画リーダーの差し戻しループ＋grounding 取得URL＋採否）を
-    # 1トレースで送る（C5.6）。本番の自律run/手動トリガーが Langfuse に可視化される。
-    # best-effort＝LANGFUSE_* 未設定（mock/ローカル/テスト）や失敗時は no-op で本体に影響しない。
+    # Langfuse: 企画の「必然性の証跡」を1トレースで送る（C5.6）。best-effort。
     try:
         from publishr_agents.observability import trace_pipeline  # noqa: PLC0415
 

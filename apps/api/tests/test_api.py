@@ -175,7 +175,11 @@ def test_reading_state_updates_granularity_and_annotations():
 
 
 def test_pipeline_run_returns_reject_log():
-    """新モードA: 入荷(arrivals)を生成。企画したら本文まで自動執筆＝mock は published＋body。"""
+    """新モードA: 入荷(arrivals/published)を生成し、却下→採用の証跡を返す。
+
+    予約制廃止改定（2026-06-23）: set pipeline は全冊を本文付き published で配本する（予約不要）。
+    企画したら本文まで自動執筆＝mock は published＋body。
+    """
     res = client.post("/pipeline/run", json={"userId": "u_sakura"})
     assert res.status_code == 200
     data = res.json()
