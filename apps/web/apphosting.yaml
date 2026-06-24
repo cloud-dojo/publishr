@@ -66,3 +66,13 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  # --- I-31 / prod-live-followups #7（方針A）: 「今すぐ企画」手動トリガーの表示 allowlist ---
+  # 実 Vertex 企画＝課金のため、デモの佐倉 UID にのみボタンを出す（config.ts canManualTrigger）。
+  # 未設定だと allowlist が DEMO_USER_ID("u_sakura") にフォールバックし、佐倉の実 Firebase UID
+  # では非表示になる。バックエンドの ALLOWED_TRIGGER_UIDS（Cloud Run・一瀬）と対で多層防御。
+  - variable: NEXT_PUBLIC_TRIGGER_UIDS
+    value: "5JLLGOc3rpXiGN9KXmsISBNAKty2"
+    availability:
+      - BUILD
+      - RUNTIME
