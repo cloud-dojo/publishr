@@ -624,6 +624,24 @@ def check_body_abstraction(body_text: str, context: dict[str, Any]) -> tuple[lis
     return [], flags, metrics
 
 
+# author_preview（BookDraft.title）: 分かりやすく簡潔（長すぎない）・言い切り基本。
+_TITLE_MAXLEN = 32  # おおよその上限（超は長すぎ候補・要確認）
+
+
+def check_book_title(title: str) -> tuple[list[str], list[str], dict[str, Any]]:
+    """BookDraft.title の規律: 分かりやすく簡潔。長さは候補フラグ、問いかけ型は metric として残す
+    （棚全体の問いかけ偏りは set 単位＝採点役/実機で見る・per-title では確定しない）。"""
+    flags: list[str] = []
+    metrics: dict[str, Any] = {}
+    t = (title or "").strip()
+    metrics["titleLen"] = len(t)
+    is_q = t.endswith(("？", "?")) or any(k in t for k in ("ですか", "ますか"))
+    metrics["titleForm"] = "question" if is_q else "statement"
+    if len(t) > _TITLE_MAXLEN:
+        flags.append(f"タイトルが長すぎ候補（{len(t)}字 > {_TITLE_MAXLEN}）＝簡潔に・分かりやすく")
+    return [], flags, metrics
+
+
 @dataclass
 class DisciplineReport:
     role: str
@@ -752,6 +770,13 @@ def run_discipline_checks(role: str, raw: dict[str, Any], *, context: Optional[d
         if not body_text:
             body_text = "\n".join(str(v) for v in raw.values() if isinstance(v, str))
         v, f, m = check_body_abstraction(body_text, context)
+        rep.violations += v
+        rep.flags += f
+        rep.metrics.update(m)
+
+    # author_preview（BookDraft.title）固有：分かりやすさ・簡潔さ（長すぎ）＋問いかけ型 metric
+    if role == "author_preview" and parsed is not None:
+        v, f, m = check_book_title(str(getattr(parsed, "title", "") or ""))
         rep.violations += v
         rep.flags += f
         rep.metrics.update(m)

@@ -396,6 +396,25 @@ def test_body_abstraction_name_flag():
     assert any(("実名" in f) or ("顧客名" in f) for f in rep.flags)
 
 
+# ── author_preview タイトルの分かりやすさ・簡潔さ（長さ＋問いかけ型 metric） ──────────
+def test_title_concise_statement_passes():
+    rep = sd.run_discipline_checks("author_preview", {"title": "年上の部下への、任せ方の設計図"})
+    assert rep.schema_ok is True
+    assert not any("長すぎ" in f for f in rep.flags)
+    assert rep.metrics.get("titleForm") == "statement"
+
+
+def test_title_too_long_flag():
+    long_title = "あなたが初めて年上のベテラン部下を含むチームを率いるときに直面する、任せ方と線引きのすべて"
+    rep = sd.run_discipline_checks("author_preview", {"title": long_title})
+    assert any("長すぎ" in f for f in rep.flags)
+
+
+def test_title_question_form_metric():
+    rep = sd.run_discipline_checks("author_preview", {"title": "年上の部下に、どこまで任せますか？"})
+    assert rep.metrics.get("titleForm") == "question"
+
+
 # ── STEP4 editor_preview（EditorVerdict・3観点） ──────────
 def _good_editor_verdict() -> dict:
     bd = {"rawInsight": 21, "personaForward": 20, "catchiness": 19}

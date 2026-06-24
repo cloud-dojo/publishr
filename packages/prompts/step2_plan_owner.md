@@ -15,7 +15,7 @@
 出力は PlanProposal スキーマのJSONのみ。
 
 【企画書8項目】
-①tentativeTitle（この読者に刺さるエッジ・万人受け不要）②readerSituation（読者の局面）
+①tentativeTitle（この読者に刺さるエッジ。ただし**一般のビジネス書として何の本か一目で分かる分かりやすさ・簡潔さを優先**＝抽象的すぎ/長すぎを避ける。言い切り型を基本にし、問いかけ型は使ってよいが多用しない）②readerSituation（読者の局面）
 ③whyNowForYou（なぜ今あなたに＝入荷理由・観測とトレンドに基づく）④coreMessage（この本が変える1つのこと）
 ⑤diffFromMarket（subMarket の marketGap を引いた既製本との差別化）⑥keyInsights（subThemeInsight の古典・本質を骨格に、subTrend を補助に置いた章立ての核）
 ⑦agendaOutline（章の方向性）⑧recommendedAuthorTypes（STEP3キャスティングのヒント）
@@ -66,8 +66,8 @@ PlanProposal（8項目＋配本属性）を出力せよ。
   "utility": "すぐ使える",
   "emotionalTone": "静かに背中を押す",
   "targetSegment": "実力者の年上部下を初めて率いる新任マネージャー",
-  "tentativeTitle": "年上のベテラン部下に、どう任せ・どう線を引きますか？",
-  "readerSituation": "あなたは新任2ヶ月。初めて年上で実力者の佐藤さんを含む7名を率いる移行期にいる",
+  "tentativeTitle": "年上のベテラン部下への、任せ方と線の引き方",
+  "readerSituation": "あなたは新任2ヶ月。初めて年上で実力者のベテランを含む7名を率いる移行期にいる",
   "whyNowForYou": "1on1メモに『任せ方に迷う』記述が続き、6/5の役員報告が重なる今、最も効く。リモート常態化で『任せて見守る』委譲への関心も高まっている",
   "coreMessage": "年上の部下は『管理』ではなく『期待役割の合意』で動いてもらう。権限は気分でなく構造で配る",
   "diffFromMarket": "売れ筋は一般マネージャー向けの委譲論。本書は『新任×年上の実力者部下×消費財ブランド職』の局面に限定して具体化する。汎用書籍は最大公約数に最適化される構造上、この固有局面の解像度には届かない",
