@@ -52,10 +52,47 @@ def _max_chapters() -> int:
         return _DEFAULT_MAX_CHAPTERS
 
 
-def _target_chars_hint() -> str:
-    """各章の目標文字数ヒント（PUBLISHR_BODY_CHARS_PER_CHAPTER・本番100p用）。未設定なら空。"""
-    n = os.environ.get("PUBLISHR_BODY_CHARS_PER_CHAPTER", "").strip()
-    return f"この章を **{n}字程度** でしっかり執筆する（具体例・手順・小見出しを使い、水増しせず密度高く）。" if n else ""
+def _resolve_volume(n_chapters: int) -> tuple[str, str]:
+    """本全体の目安と各章の目標文字数を解決する（I-35・パラメータ化）。
+
+    優先順位:
+      1. `PUBLISHR_BODY_CHARS_PER_CHAPTER`（章単位の明示指定・CLI run_full_book 互換）。
+         指定時は本全体＝章数×章単位 で逆算する。
+      2. 実行プロファイル（dev/prod）の `body_char_target`（本全体・既定の制御ノブ）。
+         `PUBLISHR_BODY_CHAR_TARGET` で上書き可。各章＝本全体÷採用章数 で導出。
+
+    返り値: (body_volume＝system へ注入する本全体目安, per_chapter_hint＝入力ブロックの章ヒント)。
+    """
+    chapters = max(1, n_chapters)
+    per_chapter_env = os.environ.get("PUBLISHR_BODY_CHARS_PER_CHAPTER", "").strip()
+    if per_chapter_env:
+        try:
+            per_chapter = max(1, int(per_chapter_env))
+        except ValueError:
+            per_chapter = 0
+        if per_chapter:
+            total = per_chapter * chapters
+            return _volume_str(total), _per_chapter_hint(per_chapter)
+
+    # プロファイル既定（PUBLISHR_BODY_CHAR_TARGET 上書き可）。0/未満なら制御なし＝プロンプト既定に委ねる。
+    from ..llm.runtime import profile_from_env
+
+    total = profile_from_env().body_char_target
+    if total <= 0:
+        return "", ""
+    per_chapter = max(1, total // chapters)
+    return _volume_str(total), _per_chapter_hint(per_chapter)
+
+
+def _volume_str(total: int) -> str:
+    return f"{total:,}字"
+
+
+def _per_chapter_hint(per_chapter: int) -> str:
+    return (
+        f"この章を **{per_chapter:,}字程度** でしっかり執筆する"
+        "（具体例・手順・小見出しを使い、水増しせず密度高く）。"
+    )
 
 
 _AUTHOR_INPUTS = """# 本(agenda/coreMessage/title)
@@ -171,7 +208,7 @@ async def run_body_loop_vertex_async(
     persona_dump = persona.model_dump(by_alias=True) if persona else None
     profile_dump = reader_profile.model_dump(by_alias=True) if reader_profile else None
     sel = list((book.agenda or [])[:_max_chapters()])
-    target_chars = _target_chars_hint()
+    body_volume, target_chars = _resolve_volume(len(sel))
     book_dump = {
         "title": book.title,
         "coreMessage": book.core_message,
@@ -189,6 +226,8 @@ async def run_body_loop_vertex_async(
                 "prevChapterSummary": prev_summary,
                 "editorFeedback": feedback,
                 "targetChars": target_chars,
+                # system プロンプト({{body_volume}})を生かす本全体の目安（I-35）。
+                "body_volume": body_volume,
             },
         )
 
