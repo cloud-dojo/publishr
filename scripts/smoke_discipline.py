@@ -579,13 +579,12 @@ def check_editor_chief_serendipity(parsed: BaseModel) -> tuple[list[str], list[s
     val_blob = " ".join(
         str(getattr(t, "value", "") or "") + str(getattr(t, "target_reader", "") or "") for t in themes
     )
-    blob = ei_blob + " " + val_blob
-    if reclaim := _scan(blob, _RECLAIM_KW):
-        flags.append(f"越境後に業務へ連れ戻す回収癖の候補（serendipityで不可）: {reclaim}")
-    if task := _scan(blob, _TASK_REF_KW):
+    if task := _scan(ei_blob + " " + val_blob, _TASK_REF_KW):
         flags.append(f"serendipityが読者の課題に直接言及（棚書き文法違反候補）: {task}")
-    # ハウツー約束は theme.value（提供価値）で見る。shelfConcept の「即効ではなく」等の
-    # 否定的ディスクレーマで誤検出しないよう editorialIntent は対象外にする。
+    # 回収癖・ハウツー約束は theme.value（提供価値）で見る。editorialIntent の
+    # 「役立つ答えではなく」「即効ではなく」等の否定的ディスクレーマで誤検出しないよう対象外。
+    if reclaim := _scan(val_blob, _RECLAIM_KW):
+        flags.append(f"越境後に業務へ連れ戻す回収癖の候補（serendipityで不可）: {reclaim}")
     if howto := _scan(val_blob, _HOWTO_KW):
         flags.append(f"serendipityでハウツー化/即効を約束している候補: {howto}")
 
