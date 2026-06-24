@@ -522,11 +522,13 @@ _COVER_TEXTBURN = ("with the title", "title text", "letters spelling", "text rea
 # ネガティブ指定（"no isometric" 等）での出現は誤検出しないよう、肯定的使用のみを数える（下記ロジック）。
 _COVER_3D_KW = ("isometric", "3d render", "3d-render", "3-d render", "photorealistic", "photo-realistic",
                 "octane render", "ray traced", "ray-traced")
-# Imagen が文字/タイトルを描き出す誘発語（"book cover"/"poster"/"magazine" 等）。抽象アートワークとして記述する。
-_COVER_TEXTTRIGGER = ("book cover", "editorial layout", "magazine layout", "magazine cover", "poster", "lorem")
-# ベストセラー・ビジネス書装画らしさのスタイル語（メトリクス・装画の上質さの目安）。
-_COVER_PREMIUM_KW = ("premium", "sophisticated", "high-end", "nonfiction", "refined", "editorial illustration",
-                     "commercial-ready", "business book artwork", "fine grain", "subtle gradient")
+# Imagen が題字（PREMIUM BUSTIGN 等のニセ英字）に焼き込む“本・ページ・上質ラベル”の語。
+# 実機で "premium"/"business book"/"editorial" がそのまま題字化したため誘発語に含める（抽象アートとして記述する）。
+_COVER_TEXTTRIGGER = ("book cover", "editorial", "magazine", "poster", "lorem",
+                      "premium", "business book", "nonfiction")
+# ベストセラー装画らしさ＝「本ラベル語」でなく配色・質感・構図の語で測るメトリクス（上質さの目安）。
+_COVER_PREMIUM_KW = ("sophisticated", "refined", "fine grain", "two-tone", "muted", "restrained",
+                     "negative space", "contemporary", "minimalist", "fine-art")
 
 
 def check_cover_prompt(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[str, Any]]:

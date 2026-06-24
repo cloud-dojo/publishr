@@ -506,9 +506,9 @@ def test_body_verdict_revise_without_feedback_violation():
 # ── STEP5 cover（coverPrompt・装丁メタ） ──────────
 def _good_cover() -> dict:
     return {"bookId": "book_test_p1", "coverPrompt": (
-        "Premium business book artwork, sophisticated high-end nonfiction aesthetic. "
-        "A refined abstract composition: a single navy motif on a calm off-white field resolving into "
-        "a deep navy band across the lower third, subtle gradient with fine grain, generous negative space, "
+        "A refined minimalist abstract artwork, contemporary fine-art print. "
+        "A single navy motif on a calm off-white field resolving into a deep navy band across the lower third, "
+        "subtle two-tone gradient with fine grain, generous negative space, muted professional palette, "
         "visual weight in the upper two-thirds. Completely text-free. "
         "No text, no lettering, no words, no logos, no real human faces, no 3D render, no isometric, "
         "no photorealistic product shot.")}
