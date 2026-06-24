@@ -313,6 +313,66 @@ def test_serendipity_shelf_grammar_flag():
     assert any("ハウツー化" in f for f in rep.flags)
 
 
+# ── editor_chief_themes serendipity（live の日曜セレンディピティ本ゲート）: 距離不足・回収癖 ──
+def _good_ect_serendipity() -> dict:
+    return {
+        "themeKind": "serendipity",
+        "editorialIntent": {
+            "shelfConcept": "未完成や偶然に惹かれる心を入口に、業務とは独立した知的主題から世界を眺め直す棚",
+            "readerExperience": "効率とは別の物差しを一つ受け取り、世界の解像度が一段上がる静かな高揚が残る",
+            "antiDuplication": ["業務課題を主題にも背景にも持ち込まない"],
+            "balanceConstraints": ["領域を芸術・自然科学・歴史・哲学へ分散させる"],
+        },
+        "assignments": [
+            {"teamId": "A", "theme": {"name": "なぜ廃墟や未完の建築は人の心を掴むのか", "role": "隣接探索",
+              "targetReader": "途中の風景に惹かれた覚えのある人", "value": "未完成に宿る想像の余白という美意識に触れる", "forbiddenOverlap": "自然の造形は扱わない（B）"}},
+            {"teamId": "B", "theme": {"name": "雪の結晶はなぜ二つと同じ形にならないのか", "role": "視座替え",
+              "targetReader": "自然の細部に立ち止まる人", "value": "偶然と必然の絡みへの畏敬が深まる", "forbiddenOverlap": "人工物は扱わない（A）"}},
+            {"teamId": "C", "theme": {"name": "金継ぎはなぜ割れた器の傷を金で目立たせるのか", "role": "ニッチ探索",
+              "targetReader": "繕われた道具に愛着を覚える人", "value": "欠損を肯定するまなざしに出会う", "forbiddenOverlap": "建築は扱わない（A）"}},
+            {"teamId": "D", "theme": {"name": "星の光が何万年も昔の姿で届くとき何を見ているのか", "role": "反対視点",
+              "targetReader": "夜空に時間の遠さを感じた人", "value": "速さとは無縁の尺度を味わう", "forbiddenOverlap": "地上の話は扱わない（B・C）"}},
+        ],
+    }
+
+
+def test_good_ect_serendipity_passes():
+    rep = sd.run_discipline_checks(
+        "editor_chief_themes", _good_ect_serendipity(), context={"theme_kind": "serendipity"}
+    )
+    assert rep.schema_ok is True
+    assert rep.violations == []
+    assert not any(("距離不足" in f) or ("回収癖" in f) for f in rep.flags)
+    assert rep.metrics.get("roleUnique") == "4/4"
+
+
+def test_ect_serendipity_taskword_in_name_flag():
+    raw = _good_ect_serendipity()
+    raw["assignments"][2]["theme"]["name"] = "大遠征が補給と納期の遅延をどう呑み込んだか"
+    rep = sd.run_discipline_checks(
+        "editor_chief_themes", raw, context={"theme_kind": "serendipity"}
+    )
+    assert any(("距離不足" in f) and ("偽装越境" in f) for f in rep.flags)
+
+
+def test_ect_serendipity_reclaim_flag():
+    raw = _good_ect_serendipity()
+    raw["assignments"][0]["theme"]["value"] = "この学びは明日の業務にすぐ役立つ"
+    rep = sd.run_discipline_checks(
+        "editor_chief_themes", raw, context={"theme_kind": "serendipity"}
+    )
+    assert any("回収癖" in f for f in rep.flags)
+
+
+def test_ect_serendipity_honmei_not_flagged():
+    # honmei（context未指定）では editor_chief serendipity 固有チェックは走らない＝課題語名でもフラグ無し
+    raw = _good_ect_serendipity()
+    raw["themeKind"] = "honmei"
+    raw["assignments"][0]["theme"]["name"] = "6/25更新までに導入効果を提案書のどこに組むか"
+    rep = sd.run_discipline_checks("editor_chief_themes", raw)
+    assert not any("偽装越境" in f for f in rep.flags)
+
+
 # ── STEP4 editor_preview（EditorVerdict・3観点） ──────────
 def _good_editor_verdict() -> dict:
     bd = {"rawInsight": 21, "personaForward": 20, "catchiness": 19}

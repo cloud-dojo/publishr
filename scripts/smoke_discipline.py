@@ -76,6 +76,15 @@ _TASK_REF_KW = ["あなたの悩み", "あなたの課題", "お悩み", "直面
 _SERENDIPITY_COUNT = 4
 _ADJACENCY_KINDS = ["隣接", "反対", "飛躍", "ニッチ"]
 
+# editor_chief_themes が serendipity のとき、テーマ名に出てはいけない課題語
+# （名前に課題語を据える＝距離不足＝「課題を別領域に翻訳しただけ」の偽装越境シグナル）。
+_SERENDIPITY_TASKWORD_KW = [
+    "遅延", "納期", "期限", "締切", "数値化", "差別化", "リソース",
+    "補給", "アサイン", "KPI", "ノルマ", "売上", "工数",
+]
+# 越境させた後に業務課題へ連れ戻す「回収癖」シグナル（serendipityのvalue/棚で出てはいけない）。
+_RECLAIM_KW = ["仕事に活", "業務に活", "に役立", "実務に活", "現場で使", "明日の業務", "業務へ還", "仕事へ還"]
+
 # ── STEP3 persona（員数4・voiceStyle×format 2軸分散・薄さ・fromFavorite・人物名衝突） ──
 # v3（4テーマ1-1-1-1）: persona_generator は1コール4人（1人/冊）。author_casting は1企画＝候補3→選抜1。
 _PERSONA_COUNT = 4           # persona_generator（GeneratedPersonaSet.personas）= 4人
@@ -530,6 +539,59 @@ def check_cover_prompt(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[
     return violations, flags, metrics
 
 
+def check_editor_chief_serendipity(parsed: BaseModel) -> tuple[list[str], list[str], dict[str, Any]]:
+    """editor_chief_themes が themeKind=serendipity のとき固有規律（live の日曜セレンディピティの本ゲート）。
+
+    員数4・role分散に加え、serendipity の本旨（業務課題を直撃せず関心の隣へ連れ出す）の崩れを拾う:
+    - テーマ名に課題語（遅延・納期・数値化・差別化 等）を据える＝距離不足＝偽装越境（課題の別領域翻訳）。
+    - value/shelfConcept で業務課題へ連れ戻す「回収癖」。
+    いずれも候補フラグ（最終判定はLLM採点役・実Gemini）。員数のみ確定違反。
+    """
+    violations: list[str] = []
+    flags: list[str] = []
+    metrics: dict[str, Any] = {}
+
+    assignments = list(getattr(parsed, "assignments", []) or [])
+    themes = [getattr(a, "theme", None) for a in assignments]
+    themes = [t for t in themes if t is not None]
+    n = len(themes)
+    if n != _SERENDIPITY_COUNT:  # 員数4厳守（確定違反）
+        violations.append(f"員数が{_SERENDIPITY_COUNT}テーマでない（{n}）")
+
+    roles = [(getattr(t, "role", "") or "").strip() for t in themes]
+    metrics["roleUnique"] = f"{len(set(r for r in roles if r))}/{len(roles)}"
+    if themes and len(set(r for r in roles if r)) < max(1, len(roles) - 1):
+        flags.append(f"role（隣接/反対/飛躍/ニッチ相当）が分散していない: {roles}")
+
+    # テーマ名に課題語＝距離不足（偽装越境）。name 単位で示す。
+    for t in themes:
+        name = str(getattr(t, "name", "") or "")
+        if hit := _scan(name, _SERENDIPITY_TASKWORD_KW):
+            flags.append(f"serendipityテーマ名に課題語＝距離不足（偽装越境候補）: {name!r} ← {hit}")
+
+    # value / targetReader / editorialIntent で業務課題へ連れ戻す回収癖・課題直撃。
+    ei = getattr(parsed, "editorial_intent", None)
+    ei_blob = ""
+    if ei is not None:
+        ei_blob = " ".join(
+            str(getattr(ei, k, "") or "") for k in ("shelf_concept", "reader_experience")
+        )
+    val_blob = " ".join(
+        str(getattr(t, "value", "") or "") + str(getattr(t, "target_reader", "") or "") for t in themes
+    )
+    blob = ei_blob + " " + val_blob
+    if reclaim := _scan(blob, _RECLAIM_KW):
+        flags.append(f"越境後に業務へ連れ戻す回収癖の候補（serendipityで不可）: {reclaim}")
+    if task := _scan(blob, _TASK_REF_KW):
+        flags.append(f"serendipityが読者の課題に直接言及（棚書き文法違反候補）: {task}")
+    # ハウツー約束は theme.value（提供価値）で見る。shelfConcept の「即効ではなく」等の
+    # 否定的ディスクレーマで誤検出しないよう editorialIntent は対象外にする。
+    if howto := _scan(val_blob, _HOWTO_KW):
+        flags.append(f"serendipityでハウツー化/即効を約束している候補: {howto}")
+
+    return violations, flags, metrics
+
+
 @dataclass
 class DisciplineReport:
     role: str
@@ -619,6 +681,14 @@ def run_discipline_checks(role: str, raw: dict[str, Any], *, context: Optional[d
     # serendipity_themes（別ロジック）固有：員数4・adjacency分散・棚書き文法
     if role == "serendipity_themes" and parsed is not None:
         v, f, m = check_serendipity_set(parsed)
+        rep.violations += v
+        rep.flags += f
+        rep.metrics.update(m)
+
+    # editor_chief_themes（live の日曜セレンディピティ本ゲート）固有：themeKind=serendipity のときのみ。
+    # 距離不足（課題語の題材化）・回収癖・課題直撃を拾う。
+    if role == "editor_chief_themes" and parsed is not None and context.get("theme_kind") == "serendipity":
+        v, f, m = check_editor_chief_serendipity(parsed)
         rep.violations += v
         rep.flags += f
         rep.metrics.update(m)
