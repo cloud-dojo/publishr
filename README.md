@@ -143,7 +143,7 @@ graph TD
 
 ## Features
 
-- 🗓️ **自律企画** — Cloud Scheduler が週2回（水・土 朝6時）起動。Drive/Calendar/Tasks を読んで今週の「読むべきテーマ」を自律推定
+- 🗓️ **自律企画** — Cloud Scheduler が週3回 朝6時（水・土＝本命、日＝serendipity）起動。Drive/Calendar/Tasks を読んで今週の「読むべきテーマ」を自律推定。本命は関心の中心から、serendipity は隣接/反対/飛躍/ニッチの出会い枠から仕立てる
 - 🤖 **3階層の企画会議** — サブ（実データ）→ 担当者（立案）→ リーダー（スコア審査）。70点未満は差し戻し
 - ✍️ **著者ペルソナの都度生成** — テーマが決まるたびに架空の著者を生成。同テーマの別切り口で複数冊を提案
 - 📖 **入荷した瞬間に全文が読める** — 配本runで本文まで自動執筆（週3回）。1冊=1ジョブ（Pub/Sub）で約100pを編集長⇄著者ループで仕上げ published に。本文は非公開 Cloud Storage に退避し、サーバ側 read で配信
@@ -173,22 +173,75 @@ graph TD
 cp .env.example .env
 ```
 
-```env
-# GCP
-GCP_PROJECT_ID=your-project-id
-VERTEX_AI_REGION=asia-northeast1
+既定値は**オフライン・決定的・課金ゼロ**（mock）で動くように振ってあります。本番（実 Vertex/GCP）は下表の「本番値」列を Cloud Run の env／Secret Manager で与えます。
 
-# Google OAuth（Drive / Calendar / Tasks）
-GOOGLE_OAUTH_CLIENT_ID=your-client-id
-GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
+**フロントエンド（`apps/web`・`NEXT_PUBLIC_*` は build 時に焼き込み）**
 
-# Langfuse
-LANGFUSE_PUBLIC_KEY=your-public-key
-LANGFUSE_SECRET_KEY=your-secret-key
-LANGFUSE_HOST=https://cloud.langfuse.com
-```
+| 変数 | 役割 | ローカル既定 | 本番値 |
+|---|---|---|---|
+| `NEXT_PUBLIC_DATA_SOURCE` | データ取得元 `mock`/`bff`/`firestore` | `bff` | `firestore` |
+| `NEXT_PUBLIC_API_URL` | BFF のベース URL | `http://localhost:8000` | Cloud Run URL |
+| `NEXT_PUBLIC_FIREBASE_*` | Firebase Auth 構成（apiKey/authDomain/projectId 等） | — | Firebase コンソール値 |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Drive Picker（GIS）用 OAuth クライアント | — | GCP 発行値 |
 
-> 実値はすべて GCP Secret Manager で管理。ローカル開発時のみ `.env` を使用してください。
+**BFF コア（`apps/api`）**
+
+| 変数 | 役割 | ローカル既定 | 本番値 |
+|---|---|---|---|
+| `DATA_SOURCE` | リポジトリ実装 `mock`/`firestore` | `mock` | `firestore` |
+| `PUBLISHR_LLM` | エージェントの LLM `mock`/`vertex` | `mock` | `vertex` |
+| `PUBLISHR_OBSERVE` | 観測ソース `fixture`/`google`（失敗時 fixture 自動フォールバック） | `fixture` | `google` |
+| `GOOGLE_GENAI_USE_VERTEXAI` | ADK を Vertex 経由にする | — | `TRUE` |
+| `GOOGLE_CLOUD_PROJECT` | GCP プロジェクト ID | — | `publishr-498123` |
+| `GOOGLE_CLOUD_LOCATION` | Vertex リージョン（Pro クォータ都合で us-central1） | `asia-northeast1` | `us-central1` |
+
+**企画・本文の規模／ループ**
+
+| 変数 | 役割 | ローカル既定 | 本番値 |
+|---|---|---|---|
+| `PUBLISHR_MAX_BOOKS_PER_RUN` | 1 run で生成する冊数（600s上限とのバランス） | `2` | `4` |
+| `PUBLISHR_SET_PIPELINE` | 4テーマ 1-1-1-1 のセット企画 | `true` | `true` |
+| `PUBLISHR_EDITOR_ROUNDS` | STEP4 プレビュー編集の差し戻し上限 | `1` | `1` |
+| `PUBLISHR_BODY_EDIT_ROUNDS` | モードB本文編集ループの最高改稿R | `3` | `3` |
+| `PUBLISHR_BODY_CHAR_TARGET` | 本全体の目標文字数（dev は小さく） | `12000` | `12000` |
+| `ENABLE_IMAGEN` | 表紙を Imagen 生成する | `false` | `true` |
+
+**キュー（Pub/Sub・C2.2）**
+
+| 変数 | 役割 | ローカル既定 | 本番値 |
+|---|---|---|---|
+| `QUEUE` | 執筆/企画キュー `mock`(in-process)/`pubsub` | `mock` | `pubsub` |
+| `PUBSUB_TOPIC` / `PUBSUB_PLANNING_TOPIC` | 本文/企画ジョブのトピック | `publishr-writing` / `publishr-planning` | 同左 |
+| `PUBSUB_PUSH_SA` | push を許可する SA（OIDC 検証） | 空（検証スキップ） | `publishr-pubsub-push@…` |
+| `PUBSUB_PUSH_AUDIENCE` / `PUBSUB_PLAN_PUSH_AUDIENCE` | worker push の OIDC audience（=各 endpoint URL） | 空 | 各 worker URL |
+
+**認証・OAuth・課金ガード**
+
+| 変数 | 役割 | ローカル既定 | 本番値 |
+|---|---|---|---|
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Drive/Calendar/Tasks 連携（空なら 503） | 空 | Secret Manager 参照 |
+| `PUBLISHR_OAUTH_STATE_SECRET` | state（CSRF/uid 紐付け）の HMAC 鍵 | 空 | Secret Manager 参照 |
+| `PUBLISHR_OAUTH_REDIRECT_URI` / `PUBLISHR_WEB_APP_URL` | callback 戻り先 / フロント戻り先 | `localhost:8000` / `localhost:3000` | 実 URL |
+| `PUBLISHR_REQUIRE_RESERVE_AUTH` | 課金アクションを認証ユーザー限定（fail-closed） | `false` | `1` |
+| `DEMO_UID` | Firestore オーナーフィルタの既定 uid | 空 | 佐倉の実 UID |
+
+**シークレット保存・ストレージ（C3.3）**
+
+| 変数 | 役割 | ローカル既定 | 本番値 |
+|---|---|---|---|
+| `PUBLISHR_OAUTH_TOKEN_STORE` | refresh token 保存先 `file`/`secret_manager` | `file` | `secret_manager` |
+| `PUBLISHR_SECRET_MANAGER_PROJECT` | Secret Manager の GCP プロジェクト | 空 | `publishr-498123` |
+| `PUBLISHR_BODY_STORE` | 本文の保存先 `inline`/`gcs` | `inline` | `gcs` |
+| `PUBLISHR_BODY_BUCKET` / `PUBLISHR_COVER_BUCKET` | 本文 MD / 表紙 PNG の非公開バケット | `publishr-contents-498123` | 同左 |
+
+**可観測性（Langfuse Cloud）**
+
+| 変数 | 役割 | ローカル既定 | 本番値 |
+|---|---|---|---|
+| `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | トレース・スコアログ送信鍵 | 空（no-op） | Secret Manager 参照 |
+| `LANGFUSE_HOST` | Langfuse エンドポイント | `https://cloud.langfuse.com` | 同左 |
+
+> 本番の実値はすべて **GCP Secret Manager** で管理し、Cloud Run へは `--update-secrets` で注入します（平文 env に置かない）。ローカル開発時のみ `.env` を使用してください。
 
 ### ローカル起動
 
@@ -230,10 +283,22 @@ NEXT_PUBLIC_DATA_SOURCE=bff NEXT_PUBLIC_API_URL=http://localhost:8000 \
 
 ### Cloud Run デプロイ
 
-```bash
-# TODO: Cloud Build トリガー設定後に追記
-gcloud builds submit --config cloudbuild.yaml
+**自動（既定）**: `main` に push すると GitHub Actions（`.github/workflows/ci.yml`）が verify 緑を確認のうえ、**WIF keyless**（鍵レス）認証で Cloud Run へ自動デプロイします。ビルドは**ルート `Dockerfile`**（`--source .`）が正本です。
+
+```yaml
+# ci.yml の Deploy ステップ（抜粋）— 手元から手動で打つときも同じコマンド
+gcloud run deploy publishr-api \
+  --source . \
+  --region asia-northeast1 \
+  --service-account publishr-runner@publishr-498123.iam.gserviceaccount.com \
+  --update-env-vars=PUBLISHR_BODY_STORE=gcs,PUBLISHR_BODY_BUCKET=publishr-contents-498123,ENABLE_IMAGEN=true,PUBLISHR_COVER_BUCKET=publishr-contents-498123 \
+  --update-secrets=LANGFUSE_HOST=…:latest,LANGFUSE_PUBLIC_KEY=…:latest,LANGFUSE_SECRET_KEY=…:latest,GOOGLE_OAUTH_CLIENT_SECRET=…:latest,PUBLISHR_OAUTH_STATE_SECRET=…:latest \
+  --quiet
 ```
+
+- フロント（`apps/web`）は **Firebase App Hosting** が `main` 追従でビルド・配信（`NEXT_PUBLIC_*` は build 時に焼き込み）。
+- 自律実行は **Cloud Scheduler**: `publishr-honmei`（水・土 06:00 JST=本命）と `publishr-serendipity`（日 06:00 JST=serendipity）が `POST /api/trigger/planning` を OIDC 付きで叩く。
+- インフラ（Pub/Sub・Scheduler 等）の IaC は [`infra/terraform/`](infra/terraform/)。
 
 ---
 
