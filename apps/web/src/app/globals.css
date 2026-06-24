@@ -173,16 +173,19 @@ a { color: inherit; text-decoration: none; }
 .cover .c-author { font-family: var(--font-display); font-size: 12px; margin-top: 14px; color: rgba(255,255,255,.9); position: relative; z-index: 4; border-top: 1px solid rgba(255,255,255,.22); padding-top: 9px; display: inline-block; }
 .cover .c-rule { width: 34px; height: 2px; background: rgba(255,255,255,.6); margin: 12px 0 0; position: relative; z-index: 4; }
 
-/* 実画像（Imagen 文字なし装画）の表紙: 画像を全面に敷き、下部スクリムの上に実タイトルを重畳。 */
-.cover--image { padding: 7% 6.5% 6.5%; background: #14161b; container-type: inline-size; }
-.cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; z-index: 1; }
-/* イラストが主役（全面）。タイトルは下部に重畳＝下端から暗幕スクリムを敷き、どんなイラストでも白文字が読める。 */
-.cover-scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 62%; z-index: 2; background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.48) 40%, rgba(0,0,0,0) 100%); pointer-events: none; }
-.cover-overlay { position: relative; z-index: 3; margin-top: auto; }
-/* タイトル等は下寄せ・白文字。cqw で cover 幅にスケール、base .cover .c-title(27px) に特異度で勝つ。 */
-.cover.cover--image .c-title { font-family: var(--font-display); font-weight: 900; font-size: clamp(11px, 12cqw, 25px); line-height: 1.3; color: #fff; letter-spacing: .2px; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
-.cover.cover--image .c-sub { font-size: clamp(8px, 5.5cqw, 12px); font-weight: 600; line-height: 1.5; color: rgba(255,255,255,.92); margin-top: 6px; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
-.cover.cover--image .c-author { font-family: var(--font-display); font-size: clamp(8px, 5.5cqw, 12px); color: rgba(255,255,255,.9); margin-top: 8px; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
+/* 実画像（Imagen 文字なしアイコン装画）の表紙: 2段組み＝上＝落ち着いた単色帯に特大タイトル（UI・くっきり日本語）、
+   下半分＝AIアイコン装画。ベストセラー・ビジネス書の「特大タイトル＋下に象徴グラフィック」型。 */
+.cover--image { padding: 0; background: linear-gradient(165deg, #232a37 0%, #161a22 62%); container-type: inline-size; }
+/* 画像は下側だけに敷く（上はタイトル帯）。object-fit:cover で中央のアイコンを生かし、
+   mask で上端を帯色へ溶かして継ぎ目を消す。 */
+.cover-img { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 46%; object-fit: cover; display: block; z-index: 1;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 16%); }
+/* タイトルは上の帯に固定（上寄せ・白文字）。cqw で cover 幅にスケール、base .cover .c-title(27px) に特異度で勝つ。 */
+.cover-overlay { position: relative; z-index: 3; margin-top: 0; padding: 8% 8% 0; }
+.cover.cover--image .c-title { font-family: var(--font-display); font-weight: 900; font-size: clamp(13px, 13cqw, 27px); line-height: 1.26; color: #fff; letter-spacing: .2px; text-shadow: 0 1px 10px rgba(0,0,0,.35); }
+.cover.cover--image .c-sub { font-size: clamp(8px, 5.2cqw, 12px); font-weight: 600; line-height: 1.5; color: rgba(255,255,255,.74); margin-top: 7px; }
+.cover.cover--image .c-author { font-family: var(--font-display); font-size: clamp(8px, 5.2cqw, 12px); color: rgba(255,255,255,.82); margin-top: 10px; }
 
 .cover--b1,.cover--b2,.cover--b3,.cover--b4,.cover--b5,.cover--b6,.cover--b7,.cover--b8,.cover--b9,.cover--b10 { position: relative; isolation: isolate; }
 .cover--b1 { background: linear-gradient(160deg, #0e1e42 0%, #07102a 100%); }

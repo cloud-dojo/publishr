@@ -6,11 +6,14 @@
 `prompts.json` にログする。装画の出来を目で見て採否を決め、良ければ採用プロンプトを確定する。
 
 使い方（Windows 企業TLS 対応・ADC 必須）:
-  uv run --with truststore python -m scripts.cover_lab --n 3
-  uv run --with truststore python -m scripts.cover_lab --n 2 --model imagen-4.0-generate-001   # 新モデル比較
-  uv run --with truststore python -m scripts.cover_lab --books 2 --n 4                          # 先頭2冊×4枚
+  uv run --with truststore python -m scripts.cover_lab --n 3                                     # 既定 imagen-4（文字焼き込みが大幅減）
+  uv run --with truststore python -m scripts.cover_lab --n 2 --model imagen-3.0-generate-002     # 旧モデルと比較
+  uv run --with truststore python -m scripts.cover_lab --books 2 --n 4                           # 先頭2冊×4枚
 
-注意: 実 Imagen は画像課金。--n×--books 枚を生成する（既定 2×4=8枚）。
+注意:
+- 実 Imagen は画像課金。--n×--books 枚を生成する（既定 2×4=8枚）。
+- 既定モデルは **imagen-4.0-generate-001**（imagen-3 は日本語/英字を題字に焼き込みやすいため）。
+  もし model-not-found 等で失敗する場合は `--model imagen-4.0-generate-preview-06-06` を試す。
 """
 from __future__ import annotations
 
@@ -57,7 +60,8 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="表紙ラボ（実Imagen・課金あり・別ライン実行）")
     p.add_argument("--n", type=int, default=2, help="各被験書あたりの生成枚数（モデルの揺れを見る）")
     p.add_argument("--books", type=int, default=len(_SAMPLE_BOOKS), help="被験書の数（先頭から）")
-    p.add_argument("--model", default=None, help="PUBLISHR_IMAGEN_MODEL 上書き（例 imagen-4.0-generate-001）")
+    p.add_argument("--model", default="imagen-4.0-generate-001",
+                   help="PUBLISHR_IMAGEN_MODEL 上書き（ラボ既定 imagen-4.0-generate-001。旧比較は imagen-3.0-generate-002）")
     p.add_argument("--out", default="publishr_other/cover_lab", help="出力ルート")
     args = p.parse_args(argv)
 
