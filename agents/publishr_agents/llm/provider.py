@@ -15,7 +15,6 @@ FLASH_DEFAULT = "gemini-2.5-flash"
 # role → tier（"pro" | "flash"）。registry.StepSpec.model_role と一致させる。
 _ROLE_TIER: dict[str, str] = {
     "reader_analyst": "pro",
-    "editorial_intent": "pro",       # v3: 編集意図（判断が重い）
     "editor_chief_themes": "pro",    # v3 4テーマ: 編集長テーマ設定（棚の背骨・判断が重い）
     "sub_reader_context": "flash",
     "sub_market": "flash",
