@@ -255,6 +255,41 @@ a { color: inherit; text-decoration: none; }
 .cover--ink .c-title { color: var(--gold-bright); }
 .cover--ink::before { content: ""; position: absolute; right: 28px; top: 16px; bottom: 16px; width: 1px; background: linear-gradient(180deg, transparent, rgba(201,163,95,.5), transparent); z-index: 1; }
 
+/* ═══════ 文字中心・ビジネス書/Kindle 風 表紙（上のダーク装飾パレットを上書き） ═══════ */
+/* 実タイトル/副題/著者をボールド級数で明るいソリッド色＋アクセント帯にレイアウト（Imagen非依存・日本語くっきり）。 */
+.cover { padding: 24px 20px 20px; }
+.cover::after { content: none; }                       /* フラット装丁＝旧グロス無効 */
+.cover .pub-emboss { color: rgba(255,255,255,.72); font-size: 10px; margin-bottom: 12px; }
+.cover .c-title { font-family: var(--font-display); font-weight: 900; font-size: 27px; line-height: 1.24; letter-spacing: .2px; color: #fff; text-shadow: none; }
+.cover .c-sub { font-size: 12px; font-weight: 600; line-height: 1.5; margin-top: 12px; color: rgba(255,255,255,.92); }
+.cover .c-rule { display: none; }
+.cover .c-author { margin-top: auto; padding-top: 10px; border-top: none; font-family: var(--font-display); font-size: 12px; color: rgba(255,255,255,.9); }
+/* 旧バリアントの透かし/装飾（::before）を全消し */
+.cover--b1::before,.cover--b2::before,.cover--b3::before,.cover--b4::before,.cover--b5::before,.cover--b6::before,.cover--b7::before,.cover--b8::before,.cover--b9::before,.cover--b10::before,.cover--midnight::before,.cover--wine::before,.cover--sand::before,.cover--slate::before,.cover--rust::before,.cover--ink::before,.cover--forest::before { content: none; }
+/* 上端の極太アクセント帯（::after を流用）＝Kindle調の差し色 */
+.cover--b1::after,.cover--b2::after,.cover--b3::after,.cover--b4::after,.cover--b5::after,.cover--b6::after,.cover--b7::after,.cover--b8::after,.cover--b9::after,.cover--b10::after,.cover--midnight::after,.cover--wine::after,.cover--sand::after,.cover--slate::after,.cover--rust::after,.cover--ink::after,.cover--forest::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; z-index: 1; }
+/* 明るいソリッド色 ＋ 帯色（白文字グループ） */
+.cover--b1 { background: #1d4ed8; }  .cover--b1::after { background: #fbbf24; }
+.cover--b2 { background: #15803d; }  .cover--b2::after { background: #fde047; }
+.cover--b3 { background: #dc2626; }  .cover--b3::after { background: #fff; }
+.cover--b4 { background: #14224d; }  .cover--b4::after { background: #38bdf8; }
+.cover--b5 { background: #ea580c; }  .cover--b5::after { background: #1f2937; }
+.cover--b6 { background: #0f766e; }  .cover--b6::after { background: #fbbf24; }
+.cover--b7 { background: #9d174d; }  .cover--b7::after { background: #fbcfe8; }
+.cover--b8 { background: #1f2937; }  .cover--b8::after { background: #fbbf24; }  .cover--b8 .c-title { color: #fbbf24; }
+.cover--b10 { background: #3730a3; } .cover--b10::after { background: #a5b4fc; }
+.cover--midnight { background: #14224d; } .cover--midnight::after { background: #fbbf24; } .cover--midnight .c-title { color: #fde68a; }
+.cover--wine { background: #9d174d; } .cover--wine::after { background: #fbcfe8; } .cover--wine .c-title { color: #fff; }
+.cover--slate { background: #334155; } .cover--slate::after { background: #38bdf8; }
+.cover--rust { background: #b45309; } .cover--rust::after { background: #fde68a; } .cover--rust .c-title { color: #fff; }
+.cover--ink { background: #111827; } .cover--ink::after { background: #fbbf24; } .cover--ink .c-title { color: #fde68a; }
+.cover--forest { background: #166534; } .cover--forest::after { background: #fde047; } .cover--forest .c-title { color: #fff; }
+/* 明るい地に濃い文字（高コントラスト）グループ */
+.cover--b9 { background: #f59e0b; }  .cover--b9::after { background: #1f2937; }
+.cover--b9 .c-title, .cover--b9 .c-sub, .cover--b9 .c-author { color: #2a1c06; }
+.cover--sand { background: #fde68a; } .cover--sand::after { background: #b45309; }
+.cover--sand .c-title, .cover--sand .c-sub, .cover--sand .c-author { color: #3a2606; }
+
 .book-meta { margin-top: 14px; }
 .book-meta .bm-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; color: var(--text-100); line-height: 1.35; min-height: 2.7em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .book-meta .bm-author { font-size: 12px; color: var(--text-500); margin-top: 4px; }

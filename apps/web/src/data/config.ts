@@ -67,10 +67,11 @@ export function canManualTrigger(uid: string | null | undefined): boolean {
 
 /**
  * 表紙画像の URL を返す。
- * - coverUrl が設定済みなら（Imagen 生成済み）そのまま返す。
- * - 未設定（null/空）なら bookId ベースのプレースホルダー画像パスを返す。
+ * - coverUrl が設定済みなら（実 Imagen 生成済み）そのまま返す。
+ * - 未設定（null/空）なら null を返し、BookCover は CSS の文字表紙（装丁）にフォールバックする
+ *   （静的プレースホルダ画像には落とさない＝Kindle 風の文字中心デザインを既定にする）。
  */
-export function coverSrc(bookId: string, coverUrl: string | null | undefined): string {
+export function coverSrc(bookId: string, coverUrl: string | null | undefined): string | null {
   if (coverUrl) return coverUrl;
-  return `/covers/${bookId}.png`;
+  return null;
 }
