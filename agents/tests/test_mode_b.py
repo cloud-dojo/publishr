@@ -93,6 +93,40 @@ def test_modeb_vertex_live():
     assert result.body_verdict
 
 
+def test_resolve_volume_from_profile_derives_per_chapter(monkeypatch):
+    """本全体目標(prod=12,000字)から各章=本全体÷採用章数 を導出し、{{body_volume}} 文字列を返す（I-35）。"""
+    from publishr_agents.mode_b import vertex_agent
+
+    monkeypatch.delenv("PUBLISHR_BODY_CHARS_PER_CHAPTER", raising=False)
+    monkeypatch.setenv("PUBLISHR_RUN_PROFILE", "prod")
+    monkeypatch.delenv("PUBLISHR_BODY_CHAR_TARGET", raising=False)
+
+    body_volume, per_chapter_hint = vertex_agent._resolve_volume(4)
+    assert body_volume == "12,000字"          # system プロンプト {{body_volume}} を生かす
+    assert "3,000字程度" in per_chapter_hint    # 12,000 ÷ 4章
+
+
+def test_resolve_volume_per_chapter_env_takes_precedence(monkeypatch):
+    """章単位の明示指定(CLI run_full_book)が最優先＝本全体は 章数×章単位 で逆算（I-35）。"""
+    from publishr_agents.mode_b import vertex_agent
+
+    monkeypatch.setenv("PUBLISHR_BODY_CHARS_PER_CHAPTER", "2000")
+    body_volume, per_chapter_hint = vertex_agent._resolve_volume(3)
+    assert body_volume == "6,000字"           # 2,000 × 3章
+    assert "2,000字程度" in per_chapter_hint
+
+
+def test_resolve_volume_zero_target_yields_no_hint(monkeypatch):
+    """目標0/未満なら制御なし＝プロンプト既定(1万〜2万字)に委ねる（空文字を注入し {{body_volume}} は無害）。"""
+    from publishr_agents.mode_b import vertex_agent
+
+    monkeypatch.delenv("PUBLISHR_BODY_CHARS_PER_CHAPTER", raising=False)
+    monkeypatch.setenv("PUBLISHR_BODY_CHAR_TARGET", "0")
+    body_volume, per_chapter_hint = vertex_agent._resolve_volume(5)
+    assert body_volume == ""
+    assert per_chapter_hint == ""
+
+
 def test_body_loop_up_to_three_rounds():
     """最高3R: 初稿→2回改稿で3ラウンド到達し承認（編集長⇄著者の差し戻しが複数回）。"""
     book = _book()

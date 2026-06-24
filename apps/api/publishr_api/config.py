@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     max_books_per_run: int = Field(default=2, validation_alias="PUBLISHR_MAX_BOOKS_PER_RUN")
     body_pages_min: int = Field(default=3, validation_alias="PUBLISHR_BODY_PAGES_MIN")
     max_body_pages: int = Field(default=5, validation_alias="PUBLISHR_MAX_BODY_PAGES")
+    # モードB本文の「本全体」目標文字数（I-35）。配本runの著者へ {{body_volume}} として注入。
+    # 既定12,000字（1万〜2万字帯）。dev で短くするなら PUBLISHR_BODY_CHAR_TARGET で下げる。
+    body_char_target: int = Field(default=12_000, validation_alias="PUBLISHR_BODY_CHAR_TARGET")
     enable_imagen: bool = False
     # 配本パイプライン: True=4テーマ1-1-1-1のセット企画（予約制廃止改定 2026-06-23・既定）/
     # False=旧・単一テーマ（ロールバック用キルスイッチ）。

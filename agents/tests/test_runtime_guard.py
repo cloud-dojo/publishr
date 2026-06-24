@@ -19,6 +19,7 @@ def test_dev_profile_is_default_and_keeps_vertex_small():
     assert profile.name == "dev"
     assert profile.max_books_per_run == 2
     assert profile.body_pages_max == 5
+    assert profile.body_char_target == 1_500
     assert profile.editor_rounds == 1
     assert profile.enable_imagen is False
     assert profile.timeout_seconds <= 60
@@ -30,8 +31,15 @@ def test_prod_profile_requires_explicit_env():
     assert profile.name == "prod"
     assert profile.max_books_per_run == 4
     assert profile.body_pages_max >= 100
+    assert profile.body_char_target == 12_000
     assert profile.editor_rounds == 3
     assert profile.enable_imagen is True
+
+
+def test_body_char_target_env_override():
+    """本全体目標文字数は PUBLISHR_BODY_CHAR_TARGET で上書きできる（I-35・パラメータ化）。"""
+    profile = profile_from_env({"PUBLISHR_BODY_CHAR_TARGET": "8000"})
+    assert profile.body_char_target == 8_000
 
 
 def test_guard_blocks_before_vertex_when_dev_limits_are_exceeded():

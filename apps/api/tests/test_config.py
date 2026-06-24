@@ -13,6 +13,7 @@ def test_settings_default_to_mock_dev_profile():
     assert settings.prompt_fewshot == "on"
     assert settings.max_books_per_run == 2
     assert settings.max_body_pages == 5
+    assert settings.body_char_target == 12_000
     assert settings.enable_imagen is False
 
 
@@ -20,6 +21,7 @@ def test_settings_accept_prod_runtime_overrides(monkeypatch):
     monkeypatch.setenv("PUBLISHR_RUN_PROFILE", "prod")
     monkeypatch.setenv("PUBLISHR_MAX_BOOKS_PER_RUN", "5")
     monkeypatch.setenv("PUBLISHR_MAX_BODY_PAGES", "100")
+    monkeypatch.setenv("PUBLISHR_BODY_CHAR_TARGET", "16000")
     monkeypatch.setenv("ENABLE_IMAGEN", "true")
 
     settings = Settings(_env_file=None)
@@ -27,4 +29,5 @@ def test_settings_accept_prod_runtime_overrides(monkeypatch):
     assert settings.publishr_run_profile == "prod"
     assert settings.max_books_per_run == 5
     assert settings.max_body_pages == 100
+    assert settings.body_char_target == 16_000
     assert settings.enable_imagen is True

@@ -25,6 +25,9 @@ class RuntimeProfile:
     max_books_per_run: int
     body_pages_min: int
     body_pages_max: int
+    # モードB本文の「本全体」目標文字数（I-35・章立てに応じて著者へ注入＝{{body_volume}}）。
+    # dev は安く短く、prod は 1万〜2万字帯。章単位の目安は body_char_target ÷ 採用章数で導出する。
+    body_char_target: int
     enable_imagen: bool
     editor_rounds: int
     timeout_seconds: int
@@ -46,6 +49,7 @@ _DEV_DEFAULTS = {
     "max_books_per_run": 2,
     "body_pages_min": 3,
     "body_pages_max": 5,
+    "body_char_target": 1_500,
     "enable_imagen": False,
     "editor_rounds": 1,
     "timeout_seconds": 45,
@@ -57,6 +61,7 @@ _PROD_DEFAULTS = {
     "max_books_per_run": 4,
     "body_pages_min": 3,
     "body_pages_max": 100,
+    "body_char_target": 12_000,
     "enable_imagen": True,
     "editor_rounds": 3,
     "timeout_seconds": 300,
@@ -119,6 +124,7 @@ def profile_from_env(env: Mapping[str, str] | None = None) -> RuntimeProfile:
         ),
         body_pages_min=_int(values, "PUBLISHR_BODY_PAGES_MIN", defaults["body_pages_min"]),
         body_pages_max=_int(values, "PUBLISHR_MAX_BODY_PAGES", defaults["body_pages_max"]),
+        body_char_target=_int(values, "PUBLISHR_BODY_CHAR_TARGET", defaults["body_char_target"]),
         enable_imagen=_bool(values, "ENABLE_IMAGEN", defaults["enable_imagen"]),
         editor_rounds=_int(values, "PUBLISHR_EDITOR_ROUNDS", defaults["editor_rounds"]),
         timeout_seconds=_int(values, "PUBLISHR_TIMEOUT_SECONDS", defaults["timeout_seconds"]),
