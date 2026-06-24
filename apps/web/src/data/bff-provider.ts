@@ -108,8 +108,8 @@ export class BffProvider extends BaseProvider {
     this.notify();
   }
 
-  async runPipeline(userId: string): Promise<void> {
-    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", { userId });
+  async runPipeline(userId: string, themeKind?: string): Promise<void> {
+    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", { userId, themeKind });
     await this.refreshBooks();
   }
 }

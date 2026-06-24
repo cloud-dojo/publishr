@@ -168,7 +168,7 @@ export abstract class BaseProvider {
   abstract saveToLibrary(id: string): Promise<void>;
   abstract removeFromLibrary(id: string): Promise<void>;
   abstract updateReadingState(id: string, state: ReadingStateInput): Promise<void>;
-  abstract runPipeline(userId: string): Promise<void>;
+  abstract runPipeline(userId: string, themeKind?: string): Promise<void>;
 
   /**
    * 初回体験：登録直後に「最初の本棚」を仕立てる。

@@ -159,8 +159,9 @@ export class FirestoreProvider extends BaseProvider {
   }
 
   // --- 手動トリガー（デモ用）: Cloud Run API ---
-  async runPipeline(userId: string): Promise<void> {
-    await this.apiPost("/api/trigger/planning", { userId });
+  // themeKind を渡すと本命(honmei)/セレンディピティ(serendipity)を切替（未指定はAPI既定=honmei）。
+  async runPipeline(userId: string, themeKind?: string): Promise<void> {
+    await this.apiPost("/api/trigger/planning", { userId, themeKind });
   }
 
   // 実データ（入荷=最近の本、配信=最新の published 本）から通知を一度だけ導出する。

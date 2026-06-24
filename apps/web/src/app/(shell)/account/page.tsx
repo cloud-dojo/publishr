@@ -284,7 +284,8 @@ export default function AccountPage() {
   const [uid, setUid] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
-  const [triggering, setTriggering] = useState(false);
+  // 実行中の企画種別（"honmei" | "serendipity" | null）。種別ごとにボタンを個別に無効化する。
+  const [triggering, setTriggering] = useState<string | null>(null);
   const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
   useEffect(() => watchAuth((u) => {
     setUid(u?.uid ?? null);
@@ -293,17 +294,20 @@ export default function AccountPage() {
   }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
-  const onTriggerArrivals = async () => {
-    setTriggering(true);
+  // 既存ユーザー（first-run 済み）が UI から企画を再実行する導線（prod-live-followups #7）。
+  // themeKind=honmei は本命テーマ、serendipity は隣接/反対/飛躍/ニッチの出会い枠。
+  const onTriggerPlanning = async (themeKind: "honmei" | "serendipity") => {
+    setTriggering(themeKind);
     setTriggerMsg(null);
+    const label = themeKind === "serendipity" ? "セレンディピティ企画" : "本命企画";
     try {
-      await actions.runPipeline(uid ?? DEMO_USER_ID);
-      setTriggerMsg("入荷トリガーを実行しました。書店に反映されるまで少し待ってください。");
+      await actions.runPipeline(uid ?? DEMO_USER_ID, themeKind);
+      setTriggerMsg(`${label}を実行しました。書店に反映されるまで少し待ってください。`);
     } catch (err) {
       console.error(err);
-      setTriggerMsg("入荷トリガーに失敗しました。少し待ってから再実行してください。");
+      setTriggerMsg(`${label}に失敗しました。少し待ってから再実行してください。`);
     } finally {
-      setTriggering(false);
+      setTriggering(null);
     }
   };
   const onLogout = async () => {
@@ -373,9 +377,10 @@ export default function AccountPage() {
         <section className="page section">
           <div className="acct-savebox">
             <div className="asb-text">
-              <div className="asb-title">デモ用の即時入荷</div>
+              <div className="asb-title">今すぐ企画</div>
               <div className="asb-sub">
-                週次バッチを待たずに、現在のユーザー向けの入荷処理を手動で実行します。
+                週次バッチを待たずに、あなた向けの企画を手動で実行します。本命はいまの関心の中心から、
+                セレンディピティは少し離れたテーマから本を仕立てます。生成には数分かかります。
               </div>
             </div>
             <div className="asb-action">
@@ -383,10 +388,18 @@ export default function AccountPage() {
               <button
                 type="button"
                 className="btn btn--gold"
-                onClick={onTriggerArrivals}
-                disabled={triggering}
+                onClick={() => onTriggerPlanning("honmei")}
+                disabled={triggering !== null}
               >
-                {triggering ? "入荷処理中..." : "今すぐ入荷を実行"}
+                {triggering === "honmei" ? "企画中..." : "本命を企画"}
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => onTriggerPlanning("serendipity")}
+                disabled={triggering !== null}
+              >
+                {triggering === "serendipity" ? "企画中..." : "セレンディピティを企画"}
               </button>
             </div>
           </div>

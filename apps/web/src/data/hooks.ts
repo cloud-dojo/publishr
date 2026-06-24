@@ -103,7 +103,7 @@ export function useActions() {
     saveToLibrary: provider.saveToLibrary.bind(provider),
     removeFromLibrary: provider.removeFromLibrary.bind(provider),
     updateReadingState: provider.updateReadingState.bind(provider),
-    runPipeline: (userId: string) => provider.runPipeline(userId),
+    runPipeline: (userId: string, themeKind?: string) => provider.runPipeline(userId, themeKind),
     notifyFavoriteAuthor: (personaId: string, personaName: string, excludeBookId?: string) =>
       provider.notifyFavoriteAuthor(personaId, personaName, excludeBookId),
   };

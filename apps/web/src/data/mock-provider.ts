@@ -137,6 +137,7 @@ export class MockProvider extends BaseProvider {
     this.notify();
   }
 
+  // 引数（userId/themeKind）は canned 出力では不要。抽象シグネチャは引数省略でも満たせる。
   async runPipeline(): Promise<void> {
     this.observation = CANNED_OBSERVATION;
     this.readerProfile = CANNED_READER_PROFILE;
