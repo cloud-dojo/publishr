@@ -415,6 +415,34 @@ def test_title_question_form_metric():
     assert rep.metrics.get("titleForm") == "question"
 
 
+# ── cover の3D/写実レンダー化検知（書店の本の装丁＝フラット2D） ──────────
+def test_cover_flat_passes():
+    cp = (
+        "Flat 2D minimalist abstract geometric artwork. A single line-drawn diagram of nested rectangles. "
+        "Calm off-white, navy accents, matte finish. No text, no lettering, no real faces, "
+        "no 3D render, no isometric, no photorealistic product shot, no lorem ipsum."
+    )
+    rep = sd.run_discipline_checks("cover", {"coverPrompt": cp})
+    assert rep.violations == []
+    assert not any("3D/写実レンダー" in f for f in rep.flags)
+    assert not any("文字/タイトル誘発" in f for f in rep.flags)
+
+
+def test_cover_3d_render_flag():
+    cp = (
+        "An isometric 3D render of a glass cube on a circuit board with glowing cables, photorealistic. "
+        "No text, no real faces."
+    )
+    rep = sd.run_discipline_checks("cover", {"coverPrompt": cp})
+    assert any("3D/写実レンダー" in f for f in rep.flags)
+
+
+def test_cover_texttrigger_flag():
+    cp = "A modern editorial magazine layout book cover poster, abstract. No text, no real faces."
+    rep = sd.run_discipline_checks("cover", {"coverPrompt": cp})
+    assert any("文字/タイトル誘発" in f for f in rep.flags)
+
+
 # ── STEP4 editor_preview（EditorVerdict・3観点） ──────────
 def _good_editor_verdict() -> dict:
     bd = {"rawInsight": 21, "personaForward": 20, "catchiness": 19}

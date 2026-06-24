@@ -518,6 +518,12 @@ def check_editor_verdict(raw: dict[str, Any]) -> tuple[list[str], list[str], dic
 _COVER_NOTEXT = ("no text", "no lettering")
 _COVER_NOFACE = ("no real face", "no human face", "no real human face")
 _COVER_TEXTBURN = ("with the title", "title text", "letters spelling", "text reading", "title written")
+# 3D/写実レンダー調＝書店の「本の装丁」でなくテック製品の概念図に見える（フラット2D装丁にする）。
+# ネガティブ指定（"no isometric" 等）での出現は誤検出しないよう、肯定的使用のみを数える（下記ロジック）。
+_COVER_3D_KW = ("isometric", "3d render", "3d-render", "3-d render", "photorealistic", "photo-realistic",
+                "octane render", "ray traced", "ray-traced")
+# Imagen が文字/タイトルを描き出す誘発語（"book cover"/"poster"/"magazine" 等）。抽象アートワークとして記述する。
+_COVER_TEXTTRIGGER = ("book cover", "editorial layout", "magazine layout", "magazine cover", "poster", "lorem")
 
 
 def check_cover_prompt(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[str, Any]]:
@@ -537,6 +543,14 @@ def check_cover_prompt(raw: dict[str, Any]) -> tuple[list[str], list[str], dict[
     for kw in _COVER_TEXTBURN:
         if kw in low:
             flags.append(f"タイトル文字焼き込みの候補表現: '{kw}'")
+    # 3D/写実レンダー調の肯定的使用（"no isometric" 等のネガティブ指定は除外）＝フラット2D装丁に反する候補。
+    render3d = [kw for kw in _COVER_3D_KW if low.count(kw) > low.count("no " + kw)]
+    if render3d:
+        flags.append(f"3D/写実レンダー調の候補（書店の本の装丁＝フラット2Dにする）: {render3d}")
+    # 文字/タイトル誘発語（肯定的使用のみ・"no lorem" 等のネガティブは除外）＝Imagenが文字を描く候補。
+    trig = [kw for kw in _COVER_TEXTTRIGGER if low.count(kw) > low.count("no " + kw)]
+    if trig:
+        flags.append(f"文字/タイトル誘発語の候補（抽象アートワークとして記述・文字組み語を避ける）: {trig}")
     return violations, flags, metrics
 
 
