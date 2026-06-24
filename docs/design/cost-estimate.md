@@ -30,7 +30,11 @@ The code guard currently uses rough internal yen estimates in `agents/publishr_a
 | Gemini Pro | JPY 350 / 1M tokens | JPY 1,050 / 1M tokens | Used for reader analysis, planning quality gates, author/editor loops |
 | Gemini Flash | JPY 50 / 1M tokens | JPY 200 / 1M tokens | Used for lighter research/cover prompt style work |
 
-These are conservative-enough development guard numbers, not a promise of actual Vertex AI pricing. C5.8 remains open until live billing and Langfuse usage are reconciled.
+These are conservative-enough development guard numbers, not a promise of actual Vertex AI pricing.
+
+> ⚠️ **Two gaps found in the 2026-06-24 live sample (see §6):**
+> 1. **Thinking tokens are not modelled.** Gemini 2.5 Pro bills "thinking" tokens as output, and on a real planning call they were ~3.6x the visible output (3,176 thinking vs 880 visible). The guard yen above ignores them, so it materially **under-counts** real Pro cost.
+> 2. **Guard yen < real list price.** Vertex list price for Gemini 2.5 Pro output is about USD 10 / 1M (~JPY 1,550 / 1M at JPY 155/USD), above the JPY 1,050 guard. Pro input ~USD 1.25 / 1M; Flash ~USD 0.30 in / USD 2.50 out / 1M; Imagen ~USD 0.04 / image. Verify all at GCP billing.
 
 ## 3. Weekly Cost Shape
 
@@ -81,4 +85,23 @@ Before declaring C5.8 complete:
 4. Run or simulate one production-shaped 4-book batch only when the dev sample is understood.
 5. Replace this estimate with measured yen-per-run and projected yen-per-week.
 
-Current status: **estimate updated for the reservation-free 12-book model; live full-pipeline measurement still pending**.
+Current status: **partial live sample measured 2026-06-24 (see §6). Per-role thinking-token billing and a full 4-book prod batch still need reconciliation from production Langfuse + GCP billing (the autonomous Wed/Sat runs already populate these).**
+
+## 6. Measured anchors (2026-06-24 live sample)
+
+Real Vertex calls (`us-central1`, `gemini-2.5-pro`), captured via `usage_metadata` / `count_tokens`. Single samples, not averages — treat as order-of-magnitude anchors.
+
+| Measurement | Value | Note |
+|---|---|---|
+| Planning Pro call (`editor_chief_themes`) | 4,330 input / 880 visible output / **8,386 total tokens** | The 3,176-token gap = **thinking tokens, billed as output**. A single "medium" Pro call ≈ 8k billed tokens. |
+| Body prose token density (JP) | **0.57 tokens / char** (4,186 chars → 2,385 tokens) | So a 12,000-char prod body ≈ ~6,800 visible output tokens/book (before thinking + per-chapter input). |
+| Body generation wall time | 4,186 chars (2 ch + 1 editor round) in **104 s**, 3 Pro calls | Prod ~6 chapters + up to 3 editor rounds will be several minutes/book. |
+
+**Bottom-up weekly estimate (12 books = 8 mainline + 4 serendipity), real list prices:**
+
+- Dominant cost = body author/editor loops (12 books). Planning (3 runs), casting, preview are secondary; cover/Flash/Imagen are minor.
+- Rough total ≈ **1.0–1.5M Pro tokens/week**, output-heavy once thinking is included.
+- At list price this is roughly **USD 6–15 / week ≈ JPY 900–2,300 / week** (wide because thinking-token volume on long body generation is not yet measured exactly).
+- **Conclusion:** a multi-week hackathon stays well under the JPY 10,000 budget **only if live runs are limited and not re-run casually for testing/demo**. Repeated full-pipeline test runs are the real budget risk, not the scheduled cadence.
+
+**To close C5.8 exactly:** pull per-role input/output/thinking token counts from production Langfuse (already instrumented via OTel) for one autonomous Wed/Sat run, cross-check against GCP billing for that day, and replace the ranges above with measured yen-per-run.
