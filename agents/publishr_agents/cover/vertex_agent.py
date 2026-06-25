@@ -61,17 +61,22 @@ async def design_covers_vertex_async(
     personas: list[GeneratedPersona],
     *,
     enable_imagen: bool = False,
+    plan: Optional[Any] = None,
 ) -> list[dict[str, Any]]:
     agent = build_cover_prompt_agent()
     pmap = {p.persona_id: p for p in personas}
+    # 配本単位の企画書（PlanProposal）。camel エイリアスで dump して {{plan.emotionalTone}} 等に合わせる。
+    plan_state: dict[str, Any] = {}
+    if plan is not None:
+        plan_state = plan.model_dump(by_alias=True) if hasattr(plan, "model_dump") else dict(plan)
     results: list[dict[str, Any]] = []
     for i, book in enumerate(books):
         persona = pmap.get(book.get("personaId"))
-        # 1冊ぶんの企画書（STEP2 PlanProposal の確定版）を state に載せる＝表紙は企画書ベースの1対1。
-        # 後方互換: plan / approvedPlan が無ければ {} で素通し（title/coreMessage で従来通り動く）。
+        # 1冊ぶんの企画書を state に載せる＝表紙は企画書ベースの1対1。本単位 plan > 配本単位 plan の順で採用。
+        # 後方互換: いずれも無ければ {} で素通し（title/coreMessage で従来通り動く）。
         state = {
             "bookDraft": book.get("bookDraft", {}),
-            "plan": book.get("plan") or book.get("approvedPlan") or {},
+            "plan": book.get("plan") or book.get("approvedPlan") or plan_state or {},
             "persona": persona.model_dump(by_alias=True) if persona else {},
         }
         prompt = await _run_prompt(agent, state)
@@ -96,6 +101,9 @@ def design_covers_vertex(
     personas: list[GeneratedPersona],
     *,
     enable_imagen: bool = False,
+    plan: Optional[Any] = None,
 ) -> list[dict[str, Any]]:
     """同期ラッパー（CLI/テストから）。**実LLM・課金あり**（Imagen は画像課金）。"""
-    return asyncio.run(design_covers_vertex_async(books, personas, enable_imagen=enable_imagen))
+    return asyncio.run(
+        design_covers_vertex_async(books, personas, enable_imagen=enable_imagen, plan=plan)
+    )

@@ -62,7 +62,8 @@ def run_mode_a_pipeline(
         plan, reader_profile=profile, favorite_authors=list(user.favorite_authors or []), llm=llm
     )
     books = run_preview(plan, persona_set.personas, reader_profile=profile, limit=limit, llm=preview_llm)
-    shelved = design_covers(books, persona_set.personas, llm=cover_llm, enable_imagen=enable_imagen)
+    # 採用企画（plan）を表紙へ渡す＝企画書ベースの1対1（vertex 経路のみ反映・mock は不変）。
+    shelved = design_covers(books, persona_set.personas, llm=cover_llm, enable_imagen=enable_imagen, plan=plan)
     return ModeAResult(plan=plan, shelved=shelved, personas=list(persona_set.personas), planning=planning)
 
 
@@ -127,7 +128,8 @@ def run_mode_a_set_pipeline(
             # book id = arr_<personaId> の4冊一意性を保証（mock/vertex どちらでも安全）。
             chosen = [casting.chosen.model_copy(update={"persona_id": f"cast_{plan.proposal_id}"})]
         drafts = run_preview(plan, chosen, reader_profile=profile, limit=1, llm=preview_llm)
-        shelved = design_covers(drafts, chosen, llm=cover_llm, enable_imagen=enable_imagen)
+        # この1テーマの企画書（plan）を表紙へ渡す＝1企画書=1冊=1画像の1対1（vertex 経路のみ反映）。
+        shelved = design_covers(drafts, chosen, llm=cover_llm, enable_imagen=enable_imagen, plan=plan)
         out.append(ModeABook(plan=plan, shelved=shelved, personas=chosen))
     return ModeASetResult(books=out, planning=planning)
 

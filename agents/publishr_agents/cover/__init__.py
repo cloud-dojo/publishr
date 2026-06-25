@@ -26,15 +26,22 @@ def design_covers(
     *,
     llm: Optional[str] = None,
     enable_imagen: Optional[bool] = None,
+    plan: Optional[Any] = None,
 ) -> list[dict[str, Any]]:
-    """STEP5 の入口。llm 未指定なら PUBLISHR_LLM で解決（mock=決定的 / vertex=Flash＋任意Imagen）。"""
+    """STEP5 の入口。llm 未指定なら PUBLISHR_LLM で解決（mock=決定的 / vertex=Flash＋任意Imagen）。
+
+    `plan`（この配本の企画書＝PlanProposal）を渡すと vertex 経路が表紙を企画書ベースの1対1で生成する。
+    mock（決定的）経路は plan を使わない＝出力不変（C0.2）。
+    """
     mode = (llm or os.environ.get("PUBLISHR_LLM", "mock")).lower()
     if mode == "mock":
         return design_covers_deterministic(books, personas)
     if mode == "vertex":
         from .vertex_agent import design_covers_vertex
 
-        return design_covers_vertex(books, personas, enable_imagen=_imagen_enabled(enable_imagen))
+        return design_covers_vertex(
+            books, personas, enable_imagen=_imagen_enabled(enable_imagen), plan=plan
+        )
     raise ValueError(f"unknown PUBLISHR_LLM={mode!r}")
 
 
