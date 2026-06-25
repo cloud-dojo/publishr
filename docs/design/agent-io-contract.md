@@ -503,24 +503,27 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 **使用モデル**: Flash（方針判断）＋ Imagen on Vertex AI（生成）。
 **Firestore/GCS**: 画像をCloud Storageに保存し、`books/{bookId}.coverUrl` を更新。
 
-### 入力
-- `BookDraft`（`title`・`coreMessage`）＋ `persona`（`voiceStyle`・`format`）
+### 入力（1冊ぶんの企画書＝1対1）
+- この本1冊の確定企画だけを受け取る: `BookDraft`（`title`・`coreMessage`）＋ `plan`（企画書＝STEP2 `PlanProposal` の確定版: `emotionalTone`・`bookRole`・`keyInsights`・`targetSegment`・`readerSituation`）＋ `persona`（`voiceStyle`・`format`）
+- **1企画書につき1回呼ぶ**（複数冊をまとめて1回で出さない・他の本に引きずられない）。実装は `cover/vertex_agent.py` が `books` を1冊ずつループ＝1対1。
 
 ### 出力
 ```jsonc
 {
   "bookId": "string",
-  "coverPrompt": "Imagenへ渡す英語プロンプト（書影・ビジネス書風・トーン指定）",
+  "coverPrompt": "Imagenへ渡す英語プロンプト（文字なしの象徴アイコン装画・トーン指定）",
   "coverUrl": "gs://.../covers/{bookId}.png"
 }
 ```
 
-### プロンプト骨子（方針判断→Imagenプロンプト生成）
+### プロンプト骨子（方針判断→Imagenプロンプト生成。正本は `packages/prompts/step5_cover.md`）
 ```
-あなたは装丁担当。本のタイトル・核心メッセージ・著者の voiceStyle/format から、ビジネス書として
-書店の棚で目を引く表紙のビジュアル方針を決め、Imagen用の英語プロンプトを生成せよ。
-- 文字（タイトル）は焼き込まず、装画・配色・トーンで世界観を表現（後段でタイトルを重畳）。
-- 著者の文体軸（哲学的/ロジカル/現場感）と形式（小説/エッセイ等）を色とモチーフに反映。
+あなたは装丁担当。渡された「1冊ぶんの企画書」（title/coreMessage/keyInsights/emotionalTone/bookRole＋voiceStyle/format）
+だけから、表紙下段に置く「文字なしの象徴アイコン装画」の方針を決め、Imagen用の英語プロンプトを生成せよ。
+1企画書＝1 coverPrompt＝1画像の1対1で出す（複数冊をまとめない）。
+- 文字（タイトル）は焼き込まない＝後段でUIが日本語タイトルを上段に重畳（中央に1点のシンプルなフラット・アイコン＋無地余白）。
+- coreMessage/keyInsights を象徴する比喩を1つ／emotionalTone を配色・余白に／voiceStyle×format を線質・モチーフに反映。
+- 題字化する語（book cover/editorial/magazine/premium 等）・発光/3D・段落テキストは禁止。
 出力は coverPrompt（英語）のみ。
 ```
 

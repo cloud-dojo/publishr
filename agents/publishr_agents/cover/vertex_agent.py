@@ -67,8 +67,11 @@ async def design_covers_vertex_async(
     results: list[dict[str, Any]] = []
     for i, book in enumerate(books):
         persona = pmap.get(book.get("personaId"))
+        # 1冊ぶんの企画書（STEP2 PlanProposal の確定版）を state に載せる＝表紙は企画書ベースの1対1。
+        # 後方互換: plan / approvedPlan が無ければ {} で素通し（title/coreMessage で従来通り動く）。
         state = {
             "bookDraft": book.get("bookDraft", {}),
+            "plan": book.get("plan") or book.get("approvedPlan") or {},
             "persona": persona.model_dump(by_alias=True) if persona else {},
         }
         prompt = await _run_prompt(agent, state)

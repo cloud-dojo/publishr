@@ -44,15 +44,28 @@ def _ensure_vertex_env() -> None:
 
 
 # 代表的な被験書（voiceStyle×format を散らす）＝ coverPrompt の作風翻訳を見るための見本。
+# 各冊は「1冊ぶんの企画書（STEP2 PlanProposal の確定版）」を模した形＝表紙は企画書ベースの1対1で回す。
 _SAMPLE_BOOKS = [
     {"id": "lab_logical", "title": "任せ方の設計図", "coreMessage": "権限は気分でなく構造で配る。",
-     "voiceStyle": "ロジカル", "format": "自己啓発"},
+     "voiceStyle": "ロジカル", "format": "自己啓発",
+     "emotionalTone": "静かに背中を押す", "bookRole": "ハンドブック",
+     "keyInsights": ["権限を構造で配る", "任せる範囲を線で引く", "信頼の段階的移譲"],
+     "targetSegment": "初めて年上の実力者を率いる新任マネージャー", "readerSituation": "任せ方に迷う移行期"},
     {"id": "lab_thoughtful", "title": "問いが組織を変える", "coreMessage": "答えを配るのでなく、問いを残す。",
-     "voiceStyle": "思想的", "format": "問答"},
+     "voiceStyle": "思想的", "format": "問答",
+     "emotionalTone": "静かに問いを灯す", "bookRole": "内省・対話",
+     "keyInsights": ["答えでなく問いを残す", "問いが思考を耕す", "余白としての問い"],
+     "targetSegment": "指示が多すぎると感じるリーダー", "readerSituation": "自走しないチームに悩む局面"},
     {"id": "lab_sensory", "title": "余白の経営", "coreMessage": "間（ま）が判断の質を決める。",
-     "voiceStyle": "感覚的", "format": "エッセイ"},
+     "voiceStyle": "感覚的", "format": "エッセイ",
+     "emotionalTone": "落ち着いて整える", "bookRole": "エッセイ・内省",
+     "keyInsights": ["間が判断を決める", "余白を設計する", "急がない速さ"],
+     "targetSegment": "多忙で即断を迫られる管理職", "readerSituation": "余白なく疲弊している局面"},
     {"id": "lab_gritty", "title": "現場で決めきる", "coreMessage": "撤退条件まで決めて、初めて決定だ。",
-     "voiceStyle": "泥臭い・現場", "format": "ケース"},
+     "voiceStyle": "泥臭い・現場", "format": "ケース",
+     "emotionalTone": "凛と決める", "bookRole": "ケース・ストーリー",
+     "keyInsights": ["撤退条件まで決める", "決めきる胆力", "現場で線を引く"],
+     "targetSegment": "撤退判断を先送りしがちな現場リーダー", "readerSituation": "決めきれず長引くプロジェクト"},
 ]
 
 
@@ -80,8 +93,17 @@ def main(argv=None) -> int:
     samples = _SAMPLE_BOOKS[: args.books]
     print(f"== 表紙ラボ: model={model} books={len(samples)} n={args.n} → {out_dir} ==", flush=True)
 
+    # 1冊＝1企画書を別々に渡す（1対1）。plan に企画書の項目を載せ、表紙を企画書ベースで生成する。
     books = [
-        {"personaId": b["id"], "bookDraft": {"bookId": b["id"], "title": b["title"], "coreMessage": b["coreMessage"]}}
+        {
+            "personaId": b["id"],
+            "bookDraft": {"bookId": b["id"], "title": b["title"], "coreMessage": b["coreMessage"]},
+            "plan": {
+                "emotionalTone": b["emotionalTone"], "bookRole": b["bookRole"],
+                "keyInsights": b["keyInsights"], "targetSegment": b["targetSegment"],
+                "readerSituation": b["readerSituation"],
+            },
+        }
         for b in samples
     ]
     personas = [
