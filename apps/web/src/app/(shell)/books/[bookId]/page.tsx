@@ -35,6 +35,14 @@ export default function BookDetailPage() {
 
   const archived = isArchivedBook(book);
 
+  // 企画(plan)は本番Firestoreには永続化されず Book に畳み込まれる（agents/persist_mapping）。
+  // plan があれば優先（mock/local＝従来表示そのまま）、無ければ Book 自身のフィールドで描く（prod）。
+  const whyNow = plan?.reason ?? book.deliveryReason ?? "";
+  const situation = plan?.readerSituation ?? book.problemToSolve ?? "";
+  const situationLabel = plan?.readerSituation ? "想定する局面" : "解決する課題";
+  const coreMessage = plan?.coreMessage ?? book.coreMessage ?? "";
+  const hasRationale = Boolean(whyNow || situation || coreMessage);
+
   // 推定分量は本文があれば**実際に書かれた章数**で出す（計画アジェンダ数だと本文と食い違う）。
   // 本文未取得（GCS退避hydrate前 or 下書き）は従来どおり計画値にフォールバック。分も実章数で揃える。
   const actualChapters = book.body ? bookChapters(book.body).length : 0;
@@ -93,22 +101,28 @@ export default function BookDetailPage() {
             {persona && <span> ― {persona.title}／{persona.style}</span>}
           </div>
 
-          {plan && (
+          {hasRationale && (
             <div className="frame">
-              <div className="frame-row spot">
-                <div className="fr-key">なぜ、いまあなたに</div>
-                <div className="fr-val">{plan.reason}</div>
-              </div>
-              <div className="frame-row">
-                <div className="fr-key">想定する局面</div>
-                <div className="fr-val">{plan.readerSituation}</div>
-              </div>
-              <div className="frame-row">
-                <div className="fr-key">核心メッセージ</div>
-                <div className="fr-val">
-                  <b>{plan.coreMessage}</b>
+              {whyNow && (
+                <div className="frame-row spot">
+                  <div className="fr-key">なぜ、いまあなたに</div>
+                  <div className="fr-val">{whyNow}</div>
                 </div>
-              </div>
+              )}
+              {situation && (
+                <div className="frame-row">
+                  <div className="fr-key">{situationLabel}</div>
+                  <div className="fr-val">{situation}</div>
+                </div>
+              )}
+              {coreMessage && (
+                <div className="frame-row">
+                  <div className="fr-key">核心メッセージ</div>
+                  <div className="fr-val">
+                    <b>{coreMessage}</b>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
