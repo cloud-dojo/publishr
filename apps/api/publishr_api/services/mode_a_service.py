@@ -292,15 +292,17 @@ def _autowrite_books(repo: RepositoryProtocol, book_ids: list[str], owner: str) 
     - mock（既定/テスト/ローカル）: reserve→`process_write_job` を同期インライン実行（決定的・event loop
       不要。`schedule_advance` の create_task は threadpool で loop 不在＝使わない）。
     - cap 超過(ConflictError)等は log してスキップ＝その本は draft のまま（企画全体は失敗させない）。
+    - publish 失敗時も `reserve_and_enqueue` が予約を draft へ戻す＝reserved 孤児（「準備中」滞留）を作らない。
     """
     from . import reservation_service, write_queue  # noqa: PLC0415 — 循環回避の lazy import
 
     for book_id in book_ids:
         try:
-            reservation_service.reserve_now(repo, book_id, owner_uid=owner)
             if settings.queue == "pubsub":
-                write_queue.enqueue(repo, book_id)  # 非同期（per-book worker）
+                # 予約→publish を1単位で（失敗時は予約巻き戻し＝reserved 孤児を作らない）。
+                write_queue.reserve_and_enqueue(repo, book_id, owner_uid=owner)
             else:
+                reservation_service.reserve_now(repo, book_id, owner_uid=owner)
                 reservation_service.process_write_job(repo, book_id)  # mock: 同期インライン
         except Exception as exc:  # noqa: BLE001 — 1冊の失敗で企画全体を落とさない
             logger.warning("autowrite skipped book=%s: %s", book_id, type(exc).__name__)

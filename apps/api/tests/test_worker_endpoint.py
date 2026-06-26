@@ -78,6 +78,43 @@ def test_worker_runs_blocking_asyncio_job_without_nested_loop(monkeypatch):
     assert called["ok"] is True
 
 
+# --- 滞留防止: 本文生成失敗時の再配信制御（transient=nack / 非transient=ack）-------
+
+
+def test_worker_write_transient_failure_nacks_and_keeps_reserved(monkeypatch):
+    """transient（429/timeout/503）失敗は 5xx で nack＝Pub/Sub が再配信して後でリトライ。
+
+    本は writing で取り残さず reserved に戻る（process_write_job のロールバック）。
+    """
+    repo = get_repository()
+    bid = _reserved_book_id(repo)
+
+    def boom(_repo, _book):
+        raise RuntimeError("vertex 429 resource exhausted")  # is_transient=True
+
+    monkeypatch.setattr(reservation_service, "_generate_body", boom)
+    res = client.post("/api/worker/write", json=_push(bid))
+    assert res.status_code >= 500  # nack → 再配信（自動リトライ）
+    assert repo.get_book(bid).status == "reserved"  # writing で滞留しない
+
+
+def test_worker_write_permanent_failure_acks_and_keeps_reserved(monkeypatch):
+    """非transient（スキーマ違反等）は 204 で ack＝再配信ストームを止めて手動再実行に委ねる。
+
+    本は reserved に戻る（writing で取り残さない）。
+    """
+    repo = get_repository()
+    bid = _reserved_book_id(repo)
+
+    def boom(_repo, _book):
+        raise ValueError("schema violation")  # is_transient=False
+
+    monkeypatch.setattr(reservation_service, "_generate_body", boom)
+    res = client.post("/api/worker/write", json=_push(bid))
+    assert res.status_code == 204  # ack（storm 防止）
+    assert repo.get_book(bid).status == "reserved"
+
+
 # --- 企画(モードA)非同期 worker（/api/worker/plan）------------------------------
 
 def _plan_push(user_id: str, owner: str | None = None, observe_uid: str = "") -> dict:

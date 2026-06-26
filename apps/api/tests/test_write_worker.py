@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from publishr_api.repositories.mock_repository import MockRepository
-from publishr_api.services import reservation_service
+from publishr_api.services import reservation_service, write_queue
 
 
 def _a_draft_id(repo) -> str:
@@ -68,6 +70,80 @@ def test_process_write_job_uses_mode_b_and_records_edit_rounds():
     assert book.body.count("## ") >= 3  # 複数章の本文（mode_b 形式）
     assert "## はじめに" in book.body
     assert "## おわりに" in book.body
+
+
+# --- 滞留防止: 本文生成失敗で writing に取り残さない（§7-2・I-20）-----------------
+
+
+def test_process_write_job_rolls_back_to_reserved_on_generation_failure(monkeypatch):
+    """本文生成が例外で落ちても writing で取り残さず reserved へ戻す。例外は呼び出し側へ送出。
+
+    旧バグ: process_write_job は先に reserved→writing を確定してから本文生成するため、生成例外時に
+    本が writing（=UI「準備中」）のまま恒久滞留していた（incident-vertex-quota-writing-stuck §2/§7-2）。
+    """
+    repo = MockRepository()
+    bid = _a_draft_id(repo)
+    reservation_service.reserve_now(repo, bid)  # reserved
+
+    def boom(_repo, _book):
+        raise RuntimeError("vertex 429 resource exhausted")
+
+    monkeypatch.setattr(reservation_service, "_generate_body", boom)
+    with pytest.raises(RuntimeError):
+        reservation_service.process_write_job(repo, bid)
+
+    book = repo.get_book(bid)
+    assert book.status == "reserved"  # writing で取り残さない（再実行で拾える状態へ）
+    assert not book.body
+
+
+def test_release_reservation_rolls_reserved_back_to_draft():
+    """enqueue 失敗時のロールバック原子: reserved → draft。"""
+    repo = MockRepository()
+    bid = _a_draft_id(repo)
+    reservation_service.reserve_now(repo, bid)
+    book = reservation_service.release_reservation(repo, bid)
+    assert book is not None
+    assert book.status == "draft"
+
+
+def test_release_reservation_noop_when_not_reserved():
+    """reserved 以外（draft/published 等）は触らない（冪等・誤巻き戻し防止）。"""
+    repo = MockRepository()
+    bid = _a_draft_id(repo)  # draft のまま
+    book = reservation_service.release_reservation(repo, bid)
+    assert book is not None
+    assert book.status == "draft"  # 変化なし
+
+
+def test_reserve_and_enqueue_rolls_back_to_draft_when_publish_fails(monkeypatch):
+    """予約後の執筆ジョブ投入(publish)が失敗したら reserved 孤児を作らず draft へ戻す。
+
+    旧バグ: reserve_now（draft→reserved 確定）の後に publish_write_job が落ちると、再配信する元
+    メッセージも無いまま reserved（=「準備中」）で誰にも拾われず滞留していた。
+    """
+    repo = MockRepository()
+    bid = _a_draft_id(repo)
+
+    def boom(_repo, _book_id):
+        raise RuntimeError("pubsub publish timeout")
+
+    monkeypatch.setattr(write_queue, "enqueue", boom)
+    with pytest.raises(RuntimeError):
+        write_queue.reserve_and_enqueue(repo, bid)
+
+    assert repo.get_book(bid).status == "draft"  # reserved 孤児にしない
+
+
+def test_reserve_and_enqueue_happy_path_enqueues_once(monkeypatch):
+    """正常時は予約して1回だけ enqueue する（reserved のまま・worker が後で published 化）。"""
+    repo = MockRepository()
+    bid = _a_draft_id(repo)
+    calls = {"n": 0}
+    monkeypatch.setattr(write_queue, "enqueue", lambda _r, _b: calls.__setitem__("n", calls["n"] + 1))
+    book = write_queue.reserve_and_enqueue(repo, bid)
+    assert book is not None and book.status == "reserved"
+    assert calls["n"] == 1
 
 
 def test_published_estimate_and_preface_match_body():

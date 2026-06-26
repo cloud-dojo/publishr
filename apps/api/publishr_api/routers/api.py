@@ -182,9 +182,8 @@ async def api_reserve(
     2026-06-23以降の通常配本は、配本バッチ内で全冊を本文つき published にする。
     このエンドポイントは旧ワーカー/冪等性テストの退避口としてだけ残す。
     """
-    book = reservation_service.reserve_now(repo, payload.book_id, owner_uid=_uid)
-    write_queue.enqueue(repo, payload.book_id)
-    return book
+    # 予約→執筆ジョブ投入を1単位で（publish 失敗時は予約を draft へ戻して reserved 孤児を防ぐ）。
+    return write_queue.reserve_and_enqueue(repo, payload.book_id, owner_uid=_uid)
 
 
 @router.post("/trigger/planning")
