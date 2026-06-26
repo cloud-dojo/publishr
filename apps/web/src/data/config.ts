@@ -67,11 +67,15 @@ export function canManualTrigger(uid: string | null | undefined): boolean {
 
 /**
  * 表紙画像の URL を返す。
- * - coverUrl が設定済みなら（実 Imagen 生成済み）そのまま返す。
+ * - coverUrl が GCS object パス（covers/...png・非公開バケット）なら、BFF
+ *   `/api/books/{id}/cover` 経由のサーバ側 read 配信 URL を返す（`<img src>` から GCS を直接
+ *   引かせない）。※coverUrl をそのまま返すと web 相対パスに解決され 404 になる。
+ * - 既に http(s) の外部 URL ならそのまま返す（将来用）。
  * - 未設定（null/空）なら null を返し、BookCover は CSS の文字表紙（装丁）にフォールバックする
  *   （静的プレースホルダ画像には落とさない＝Kindle 風の文字中心デザインを既定にする）。
  */
 export function coverSrc(bookId: string, coverUrl: string | null | undefined): string | null {
-  if (coverUrl) return coverUrl;
-  return null;
+  if (!coverUrl) return null;
+  if (coverUrl.startsWith("http")) return coverUrl;
+  return `${apiUrl}/api/books/${encodeURIComponent(bookId)}/cover`;
 }
