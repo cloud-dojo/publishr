@@ -97,9 +97,11 @@ export class FirestoreProvider extends BaseProvider {
       })
     );
 
-    // 企画
+    // 企画: 自分の企画のみ（ownerUid 一致）。ルール(plans:read=ownerUid==uid)に合わせてクエリ側も
+    // 絞らないと、list が「他人の企画も返しうる」と判定され listener 全体が permission-denied で拒否される。
+    // ※本番では plans は永続化されず Book に畳み込まれる想定のため通常は空（mock/bff は fixtures が入る）。
     this.unsubs.push(
-      onSnapshot(collection(this.db, "plans"), (snap) => {
+      onSnapshot(query(collection(this.db, "plans"), where("ownerUid", "==", uid)), (snap) => {
         this.plans.clear();
         snap.forEach((d) => this.plans.set(d.id, { id: d.id, ...d.data() } as Plan));
         this.notify();
