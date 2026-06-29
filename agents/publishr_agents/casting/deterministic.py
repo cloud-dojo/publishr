@@ -129,7 +129,8 @@ def cast_author_deterministic(
     if favorite_authors:
         fav = favorite_authors[0]
         candidates[0] = GeneratedPersona(
-            persona_id=f"cast_{plan.proposal_id or 'plan'}_fav",
+            # 登録お気に入りIDを保持＝persist 後も front の favorites.has(id) と一致（★継続）。
+            persona_id=fav.get("personaId") or f"cast_{plan.proposal_id or 'plan'}_fav",
             name=fav.get("name", "お気に入り著者"),
             voice_style=candidates[0].voice_style,
             format=candidates[0].format,

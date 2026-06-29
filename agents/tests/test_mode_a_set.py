@@ -124,3 +124,50 @@ def test_set_pipeline_deterministic():
     b = map_mode_a_set_to_books(_run(), owner_uid="u_x", created_at=NOW.isoformat())[0]
     assert [x.id for x in a] == [x.id for x in b]
     assert [x.title for x in a] == [x.title for x in b]
+
+
+# ── お気に入り「配本ごと約25%で1冊」起用（確率ゲートは mode_a が握る） ────────────
+_FAV = {
+    "personaId": "fav_demo_1", "name": "推し 作家",
+    "voiceStyle": "思想的・哲学的", "format": "エッセイ形式", "savedAt": "t",
+}
+
+
+def _user_with_favorite():
+    return _user().model_copy(update={"favorite_authors": [_FAV]})
+
+
+def test_favorite_featured_exactly_one_book_when_open():
+    """当たり配本（pct=100）でも4冊中1冊だけがお気に入り＝占有しない。登録IDを保持（★継続）。"""
+    res = run_mode_a_set_pipeline(
+        _user_with_favorite(), source=FixtureObservationSource(), now=NOW, favorite_pct=100
+    )
+    fav_books = [mb for mb in res.books if mb.personas and mb.personas[0].from_favorite]
+    assert len(fav_books) == 1
+    assert fav_books[0].personas[0].persona_id == "fav_demo_1"  # 登録IDを保持
+    # 4冊とも著者は別（お気に入り1＋通常3）
+    author_ids = [mb.personas[0].persona_id for mb in res.books]
+    assert len(set(author_ids)) == 4
+
+
+def test_favorite_not_featured_when_closed():
+    """外れ配本（pct=0）はお気に入りゼロ＝お気に入り未登録時と同じ4冊。"""
+    res = run_mode_a_set_pipeline(
+        _user_with_favorite(), source=FixtureObservationSource(), now=NOW, favorite_pct=0
+    )
+    assert all(not (mb.personas and mb.personas[0].from_favorite) for mb in res.books)
+    author_ids = [mb.personas[0].persona_id for mb in res.books]
+    assert len(set(author_ids)) == 4
+
+
+def test_empty_favorites_zero_diff_from_baseline():
+    """お気に入り未登録は従来どおり（4冊・全て通常著者・cast_<plan_id>）。"""
+    res = run_mode_a_set_pipeline(_user(), source=FixtureObservationSource(), now=NOW)
+    assert all(not (mb.personas and mb.personas[0].from_favorite) for mb in res.books)
+
+
+def test_favorite_feature_deterministic_per_seed():
+    u = _user_with_favorite()
+    a = run_mode_a_set_pipeline(u, source=FixtureObservationSource(), now=NOW, seed="run-xyz")
+    b = run_mode_a_set_pipeline(u, source=FixtureObservationSource(), now=NOW, seed="run-xyz")
+    assert [mb.personas[0].persona_id for mb in a.books] == [mb.personas[0].persona_id for mb in b.books]

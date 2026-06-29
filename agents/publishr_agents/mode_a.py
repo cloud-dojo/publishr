@@ -38,14 +38,18 @@ def run_mode_a_pipeline(
     threshold: int = 70,
     limit: Optional[int] = None,
     past_books: Optional[list[Book]] = None,
+    seed: str = "",
+    favorite_pct: int = 25,  # = favorites.FAVORITE_FEATURE_PCT_DEFAULT（配本ごとお気に入り起用確率%）
 ) -> ModeAResult:
     """観測→読者→企画→キャスティング→プレビュー→装丁 を一気通貫で回す。
 
     source は ObservationSource（FixtureObservationSource / GoogleObservationSource）。
     各 *_llm は "mock" | "vertex"。limit はプレビューで生成する冊数（コスト制御）。
     past_books＝ユーザの過去公開本（C1.8 学習ループ＝反応/選択を読者分析に反映・無ければ no-op）。
+    お気に入り著者は配本ごとに約 favorite_pct%（既定25）で1枠に起用（seed で配本ごとに振り直し）。
     """
     from .casting import cast_personas
+    from .casting.favorites import choose_favorite_feature
     from .cover import design_covers
     from .observe import collect_observation
     from .planning import run_planning
@@ -58,8 +62,12 @@ def run_mode_a_pipeline(
         profile, theme=theme, theme_kind=theme_kind, threshold=threshold, llm=llm
     )
     plan = PlanProposal.model_validate(planning["approvedPlan"])
+    # 確率はここが握る: 当たればお気に入りを casting へ渡し1枠に混入（外れれば通常著者のみ）。
+    feature = choose_favorite_feature(
+        ["plan"], list(user.favorite_authors or []), seed=seed, pct=favorite_pct
+    )
     persona_set = cast_personas(
-        plan, reader_profile=profile, favorite_authors=list(user.favorite_authors or []), llm=llm
+        plan, reader_profile=profile, favorite_authors=([feature[1]] if feature else []), llm=llm
     )
     books = run_preview(plan, persona_set.personas, reader_profile=profile, limit=limit, llm=preview_llm)
     # 採用企画（plan）を表紙へ渡す＝企画書ベースの1対1（vertex 経路のみ反映・mock は不変）。
@@ -100,12 +108,17 @@ def run_mode_a_set_pipeline(
     enable_imagen: bool = False,
     theme_kind: str = "honmei",
     threshold: int = 70,
+    seed: str = "",
+    favorite_pct: int = 25,  # = favorites.FAVORITE_FEATURE_PCT_DEFAULT（配本ごとお気に入り起用確率%）
 ) -> ModeASetResult:
     """観測→読者→セット企画(4テーマ)→各テーマ[キャスティング→プレビュー→装丁] を回し、棚に4冊並べる。
 
     各 *_llm は "mock" | "vertex"。1テーマ=1著者=1冊（多様性は配本属性＋テーマ別著者で担保）。
+    お気に入り著者は「配本ごとに約 favorite_pct%（既定25）で誰か1人を1テーマだけ起用」する決定的抽選。
+    seed（配本トークン）で配本ごとに振り直し・同一配本は再現的。
     """
     from .casting import cast_author
+    from .casting.favorites import choose_favorite_feature
     from .cover import design_covers
     from .observe import collect_observation
     from .planning import run_planning_set
@@ -117,16 +130,28 @@ def run_mode_a_set_pipeline(
     planning = run_planning_set(profile, theme_kind=theme_kind, threshold=threshold, llm=llm)
     plans = [PlanProposal.model_validate(p) for p in planning["planSet"]["plans"]]
 
+    # 確率はここ（オーケストレーション層）が握る: 当たった1枠にだけ favorite を渡す＝
+    # casting は「渡されたら起用」に保つ（mock の "あれば必ず混入" でも4冊を占有しない）。
     favorites = list(user.favorite_authors or [])
+    feature = choose_favorite_feature(
+        [p.proposal_id or "" for p in plans], favorites, seed=seed, pct=favorite_pct
+    )
     out: list[ModeABook] = []
-    for plan in plans:
+    for i, plan in enumerate(plans):
+        fav_arg = [feature[1]] if (feature is not None and feature[0] == i) else []
         # 1テーマ=1冊：author_casting で3候補→1選抜。
-        casting = cast_author(plan, reader_profile=profile, favorite_authors=favorites, llm=llm)
+        casting = cast_author(plan, reader_profile=profile, favorite_authors=fav_arg, llm=llm)
         chosen = []
         if casting.chosen:
-            # vertex casting は候補IDを c1/c2/c3 等で返し4冊間で衝突する。plan スコープに再id し、
-            # book id = arr_<personaId> の4冊一意性を保証（mock/vertex どちらでも安全）。
-            chosen = [casting.chosen.model_copy(update={"persona_id": f"cast_{plan.proposal_id}"})]
+            ch = casting.chosen
+            # お気に入り再登板は登録 personaId を保持（★継続＝front の favorites.has(id) 一致／
+            # 本IDは persist 側で run トークンを挟み毎run別冊に積み上がる）。それ以外は plan スコープに
+            # 再id し、book id = arr_<personaId> の4冊間衝突（c1/c2/c3）を防ぐ（mock/vertex 両安全）。
+            chosen = [
+                ch
+                if ch.from_favorite
+                else ch.model_copy(update={"persona_id": f"cast_{plan.proposal_id}"})
+            ]
         drafts = run_preview(plan, chosen, reader_profile=profile, limit=1, llm=preview_llm)
         # この1テーマの企画書（plan）を表紙へ渡す＝1企画書=1冊=1画像の1対1（vertex 経路のみ反映）。
         shelved = design_covers(drafts, chosen, llm=cover_llm, enable_imagen=enable_imagen, plan=plan)

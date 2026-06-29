@@ -196,6 +196,10 @@ def run(
             enable_imagen=settings.enable_imagen,
             theme_kind=theme_kind,
             threshold=70,
+            # お気に入り起用の抽選 seed＝配本トークン（再配信は同一・別配本は振り直し）。
+            # run_token 無し（mock/直呼び）は created（wall-clock）＝手動トリガごとに振り直す。
+            seed=run_token or created,
+            favorite_pct=settings.favorite_feature_pct,
         )
         books, personas = map_mode_a_set_to_books(
             set_result, owner_uid=owner, created_at=created, run_token=run_token
@@ -238,6 +242,8 @@ def run(
         threshold=70,
         limit=settings.max_books_per_run,
         past_books=past_books,
+        seed=run_token or created,
+        favorite_pct=settings.favorite_feature_pct,
     )
     books, personas = map_mode_a_to_books(
         result.plan,

@@ -38,7 +38,7 @@ _INPUTS = """# 承認企画(PlanProposal・8項目)
 {{approvedPlan}}
 # 読者プロファイル(stylePreference 参照)
 {{readerProfile}}
-# お気に入り著者（任意・約15%で1枠採用・空なら採用なし）
+# お気に入り著者（任意・渡されたら1枠採用・空なら採用なし／起用可否はシステム側で抽選済み）
 {{favoriteAuthors}}
 GeneratedPersonaSet（personas[5]＋reason）のJSONのみを出力せよ。"""
 

@@ -11,7 +11,7 @@ from typing import Any, Optional
 from publishr_schema import AuthorCasting, GeneratedPersonaSet, PlanProposal, ReaderProfile3Layer
 
 from .deterministic import cast_author_deterministic, cast_personas_deterministic
-from .favorites import reconcile_favorite_ids
+from .favorites import reconcile_author_favorite_id, reconcile_favorite_ids
 
 
 def cast_personas(
@@ -56,19 +56,22 @@ def cast_author(
     """
     mode = (llm or os.environ.get("PUBLISHR_LLM", "mock")).lower()
     if mode == "mock":
-        return cast_author_deterministic(
+        result = cast_author_deterministic(
             plan, reader_profile=reader_profile, favorite_authors=favorite_authors
         )
-    if mode == "vertex":
+    elif mode == "vertex":
         from .vertex_agent import cast_author_vertex
 
-        return cast_author_vertex(
+        result = cast_author_vertex(
             plan,
             reader_profile=reader_profile,
             favorite_authors=favorite_authors,
             persona_inspiration=persona_inspiration,
         )
-    raise ValueError(f"unknown PUBLISHR_LLM={mode!r}")
+    else:
+        raise ValueError(f"unknown PUBLISHR_LLM={mode!r}")
+    # backend に関わらず from_favorite 枠の personaId を登録お気に入りへ固定（★継続）。
+    return reconcile_author_favorite_id(result, favorite_authors)
 
 
 __all__ = [
@@ -77,4 +80,5 @@ __all__ = [
     "cast_author",
     "cast_author_deterministic",
     "reconcile_favorite_ids",
+    "reconcile_author_favorite_id",
 ]

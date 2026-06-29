@@ -125,9 +125,13 @@ def test_author_casting_ids_are_plan_scoped():
 
 
 def test_author_casting_favorite_injected():
+    """favorite を渡されたら起用（確率ゲートは上流＝mode_a が握る）。登録IDを保持し chosen になる。"""
     favs = [{"personaId": "fav_1", "name": "推し 作家", "voiceStyle": "思想的", "format": "エッセイ形式"}]
     result = cast_author_deterministic(_plan(), favorite_authors=favs)
-    assert any(c.from_favorite and c.name == "推し 作家" for c in result.candidates)
+    fav = next((c for c in result.candidates if c.from_favorite), None)
+    assert fav is not None and fav.name == "推し 作家"
+    assert fav.persona_id == "fav_1"  # 登録IDを保持（★継続＝front の favorites.has(id) 一致）
+    assert result.chosen is not None and result.chosen.from_favorite  # 起用時は chosen がお気に入り
 
 
 def test_author_casting_deterministic_and_dispatcher(monkeypatch):

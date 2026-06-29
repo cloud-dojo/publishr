@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # 配本パイプライン: True=4テーマ1-1-1-1のセット企画（予約制廃止改定 2026-06-23・既定）/
     # False=旧・単一テーマ（ロールバック用キルスイッチ）。
     set_pipeline: bool = Field(default=True, validation_alias="PUBLISHR_SET_PIPELINE")
+    # お気に入り著者の「再登板（新刊）」を1配本で起用する確率（%）。既定25（≒4冊中1冊の体感）。
+    # システム側で決定的に抽選（seed=配本トークン）。0=無効。比率/ランダム性は将来A/B（mvp-scope §9）。
+    favorite_feature_pct: int = Field(default=25, validation_alias="PUBLISHR_FAVORITE_FEATURE_PCT")
     editor_rounds: int = Field(default=1, validation_alias="PUBLISHR_EDITOR_ROUNDS")
     # モードB本文編集ループの最高改稿ラウンド数（§6-2「最高3R」）。worker が mode_b に渡す。
     body_edit_rounds: int = Field(default=3, validation_alias="PUBLISHR_BODY_EDIT_ROUNDS")
