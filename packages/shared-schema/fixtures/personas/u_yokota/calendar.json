@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "description": "Publishr デモ用 Calendar fixture。横田健三の直近1ヶ月(2026-06-01〜07-02)。STEP0 ObservationBundle の calendar.events に対応。ビジネスイベントのみ・個人メモなし。few-shot外のクリーンな汎化プローブ被験者。",
+    "persona": "横田健三（52歳・自動車部品メーカー 主力工場長・直属約200名・serendipityTolerance=低）",
+    "source": "プロンプト汎用性検証用（2026-06-25作成・N-Hセル）",
+    "scope": "calendar.readonly",
+    "timeZone": "Asia/Tokyo",
+    "fieldNote": "summary=タイトル（STEP0でtitleにマップ）。attendeesCount/recurringはObservationBundleシグナル。"
+  },
+  "events": [
+    { "id": "cal_001", "summary": "生産部 課長朝礼（定例）", "start": "2026-06-01T08:30:00+09:00", "end": "2026-06-01T09:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+    { "id": "cal_002", "summary": "工場 安全パトロール（定例）", "start": "2026-06-01T15:00:00+09:00", "end": "2026-06-01T16:00:00+09:00", "attendeesCount": 5, "recurring": true, "description": "" },
+
+    { "id": "cal_003", "summary": "部課長会（定例）", "start": "2026-06-03T16:00:00+09:00", "end": "2026-06-03T17:00:00+09:00", "attendeesCount": 9, "recurring": true, "description": "" },
+    { "id": "cal_004", "summary": "Aライン 生産遅延 挽回計画レビュー", "start": "2026-06-04T10:00:00+09:00", "end": "2026-06-04T11:30:00+09:00", "attendeesCount": 6, "recurring": false, "description": "" },
+
+    { "id": "cal_005", "summary": "原価低減会議（来期コストダウン目標の詰め）", "start": "2026-06-05T10:00:00+09:00", "end": "2026-06-05T12:00:00+09:00", "attendeesCount": 7, "recurring": false, "description": "" },
+    { "id": "cal_006", "summary": "生産部 課長朝礼（定例）", "start": "2026-06-08T08:30:00+09:00", "end": "2026-06-08T09:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+    { "id": "cal_007", "summary": "顧客OEM 工程監査 事前確認MTG", "start": "2026-06-08T13:00:00+09:00", "end": "2026-06-08T14:30:00+09:00", "attendeesCount": 5, "recurring": false, "description": "" },
+
+    { "id": "cal_008", "summary": "品質会議（不良流出 是正の進捗）", "start": "2026-06-09T10:00:00+09:00", "end": "2026-06-09T11:00:00+09:00", "attendeesCount": 6, "recurring": true, "description": "" },
+    { "id": "cal_009", "summary": "月次 生産会議", "start": "2026-06-10T14:00:00+09:00", "end": "2026-06-10T15:30:00+09:00", "attendeesCount": 10, "recurring": true, "description": "" },
+    { "id": "cal_010", "summary": "設備保全 月次レビュー", "start": "2026-06-11T15:00:00+09:00", "end": "2026-06-11T16:00:00+09:00", "attendeesCount": 4, "recurring": true, "description": "" },
+
+    { "id": "cal_011", "summary": "技能伝承会議（定年再雇用満了者の引き継ぎ）", "start": "2026-06-12T13:00:00+09:00", "end": "2026-06-12T14:30:00+09:00", "attendeesCount": 5, "recurring": false, "description": "" },
+    { "id": "cal_012", "summary": "生産部 課長朝礼（定例）", "start": "2026-06-15T08:30:00+09:00", "end": "2026-06-15T09:00:00+09:00", "attendeesCount": 8, "recurring": true, "description": "" },
+
+    { "id": "cal_013", "summary": "設備投資 稟議 役員審議（主力ライン省人化）", "start": "2026-06-16T10:00:00+09:00", "end": "2026-06-16T11:30:00+09:00", "attendeesCount": 8, "recurring": false, "description": "" },
+    { "id": "cal_014", "summary": "安全衛生委員会（月次）", "start": "2026-06-17T16:00:00+09:00", "end": "2026-06-17T17:00:00+09:00", "attendeesCount": 12, "recurring": true, "description": "" },
+    { "id": "cal_015", "summary": "多能工化 スキル棚卸しMTG", "start": "2026-06-18T10:00:00+09:00", "end": "2026-06-18T11:00:00+09:00", "attendeesCount": 6, "recurring": false, "description": "" },
+
+    { "id": "cal_016", "summary": "月次 原価会議", "start": "2026-06-24T10:00:00+09:00", "end": "2026-06-24T11:30:00+09:00", "attendeesCount": 7, "recurring": true, "description": "" },
+    { "id": "cal_017", "summary": "顧客OEM IATF工程監査 本番", "start": "2026-07-02T09:00:00+09:00", "end": "2026-07-02T17:00:00+09:00", "attendeesCount": 8, "recurring": false, "description": "終日・顧客監査" }
+  ]
+}

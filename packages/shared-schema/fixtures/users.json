@@ -42,5 +42,27 @@
       "calendar": { "enabled": true, "calendarIds": ["primary"] },
       "tasks": { "enabled": true }
     }
+  },
+  {
+    "id": "u_yokota",
+    "name": "横田 健三",
+    "initial": "横",
+    "profile": {
+      "role": "自動車部品メーカー・主力工場 工場長／直属約200名（生産・品質保証・生産技術・設備保全）",
+      "workTheme": "来期原価10%削減・省人化と技能伝承の両立・生産遅延リカバリ・顧客工程監査対応",
+      "estimatedInterests": ["現場改善", "品質管理", "業務標準化", "設備保全", "安全管理"],
+      "serendipityTolerance": "低"
+    },
+    "initialProfile": null,
+    "favoriteAuthors": [],
+    "connectedSources": {
+      "drive": {
+        "enabled": true,
+        "folderIds": ["fld_work"],
+        "labels": [{ "folderId": "fld_work", "label": "業務" }]
+      },
+      "calendar": { "enabled": true, "calendarIds": ["primary"] },
+      "tasks": { "enabled": true }
+    }
   }
 ]
