@@ -151,7 +151,7 @@ export default function OnboardingPage() {
         </div>
 
         <button type="button" className="onb-skip" onClick={() => void persist(true)} disabled={saving}>
-          スキップする（あとでDriveから自動で学びます）
+          スキップする（あとで設定から調整できます）
         </button>
       </div>
     </div>

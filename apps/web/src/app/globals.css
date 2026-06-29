@@ -529,49 +529,6 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .progress-foot .pbar i { display: block; height: 100%; background: linear-gradient(90deg,var(--brass),var(--gold-bright)); }
 .progress-foot .ptext { font-size: 12.5px; color: var(--text-500); }
 
-/* ===== 執筆中 (writing) ===== */
-.stage { display: grid; grid-template-columns: 300px 1fr; gap: 54px; padding: 8px 44px 0; align-items: start; }
-.writing-book { position: sticky; top: var(--topbar-h); text-align: center; }
-.writing-book .cover { animation: bookGlow 3s ease-in-out infinite; }
-.writing-book.done .cover { animation: none; }
-@keyframes bookGlow { 0%,100%{box-shadow:var(--shadow-book)} 50%{box-shadow:0 18px 40px -10px var(--gold-glow)} }
-.pen-line { height: 3px; background: var(--ink-700); border-radius: 3px; overflow: hidden; margin: 16px 0 8px; }
-.pen-line i { display: block; width: 0; height: 100%; background: linear-gradient(90deg,transparent,var(--gold-bright),transparent); }
-.pen-line.active i { width: 40%; animation: pen 1.8s linear infinite; }
-.pen-line.done i { width: 100%; background: var(--gold-bright); }
-@keyframes pen { from{transform:translateX(-110%)} to{transform:translateX(360%)} }
-.writing-status { font-family: var(--font-display); font-size: 14px; color: var(--gold-bright); }
-.writing-pct { font-family: var(--font-en); font-size: 38px; color: var(--text-100); margin-top: 6px; }
-.pipeline { position: relative; padding-left: 34px; }
-.pipeline::before { content: ""; position: absolute; left: 11px; top: 6px; bottom: 30px; width: 2px; background: var(--line); }
-.step { position: relative; padding: 0 0 26px; }
-.step .dot { position: absolute; left: -34px; top: 1px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--ink-800); border: 2px solid var(--line); color: var(--text-500); z-index: 2; }
-.step.done .dot { background: var(--forest); border-color: #8fc2a3; color: #dff3e6; }
-.step.active .dot { background: var(--gold); border-color: var(--gold-bright); color: var(--ink-900); }
-.step .st-title { font-family: var(--font-display); font-size: 16px; color: var(--text-100); font-weight: 600; }
-.step.pending .st-title { color: var(--text-500); }
-.step .st-actor { font-family: var(--font-en); font-style: italic; font-size: 13px; color: var(--gold); margin-left: 8px; }
-.step .st-desc { font-size: 13px; color: var(--text-300); margin-top: 6px; line-height: 1.65; }
-.step .st-desc .quote { color: var(--text-200); border-left: 2px solid var(--line); padding-left: 12px; display: block; margin-top: 8px; font-family: var(--font-display); }
-.debate { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-.debate .cand { flex: 1 1 150px; padding: 11px 13px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--ink-800); font-size: 12.5px; }
-.debate .cand .cd-h { font-family: var(--font-display); color: var(--text-100); font-size: 13px; margin-bottom: 5px; }
-.debate .cand.win { border-color: var(--gold); background: linear-gradient(180deg,rgba(201,163,95,.12),transparent); }
-.debate .cand.win .cd-h { color: var(--gold-bright); }
-.debate .cand.lose { opacity: .5; }
-.debate .cand .verdict { font-size: 11px; margin-top: 7px; }
-.debate .cand.win .verdict { color: #8fc2a3; }
-.debate .cand.lose .verdict { color: var(--wine); }
-.debate-lead { font-size: 13px; color: var(--text-300); line-height: 1.7; margin: 10px 0 4px; }
-.debate-round { font-size: 12px; color: var(--gold); font-weight: 600; letter-spacing: 0.04em; margin: 18px 0 2px; }
-.debate-resubmit { font-size: 12px; color: var(--text-300); text-align: center; margin: 14px 0 6px; }
-.daybreak { padding: 50px 44px 0; }
-.daybreak-rule { display: flex; align-items: center; gap: 16px; color: var(--text-500); font-family: var(--font-en); font-style: italic; font-size: 15px; }
-.daybreak-rule::before,.daybreak-rule::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-.arrival { margin-top: 26px; padding: 28px 32px; border-radius: var(--radius); background: linear-gradient(135deg,rgba(201,163,95,.14),rgba(20,23,31,.6)); border: 1px solid var(--gold); display: flex; align-items: center; gap: 24px; box-shadow: 0 0 50px -20px var(--gold-glow); }
-.arrival .a-ico { font-size: 30px; }
-.arrival .a-title { font-family: var(--font-display); font-size: 20px; color: var(--text-100); font-weight: 700; }
-.arrival .a-sub { font-size: 13px; color: var(--text-300); margin-top: 5px; }
 
 /* ===== 読後 (post-read) ===== */
 .postread { max-width: 720px; margin: 0 auto; padding: 20px 44px 0; }
@@ -883,10 +840,8 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 @media (max-width: 860px) {
   .reading   { grid-template-columns: 1fr; }
   .detail    { grid-template-columns: 1fr; gap: 28px; }
-  .stage     { grid-template-columns: 1fr; gap: 28px; }
   .hl-layout { grid-template-columns: 1fr; }
   .detail-cover-col,
   .rail-tools,
-  .hl-side,
-  .writing-book { position: static; }
+  .hl-side { position: static; }
 }

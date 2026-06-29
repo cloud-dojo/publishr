@@ -57,7 +57,7 @@ export default function AuthorPage() {
         <Topbar back={{ href: "/authors", label: "← 作家たち" }} />
         <section className="page section">
           <div className="muted">
-            {provider.ready ? "この著者は見つかりませんでした。" : "読み込み中…"}
+            {provider.ready ? "この作家は見つかりませんでした。" : "読み込み中…"}
           </div>
         </section>
       </>
@@ -104,7 +104,7 @@ export default function AuthorPage() {
             >
               {isFav ? "★ お気に入り登録済み" : "☆ お気に入りの作家に登録"}
             </button>
-            <span className="ah-counts">この著者の本 {books.length}冊</span>
+            <span className="ah-counts">この作家の本 {books.length}冊</span>
           </div>
         </div>
       </header>
@@ -165,7 +165,7 @@ export default function AuthorPage() {
           <div>
             <div className="eyebrow">Books for you</div>
             <div className="section-title">
-              あなたに——<span className="accent">この著者の本</span>
+              あなたに——<span className="accent">この作家の本</span>
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function AuthorPage() {
             ))}
           </div>
         ) : (
-          <div className="muted">この著者の本は、まだあなたの棚にありません。</div>
+          <div className="muted">この作家の本は、まだあなたの棚にありません。</div>
         )}
       </section>
     </>

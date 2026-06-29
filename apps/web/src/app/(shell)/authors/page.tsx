@@ -92,10 +92,10 @@ export default function AuthorsPage() {
           <div>
             <div className="eyebrow">All authors</div>
             <div className="section-title">
-              現在、書店に並んでいる<span className="accent">すべて</span>の書き手
+              現在、書店に並んでいる<span className="accent">すべて</span>の作家
             </div>
             <div className="section-sub">
-              Publishr が企画ごとに生み出した著者たち。読書ページや著者ページからお気に入りに登録できます。
+              Publishr が企画ごとに生み出した作家たち。読書ページや作家ページからお気に入りに登録できます。
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function AuthorsPage() {
               あなたの<span className="accent">お気に入り</span>の作家
             </div>
             <div className="section-sub">
-              お気に入りに登録すると、その著者がこれからもあなたのために本を書き続けます。
+              お気に入りに登録すると、その作家がこれからもあなたのために本を書き続けます。
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function AuthorsPage() {
           ))}
           {favs.length === 0 && (
             <div className="muted">
-              まだお気に入りの作家はいません。気に入った著者を ☆ で登録してみてください。
+              まだお気に入りの作家はいません。気に入った作家を ☆ で登録してみてください。
             </div>
           )}
         </div>

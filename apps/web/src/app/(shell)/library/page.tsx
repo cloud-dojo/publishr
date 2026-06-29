@@ -15,7 +15,7 @@ export default function LibraryPage() {
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
   // 書庫＝ユーザーが「書庫へ移動」した本だけのキュレーション集（shelf==="library"）。
-  // 入荷(arrivals/odd)は直近28日の新着ビュー。移動しないと28日で入荷から落ち、書庫にも入らない
+  // 入荷(arrivals/odd)は直近30日の新着ビュー。移動しないと30日で入荷から落ち、書庫にも入らない
   // （検索からは到達可）。新しい順。
   // 書庫＝「書庫へ移動」した本（archivedAt セット or shelf=library）。saveToLibrary は archivedAt のみ
   // 更新するため生 shelf ではなく isArchivedBook で判定する（I-30）。書庫から外した本（feedback.dropped）
@@ -28,7 +28,7 @@ export default function LibraryPage() {
     if (
       !window.confirm(
         `『${book.title}』を書庫から外しますか？\n\n` +
-          `外すと、この本はもう読めなくなります。引いたハイライト・付けたブックマークもすべて消え、` +
+          `外すと書庫から消えます。引いたハイライト・付けたブックマークも一緒に消え、` +
           `元に戻すことはできません。`
       )
     )
@@ -76,7 +76,7 @@ export default function LibraryPage() {
           {library.length === 0 && (
             <div className="muted">
               {provider.ready
-                ? "まだ蔵書がありません。入荷で気に入った本を「📚 書庫へ移動」すると、ここに集まります。"
+                ? "まだ蔵書がありません。入荷で気に入った本を「📚 書庫に保存」すると、ここに集まります。"
                 : "読み込み中…"}
             </div>
           )}

@@ -145,7 +145,7 @@ export default function FinishPage() {
           </div>
         )}
 
-        {/* 書庫に保存：読了したこの本を蔵書に残す導線。押さないと28日で入荷から落ち書庫にも
+        {/* 書庫に保存：読了したこの本を蔵書に残す導線。押さないと30日で入荷から落ち書庫にも
             入らない（curation型・手動キュレーション）。移動は一方向。 */}
         {book.status === "published" && (
           <div className="panel" style={{ textAlign: "center" }}>

@@ -16,9 +16,8 @@ function hrefFor(book: Book): string {
 }
 
 function authorSuffix(book: Book): string {
-  if (book.status === "writing") return ` ・ 残り ${Math.max(0, 100 - book.feedback.readPercent)}%`;
-  if (book.status === "draft" && book.shelf === "press") return " ・ 企画承認済み";
-  if (book.status === "published" && book.feedback.rating) {
+  // 配本時に本文まで生成済み＝published 前提。読了評価があれば ★ を添える（feedback 未設定は無印）。
+  if (book.status === "published" && book.feedback?.rating) {
     return ` ・ ${"★".repeat(book.feedback.rating)}`;
   }
   return "";

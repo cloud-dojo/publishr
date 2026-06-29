@@ -299,7 +299,7 @@ export default function AccountPage() {
   const onTriggerPlanning = async (themeKind: "honmei" | "serendipity") => {
     setTriggering(themeKind);
     setTriggerMsg(null);
-    const label = themeKind === "serendipity" ? "セレンディピティ企画" : "本命企画";
+    const label = themeKind === "serendipity" ? "新しい出会いの企画" : "本命の企画";
     try {
       await actions.runPipeline(uid ?? DEMO_USER_ID, themeKind);
       setTriggerMsg(`${label}を実行しました。書店に反映されるまで少し待ってください。`);
@@ -383,7 +383,7 @@ export default function AccountPage() {
               <div className="asb-title">今すぐ企画</div>
               <div className="asb-sub">
                 週次バッチを待たずに、あなた向けの企画を手動で実行します。本命はいまの関心の中心から、
-                セレンディピティは少し離れたテーマから本を仕立てます。生成には数分かかります。
+                新しい出会いは少し離れたテーマから本を仕立てます。生成には数分かかります。
               </div>
             </div>
             <div className="asb-action">
@@ -402,7 +402,7 @@ export default function AccountPage() {
                 onClick={() => onTriggerPlanning("serendipity")}
                 disabled={triggering !== null}
               >
-                {triggering === "serendipity" ? "企画中..." : "セレンディピティを企画"}
+                {triggering === "serendipity" ? "企画中..." : "新しい出会いを企画"}
               </button>
             </div>
           </div>

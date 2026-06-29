@@ -41,7 +41,7 @@ export default function BookDetailPage() {
   // plan があれば優先（mock/local＝従来表示そのまま）、無ければ Book 自身のフィールドで描く（prod）。
   const whyNow = plan?.reason ?? book.deliveryReason ?? "";
   const situation = plan?.readerSituation ?? book.problemToSolve ?? "";
-  const situationLabel = plan?.readerSituation ? "想定する局面" : "解決する課題";
+  const situationLabel = "想定する局面";
   const coreMessage = plan?.coreMessage ?? book.coreMessage ?? "";
   const hasRationale = Boolean(whyNow || situation || coreMessage);
 
@@ -55,7 +55,7 @@ export default function BookDetailPage() {
     <>
       <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
       <div className="page-hero" style={{ paddingBottom: 0 }}>
-        <div className="ph-eyebrow">Today&apos;s arrival · curated for you</div>
+        <div className="ph-eyebrow">{archived ? "From your library" : "Today’s arrival · curated for you"}</div>
       </div>
 
       <div className="detail">
@@ -69,8 +69,8 @@ export default function BookDetailPage() {
             titleSize={25}
           />
           <div className="detail-actions">
-            {/* 書店にある本＝まず「書庫に入庫」。入庫した本（書庫）は期限で消えず残り続け、
-                そこで初めて「いま読む」を出す。入庫後は同画面で archived が反転しCTAが切り替わる。 */}
+            {/* 書店にある本＝まず「書庫に保存」。保存した本（書庫）は期限で消えず残り続け、
+                そこで初めて「いま読む」を出す。保存後は同画面で archived が反転しCTAが切り替わる。 */}
             {archived ? (
               <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
                 いま読む →
@@ -81,7 +81,7 @@ export default function BookDetailPage() {
                 className="btn btn--gold btn--block"
                 onClick={() => void saveToLibrary(book.id)}
               >
-                書庫に入庫する
+                書庫に保存する
               </button>
             )}
             {persona && (
@@ -93,7 +93,7 @@ export default function BookDetailPage() {
           <div className="detail-meta-line">
             推定分量：<b>全{chapterCount}章・約{minuteCount}分</b>
             <br />
-            装丁：<b>Imagen 生成</b>／企画：<b>編集会議 AI</b>
+            装丁：<b>{book.coverUrl ? "Imagen 生成" : "シンプル装丁"}</b>／企画：<b>編集会議 AI</b>
           </div>
         </div>
 
@@ -170,7 +170,7 @@ export default function BookDetailPage() {
                     className="btn btn--gold"
                     onClick={() => void saveToLibrary(book.id)}
                   >
-                    書庫に入庫して読む →
+                    書庫に保存して読む →
                   </button>
                 )}
               </div>
