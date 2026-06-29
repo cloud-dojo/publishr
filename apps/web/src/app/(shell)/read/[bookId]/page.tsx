@@ -35,12 +35,31 @@ const HL_COLORS: { value: HighlightColor; label: string }[] = [
 ];
 
 // 段落内のハイライトをレンジ別に描画するヘルパー
+function renderBold(text: string, bold: Array<[number, number]>): React.ReactNode {
+  if (!bold || bold.length === 0) return text;
+  const segs: React.ReactNode[] = [];
+  let pos = 0;
+  for (const [s, e] of bold) {
+    const start = Math.max(pos, s);
+    const end = Math.min(e, text.length);
+    if (start >= end) continue;
+    if (pos < start) segs.push(text.slice(pos, start));
+    segs.push(<strong key={start}>{text.slice(start, end)}</strong>);
+    pos = end;
+  }
+  if (pos < text.length) segs.push(text.slice(pos));
+  return <>{segs}</>;
+}
+
 function renderParaContent(
   text: string,
   highlights: ReadingAnnotation[],
-  onMarkClick: (e: React.MouseEvent<HTMLElement>, annId: string) => void
+  onMarkClick: (e: React.MouseEvent<HTMLElement>, annId: string) => void,
+  bold: Array<[number, number]> = []
 ): React.ReactNode {
-  if (highlights.length === 0) return text;
+  // ハイライト無し＝太字（**強調**）だけ描画する。ハイライト有りの段落では
+  // オフセット整合を優先し、太字描画はスキップする（クリーンテキスト座標で slice）。
+  if (highlights.length === 0) return renderBold(text, bold);
 
   // startOffset が未設定（旧形式）= 段落全体ハイライト
   const legacy = highlights.find((a) => typeof a.startOffset !== "number");
@@ -521,6 +540,23 @@ export default function ReaderPage() {
                       </figure>
                     );
                   }
+                  if (b.kind === "subhead") {
+                    return (
+                      <h3 key={`s${b.pi}`} className="rd-subhead" data-pi={b.pi}>
+                        {renderParaContent(b.text, paraHighlights(b.pi), onMarkClick)}
+                      </h3>
+                    );
+                  }
+                  if (b.kind === "list") {
+                    const ListTag = b.ordered ? "ol" : "ul";
+                    return (
+                      <ListTag key={`l${b.pi}`} className="rd-list">
+                        {b.items.map((it, j) => (
+                          <li key={j}>{it}</li>
+                        ))}
+                      </ListTag>
+                    );
+                  }
                   const pHighlights = paraHighlights(b.pi);
                   return (
                     <p
@@ -528,7 +564,7 @@ export default function ReaderPage() {
                       data-pi={b.pi}
                       className={b.lead ? "lead" : ""}
                     >
-                      {renderParaContent(b.text, pHighlights, onMarkClick)}
+                      {renderParaContent(b.text, pHighlights, onMarkClick, b.bold)}
                     </p>
                   );
                 })}

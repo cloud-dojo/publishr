@@ -8,8 +8,35 @@ export const CHAPTER_PI_BASE = 1_000_000;
 
 export type ReaderBlock =
   | { kind: "chapter"; text: string; pi: number }
-  | { kind: "para"; text: string; pi: number; chapter: string; lead: boolean }
+  | { kind: "para"; text: string; pi: number; chapter: string; lead: boolean; bold: Array<[number, number]> }
+  | { kind: "subhead"; text: string; pi: number; chapter: string }
+  | { kind: "list"; items: string[]; ordered: boolean; pi: number; chapter: string }
   | { kind: "mermaid"; text: string; pi: number; chapter: string };
+
+// インライン Markdown（**強調**）を解析し、記号を除いたクリーンテキストと
+// 太字レンジ（クリーンテキスト座標）に分ける。ハイライトのオフセット計算は描画後の
+// テキスト基準なので、格納テキストから `**` を必ず除いておく（座標ズレ防止）。
+export function parseInline(raw: string): { text: string; bold: Array<[number, number]> } {
+  const bold: Array<[number, number]> = [];
+  let text = "";
+  let i = 0;
+  while (i < raw.length) {
+    if (raw[i] === "*" && raw[i + 1] === "*") {
+      const close = raw.indexOf("**", i + 2);
+      if (close !== -1) {
+        const inner = raw.slice(i + 2, close);
+        const start = text.length;
+        text += inner;
+        if (inner) bold.push([start, text.length]);
+        i = close + 2;
+        continue;
+      }
+    }
+    text += raw[i];
+    i++;
+  }
+  return { text, bold };
+}
 
 export function parseBook(body: string | null | undefined, fallback = ""): ReaderBlock[] {
   const src = body && body.trim() ? body : fallback;
@@ -20,12 +47,22 @@ export function parseBook(body: string | null | undefined, fallback = ""): Reade
   let firstPara = true;
   let buf: string[] = [];
   let mermaidBuf: string[] | null = null;
+  let listBuf: string[] | null = null;
+  let listOrdered = false;
   const flush = () => {
     if (buf.length) {
-      blocks.push({ kind: "para", text: buf.join(""), pi: pi++, chapter, lead: firstPara });
+      const { text, bold } = parseInline(buf.join(""));
+      blocks.push({ kind: "para", text, pi: pi++, chapter, lead: firstPara, bold });
       firstPara = false;
       buf = [];
     }
+  };
+  const flushList = () => {
+    if (listBuf && listBuf.length) {
+      blocks.push({ kind: "list", items: listBuf, ordered: listOrdered, pi: pi++, chapter });
+      firstPara = false;
+    }
+    listBuf = null;
   };
   for (const line of src.split("\n")) {
     // mermaid フェンス内の処理
@@ -42,23 +79,52 @@ export function parseBook(body: string | null | undefined, fallback = ""): Reade
     }
     // mermaid フェンス開始
     if (line.trim() === "```mermaid") {
+      flushList();
       flush();
       mermaidBuf = [];
       continue;
     }
+    // 小見出し（### 〜 ###### …）。章見出し（## …）より先に判定する。
+    const subm = line.match(/^#{3,6}\s+(.*)$/);
+    if (subm) {
+      flushList();
+      flush();
+      const { text } = parseInline(subm[1].trim());
+      blocks.push({ kind: "subhead", text, pi: pi++, chapter });
+      firstPara = false;
+      continue;
+    }
     if (line.startsWith("## ")) {
+      flushList();
       flush();
       chapter = line.slice(3).trim();
       blocks.push({ kind: "chapter", text: chapter, pi: CHAPTER_PI_BASE + chapterOrd++ });
       continue;
     }
-    if (line.trim() === "") {
+    const trimmed = line.trim();
+    // 箇条書き（- / * / 1.）。`**強調` 始まりの段落と取り違えない。
+    const ulm = !trimmed.startsWith("**") ? trimmed.match(/^[-*]\s+(.*)$/) : null;
+    const olm = trimmed.match(/^\d+\.\s+(.*)$/);
+    if (ulm || olm) {
       flush();
+      if (listBuf === null) {
+        listBuf = [];
+        listOrdered = !!olm;
+      }
+      const item = ulm ? ulm[1] : olm![1];
+      listBuf.push(parseInline(item).text);
       continue;
     }
-    buf.push(line.trim());
+    if (trimmed === "") {
+      flush();
+      flushList();
+      continue;
+    }
+    flushList();
+    buf.push(trimmed);
   }
   flush();
+  flushList();
   return blocks;
 }
 
@@ -88,7 +154,7 @@ export function bookChapters(
 /** pi が属する章名を返す（段落・見出しの両方に対応。無ければ ""）。 */
 export function chapterForPara(body: string | null | undefined, pi: number): string {
   for (const b of parseBook(body)) {
-    if (b.kind === "para" && b.pi === pi) return b.chapter;
+    if ((b.kind === "para" || b.kind === "subhead") && b.pi === pi) return b.chapter;
     if (b.kind === "chapter" && b.pi === pi) return b.text; // 見出し自身のハイライト
   }
   return "";
@@ -101,14 +167,14 @@ export function applyGranularity(
 ): ReaderBlock[] {
   if (granularity === "full") return blocks;
   if (granularity === "summary") {
-    // 各章：見出し＋その章の最初の段落のみ
+    // 各章：見出し＋その章の最初の段落のみ（小見出し/箇条書きはスキップ）
     const out: ReaderBlock[] = [];
     let tookParaInChapter = false;
     for (const b of blocks) {
       if (b.kind === "chapter") {
         out.push(b);
         tookParaInChapter = false;
-      } else if (!tookParaInChapter) {
+      } else if (b.kind === "para" && !tookParaInChapter) {
         out.push(b);
         tookParaInChapter = true;
       }
@@ -122,7 +188,7 @@ export function applyGranularity(
     if (b.kind === "chapter") {
       if (out.length === 0) out.push(b);
       else break;
-    } else {
+    } else if (b.kind === "para") {
       out.push(b);
       if (++paraCount >= 1) break;
     }
