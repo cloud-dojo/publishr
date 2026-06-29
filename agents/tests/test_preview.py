@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from publishr_schema import BookDraft, EditorVerdict, PlanProposal
+from publishr_schema import BookDraft, EditorVerdict, PlanProposal, ReaderProfile3Layer
 
 from publishr_agents.casting import cast_personas
 from publishr_agents.preview import run_preview
@@ -92,6 +92,66 @@ def test_deterministic_is_stable():
 def test_limit_caps_book_count():
     results = run_preview_deterministic(_plan(), _personas(), limit=2)
     assert len(results) == 2
+
+
+# ── serendipity 棚書き文法（本文の抽象化ライン）────────────────
+def _profile_with_challenge(challenge: str) -> ReaderProfile3Layer:
+    return ReaderProfile3Layer.model_validate(
+        {
+            "base": {
+                "industry": "食品・飲料メーカー",
+                "jobType": "マーケティング・ブランド",
+                "position": "課長（新任）",
+                "orgScale": "部下7名",
+                "readingGenres": ["実践書"],
+            },
+            "currentWork": {
+                "currentSituation": "新任2ヶ月",
+                "activeWorkThemes": ["新任マネジメント"],
+                "challenges": [challenge],
+                "upcomingKeyEvents": [],
+                "evidence": [],
+            },
+            "readingBehavior": {"serendipityTolerance": "mid", "stylePreference": "実務的"},
+        }
+    )
+
+
+def _serendipity_plan() -> PlanProposal:
+    return PlanProposal.model_validate(
+        {
+            "proposalId": "plan_misa_seren_01",
+            "themeKind": "serendipity",
+            "round": 2,
+            "tentativeTitle": "貨幣が変えた人類の信用史",
+            "readerSituation": "教養への関心の萌芽",
+            "whyNowForYou": "関心の隣へ",
+            "coreMessage": "価値の約束はどう編まれてきたか",
+            "diffFromMarket": "実務書ではなく文化史の視点",
+            "keyInsights": ["交換から信用へ"],
+            "agendaOutline": ["物々交換", "貨幣の発明", "信用の制度化"],
+            "recommendedAuthorTypes": ["教養エッセイタイプ"],
+        }
+    )
+
+
+def test_serendipity_draft_does_not_leak_surface_challenge():
+    """セレンディピティ本は棚書き文法＝読者の表層業務課題を直書きしない（本文の抽象化ライン）。
+
+    同じ profile を honmei に渡すと入荷理由で課題を直撃する、の対比で「空振りでない」ことを担保する。
+    """
+    surface = "売上前年割れの立て直し"
+    profile = _profile_with_challenge(surface)
+
+    seren = run_preview_deterministic(_serendipity_plan(), _personas(), reader_profile=profile)
+    for r in seren:
+        d = r["bookDraft"]
+        blob = d["deliveryReason"] + d["problemToSolve"] + d["prefaceSample"]
+        assert surface not in blob, f"serendipityで表層課題が漏れた: {blob}"
+
+    # 対比: 同じ課題を honmei に渡すと入荷理由で直撃する（honmei は課題直撃でよい）
+    honmei = run_preview_deterministic(_plan(), _personas(), reader_profile=profile)
+    assert any(surface in r["bookDraft"]["deliveryReason"] for r in honmei), "honmeiは課題直撃のはず"
 
 
 # ── dispatcher ────────────────────────────────────────────

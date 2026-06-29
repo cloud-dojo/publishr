@@ -225,6 +225,9 @@ async def _run_team(
     if plan is not None and not plan.get("proposalId"):
         team_id = assignment.get("team_id") or assignment.get("theme", {}).get("theme_id") or "x"
         plan["proposalId"] = f"plan_vertex_{team_id}"
+    # LLM が themeKind を返さない/誤って設定する場合があるため呼び出し元から強制上書き
+    if plan is not None:
+        plan["themeKind"] = theme_kind
     return plan
 
 

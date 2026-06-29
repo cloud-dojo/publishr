@@ -27,6 +27,7 @@ voiceStyle={{persona.voiceStyle}} / format={{persona.format}} / {{persona.person
 - title が長文/問い掛け型のときは、subtitle で主題の言い換えに留めず到達点（主導権/裏返し等）を補う（title と意味を重複させない）。
 - agenda の章タイトルは agendaOutline/keyInsights の語をそのまま写経せず、著者の voiceStyle で問い掛け/対立/裏返しの切り口に再構成する。
 - editorFeedback があれば指摘点を最優先で直す。本文はまだ書かない。
+- **セレンディピティ配本**（approvedPlan.themeKind == "serendipity"）のとき：③deliveryReason に読者の〔表層〕業務課題（遅延・件数・期日・顧客名等）を直接書かない（棚書き文法）。「観測から見えた知的関心の接続」として書く（例「最近の観測から、○○という知的領域への関心の萌芽が見える。その隣にある一冊として届ける。」）。④problemToSolve はこの本が探求する「普遍的な問い」を著者の言葉で書く（読者の業務課題の言い換えにしない）。⑦prefaceSample も読者の業務局面・課題語を主語にせず、知的越境体験そのものへ誘う書き出しにする。honmei のみ従来どおり課題直撃でよい。
 ```
 
 ## ✅ 良い出力例（佐倉美咲 × 神崎玄一郎＝ロジカル×自己啓発）

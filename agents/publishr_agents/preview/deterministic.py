@@ -23,22 +23,39 @@ def _draft(plan: PlanProposal, persona: GeneratedPersona, profile: Optional[Read
     cw = profile.current_work if profile else None
     challenge = (cw.challenges[0] if cw and cw.challenges else "いまの局面")
     outline = plan.agenda_outline or ["現状の言語化", "型の提示", "局面別の適用"]
+    is_serendipity = (plan.theme_kind or "") == "serendipity"
+
+    if is_serendipity:
+        # serendipity: 棚書き文法＝課題を直撃しない。関心の接続として書く。
+        intellectual_territory = plan.theme or plan.tentative_title
+        delivery_reason = (
+            f"読者の関心の隣に「{intellectual_territory}」という知的領域がある。"
+            f"好奇心の接続として、この一冊を。"
+        )
+        problem_to_solve = f"{plan.core_message}（{persona.voice_style}の切り口で）"
+        preface_sample = (
+            f"著者 {persona.name} より。{persona.format} で、"
+            f"「{intellectual_territory}」という知的境界を越える体験の「はじめに」。"
+        )
+    else:
+        # honmei: 課題直撃・観測局面に名指しで踏み込む
+        delivery_reason = f"観測から「{challenge[:28]}」という局面が見えたため、いまこの一冊を。"
+        problem_to_solve = f"{challenge}（{persona.voice_style}の視点で解く）"
+        preface_sample = (
+            f"著者 {persona.name} より。{persona.format} で、"
+            f"あなたの『{challenge[:18]}』に名指しで寄り添う「はじめに」。"
+        )
+
     return BookDraft(
         title=f"{plan.tentative_title}（{persona.name}）",
         subtitle=plan.core_message or plan.diff_from_market,
-        # ③ deliveryReason＝入荷理由（観測の局面に触れる）
-        delivery_reason=f"観測から「{challenge[:28]}」という局面が見えたため、いまこの一冊を。",
-        # ④ problemToSolve＝読者の課題を著者の言葉で
-        problem_to_solve=f"{challenge}（{persona.voice_style}の視点で解く）",
+        delivery_reason=delivery_reason,
+        problem_to_solve=problem_to_solve,
         # ⑤ coreMessage（voiceStyle を前面に＝②観点）
         core_message=f"{plan.core_message}—{persona.voice_style}で迷いを判断に変える。",
         # ⑥ agenda（章＋一行サマリー）
         agenda=[AgendaEntry(chapter=f"第{i}章", summary=s) for i, s in enumerate(outline, 1)],
-        # ⑦ prefaceSample（name/format を前面に・読者へ名指し）
-        preface_sample=(
-            f"著者 {persona.name} より。{persona.format} で、"
-            f"あなたの『{challenge[:18]}』に名指しで寄り添う「はじめに」。"
-        ),
+        preface_sample=preface_sample,
     )
 
 
