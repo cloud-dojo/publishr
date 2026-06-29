@@ -23,6 +23,13 @@ export const firebaseConfig = {
 export const isFirebaseConfigured: boolean =
   firebaseConfig.apiKey !== "" && firebaseConfig.projectId !== "";
 
+// 表紙の簡易フォールバック（C5.1 表紙保険）。
+// imagen 表紙(coverUrl)が無いとき、表紙を「シックな暗色グラデ＋タイトル左上」のミニマル装丁にする。
+// 既定 ON（imagen 連携が間に合わない前提の標準表紙）。coverUrl があればそちらを優先する。
+// 従来の CSS フラット装丁に戻したい場合のみ NEXT_PUBLIC_SIMPLE_COVER=0 で無効化する。
+export const simpleCoverFallback: boolean =
+  process.env.NEXT_PUBLIC_SIMPLE_COVER !== "0";
+
 // Google Picker（Drive フォルダ選択 UI・C4.1）の公開設定。
 // すべて公開値（クライアント側・GCP コンソールで origin/referrer を制限する）。
 // apphosting.yaml / .env.local の NEXT_PUBLIC_GOOGLE_* で投入する:

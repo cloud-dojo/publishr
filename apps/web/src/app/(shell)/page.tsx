@@ -53,11 +53,6 @@ export default function HomePage() {
 
   const interests = provider.booksByShelf("arrivals").filter(isFreshArrival).sort(byNewest);
   const encounters = provider.booksByShelf("odd").filter(isFreshArrival).sort(byNewest);
-  // 執筆中（自動執筆の短時間遷移）：reserved/writing をさりげなく表示。
-  const press = provider
-    .listBooks()
-    .filter((b) => b.status === "writing" || b.status === "reserved")
-    .sort(byNewest);
   // hero ラベルは「実際に並んでいる最新入荷」から導出（スケジュール仮定に依存しない）。
   // interests/encounters は新しい順なので先頭が各々の最新。両者の新しい方を採用。
   const newestArrival =
@@ -260,29 +255,6 @@ export default function HomePage() {
           </>
         )}
       </section>
-
-      {/* いま執筆中 */}
-      {press.length > 0 && (
-        <section className="page section">
-          <div className="section-head">
-            <div>
-              <div className="eyebrow">In the press</div>
-              <div className="section-title">
-                いま、<span className="accent">執筆中</span>の本
-              </div>
-              <div className="section-sub">
-                編集部が本文を書き継いでいる本です。仕上がり次第、棚に並びます。
-              </div>
-            </div>
-          </div>
-          <div className="shelf-grid">
-            {press.map((b) => (
-              <BookCard key={b.id} book={b} authorName={authorName(b)} layout="row" />
-            ))}
-          </div>
-        </section>
-      )}
-
     </>
   );
 }

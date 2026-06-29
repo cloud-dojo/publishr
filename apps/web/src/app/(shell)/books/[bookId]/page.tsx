@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
-import { DebateCandidates } from "@/components/writing/DebateCandidates";
 import { Topbar } from "@/components/shell/Topbar";
 import { bookChapters } from "@/data/bookText";
 import { isArchivedBook } from "@/lib/arrival";
@@ -34,16 +33,8 @@ export default function BookDetailPage() {
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
 
-  // 企画会議の証跡（却下→再提出ループ）。この本が審議候補そのものの場合のみ表示する。
-  // ※fixtureはplanIdを全蔵書で使い回しており planId では絞れないため、本のタイトル/サブタイトルが
-  //   審議候補名（＝採用された企画タイトル）に一致するかで判定する。
-  const debate = provider.getDebate();
-  const candidates = provider.getCandidates();
-  const approvedPlanIds = provider.getApprovedPlanIds();
-  const debated =
-    debate.length > 0 &&
-    candidates.some((c) => c.candidate === book.title || c.candidate === book.subtitle);
-
+  // 企画会議の証跡（却下→再提出ループ）はユーザー向けの本詳細には出さない（読者は「なぜ自分に・核心
+  // メッセージ・目次・序文」だけで判断できればよい）。編集の裏側＝証跡は別導線で見せる方針。
   const archived = isArchivedBook(book);
 
   // 企画(plan)は本番Firestoreには永続化されず Book に畳み込まれる（agents/persist_mapping）。
@@ -78,27 +69,28 @@ export default function BookDetailPage() {
             titleSize={25}
           />
           <div className="detail-actions">
-            <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
-              いま読む →
-            </Link>
+            {/* 書店にある本＝まず「書庫に入庫」。入庫した本（書庫）は期限で消えず残り続け、
+                そこで初めて「いま読む」を出す。入庫後は同画面で archived が反転しCTAが切り替わる。 */}
+            {archived ? (
+              <Link className="btn btn--gold btn--block" href={`/read/${book.id}`}>
+                いま読む →
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="btn btn--gold btn--block"
+                onClick={() => void saveToLibrary(book.id)}
+              >
+                書庫に入庫する
+              </button>
+            )}
             {persona && (
               <Link className="btn btn--ghost btn--block" href={`/author/${persona.id}`}>
                 ✦ {persona.name} を知る
               </Link>
             )}
-            {book.status === "published" && (
-              <button
-                type="button"
-                className="btn btn--ghost btn--block"
-                disabled={archived}
-                onClick={() => void saveToLibrary(book.id)}
-              >
-                {archived ? "書庫に保存済み" : "書庫に残す"}
-              </button>
-            )}</div>
+          </div>
           <div className="detail-meta-line">
-            状態：<b>{statusLabel(book.status)}</b>
-            <br />
             推定分量：<b>全{chapterCount}章・約{minuteCount}分</b>
             <br />
             装丁：<b>Imagen 生成</b>／企画：<b>編集会議 AI</b>
@@ -137,31 +129,6 @@ export default function BookDetailPage() {
             </div>
           )}
 
-          {debated && (
-            <div className="section" style={{ marginTop: 40 }}>
-              <div className="section-head">
-                <div>
-                  <div className="eyebrow">Editorial debate</div>
-                  <div className="section-title">
-                    企画会議の<span className="accent">証跡</span>
-                  </div>
-                </div>
-              </div>
-              <p className="debate-lead">
-                3つの企画案がスコアゲートで審議されました。第1ラウンドで全案を差し戻し、修正のうえ第2ラウンドで採用が決定しています。
-              </p>
-              <div className="debate-round">第1ラウンド ― 全案を差し戻し</div>
-              <DebateCandidates entries={debate.filter((e) => e.round === 1)} />
-              <div className="debate-resubmit">↓ 修正して再提出</div>
-              <div className="debate-round">第2ラウンド ― 採用を決定</div>
-              <DebateCandidates
-                entries={debate.filter((e) => e.round === 2)}
-                candidates={candidates}
-                approvedPlanIds={approvedPlanIds}
-              />
-            </div>
-          )}
-
           <div className="section" style={{ marginTop: 40 }}>
             <div className="section-head">
               <div>
@@ -193,9 +160,19 @@ export default function BookDetailPage() {
                 ))}
               </div>
               <div className="row gap12" style={{ marginTop: 24 }}>
-                <Link className="btn btn--gold" href={`/read/${book.id}`}>
-                  全文を読む →
-                </Link>
+                {archived ? (
+                  <Link className="btn btn--gold" href={`/read/${book.id}`}>
+                    全文を読む →
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn--gold"
+                    onClick={() => void saveToLibrary(book.id)}
+                  >
+                    書庫に入庫して読む →
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -203,18 +180,4 @@ export default function BookDetailPage() {
       </div>
     </>
   );
-}
-
-function statusLabel(status: string): string {
-  switch (status) {
-    // 予約撤去・自動執筆後は draft/reserved/writing は数十秒〜数分の一時状態＝「準備中」に集約。
-    case "draft":
-    case "reserved":
-    case "writing":
-      return "準備中（まもなく全文が読めます）";
-    case "published":
-      return "読めます";
-    default:
-      return status;
-  }
 }

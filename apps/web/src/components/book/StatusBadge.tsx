@@ -11,10 +11,8 @@ const READ_DONE_PERCENT = 90; // これ以上読んだら「読了」
 // ※ 旧実装は published を shelf で「入荷/読了」分けしていたが、shelf は published 化で
 //   遷移しないため「入荷本が永遠に入荷／未読の蔵書が読了」になり矛盾していた。
 function spec(book: Book): BadgeSpec | null {
-  // 準備中＝自動執筆中の一時状態（draft/reserved/writing）。手動「予約」は無い。
-  if (book.status !== "published") {
-    return { cls: "badge--writing", label: "準備中", pulse: book.status === "writing" };
-  }
+  // 「準備中」は廃止（全冊・配本時に本文まで生成済み＝出す前提）。draft/writing 等の一時状態でも
+  // ユーザー向けには出さない＝入荷/読了/新しい出会い のみをバッジにする。
   // 読了＝実際に読み終えた（shelf に依存しない）。
   if ((book.feedback?.readPercent ?? 0) >= READ_DONE_PERCENT) {
     return { cls: "badge--done", label: "読了", pulse: false };
@@ -25,7 +23,7 @@ function spec(book: Book): BadgeSpec | null {
   if (isWithinDays(book.createdAt, ARRIVAL_WINDOW_DAYS)) {
     return book.shelf === "odd"
       ? { cls: "badge--odd", label: "新しい出会い", pulse: false }
-      : { cls: "badge--new", label: "入荷", pulse: false };
+      : { cls: "badge--new", label: "あなたの関心", pulse: false };
   }
   // それ以外＝蔵書（バッジ無し＝書庫のノイズを減らす）。
   return null;

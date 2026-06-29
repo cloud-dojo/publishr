@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { simpleCoverFallback } from "@/data/config";
+
 export function BookCover({
   variant,
   coverUrl,
@@ -20,8 +22,9 @@ export function BookCover({
   const titleStyle: CSSProperties | undefined = titleSize
     ? { fontSize: `${titleSize}px` }
     : undefined;
-  // coverUrl（実Imagen等の文字なしアイコン装画）があれば「上＝固定タイトル帯／下＝アイコン装画」の2段に組む
-  // （日本語タイトルは Imagen で焼けないため UI 側で上段に重ねる＝ベストセラー装丁＋くっきり日本語）。無ければ CSS 装丁。
+  // coverUrl（実Imagen等の文字なしアイコン装画）があれば最優先で「上＝固定タイトル帯／下＝アイコン装画」
+  // の2段に組む（日本語タイトルは Imagen で焼けないため UI 側で上段に重ねる）。imagen が無いときに
+  // 簡易表紙/CSS装丁へフォールバックする。
   if (coverUrl) {
     return (
       <div className="cover cover--image">
@@ -34,6 +37,18 @@ export function BookCover({
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={coverUrl} alt={title} className="cover-img" />
+        {badge ? <div className="cover-badge">{badge}</div> : null}
+      </div>
+    );
+  }
+  // 簡易表紙（既定・imagen 未連携時）。画像/サブ/著者/装飾を捨て、variant 由来のシックな暗色グラデ＋
+  // タイトル左上だけのミニマル装丁にする（色は variant でばらける）。NEXT_PUBLIC_SIMPLE_COVER=0 で無効化。
+  if (simpleCoverFallback) {
+    return (
+      <div className={`cover cover--${variant || "b1"} cover-min`}>
+        <div className="c-title" style={titleStyle}>
+          {title}
+        </div>
         {badge ? <div className="cover-badge">{badge}</div> : null}
       </div>
     );

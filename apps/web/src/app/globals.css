@@ -301,14 +301,28 @@ a { color: inherit; text-decoration: none; }
 .cover--sand .c-title, .cover--sand .c-sub, .cover--sand .c-author { color: #3a2606; }
 
 /* 簡易フォールバック装丁（NEXT_PUBLIC_SIMPLE_COVER=1・C5.1 表紙保険）。
-   variant 由来の単色背景はそのまま使い、装飾（上帯/モチーフ）とサブ/著者を全て消して
-   「色一色＋タイトルだけ」にする。タイトルは中央寄せで大きく。
+   サイドバー「最近読んだ本」の質感に合わせ、シックな黒の発光グラデ＋タイトル左上（中央寄せにしない）。
+   variant 由来の派手な単色/上帯/モチーフは打ち消し、サブ/著者を消して「黒地＋タイトルだけ」にする。
    ※クラス名は単ダッシュ（cover-min）。二重ダッシュ .x--y は Lightning CSS に黙ってdropされるため。 */
-.cover-min { justify-content: center; align-items: center; text-align: center; padding: 22px 18px; }
+.cover-min {
+  justify-content: flex-start; align-items: flex-start; text-align: left; padding: 20px 18px;
+  background: linear-gradient(160deg, #232a37 0%, #0c0e15 80%) !important;
+}
 .cover-min::before, .cover-min::after { content: none !important; }
 .cover-min .c-sub, .cover-min .c-author, .cover-min .c-rule, .cover-min .pub-emboss { display: none !important; }
-.cover-min .c-title { margin: 0; }
-.book--row .cover-min { padding: 12px 11px; }
+.cover-min .c-title { margin: 0; color: #f3efe6; text-shadow: 0 1px 10px rgba(0,0,0,.45); }
+.book--row .cover-min { padding: 13px 12px; }
+/* シックな暗色を variant で割り当て、色をばらけさせる（黒一色にしない・最近読んだ本の質感）。 */
+.cover-min.cover--b1 { background: linear-gradient(160deg, #1b2440, #0c1226) !important; }
+.cover-min.cover--b2 { background: linear-gradient(160deg, #28402f, #11231a) !important; }
+.cover-min.cover--b3 { background: linear-gradient(160deg, #2a2d34, #0c0d10) !important; }
+.cover-min.cover--b4 { background: linear-gradient(160deg, #38404e, #181c25) !important; }
+.cover-min.cover--b5 { background: linear-gradient(160deg, #3a2c16, #16100a) !important; }
+.cover-min.cover--b6 { background: linear-gradient(160deg, #1d3a39, #0c1a1a) !important; }
+.cover-min.cover--b7 { background: linear-gradient(160deg, #3a1822, #180a10) !important; }
+.cover-min.cover--b8 { background: linear-gradient(160deg, #2b2620, #0e0c08) !important; }
+.cover-min.cover--b9 { background: linear-gradient(160deg, #3d2415, #1a0f08) !important; }
+.cover-min.cover--b10 { background: linear-gradient(160deg, #272447, #0e0d1a) !important; }
 
 .book-meta { margin-top: 14px; }
 .book-meta .bm-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; color: var(--text-100); line-height: 1.35; min-height: 2.7em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
