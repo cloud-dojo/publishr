@@ -26,7 +26,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="モードB 手動1冊 本文編集ループ")
     parser.add_argument("--book-id", default="b_makasekata", help="対象書籍ID（fixtures/books.json）")
     parser.add_argument("--llm", default="mock", choices=["mock", "vertex"])
-    parser.add_argument("--rounds", type=int, default=1, help="最大改稿ラウンド数（手動スライスは1）")
+    parser.add_argument("--rounds", type=int, default=2, help="最大改稿ラウンド数（既定2・本番3まで）")
     parser.add_argument("--json", action="store_true", help="結果を JSON で出力")
     args = parser.parse_args()
 

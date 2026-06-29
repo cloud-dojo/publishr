@@ -25,7 +25,7 @@
 - approvedPlan.recommendedAuthorTypes に合致する経歴・専門性を持たせる。
 - すべて架空（実在人物を模倣しない・知財）。著者名は参考出力例の著者（神崎玄一郎・里見ほたる 等）と**姓・名のいずれも重複・流用しない**（姓だけのコピーも禁止）。完全に新規の架空名にする。
 - themeKind=serendipity のときは教養越境型（哲学/歴史/宗教等）を厚めに。
-- favoriteAuthors があれば各枠を約15%の確率で採用し fromFavorite=true（空なら採用なし）。
+- favoriteAuthors が渡されたら1枠を採用し fromFavorite=true にする（空なら採用なし）。起用するか否かの抽選はシステム側で決定済み（ここで確率判断はしない）。
 - 員数4人を厳守し、reason に「2軸でどう散らしたか」を書く。
 ```
 
