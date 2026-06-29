@@ -2,7 +2,7 @@
 
 > 📑 関連: [正本マップ](../README.md)／[kickoff-checklist.md](kickoff-checklist.md)（着手ゲート）／[roles-and-ops.md](roles-and-ops.md)（週次・役割）／[open-issues.md](open-issues.md)（未決論点）。
 > **本書の位置づけ（単一正本）**: **作業分解（A/B/C）＋実装順序（WBS IDの直列）＋ゲート＋検証**を1枚に統合した**エージェント実施の正本**。Claude Code / Cursor エージェントは**本書を読み込んで実施**する。MVPローカルスコープの骨格は [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)（ローカル一まわり）を補助参照。
-> **ゴール**: **7/10提出・動くデモ動画＋再現可能リポジトリ・機能凍結6/30**。実装順序もタスクIDも**すべて WBS（A/B/C0/C1…）で一本化**する（旧 Phase P0a〜P7 表記は廃止）。
+> **ゴール**: **7/10提出・動くデモ動画＋再現可能リポジトリ・機能凍結7/2**（2026-06-29 MTGで6/30→7/2へ延長）。実装順序もタスクIDも**すべて WBS（A/B/C0/C1…）で一本化**する（旧 Phase P0a〜P7 表記は廃止）。
 > **構造の方針**: **カテゴリを主役（レベル1）**にし、**時間（週）は各表の1列（属性）に格下げ**。着手順は冒頭「§エージェント実施ガイド」の**WBS直列**が正。時間軸での見え方は末尾「時間軸ビュー（参考）」に温存。
 > **前提**: 実働約5週間（W1〜W5）／体制＝一瀬1.0＋鉄田0.5〜1.0／設計・プロンプト・Eval素材・GCP環境は✅済（チェックリスト §0）。
 > **クリティカルパス**: B(基盤) → ~~C1.0(ADK疎通)~~（✅） → **C1.1-C1.3＋C4のE2E縦通し（W2★最重要）** → C2/C5 → C6（録画）。
@@ -93,7 +93,16 @@
 
 ---
 
-## 🧭 現在地サマリ（最新: 2026-06-24）
+## 🧭 現在地サマリ（最新: 2026-06-29）
+
+> **いまどこ（2026-06-29・定例MTG 決定反映）**: 製品は本番フル稼働＋品質チューニング/デモ準備フェーズ。本日のMTGで以下を決定。
+> - **機能凍結を 6/30 → 7/2 に延長**（表紙・obs4 の品質詰めの猶予を確保）。提出は **7/10 据え置き**。
+> - **デモ方針＝無認証の公開デモに確定**：審査員含め誰でも、**佐倉美咲アカウントのページを既定表示**で閲覧できる状態にする（**パスワード設定なし**＝I-32 の ID/Password 認証は方針転換で不要）。**「今すぐ入荷」ボタンは残すが、押下で裏に用意済みの本が書庫/書店に"入荷"される見せ方に特化**＝実LLMを呼ぶライブ生成ではない（**課金ゼロ・安全**・I-31）。見せ場は「本が入荷される様子」と「実際の読書ページ」。デモ向け調整は**鉄田**が継続。
+> - **表紙（C5.1）＝6/30 まで実Imagen表紙を鉄田が継続挑戦。間に合わなければ簡易装丁（黒地＋タイトル・`0f48ae5` で既に既定）で確定**。
+> - **企画会議の証跡（却下→再提出）はUIに見せ場を置かない＝Langfuse で追える状態で十分**（合意）。
+> - **日曜セレンディピティ運用＝最終確認OK・完了**。
+> - **公開クリーンリポ（I-34）＝一瀬に委譲**（鉄田は関与しない）。
+> - 継続担当：**プロンプトのテイストチューニング＋UI整理＝鉄田**。
 
 > **いまどこ（2026-06-21）**: **製品は機能完成域＝本番フル稼働＋観測(Langfuse)＋プロンプト評価(CI実judge)まで整備済**。機能凍結6/30・提出7/10。残りの主役は **M5/M6（デモ/提出・鉄田主体）**。6/17サマリ以降（PR#56〜#70）の追加:
 > - **Langfuse 本番フル稼働**（PR#68/#69）: `trace_pipeline`＝①企画リーダー差し戻しループ＋grounding＋採否＋**`plan_score`/`plan_passed`(70ゲート可視化)**。さらに **ADK の各LLM呼び出しを OpenTelemetry で span 化**（`init_tracing` が global TracerProvider を張る・gemini-2.5-pro/flash・トークン計装）。手動runで全Stage着弾を実証。
@@ -459,7 +468,7 @@ Publishr MVP（カテゴリWBS）
 | ID | タスク | タスク詳細（何をやる？） | 担当 | 予定週 | 依存 | DoD | 状態 |
 |---|---|---|---|---|---|---|---|
 | C5.1 | W1 各プロンプト実テスト→調整 | 実際にAIへ指示文を流し、想定どおり出るか・悪い例を弾くかを確認して調整 | 鉄田・一瀬 | W1–W2（6/8–21） | C1.0.1 | Langfuseで出力確認 (旧WP5.3) | 🟡MiniLoopで research_subs/plan_owner/plan_leader の実Vertex確認済（C1.0.1）／全11本の網羅は未。**2026-06-23：品質バッチ `scripts/run_aistudio_batch.py`（Vertex/AI Studio・STEP0→4一気通貫・出力＋引用URL照合をファイル化）で u_mita 実Pro検証→STEP1-4＋判定役を実測し6件修正＝subThemeInsight拒否ガード／leader入出力整合＋調査欠落足切り／subMarket書誌規律／Cドメイン錨／編集calibration／leader+eval_judge満点ドリフト是正。`make eval`緑・pytest緑。詳細 open-issues I-36/I-37/I-1/I-18/I-26** |
-| C5.2 | 良い/悪い例を eval fixture に兼用反映 | 良い例/悪い例を、AIの手本（few-shot）とテストの両方に使い回す | 鉄田 | W2（6/15–21） | C5.1,A4.1 | few-shot＋Eval両用 (旧WP5.4) | 🟡**兼用構造done（決定的・2026-06-07）**＝採点系4本(leader/editor×2/judge)の✅良い例/❌悪い例を `loader.py` が単一ソースから抽出→`eval_harness.check_fewshot_eval_alignment()` が「良い例=合格・悪い例=不合格・judge=eval_set帯と整合」を実LLM無しで回帰（test 2件追加グリーン）。残＝**実judge(LLM)実行での検証はC5.4/C1.0疎通待ち** |
+| C5.2 | 良い/悪い例を eval fixture に兼用反映 | 良い例/悪い例を、AIの手本（few-shot）とテストの両方に使い回す | 鉄田 | W2（6/15–21） | C5.1,A4.1 | few-shot＋Eval両用 (旧WP5.4) | 🟡**兼用構造done（決定的・2026-06-07）**＝採点系4本(leader/editor×2/judge)の✅良い例/❌悪い例を `loader.py` が単一ソースから抽出→`eval_harness.check_fewshot_eval_alignment()` が「良い例=合格・悪い例=不合格・judge=eval_set帯と整合」を実LLM無しで回帰（test 2件追加グリーン）。残＝**実judge(LLM)実行での検証はC5.4/C1.0疎通待ち**。**【2026-06-29 C5.2 #1クローズ】** `step1_reader_analyst.md`の中期展望転記ルール（`activeWorkThemes`末尾「中期展望: ◯◯」）が実Gemini Pro（u_mita）で発火確認＝STEP1出力:`中期展望: 技術的負債の解消と競合優位性の再構築（AI機能開発）`。STEP1→STEP2 serendipity縦串で燃料到達確認（theme#3「プロダクトは永遠に完成しない」が技術的負債/AI機能に直結）。obs4チューニング目的は達成。副次所見（serendipity preview層の表層課題リーク）は別タスク切り出し済み。 |
 | C5.3 | **Eval judgeゲート**をCIに組込 | AI品質が基準(70点)未満なら自動でデプロイを止める品質ゲートをCIに組み込む | 一瀬 | W4（6/29–7/5） | C5.x,**I-21** | failでデプロイ停止（MVP §9）。`eval/eval_set.yaml` を LLM-judge で採点・`cases`=ゲート(8件中7)/`borderlineCases`=診断で読む（I-21）。**mock用 `scripts/eval_harness.py` は v2 整合済み（C0.1✅）**。CI本番ゲート＝Vertex AI Gen AI Evaluation Service（GEAP）を B3.2 と併設 (旧WP6.2) | ✅**実装済（2026-06-10・PR#15）**＝`scripts/eval_gate.py`＝cases(8)をjudge採点→expectedBand内なら正答→ceil(87.5%)=**7/8で通過・未満は exit 1**（基準割れでデプロイ停止）。borderline(2)は診断専用でゲート外(I-21)。mock judge(4観点×0-25・決定的・$0・教養越境は中レンジclamp)で**8/8正答を実測**。`make eval-gate`＋**`.github/workflows/ci.yml`**(B3.1: setup→verify→eval→eval-gate・CI実機green)。test_eval_gate 7件。**残＝vertex判定(GEAP本番ゲート・B3.2併設・課金)はoffline未配線(NotImplemented)** |
 | C5.4 | judge再現性テスト（複数回採点・標準偏差確認） | 採点AIが毎回ブレない（同じ点を出す）か複数回試して信頼度を確認 | 一瀬 | W2–W3（6/15–28） | C5.1,**I-21** | ゲート判定の信頼度確認（v2 Evalハーネス=I-21 が前提。境界ケース `eval_b1/b2` で閾値70近傍の判別を測る） (旧WP7.2) | 🟡**一瀬ハーネス実装済・実judge運用残（2026-06-12）**＝`scripts/eval_reproducibility.py`（`make eval-repro`）＝cases8＋borderline2を N回採点し mean/σ/CV と**判定の自己一致率**（≠正答性＝C5.3の担当）を出す。`--max-cv`/`--min-stability` で逸脱は exit 1。**再現性=採点のブレを測る指標**として整理（mockは決定的＝σ=0・一致100%＝床、実ブレは `--backend vertex`＝gated/課金）。test 4件。**所見**: mock は eval_b1 を100点（[68,80]外）と再現的に採点＝境界帯の較正は実judge前提（mockは判定の向き=70との上下のみ正しい）。**【2026-06-12 実judge配線済（gated）】** `eval_gate.judge_plan(backend="vertex")`＝実 Gemini Pro（`eval_judge.md`ルーブリック・readerProfile＋plan→4観点JSON→mock互換dict・`PUBLISHR_JUDGE_TEMPERATURE`で振れる）。`@pytest.mark.vertex`の最小liveテスト（`test_eval_gate_vertex.py`・既定skip）。**残＝`PUBLISHR_RUN_VERTEX=1 PUBLISHR_EVAL_BACKEND=vertex make eval-repro` で実σ/CV測定（課金・ADC要）** |
 | C5.5 | 閾値・ルーブリックの運用調整 | 合格ライン(70点等)や採点基準を、実データを見ながら微調整 | 一瀬 | W4（6/29–7/5） | C5.4 | 実データで微調整（I-1/I-18） (旧WP7.3) | 🟡**一瀬の調整土台実装済・実データ微調整残（2026-06-12）**＝`scripts/eval_threshold_sweep.py`（`make eval-sweep`）＝本命合格ライン `honmeiMin`（`eval_set.yaml` `meta.threshold`＝単一調整箇所）を±10で振り、高関連の通過数と境界 `eval_b1`(ギリ通す)/`eval_b2`(ギリ落とす)の合否を一望。test 4件。**所見（mock決定的）**: 70は **60–75 まで本命4/4通過＋境界ペア正しく分離（b1通過/b2落下）の余裕帯**、80で本命1件取りこぼし。**【2026-06-12 実judge配線済（gated・C5.4と同じ）】** sweep/repro は `--backend vertex` で実Gemini採点に切替可。**残＝実judgeスコアでの最終閾値微調整・ルーブリック文言調整（`PUBLISHR_RUN_VERTEX=1`・課金・実データ）** |
@@ -508,7 +517,7 @@ Publishr MVP（カテゴリWBS）
 | M1 | **C1.0.1** | W1末（6/14頃） | 実Vertex MiniLoop（**C1.0.1ゲート**・最大リスク解消）（**2026-06-06 達成・W0前倒し**） |
 | **M2** | **C1.1–C1.3＋C4** | **W2末（6/21頃）** | ✅**2026-06-09 達成（前倒し）**: 観測→企画→棚に並ぶ＝山場/撤退判定点クリア（PR#4・Cloud Run/Firestore縦通し・トリガー実モードA） |
 | M3 | **C1.7/C2** | W3末（6/28頃） | ✅**完了（2026-06-10・前倒し）**: C2.1-2.3＝予約→Pub/Sub→本文編集ループ(最高3R)→published（PR#6-9）＋**C1.7 Scheduler本番**（`publishr-honmei`・水/土6:00 JST・OIDC→Cloud Run trigger→佐倉Firestore自律入荷・実機検証済）。**残＝serendipity(日)差別化の小follow-upのみ** |
-| 🔒 機能凍結 | — | 6/30 | 以後は品質向上・デモ磨きのみ |
+| 🔒 機能凍結 | — | 7/2 | 6/30→7/2へ延長（2026-06-29 MTG）。以後は品質向上・デモ磨きのみ |
 | M4 | **C5/B3** | W4末（7/5頃） | ✅**ほぼ完了（2026-06-11・前倒し）**: C5.9 resilience＋C5.6 Langfuse2ループ＋C5.3 Evalゲート(7/8停止)＋B4.1 IaC＋**B3.2 CD自動デプロイ(mainマージ→Cloud Run・WIF・実機✅)**＋B3.1 CI（PR#13・#15・#17）。**残＝C5.3 GEAP本番judge(課金)・C5.4/5.5 judge再現性/閾値調整(鉄田)** |
 | M5 | **C6** | W5（7/9頃） | 録画＋README |
 | 🚩 M6 | **C6.6** | 7/10（厳守） | public化・最終提出 |
