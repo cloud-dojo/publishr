@@ -29,8 +29,26 @@ function spec(book: Book): BadgeSpec | null {
   return null;
 }
 
-export function StatusBadge({ book, floating = true }: { book: Book; floating?: boolean }) {
-  const s = spec(book);
+// 書庫(library)用：入荷/種別ではなく「読書の進捗」を 未読 / 読書中 / 読了 の3状態で出す。
+// readPercent: 0=未読 / 1〜89=読書中 / 90以上=読了（READ_DONE_PERCENT）。
+function progressSpec(book: Book): BadgeSpec {
+  const pct = book.feedback?.readPercent ?? 0;
+  if (pct >= READ_DONE_PERCENT) return { cls: "badge--done", label: "読了", pulse: false };
+  if (pct > 0) return { cls: "badge--reading", label: "読書中", pulse: false };
+  return { cls: "badge--unread", label: "未読", pulse: false };
+}
+
+export function StatusBadge({
+  book,
+  floating = true,
+  mode = "arrival",
+}: {
+  book: Book;
+  floating?: boolean;
+  // arrival=書店トップ（あなたの関心/新しい出会い/読了）, progress=書庫（未読/読書中/読了）
+  mode?: "arrival" | "progress";
+}) {
+  const s = mode === "progress" ? progressSpec(book) : spec(book);
   if (!s) return null;
   return (
     <span className={`${floating ? "book-badge " : ""}badge ${s.cls}`}>

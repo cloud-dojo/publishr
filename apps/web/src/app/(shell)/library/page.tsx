@@ -25,7 +25,14 @@ export default function LibraryPage() {
     .filter((b) => b.status === "published" && isArchivedBook(b) && !b.feedback?.dropped)
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   const handleRemove = async (book: Book) => {
-    if (!window.confirm(`『${book.title}』を書庫から外しますか？`)) return;
+    if (
+      !window.confirm(
+        `『${book.title}』を書庫から外しますか？\n\n` +
+          `外すと、この本はもう読めなくなります。引いたハイライト・付けたブックマークもすべて消え、` +
+          `元に戻すことはできません。`
+      )
+    )
+      return;
     setRemovingId(book.id);
     try {
       await removeFromLibrary(book.id);
@@ -55,7 +62,7 @@ export default function LibraryPage() {
         <div className="book-grid">
                     {library.map((b) => (
             <div key={b.id} className="library-book">
-              <BookCard book={b} authorName={authorName(b)} />
+              <BookCard book={b} authorName={authorName(b)} showArrived={false} badgeMode="progress" />
               <button
                 type="button"
                 className="library-remove"

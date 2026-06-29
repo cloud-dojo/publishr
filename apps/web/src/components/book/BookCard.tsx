@@ -30,12 +30,17 @@ export function BookCard({
   reason,
   showWhy = false,
   layout = "grid",
+  showArrived = true,
+  badgeMode = "arrival",
 }: {
   book: Book;
   authorName: string;
   reason?: string;
   showWhy?: boolean;
   layout?: "grid" | "row";
+  // 書庫では入荷日を出さない（showArrived=false）。バッジは読書進捗(progress)に切替。
+  showArrived?: boolean;
+  badgeMode?: "arrival" | "progress";
 }) {
   // 横長レイアウト（書店トップ）：カバー左＋本文右にタグ・タイトル・著者・なぜカード
   if (layout === "row") {
@@ -77,14 +82,14 @@ export function BookCard({
         title={book.title}
         subtitle={book.subtitle}
         author={authorName}
-        badge={<StatusBadge book={book} floating={false} />}
+        badge={<StatusBadge book={book} floating={false} mode={badgeMode} />}
       />
       <div className="book-meta">
         <div className="bm-title">{book.title}</div>
         <div className="bm-author">
           {authorName} 著{authorSuffix(book)}
         </div>
-        {book.createdAt && (
+        {showArrived && book.createdAt && (
           <div className="bm-arrived" title={`入荷: ${book.createdAt.slice(0, 10)}`}>
             🕓 {arrivedLabel(book.createdAt)}入荷
           </div>

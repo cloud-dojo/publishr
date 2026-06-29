@@ -39,7 +39,9 @@ export function Sidebar() {
   const provider = useProvider();
   const library = provider
     .booksByShelf("library")
-    .filter((b) => b.status === "published")
+    // 書庫から外した本(dropped)は「最近読んだ本」からも消す（書庫ページと挙動を揃える＝
+    // 外したら導線が残らない＝もう読めない）。
+    .filter((b) => b.status === "published" && !b.feedback?.dropped)
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
     .slice(0, 5);
 

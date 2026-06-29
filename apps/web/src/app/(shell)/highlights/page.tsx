@@ -34,7 +34,12 @@ export default function HighlightsPage() {
   // 読書ページで付けた注釈（book.annotations）。シードmockは mock デモ時のみ混ぜる。
   // firestore/bff（本番・実ユーザー）では、本がゼロなら何も出さない（実データのみ）。
   const items = mergeHighlights(annotationsToHighlights(provider.listBooks()), dataSource === "mock");
-  const visibleItems = items.filter((h) => h.kind !== "note");
+  // 書庫から外した本（feedback.dropped）のハイライト/ブックマークは消す＝書庫から外す＝
+  // その本に紐づく痕跡もすべて消える、という正しい挙動（library の確認文言と一致させる）。
+  const droppedIds = new Set(
+    provider.listBooks().filter((b) => b.feedback?.dropped).map((b) => b.id)
+  );
+  const visibleItems = items.filter((h) => h.kind !== "note" && !droppedIds.has(h.bookId));
   const count = (k: Tab) =>
     k === "all" ? visibleItems.length : visibleItems.filter((h) => h.kind === k).length;
   const groups = highlightsGroupedByBook(visibleItems, tab);
