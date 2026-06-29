@@ -10,6 +10,7 @@ import {
   connectAuthEmulator,
   getAuth,
   onAuthStateChanged,
+  signInWithCustomToken,
   signInWithPopup,
   signOut as fbSignOut,
   type Auth,
@@ -65,6 +66,14 @@ export async function signInWithGoogle(): Promise<FirebaseUser | null> {
   if (!auth) return null;
   const provider = new GoogleAuthProvider();
   const cred = await signInWithPopup(auth, provider);
+  return cred.user;
+}
+
+/** デモ用カスタムトークンでサインイン（I-32）。BFF から受け取ったトークンを渡す。 */
+export async function signInWithDemoToken(token: string): Promise<FirebaseUser | null> {
+  const auth = getFirebaseAuth();
+  if (!auth) return null;
+  const cred = await signInWithCustomToken(auth, token);
   return cred.user;
 }
 

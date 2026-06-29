@@ -9,6 +9,7 @@ Bearer トークンは MVP ではオプション（存在すれば uid を検証
 from __future__ import annotations
 
 import logging
+import os
 import time
 import uuid
 from datetime import datetime, timezone
@@ -16,6 +17,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from publishr_schema import Book
 
 from ..config import settings
@@ -219,3 +221,30 @@ def api_trigger_planning(
         trigger_guard.release(key, now=time.monotonic())
     logger.info("trigger ok key=%s queued=%s llm=%s run_id=%s", key, queued, settings.publishr_llm, run_id)
     return {"ok": True, "queued": queued}
+
+
+class DemoTokenInput(BaseModel):
+    password: str
+
+
+@router.post("/demo-token")
+def api_demo_token(payload: DemoTokenInput) -> dict:
+    """デモ用 Firebase Custom Token 発行（I-32）。
+
+    PUBLISHR_DEMO_PASSWORD が設定済みでかつ一致した場合のみ、
+    settings.demo_uid で署名されたカスタムトークンを返す。
+    フロントは signInWithCustomToken でそのまま佐倉uidとしてログインできる。
+    """
+    expected = os.getenv("PUBLISHR_DEMO_PASSWORD", "")
+    if not expected:
+        raise HTTPException(status_code=503, detail="デモ認証は無効です")
+    if payload.password != expected:
+        raise HTTPException(status_code=401, detail="パスワードが違います")
+    uid = settings.demo_uid
+    if not uid:
+        raise HTTPException(status_code=503, detail="demo_uid 未設定")
+    _ensure_firebase_app()
+    import firebase_admin.auth as fb_auth  # noqa: PLC0415
+
+    token = fb_auth.create_custom_token(uid).decode()
+    return {"token": token}

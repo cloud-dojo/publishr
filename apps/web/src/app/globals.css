@@ -742,6 +742,17 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
 .auth-lead { font-size: 13px; color: var(--text-300); line-height: 1.9; margin-bottom: 32px; }
 .auth-error { color: #e0899a; font-size: 13px; }
 .auth-note { color: var(--text-500); font-size: 11.5px; line-height: 1.6; margin-top: 4px; }
+.auth-or { text-align: center; color: var(--text-500); font-size: 12px; margin: 20px 0 16px; position: relative; }
+.auth-or::before, .auth-or::after { content: ""; position: absolute; top: 50%; width: 38%; height: 1px; background: var(--border); }
+.auth-or::before { left: 0; }
+.auth-or::after { right: 0; }
+.auth-demo { display: flex; flex-direction: column; gap: 10px; }
+.auth-demo-label { font-size: 12px; color: var(--text-400); font-weight: 600; letter-spacing: .04em; }
+.auth-demo-field { display: flex; align-items: center; gap: 10px; }
+.auth-demo-id-label { font-size: 12px; color: var(--text-400); width: 68px; flex-shrink: 0; }
+.auth-demo-id-value { font-size: 13px; color: var(--text-200); font-family: var(--font-mono, monospace); }
+.auth-demo-input { flex: 1; background: var(--surface-2, #1e1e1e); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; color: var(--text-100); outline: none; }
+.auth-demo-input:focus { border-color: var(--gold, #b8922a); }
 
 .onb-card { max-width: 580px; gap: 18px; }
 .onb-progress { display: flex; gap: 6px; }
