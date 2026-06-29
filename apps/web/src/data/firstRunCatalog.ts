@@ -18,7 +18,7 @@ type Spec = {
 
 // 本命（あなたの仕事・関心にまっすぐ応える）8冊（本命2回×4冊）。
 const HONMEI: Spec[] = [
-  { id: "fr_h01", persona: "p_kirishima", title: "30人を、ひとりで背負わない。", subtitle: "任せ方の設計図", cover: "b1", reason: "判断や相談が一人に集まりがちなチームで、任せる基準と権限の渡し方を整える一冊です。" },
+  { id: "fr_h01", persona: "p_kirishima", title: "チームを、ひとりで背負わない。", subtitle: "任せ方の設計図", cover: "b1", reason: "判断や相談が一人に集まりがちなチームで、任せる基準と権限の渡し方を整える一冊です。" },
   { id: "fr_h02", persona: "p_aoi", title: "叱らずに伝える", subtitle: "関係を壊さない指摘の作法", cover: "b2", reason: "相手との関係を守りながら、言いにくいことを具体的な改善につなげる伝え方を扱います。" },
   { id: "fr_h03", persona: "p_azumi", title: "\"問い\"で動かす現場", subtitle: "指示を減らし、自走を増やす", cover: "b3", reason: "指示待ちが増えた現場で、メンバーが自分で考え始める問いの作り方を整理します。" },
   { id: "fr_h04", persona: "p_yuki", title: "指示ゼロでも回る仕組み", subtitle: "属人化からの脱出", cover: "b4", reason: "人に頼りきった運用を、誰が見ても動ける仕組みに変えるための道筋を描きます。" },

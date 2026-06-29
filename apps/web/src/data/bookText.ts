@@ -8,7 +8,8 @@ export const CHAPTER_PI_BASE = 1_000_000;
 
 export type ReaderBlock =
   | { kind: "chapter"; text: string; pi: number }
-  | { kind: "para"; text: string; pi: number; chapter: string; lead: boolean };
+  | { kind: "para"; text: string; pi: number; chapter: string; lead: boolean }
+  | { kind: "mermaid"; text: string; pi: number; chapter: string };
 
 export function parseBook(body: string | null | undefined, fallback = ""): ReaderBlock[] {
   const src = body && body.trim() ? body : fallback;
@@ -18,6 +19,7 @@ export function parseBook(body: string | null | undefined, fallback = ""): Reade
   let chapterOrd = 0;
   let firstPara = true;
   let buf: string[] = [];
+  let mermaidBuf: string[] | null = null;
   const flush = () => {
     if (buf.length) {
       blocks.push({ kind: "para", text: buf.join(""), pi: pi++, chapter, lead: firstPara });
@@ -26,6 +28,24 @@ export function parseBook(body: string | null | undefined, fallback = ""): Reade
     }
   };
   for (const line of src.split("\n")) {
+    // mermaid フェンス内の処理
+    if (mermaidBuf !== null) {
+      if (line.trim() === "```") {
+        flush();
+        blocks.push({ kind: "mermaid", text: mermaidBuf.join("\n"), pi: pi++, chapter });
+        mermaidBuf = null;
+        firstPara = false;
+      } else {
+        mermaidBuf.push(line);
+      }
+      continue;
+    }
+    // mermaid フェンス開始
+    if (line.trim() === "```mermaid") {
+      flush();
+      mermaidBuf = [];
+      continue;
+    }
     if (line.startsWith("## ")) {
       flush();
       chapter = line.slice(3).trim();

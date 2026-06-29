@@ -42,6 +42,7 @@ docs/*
 !docs/ui/
 !docs/infra/
 !docs/planning/
+!docs/quality/
 # 生成された設計図(html/pdf)は非追跡
 docs/**/*.html
 docs/**/*.pdf
@@ -75,3 +76,9 @@ artifacts/prompt-review/
 # Claude Code 内部ファイル
 .agents/
 skills-lock.json
+
+# 対外資料・MTG資料の置き場（リポジトリには含めない＝PII/内部資料の隔離）
+publishr_other/
+
+# プロンプト検証の使い捨て出力（成果物は fixtures / docs へ別途保存）
+tmp_verify/

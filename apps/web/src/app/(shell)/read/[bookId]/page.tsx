@@ -6,6 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 import type { Granularity, HighlightColor, ReadingAnnotation } from "@publishr/shared-schema";
 
+import { MermaidDiagram } from "@/components/book/MermaidDiagram";
 import { Topbar } from "@/components/shell/Topbar";
 import { applyGranularity, parseBook, splitChapter } from "@/data/bookText";
 import { useActions, useProvider } from "@/data/hooks";
@@ -511,6 +512,13 @@ export default function ReaderPage() {
                           {renderParaContent(title || b.text, paraHighlights(b.pi), onMarkClick)}
                         </h2>
                       </section>
+                    );
+                  }
+                  if (b.kind === "mermaid") {
+                    return (
+                      <figure key={`m${b.pi}`} className="mermaid-wrap">
+                        <MermaidDiagram chart={b.text} />
+                      </figure>
                     );
                   }
                   const pHighlights = paraHighlights(b.pi);

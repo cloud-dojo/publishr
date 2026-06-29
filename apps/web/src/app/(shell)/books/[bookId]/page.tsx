@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { BookCover } from "@/components/book/BookCover";
 import { BookToc } from "@/components/book/BookToc";
+import { DebateCandidates } from "@/components/writing/DebateCandidates";
 import { Topbar } from "@/components/shell/Topbar";
 import { bookChapters } from "@/data/bookText";
 import { isArchivedBook } from "@/lib/arrival";
@@ -32,6 +33,16 @@ export default function BookDetailPage() {
   const persona = provider.getPersona(book.authorPersonaId);
   const plan = provider.getPlan(book.planId);
   const prefaceParagraphs = book.prefaceSample.split("\n\n").filter(Boolean);
+
+  // 企画会議の証跡（却下→再提出ループ）。この本が審議候補そのものの場合のみ表示する。
+  // ※fixtureはplanIdを全蔵書で使い回しており planId では絞れないため、本のタイトル/サブタイトルが
+  //   審議候補名（＝採用された企画タイトル）に一致するかで判定する。
+  const debate = provider.getDebate();
+  const candidates = provider.getCandidates();
+  const approvedPlanIds = provider.getApprovedPlanIds();
+  const debated =
+    debate.length > 0 &&
+    candidates.some((c) => c.candidate === book.title || c.candidate === book.subtitle);
 
   const archived = isArchivedBook(book);
 
@@ -123,6 +134,31 @@ export default function BookDetailPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {debated && (
+            <div className="section" style={{ marginTop: 40 }}>
+              <div className="section-head">
+                <div>
+                  <div className="eyebrow">Editorial debate</div>
+                  <div className="section-title">
+                    企画会議の<span className="accent">証跡</span>
+                  </div>
+                </div>
+              </div>
+              <p className="debate-lead">
+                3つの企画案がスコアゲートで審議されました。第1ラウンドで全案を差し戻し、修正のうえ第2ラウンドで採用が決定しています。
+              </p>
+              <div className="debate-round">第1ラウンド ― 全案を差し戻し</div>
+              <DebateCandidates entries={debate.filter((e) => e.round === 1)} />
+              <div className="debate-resubmit">↓ 修正して再提出</div>
+              <div className="debate-round">第2ラウンド ― 採用を決定</div>
+              <DebateCandidates
+                entries={debate.filter((e) => e.round === 2)}
+                candidates={candidates}
+                approvedPlanIds={approvedPlanIds}
+              />
             </div>
           )}
 

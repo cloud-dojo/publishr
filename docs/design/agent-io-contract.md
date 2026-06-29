@@ -198,7 +198,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 > - `recentReads` ← 既読題名（次企画の被り回避）。
 >
 > これらは reader（`deterministic`/`vertex`）が `readingBehavior` に載せ、**STEP2企画は `readerProfile` 経由で受領**（配線を増やさない）。STEP2 プロンプト（`step2_plan_owner`）は「刺さった軸を強め・不発/既読の被りを避け・stylePreference に寄せる」を指示。
-> 入力経路は `run_mode_a_pipeline(past_books=…)`／BFF `mode_a_service` が published・反応あり・owner一致の本を渡す。**反応/選択が無ければ全シグナルは空＝STEP1出力は従来どおり（mock決定的・eval/pipeline不変）**。お気に入り作家はキャスティング15%混入（STEP3a）にも別途反映され、本機能は企画軸まで拡張する位置づけ。残＝実Vertexでの嗜好反映 live実証（gated）。
+> 入力経路は `run_mode_a_pipeline(past_books=…)`／BFF `mode_a_service` が published・反応あり・owner一致の本を渡す。**反応/選択が無ければ全シグナルは空＝STEP1出力は従来どおり（mock決定的・eval/pipeline不変）**。お気に入り作家はキャスティング起用（STEP3a・配本ごと約25%で1冊・システム側で決定的抽選）にも別途反映され、本機能は企画軸まで拡張する位置づけ。残＝実Vertexでの嗜好反映 live実証（gated）。
 >
 > **【アカウント選択の反映・2026-06-14】** `initialProfile` の各項目を reader が反映: 業界/職種/役職 → `base`、好みの読み口 `readingGenres` → `base`＋`stylePreference`、**今の関心 `recentInterests` → `currentWork.activeWorkThemes`（候補テーマに合流・evidence=`initialProfile:recentInterests`）**、**新しい出会いの幅（4語: いつもの専門を深く/ときどき寄り道/バランス重視/広く新しい刺激を）→ `_serendipity()` が low/mid/high に写像 → `readingBehavior.serendipityTolerance`**。⚠️ ただし(1) account の 4語は現状 `serendipity` キー保存で `serendipityTolerance` と分断＝web 側で `serendipityTolerance` へ保存する結線が要る、(2) BFF は今 fixtures からユーザを読むため、アカウント編集が pipeline に届くのは **C4.9（per-request Firestore ユーザロード）** 後。reader 側の受け皿は実装済み＝C4.9 が繋がれば流れる。
 
@@ -361,9 +361,9 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 **役割**: 承認企画（1テーマ）に最も合う架空著者ペルソナを、**その場で5人 都度生成**する（固定プールからの選抜ではない）。「このテーマを誰に書いてもらうか」を決め、**著者を“揃える”役**。執筆させるのは次のSTEP4編集長の仕事（本エージェントは書かせない）。
 **使用モデル**: Gemini Pro（人格設計は判断が重い。ハイブリッド方針。**1runあたり1コール**で5人を一括生成）。
 **必然性補強**: テーマの文脈に完全に合わせた経歴・文体・口癖を持つ著者を生成できる。同一テーマでも読者プロファイル（役職・業界・局面）が変わると生成される著者の切り口・文体が変わる（設計規律「出力が変わる最小構成」をクリア）。
-**お気に入り著者の混入**:
-- `users/{uid}.favoriteAuthors[]` があれば混入候補として渡す。生成5人のうち何人を混入するかを判断し、混入した著者は `fromFavorite=true` を立てる。
-- **MVPは混入比率15%**（生成5人の各枠を約15%の確率で favoriteAuthors から採用＝平均1人弱）。比率・選出ロジック（ランダム性）は今後A/Bで検証。**favoriteAuthors が空なら no-op**（初回ビルドは空＝混入0）。
+**お気に入り著者の起用**:
+- `users/{uid}.favoriteAuthors[]` があれば起用候補として渡す。**起用するか否か（確率）はシステム側で決定済み**＝渡された著者を1枠に起用し `fromFavorite=true` を立てる（渡されなければ起用なし）。
+- **MVPは配本ごと約25%で1冊**（v3=4テーマ4冊。お気に入りの誰か1人を約25%で1テーマだけに起用＝当たれば4冊中1冊・外れれば0冊／4冊を占有しない）。**確率の抽選はオーケストレーション層（`mode_a` の `choose_favorite_feature`）が決定的に行う**（seed=配本トークンで配本ごとに振り直し・同一配本は再現的・hashlib）。比率は `PUBLISHR_FAVORITE_FEATURE_PCT`（既定25）で調整・将来A/B。**favoriteAuthors が空なら no-op**。
 **実装メモ**:
 - 出力スキーマ検証必須（員数5人を守らせ、不一致なら再試行）。ADK構造化出力で吸収。
 - 生成ペルソナは `personas/{personaId}`（`ephemeral=true`）に保存。`book.authorPersonaId` が参照する正本になる（棚の有効期間中は保持）。
@@ -372,7 +372,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 ### 入力
 - `approvedPlan`（1テーマ・`recommendedAuthorTypes`・`themeKind` を含む）
 - `ReaderProfile`（文体嗜好 `readingBehavior.stylePreference` を生成ペルソナの主軸著者の文体設計に反映）
-- `users/{uid}.favoriteAuthors[]`（任意・混入候補。MVPは約15%の確率で採用／空なら no-op）
+- `users/{uid}.favoriteAuthors[]`（任意・起用候補。配本ごと約25%で誰か1人を1冊に起用／空なら no-op）
 - `著者ペルソナ集.md` 要約（任意・生成インスピレーション素材。コピーはしない）
 
 ### 出力：`GeneratedPersonaSet`
@@ -408,7 +408,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 - 読者の stylePreference に主軸となる1人を寄せる（最も読みやすいよう設計）。
 - 企画の recommendedAuthorTypes に合致する経歴・専門性を持たせる。
 - themeKind=serendipity のときは、教養越境型（哲学・歴史・宗教等の専門家）を厚めに設計してよい。
-- favoriteAuthors が提供されている場合、各枠を約15%の確率で favoriteAuthors から採用し fromFavorite=true（空なら採用なし）。
+- favoriteAuthors が渡された場合は1人を採用し fromFavorite=true（空なら採用なし）。起用可否の抽選はシステム側で決定済み＝渡された時点で起用が確定（プロンプト/関数側で確率判断はしない）。
 - 参考素材（著者ペルソナ集.md の15件サンプル）があれば多様性確保のインスピレーションに使ってよい（コピー禁止）。
 - 員数5人を厳守し、reason を付す。
 出力は GeneratedPersonaSet スキーマのJSONのみ。
