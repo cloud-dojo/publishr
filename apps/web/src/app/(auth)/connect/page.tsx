@@ -18,11 +18,12 @@ function ConnectPageInner() {
 
   const user = provider.getUser(uid ?? DEMO_USER_ID);
   const justConnected = searchParams.get("connected") === "1";
-  const allConnected =
-    (user?.connectedSources?.drive?.enabled &&
-      user?.connectedSources?.calendar?.enabled &&
-      user?.connectedSources?.tasks?.enabled) ??
-    false;
+  // ひとつでも連携できていれば「書店へ進む」を出す（全部揃わないと進めない印象を避ける）。
+  const someConnected = Boolean(
+    user?.connectedSources?.drive?.enabled ||
+      user?.connectedSources?.calendar?.enabled ||
+      user?.connectedSources?.tasks?.enabled
+  );
 
   return (
     <div className="auth-frame">
@@ -48,7 +49,7 @@ function ConnectPageInner() {
           style={{ marginTop: "var(--space-4, 1rem)" }}
           onClick={() => router.push("/")}
         >
-          {allConnected ? "書店へ進む →" : "あとで連携する"}
+          {someConnected ? "書店へ進む →" : "あとで連携する"}
         </button>
       </div>
     </div>

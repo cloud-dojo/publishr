@@ -10,6 +10,7 @@ import {
   CANNED_READER_PROFILE,
 } from "./canned";
 import { buildFirstRunBooks } from "./firstRunCatalog";
+import { ensureBookFrame } from "./bookText";
 import type { InitialProfileInput } from "./profileOptions";
 import { BaseProvider } from "./provider";
 import { EXTRA_LIBRARY_BOOKS, SAMPLE_BODIES } from "./sampleLibrary";
@@ -34,7 +35,7 @@ export class MockProvider extends BaseProvider {
     EXTRA_LIBRARY_BOOKS.forEach((b) => this.books.set(b.id, b));
     this.books.forEach((b, id) => {
       const body = SAMPLE_BODIES[id];
-      if (body) this.books.set(id, { ...b, body });
+      if (body) this.books.set(id, { ...b, body: ensureBookFrame(body, b.prefaceSample, b.title) });
     });
     fixtures.plans.forEach((p) => this.plans.set(p.id, p));
     fixtures.personas.forEach((p) => this.personas.set(p.id, p));
@@ -66,7 +67,7 @@ export class MockProvider extends BaseProvider {
       {
         id: "ntf_seed_delivery",
         kind: "delivery",
-        title: lib ? `『${lib.title}』が書庫に届きました` : "新しい本が書庫に届きました",
+        title: lib ? `『${lib.title}』が本棚に加わりました` : "新しい本が本棚に加わりました",
         body: "執筆が完了しました。まずは本の概要をご覧いただけます。",
         createdAt: new Date(now - 3 * 3_600_000).toISOString(),
         read: true,
@@ -77,11 +78,11 @@ export class MockProvider extends BaseProvider {
         id: "ntf_seed_favorite",
         kind: "favoriteAuthor",
         title: favBook
-          ? `お気に入りの作家 ${favName} の新しい一冊が入荷しました`
+          ? `お気に入りの作家 ${favName} の新しい一冊が届きました`
           : `お気に入りの作家 ${favName} が、次の一冊を構想中です`,
         body: favBook
           ? "どんな本を書いたのか、概要をご覧いただけます。"
-          : "新しい一冊が入荷した際に、ここでご案内します。",
+          : "新しい一冊が届いたら、ここでご案内します。",
         createdAt: new Date(now - 40 * 60_000).toISOString(),
         read: false,
         href: favBook ? `/books/${favBook.id}` : "/authors",
@@ -91,8 +92,8 @@ export class MockProvider extends BaseProvider {
       {
         id: "ntf_seed_arrival",
         kind: "arrival",
-        title: `今朝、あなたのために${arrivalCount}冊が入荷しました`,
-        body: "いま、あなたの関心にまっすぐ応える一冊たちです。",
+        title: `あなたのために${arrivalCount}冊が届きました`,
+        body: "目の前の問いに、まっすぐ応える一冊たちです。",
         createdAt: new Date(now - 3 * 60_000).toISOString(),
         read: false,
         href: "/",

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { BackLink } from "@/components/shell/NavigationHistory";
 import { chapterForPara } from "@/data/bookText";
 import { useProvider } from "@/data/hooks";
 
@@ -16,7 +17,7 @@ export default function BookBookmarksPage() {
       <>
         <header className="topbar">
           <div className="reader-top">
-            <Link href={`/read/${params.bookId}`} className="greeting">‹ 本にもどる</Link>
+            <BackLink href={`/read/${params.bookId}`} className="greeting">‹ 本へ戻る</BackLink>
           </div>
         </header>
         <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
@@ -34,7 +35,7 @@ export default function BookBookmarksPage() {
     <>
       <header className="topbar">
         <div className="reader-top">
-          <Link href={`/read/${book.id}`} className="greeting">‹ 本にもどる</Link>
+          <BackLink href={`/read/${book.id}`} className="greeting">‹ 本へ戻る</BackLink>
           <div className="rt-title">
             {book.title} <span>／ {persona?.name}</span>
           </div>

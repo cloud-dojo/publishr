@@ -54,15 +54,12 @@ export default function HighlightsPage() {
           </>
         }
       />
+      <div className="scaled-page">
       <section className="page-hero">
         <div className="ph-eyebrow">Your marks &amp; margins</div>
         <h1>
           ハイライトと<span className="accent">ブックマーク</span>。
         </h1>
-        <p>
-          あなたが線を引いた場所・ブックマークした場所——これはあなたの関心の地図です。次に何を書くべきかを、Publishr
-          はここから学びます。
-        </p>
       </section>
 
       <section className="page section">
@@ -109,6 +106,7 @@ export default function HighlightsPage() {
         ))}
         {groups.length === 0 && <div className="muted">該当するハイライトはありません。</div>}
       </section>
+      </div>
     </>
   );
 }

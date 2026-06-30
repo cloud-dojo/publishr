@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { BookToc } from "@/components/book/BookToc";
+import { BackLink } from "@/components/shell/NavigationHistory";
 import { Topbar } from "@/components/shell/Topbar";
 import { useProvider } from "@/data/hooks";
 
@@ -15,7 +15,7 @@ export default function ContentsPage() {
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: `/read/${params.bookId}`, label: "‹ 本にもどる" }} notify={false} icon="☰" />
+        <Topbar back={{ href: `/read/${params.bookId}`, label: "‹ 本へ戻る" }} notify={false} icon="☰" />
         <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
       </>
     );
@@ -27,9 +27,9 @@ export default function ContentsPage() {
     <>
       <header className="topbar">
         <div className="reader-top">
-          <Link href={`/read/${book.id}`} className="greeting">
-            ‹ 本にもどる
-          </Link>
+          <BackLink href={`/read/${book.id}`} className="greeting">
+            ‹ 本へ戻る
+          </BackLink>
           <div className="rt-title">
             {book.title} <span>／ {persona?.name}</span>
           </div>

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { BackLink } from "./NavigationHistory";
 import { NotificationBell } from "./NotificationBell";
 
 export function Topbar({
@@ -17,15 +17,15 @@ export function Topbar({
   return (
     <header className="topbar">
       {back ? (
-        <Link href={back.href} className="greeting">
+        <BackLink href={back.href} className="greeting">
           {back.label}
-        </Link>
+        </BackLink>
       ) : (
         <div className="greeting">{greeting}</div>
       )}
       <div className="searchbar">
         <span>⌕</span>
-        <input placeholder="作家・テーマで書庫を探す…" />
+        <input placeholder="作家・テーマで本を探す…" />
       </div>
       {notify ? (
         <NotificationBell />

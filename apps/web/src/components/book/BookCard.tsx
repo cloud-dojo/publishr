@@ -3,7 +3,7 @@
 import type { Book } from "@publishr/shared-schema";
 
 import { coverSrc } from "@/data/config";
-import { arrivedLabel } from "@/lib/arrival";
+import { shelfExpiryLabel } from "@/lib/arrival";
 
 import { BookCover } from "./BookCover";
 import { StatusBadge } from "./StatusBadge";
@@ -16,9 +16,8 @@ function hrefFor(book: Book): string {
 }
 
 function authorSuffix(book: Book): string {
-  if (book.status === "writing") return ` ・ 残り ${Math.max(0, 100 - book.feedback.readPercent)}%`;
-  if (book.status === "draft" && book.shelf === "press") return " ・ 企画承認済み";
-  if (book.status === "published" && book.feedback.rating) {
+  // 配本時に本文まで生成済み＝published 前提。読了評価があれば ★ を添える（feedback 未設定は無印）。
+  if (book.status === "published" && book.feedback?.rating) {
     return ` ・ ${"★".repeat(book.feedback.rating)}`;
   }
   return "";
@@ -42,6 +41,8 @@ export function BookCard({
   showArrived?: boolean;
   badgeMode?: "arrival" | "progress";
 }) {
+  const expiryLabel = shelfExpiryLabel(book.createdAt);
+
   // 横長レイアウト（書店トップ）：カバー左＋本文右にタグ・タイトル・著者・なぜカード
   if (layout === "row") {
     return (
@@ -52,14 +53,13 @@ export function BookCard({
           title={book.title}
           subtitle={book.subtitle}
           author={authorName}
-          titleSize={13}
+          titleSize={10}
         />
         <div className="book-body">
           <div className="book-badges">
-            <StatusBadge book={book} floating={false} />
-            {book.createdAt && (
-              <span className="bm-arrived" title={`入荷: ${book.createdAt.slice(0, 10)}`}>
-                🕓 {arrivedLabel(book.createdAt)}入荷
+            {expiryLabel && (
+              <span className="bm-arrived bm-arrived--expiry" title={`棚に並んだ日: ${book.createdAt?.slice(0, 10)}`}>
+                {expiryLabel}
               </span>
             )}
           </div>
@@ -89,9 +89,9 @@ export function BookCard({
         <div className="bm-author">
           {authorName} 著{authorSuffix(book)}
         </div>
-        {showArrived && book.createdAt && (
-          <div className="bm-arrived" title={`入荷: ${book.createdAt.slice(0, 10)}`}>
-            🕓 {arrivedLabel(book.createdAt)}入荷
+        {showArrived && expiryLabel && (
+          <div className="bm-arrived bm-arrived--expiry" title={`棚に並んだ日: ${book.createdAt?.slice(0, 10)}`}>
+            {expiryLabel}
           </div>
         )}
       </div>

@@ -130,7 +130,7 @@ export function parseBook(body: string | null | undefined, fallback = ""): Reade
 
 /** 章見出しを「章番号」と「タイトル」に分解（章扉の大見出し用）。 */
 export function splitChapter(heading: string): { no: string; title: string } {
-  const m = heading.match(/^(第[0-9０-９一二三四五六七八九十百]+章|Chapter\s*\d+|序章?|終章?|序|終)\s*(.*)$/);
+  const m = heading.match(/^((?:第)?[0-9０-９一二三四五六七八九十百]+章|Chapter\s*\d+|序章?|終章?|序|終|はじめに|まえがき|おわりに|あとがき)\s*(.*)$/);
   if (m) return { no: m[1].trim(), title: m[2].trim() };
   return { no: "", title: heading.trim() };
 }
@@ -149,6 +149,73 @@ export function bookChapters(
     }
   }
   return out;
+}
+
+function paragraphs(raw: string | null | undefined): string[] {
+  return (raw ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+}
+
+function isIntroChapter(chapter: string): boolean {
+  return /^(序章|序|はじめに|まえがき)/.test(chapter.trim());
+}
+
+function isOutroChapter(chapter: string): boolean {
+  return /^(終章|終|おわりに|あとがき|最後に)/.test(chapter.trim());
+}
+
+/** 古いデモ本文に、独立した「はじめに」「おわりに」が無い場合だけ補う。 */
+export function ensureBookFrame(
+  body: string | null | undefined,
+  prefaceSample: string | null | undefined,
+  title: string
+): string | null {
+  if (!body?.trim()) return body ?? null;
+  const chapters = bookChapters(body);
+  const hasIntro = chapters.some((c) => isIntroChapter(c.no) || isIntroChapter(c.title));
+  const hasOutro = chapters.some((c) => isOutroChapter(c.no) || isOutroChapter(c.title));
+  const parts: string[] = [];
+
+  if (!hasIntro) {
+    const intro = paragraphs(prefaceSample).slice(0, 3);
+    const introText = intro.length > 0
+      ? intro.join("\n\n")
+      : `この本は、いま必要な問いを立て直すための一冊です。${title}という主題を、明日からの行動につながる形で読み進めていきます。`;
+    parts.push(`## はじめに\n\n${introText}`);
+  }
+
+  parts.push(body.trim());
+
+  if (!hasOutro) {
+    parts.push(
+      `## おわりに\n\n${title}で扱ってきたことは、読み終えた瞬間に完結するものではありません。まずは、今日の仕事の中で一つだけ判断の置き方を変えてみてください。その小さな一歩が、次の局面を動かす入口になります。`
+    );
+  }
+
+  return parts.join("\n\n");
+}
+
+/** 本の概要ページ用の試し読み断片。prefaceSample が短い時は本文冒頭から最大3段落を補う。 */
+export function overviewExcerptParagraphs(
+  body: string | null | undefined,
+  prefaceSample: string | null | undefined,
+  max = 3
+): string[] {
+  const sample = paragraphs(prefaceSample);
+  const sampleChars = sample.join("").length;
+  if (sample.length >= 2 || sampleChars >= 90 || !body?.trim()) {
+    return sample.slice(0, max);
+  }
+
+  const blocks = parseBook(body);
+  const intro: string[] = [];
+  const allParagraphs: string[] = [];
+  for (const b of blocks) {
+    if (b.kind !== "para") continue;
+    allParagraphs.push(b.text);
+    if (isIntroChapter(b.chapter)) intro.push(b.text);
+  }
+  const fromBody = intro.length > 0 ? intro : allParagraphs;
+  return (fromBody.length > 0 ? fromBody : sample).slice(0, max);
 }
 
 /** pi が属する章名を返す（段落・見出しの両方に対応。無ければ ""）。 */

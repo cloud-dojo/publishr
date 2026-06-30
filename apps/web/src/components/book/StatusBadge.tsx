@@ -7,23 +7,23 @@ type BadgeSpec = { cls: string; label: string; pulse: boolean };
 const READ_DONE_PERCENT = 90; // これ以上読んだら「読了」
 
 // 予約撤去・企画→即published 後のラベル。`shelf` はライフサイクル（入荷↔書庫↔読了）でなく
-// 「種別」（odd=セレンディピティ）にのみ使い、入荷/読了は recency と読書進捗で決める。
+// 「種別」（odd=視野を広げる本）にのみ使い、入荷/読了は recency と読書進捗で決める。
 // ※ 旧実装は published を shelf で「入荷/読了」分けしていたが、shelf は published 化で
 //   遷移しないため「入荷本が永遠に入荷／未読の蔵書が読了」になり矛盾していた。
 function spec(book: Book): BadgeSpec | null {
   // 「準備中」は廃止（全冊・配本時に本文まで生成済み＝出す前提）。draft/writing 等の一時状態でも
-  // ユーザー向けには出さない＝入荷/読了/新しい出会い のみをバッジにする。
+  // ユーザー向けには出さない＝おすすめ/読了/視野を広げる のみをバッジにする。
   // 読了＝実際に読み終えた（shelf に依存しない）。
   if ((book.feedback?.readPercent ?? 0) >= READ_DONE_PERCENT) {
     return { cls: "badge--done", label: "読了", pulse: false };
   }
   // ユーザーが書庫へ移動済み（shelf=library）は入荷扱いしない＝書庫グリッドで「入荷」と出さない。
   if (book.shelf === "library") return null;
-  // 入荷＝published かつ入荷から数日以内の新刊（セレンディピティは「新しい出会い」）。
+  // published かつ一定期間内の本（odd は「視野を広げる」）。
   if (isWithinDays(book.createdAt, ARRIVAL_WINDOW_DAYS)) {
     return book.shelf === "odd"
-      ? { cls: "badge--odd", label: "新しい出会い", pulse: false }
-      : { cls: "badge--new", label: "あなたの関心", pulse: false };
+      ? { cls: "badge--odd", label: "視野を広げる", pulse: false }
+      : { cls: "badge--new", label: "おすすめ", pulse: false };
   }
   // それ以外＝蔵書（バッジ無し＝書庫のノイズを減らす）。
   return null;
@@ -45,7 +45,7 @@ export function StatusBadge({
 }: {
   book: Book;
   floating?: boolean;
-  // arrival=書店トップ（あなたの関心/新しい出会い/読了）, progress=書庫（未読/読書中/読了）
+  // arrival=書店トップ（おすすめ/視野を広げる/読了）, progress=本棚（未読/読書中/読了）
   mode?: "arrival" | "progress";
 }) {
   const s = mode === "progress" ? progressSpec(book) : spec(book);

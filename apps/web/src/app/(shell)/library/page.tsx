@@ -15,7 +15,7 @@ export default function LibraryPage() {
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
   // 書庫＝ユーザーが「書庫へ移動」した本だけのキュレーション集（shelf==="library"）。
-  // 入荷(arrivals/odd)は直近28日の新着ビュー。移動しないと28日で入荷から落ち、書庫にも入らない
+  // 入荷(arrivals/odd)は直近30日の新着ビュー。移動しないと30日で入荷から落ち、書庫にも入らない
   // （検索からは到達可）。新しい順。
   // 書庫＝「書庫へ移動」した本（archivedAt セット or shelf=library）。saveToLibrary は archivedAt のみ
   // 更新するため生 shelf ではなく isArchivedBook で判定する（I-30）。書庫から外した本（feedback.dropped）
@@ -27,8 +27,8 @@ export default function LibraryPage() {
   const handleRemove = async (book: Book) => {
     if (
       !window.confirm(
-        `『${book.title}』を書庫から外しますか？\n\n` +
-          `外すと、この本はもう読めなくなります。引いたハイライト・付けたブックマークもすべて消え、` +
+        `『${book.title}』を本棚から外しますか？\n\n` +
+          `外すと本棚から消えます。引いたハイライト・付けたブックマークも一緒に消え、` +
           `元に戻すことはできません。`
       )
     )
@@ -46,42 +46,44 @@ export default function LibraryPage() {
       <Topbar
         greeting={
           <>
-            <b>わたしの書庫</b>　― あなたが書庫に集めた、お気に入りの蔵書。
+            <b>あなたの本棚</b>　― 残しておきたい、お気に入りの本。
           </>
         }
       />
-      <section className="page-hero">
-        <div className="ph-eyebrow">Your library</div>
-        <h1>
-          あなたのために書かれた<br />
-          <span className="accent">蔵書</span>。
-        </h1>
-      </section>
+      <div className="scaled-page library-page">
+        <section className="page-hero">
+          <div className="ph-eyebrow">Your bookshelf</div>
+          <h1>
+            あなただけの本が、<br />
+            <span className="accent">ここに並びます</span>。
+          </h1>
+        </section>
 
-      <section className="page section">
-        <div className="book-grid">
-                    {library.map((b) => (
-            <div key={b.id} className="library-book">
-              <BookCard book={b} authorName={authorName(b)} showArrived={false} badgeMode="progress" />
-              <button
-                type="button"
-                className="library-remove"
-                disabled={removingId === b.id}
-                onClick={() => void handleRemove(b)}
-              >
-                {removingId === b.id ? "外しています..." : "書庫から外す"}
-              </button>
+        <section className="page section">
+          <div className="book-grid">
+            {library.map((b) => (
+              <div key={b.id} className="library-book">
+                <BookCard book={b} authorName={authorName(b)} showArrived={false} badgeMode="progress" />
+                <button
+                  type="button"
+                  className="library-remove"
+                  disabled={removingId === b.id}
+                  onClick={() => void handleRemove(b)}
+                >
+                  {removingId === b.id ? "外しています..." : "本棚から外す"}
+                </button>
+              </div>
+            ))}
+            {library.length === 0 && (
+              <div className="muted">
+                {provider.ready
+                  ? "まだ本棚に本がありません。気に入った本を「本棚に保存」すると、ここに集まります。"
+                  : "読み込み中…"}
+              </div>
+            )}
             </div>
-          ))}
-          {library.length === 0 && (
-            <div className="muted">
-              {provider.ready
-                ? "まだ蔵書がありません。入荷で気に入った本を「📚 書庫へ移動」すると、ここに集まります。"
-                : "読み込み中…"}
-            </div>
-          )}
-        </div>
-      </section>
+        </section>
+      </div>
     </>
   );
 }

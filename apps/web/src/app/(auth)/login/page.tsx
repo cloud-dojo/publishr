@@ -14,6 +14,11 @@ export default function LoginPage() {
   const [demoPassword, setDemoPassword] = useState("");
   const [demoBusy, setDemoBusy] = useState(false);
 
+  const getNextPath = () => {
+    const rawNext = new URLSearchParams(window.location.search).get("next");
+    return rawNext?.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  };
+
   const onLogin = async () => {
     setBusy(true);
     setError(null);
@@ -23,13 +28,13 @@ export default function LoginPage() {
         if (user) {
           // 初期設定済みならトップ、未設定ならオンボーディングへ（Firestore優先で判定）。
           const done = await hasCompletedOnboarding(user.uid);
-          router.push(done ? "/" : "/onboarding");
+          router.push(done ? getNextPath() : "/onboarding");
         } else {
           setError("ログインに失敗しました。");
         }
       } else {
         // mock: 認証なしで体験フローへ。登録済みならトップ、未登録ならオンボーディング。
-        router.push(getInitialProfile() ? "/" : "/onboarding");
+        router.push(getInitialProfile() ? getNextPath() : "/onboarding");
       }
     } catch {
       setError("ログインに失敗しました。もう一度お試しください。");
@@ -56,7 +61,7 @@ export default function LoginPage() {
       const user = await signInWithDemoToken(token);
       if (user) {
         const done = await hasCompletedOnboarding(user.uid);
-        router.push(done ? "/" : "/onboarding");
+        router.push(done ? getNextPath() : "/onboarding");
       } else {
         setError("デモログインに失敗しました。");
       }

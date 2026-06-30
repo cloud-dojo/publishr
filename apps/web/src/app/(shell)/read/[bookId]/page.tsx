@@ -8,6 +8,7 @@ import type { Granularity, HighlightColor, ReadingAnnotation } from "@publishr/s
 
 import { MermaidDiagram } from "@/components/book/MermaidDiagram";
 import { Topbar } from "@/components/shell/Topbar";
+import { BackLink } from "@/components/shell/NavigationHistory";
 import { applyGranularity, parseBook, splitChapter } from "@/data/bookText";
 import { useActions, useProvider } from "@/data/hooks";
 
@@ -141,6 +142,8 @@ export default function ReaderPage() {
     const cw = clip.clientWidth;
     const n = cw >= SPREAD_MIN ? 2 : 1;
     const colW = Math.max(1, Math.floor((cw - (n - 1) * PAGE_GAP) / n));
+    flow.style.width = `${cw}px`;
+    flow.style.columnCount = `${n}`;
     flow.style.columnWidth = `${colW}px`;
     flow.style.columnGap = `${PAGE_GAP}px`;
     const colPitch = colW + PAGE_GAP;
@@ -268,7 +271,7 @@ export default function ReaderPage() {
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: "/library", label: "‹ 書庫" }} notify={false} icon="Aa" />
+        <Topbar back={{ href: "/library", label: "‹ 本棚へ戻る" }} notify={false} icon="Aa" />
         <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
       </>
     );
@@ -425,9 +428,9 @@ export default function ReaderPage() {
     <>
       <header className="topbar">
         <div className="reader-top">
-          <Link href="/library" className="greeting">
-            ‹ 書庫
-          </Link>
+          <BackLink href="/library" className="greeting">
+            ‹ 本棚へ戻る
+          </BackLink>
           <div className="rt-title">
             {book.title} <span>／ {persona?.name}</span>
           </div>
@@ -501,7 +504,7 @@ export default function ReaderPage() {
           </button>
 
           <div
-            className={`reader-viewport reveal${colsPerView > 1 ? " spread" : ""}`}
+            className={`reader-viewport reveal${colsPerView > 1 ? " spread" : ""}${turning ? " is-turning" : ""}`}
             ref={viewportRef}
           >
             <div className="rd-runhead">
@@ -511,7 +514,7 @@ export default function ReaderPage() {
 
             <div className="page-clip" ref={clipRef}>
               <div
-                className={`page-flow${turning ? " is-turning" : ""}`}
+                className="page-flow"
                 ref={flowRef}
                 style={{
                   transform: `translateX(-${view * stride}px)`,
@@ -522,13 +525,15 @@ export default function ReaderPage() {
                 {blocks.map((b, i) => {
                   if (b.kind === "chapter") {
                     const { no, title } = splitChapter(b.text);
+                    const openerTitle = title || b.text;
+                    const showNo = !!no && no !== openerTitle;
                     return (
                       <section key={`c${i}`} className="rd-opener" data-ch={b.text}>
-                        {no && <div className="rd-opener-no">{no}</div>}
+                        {showNo && <div className="rd-opener-no">{no}</div>}
                         <div className="rd-opener-rule" />
                         {/* 見出しタイトルもハイライト可能にする（data-pi で段落と同じ仕組みに乗せる） */}
                         <h2 className="rd-opener-title" data-pi={b.pi}>
-                          {renderParaContent(title || b.text, paraHighlights(b.pi), onMarkClick)}
+                          {renderParaContent(openerTitle, paraHighlights(b.pi), onMarkClick)}
                         </h2>
                       </section>
                     );
@@ -683,7 +688,7 @@ export default function ReaderPage() {
             )}
 
             <div className="muted" style={{ fontSize: 11, marginTop: 10, lineHeight: 1.5 }}>
-              あなたの選択は次の入荷の企画に反映されます。
+              あなたの選択は次に届く本の企画に反映されます。
             </div>
           </div>
 

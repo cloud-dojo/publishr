@@ -21,7 +21,7 @@ export function latestArrivalDate(now: Date = new Date()): Date {
 }
 
 /** "今週の入荷"棚の保持期間（日）。これより古い未保存（書庫へ移していない）本は棚落ち。
- *  予約制廃止改定 2026-06-23: 28日化は撤回し7日を維持。書庫へ移した本だけ永久保存。 */
+ *  予約制廃止改定 2026-06-23 / 保持再確認 2026-06-24: 入荷から30日で棚落ち。書庫へ移した本だけ永久保存。 */
 export const ARRIVAL_WINDOW_DAYS = 30;
 
 export interface ArrivalBookLike {
@@ -87,8 +87,25 @@ export function arrivalHeroLabel(createdAt: string | undefined, now: Date = new 
   return "先日";
 }
 
+/** 棚落ちが近い本だけ、書店上で控えめに知らせる。通常時はラベルを出さない。 */
+export function shelfExpiryLabel(createdAt: string | undefined, now: Date = new Date()): string {
+  if (!createdAt) return "";
+  const t = new Date(createdAt);
+  if (Number.isNaN(t.getTime())) return "";
+  const startToday = new Date(now);
+  startToday.setHours(0, 0, 0, 0);
+  const startThat = new Date(t);
+  startThat.setHours(0, 0, 0, 0);
+  const elapsedDays = Math.floor((startToday.getTime() - startThat.getTime()) / 86_400_000);
+  const remainingDays = ARRIVAL_WINDOW_DAYS - elapsedDays;
+  if (remainingDays > 3) return "";
+  if (remainingDays <= 0) return "今日、棚から下がります";
+  if (remainingDays === 1) return "明日、棚から下がります";
+  return `あと${remainingDays}日で棚から下がります`;
+}
+
 /** 各本の入荷日(createdAt)を相対表記で。今朝 / 昨日 / おととい / N日前（〜6日）/ M/D（1週間以上前）。
- *  4週間保持の入荷一覧で「いつ入荷したか」を本ごとに示すために使う。 */
+ *  期限表示へ移行中。互換用に残している。 */
 export function arrivedLabel(createdAt: string | undefined, now: Date = new Date()): string {
   if (!createdAt) return "";
   const t = new Date(createdAt);

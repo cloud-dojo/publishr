@@ -9,6 +9,7 @@ import { Topbar } from "@/components/shell/Topbar";
 import { AUTHOR_BIOS } from "@/data/authorBios";
 import { toggleFavorite, useFavorites } from "@/data/favorites-store";
 import { useProvider } from "@/data/hooks";
+import { isArchivedBook, isVisibleArrival } from "@/lib/arrival";
 
 // アイコン文字＝苗字の頭文字（name 先頭1文字）。
 function monogramOf(name: string): string {
@@ -54,17 +55,24 @@ export default function AuthorPage() {
   if (!persona) {
     return (
       <>
-        <Topbar back={{ href: "/authors", label: "← 作家たち" }} />
+        <Topbar back={{ href: "/authors", label: "‹ 作家たちへ戻る" }} />
         <section className="page section">
           <div className="muted">
-            {provider.ready ? "この著者は見つかりませんでした。" : "読み込み中…"}
+            {provider.ready ? "この作家は見つかりませんでした。" : "読み込み中…"}
           </div>
         </section>
       </>
     );
   }
 
-  const books = provider.listBooks().filter((b) => b.authorPersonaId === persona.id);
+  const books = provider
+    .listBooks()
+    .filter(
+      (b) =>
+        b.authorPersonaId === persona.id &&
+        !b.feedback?.dropped &&
+        (isArchivedBook(b) || isVisibleArrival(b))
+    );
   const isFav = favorites.has(persona.id);
   const bio = AUTHOR_BIOS[persona.id];
   const onToggleFav = () =>
@@ -78,8 +86,9 @@ export default function AuthorPage() {
 
   return (
     <>
-      <Topbar back={{ href: "/authors", label: "← 作家たち" }} />
+      <Topbar back={{ href: "/authors", label: "‹ 作家たちへ戻る" }} />
 
+      <div className="scaled-page author-page">
       <header className="author-head page">
         <span className="ah-avatar">{monogramOf(persona.name)}</span>
         <div className="ah-meta">
@@ -104,7 +113,7 @@ export default function AuthorPage() {
             >
               {isFav ? "★ お気に入り登録済み" : "☆ お気に入りの作家に登録"}
             </button>
-            <span className="ah-counts">この著者の本 {books.length}冊</span>
+            <span className="ah-counts">この作家の本 {books.length}冊</span>
           </div>
         </div>
       </header>
@@ -165,20 +174,27 @@ export default function AuthorPage() {
           <div>
             <div className="eyebrow">Books for you</div>
             <div className="section-title">
-              あなたに——<span className="accent">この著者の本</span>
+              この作家から<span className="accent">届いた本</span>
             </div>
           </div>
         </div>
         {books.length > 0 ? (
           <div className="book-grid">
             {books.slice(0, 4).map((b) => (
-              <BookCard key={b.id} book={b} authorName={authorName(b)} />
+              <BookCard
+                key={b.id}
+                book={b}
+                authorName={authorName(b)}
+                showArrived={false}
+                badgeMode="progress"
+              />
             ))}
           </div>
         ) : (
-          <div className="muted">この著者の本は、まだあなたの棚にありません。</div>
+          <div className="muted">この作家の本は、まだ並んでいません。</div>
         )}
       </section>
+      </div>
     </>
   );
 }

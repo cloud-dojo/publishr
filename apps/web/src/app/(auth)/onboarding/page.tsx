@@ -5,28 +5,16 @@ import { useState } from "react";
 
 import {
   profileSteps,
-  serendipityOptions,
   type InitialProfileInput,
   type ProfileStep,
   type ProfileStepKey,
 } from "@/data/profileOptions";
 import { saveInitialProfile, setFirstRunStatus } from "@/data/user-writes";
 
-// 「新しい出会いの幅」(serendipity) を初期設定の最後のステップとして追加する。
-// serendipity は initialProfile の独立フィールドだが、設問としてはここで確認する。
-type StepKey = ProfileStepKey | "serendipity";
+type StepKey = ProfileStepKey;
 type StepDef = Omit<ProfileStep, "key"> & { key: StepKey };
 
-const SERENDIPITY_STEP: StepDef = {
-  key: "serendipity",
-  label: "新しい出会いの幅",
-  question: "いつもの関心から、どれくらい離れた本も混ぜてほしいですか",
-  type: "single",
-  required: true,
-  options: serendipityOptions,
-};
-
-const STEPS: StepDef[] = [...profileSteps, SERENDIPITY_STEP];
+const STEPS: StepDef[] = profileSteps;
 
 type Answers = {
   industry: string;
@@ -34,7 +22,6 @@ type Answers = {
   position: string;
   recentInterests: string[];
   readingGenres: string[];
-  serendipity: string;
 };
 
 const EMPTY: Answers = {
@@ -43,7 +30,6 @@ const EMPTY: Answers = {
   position: "",
   recentInterests: [],
   readingGenres: [],
-  serendipity: "",
 };
 
 export default function OnboardingPage() {
@@ -82,7 +68,7 @@ export default function OnboardingPage() {
       position: answers.position,
       recentInterests: answers.recentInterests,
       readingGenres: answers.readingGenres,
-      serendipity: answers.serendipity || "バランス重視",
+      serendipity: "バランス重視",
       skipped,
       createdAt: new Date().toISOString(),
     };
@@ -151,7 +137,7 @@ export default function OnboardingPage() {
         </div>
 
         <button type="button" className="onb-skip" onClick={() => void persist(true)} disabled={saving}>
-          スキップする（あとでDriveから自動で学びます）
+          スキップする（あとで設定から調整できます）
         </button>
       </div>
     </div>
