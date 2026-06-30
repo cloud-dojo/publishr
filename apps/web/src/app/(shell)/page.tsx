@@ -15,7 +15,7 @@ import {
   type FirstRunStatus,
 } from "@/data/user-writes";
 import { watchAuth } from "@/lib/firebase";
-import { ARRIVAL_WINDOW_DAYS, arrivalHeroLabel, isVisibleArrival } from "@/lib/arrival";
+import { ARRIVAL_WINDOW_DAYS, isVisibleArrival } from "@/lib/arrival";
 
 export default function HomePage() {
   const provider = useProvider();
@@ -26,6 +26,8 @@ export default function HomePage() {
     setAuthDisplayName(u?.displayName ?? null);
     setUid(u?.uid ?? null);
   }), []);
+  const reader = provider.getUser(uid ?? DEMO_USER_ID);
+  const readerName = authDisplayName || reader?.name || "ゲスト";
   // 時刻に応じた挨拶（夜に「おはよう」を出さない）。SSR/初期は中立の「こんにちは」にして、
   // マウント後にブラウザのローカル時刻で確定＝ハイドレーション不一致を避ける。
   const [greeting, setGreeting] = useState("こんにちは");
@@ -40,7 +42,7 @@ export default function HomePage() {
 
   // 棚＝shelf＋直近30日ウィンドウ（ARRIVAL_WINDOW_DAYS）で導出。企画したら本文まで自動執筆＝
   // 予約導線なし。draft はすぐ published になるため status は問わず「入荷から30日以内の本」を
-  // 関心(arrivals)/新しい出会い(odd)に並べる（published も消えずに残す）。
+  // おすすめ(arrivals)/視野を広げる本(odd)に並べる（published も消えずに残す）。
   // ※読了しても shelf は変わらない（自動で棚落ちしない）。ユーザーが「📚 書庫に保存/移動」した
   //   本だけ shelf=library になり入荷一覧から外れて書庫に残る。移動せず30日を過ぎた本は入荷から
   //   自然に落ちる（書庫には入らない・検索からは到達可）。
@@ -53,15 +55,6 @@ export default function HomePage() {
 
   const interests = provider.booksByShelf("arrivals").filter(isFreshArrival).sort(byNewest);
   const encounters = provider.booksByShelf("odd").filter(isFreshArrival).sort(byNewest);
-  // hero ラベルは「実際に並んでいる最新入荷」から導出（スケジュール仮定に依存しない）。
-  // interests/encounters は新しい順なので先頭が各々の最新。両者の新しい方を採用。
-  const newestArrival =
-    [interests[0]?.createdAt, encounters[0]?.createdAt]
-      .filter((d): d is string => Boolean(d))
-      .sort()
-      .at(-1);
-  const arrival = arrivalHeroLabel(newestArrival, now); // 今朝 / 昨日 / おととい / 先日 / ""
-
   // --- 初回体験（登録直後）：空→生成中→15冊 ---
   // localStorage 読取はハイドレーション不一致を避けるためマウント後に行う。
   const [firstRun, setFirstRun] = useState<FirstRunStatus | null>(null);
@@ -118,7 +111,7 @@ export default function HomePage() {
         <Topbar
           greeting={
             <>
-              ようこそ、<b>{authDisplayName ?? "あなた"}</b> さん。
+              ようこそ、<b>{readerName}</b> さん。
             </>
           }
         />
@@ -135,7 +128,7 @@ export default function HomePage() {
             <span className="fr-spinner" aria-hidden />
             <span>
               あなたの初期プロフィールと連携情報をもとに、編集部がいま書き下ろしています。
-              入荷した本から順に棚へ並びます（{arrived.length} / {FIRST_RUN_TOTAL} 冊）。
+              書き上がった本から順に棚へ並びます（{arrived.length} / {FIRST_RUN_TOTAL} 冊）。
             </span>
             <button type="button" className="fr-skip" onClick={finishFirstRun}>
               書店を見る →
@@ -173,88 +166,68 @@ export default function HomePage() {
       <Topbar
         greeting={
           <>
-            {greeting}、<b>{authDisplayName ?? "ゲスト"}</b> さん。
+            {greeting}、<b>{readerName}</b> さん。
           </>
         }
       />
 
-      <section className="page-hero">
-        <div className="ph-eyebrow">This morning&apos;s arrivals</div>
-        <h1>
-          {arrival ? (
+      <div className="home-page">
+        <section className="page-hero">
+          <div className="ph-eyebrow">Your bookstore</div>
+          <h1>
+            あなたの書店に、
+            <br />
+            <span className="accent">あなたのための本</span>が並んでいます。
+          </h1>
+        </section>
+
+        {/* 書店の本棚（おすすめ → 視野を広げる本） */}
+        <section className="page section">
+          {/* グループ：おすすめ */}
+          <div className="group-head">
+            <div className="group-title">
+              いま、おすすめしたい本 <span className="group-count">{interests.length}冊</span>
+            </div>
+            <div className="group-note">目の前の問いに、まっすぐ応える本。</div>
+          </div>
+          <div className="shelf-grid">
+            {interests.map((b) => (
+              <BookCard
+                key={b.id}
+                book={b}
+                authorName={authorName(b)}
+                reason={reason(b)}
+                showWhy
+                layout="row"
+              />
+            ))}
+          </div>
+
+          {/* グループ：視野を広げる本 */}
+          {encounters.length > 0 && (
             <>
-              {arrival}、あなたの書店に
-              <br />
-              <span className="accent">新しい本</span>が並びました。
-            </>
-          ) : (
-            <>
-              あなたの書店へ、
-              <br />
-              <span className="accent">ようこそ</span>。
+              <div className="group-head group-head--spaced">
+                <div className="group-title">
+                  視野を広げる本 <span className="group-count">{encounters.length}冊</span>
+                </div>
+                <div className="group-note">いつもと違う角度から、考える幅を広げる本。</div>
+              </div>
+              <div className="shelf-grid">
+                {encounters.map((b) => (
+                  <BookCard
+                    key={b.id}
+                    book={b}
+                    authorName={authorName(b)}
+                    reason={reason(b)}
+                    showWhy
+                    layout="row"
+                  />
+                ))}
+              </div>
             </>
           )}
-        </h1>
-      </section>
-
-      {/* 今週の入荷（関心 → 新しい出会い） */}
-      <section className="page section">
-        <div className="section-head">
-          <div>
-            <div className="eyebrow">Curated for you this week</div>
-            <div className="section-title">
-              今週の<span className="accent">入荷</span>
-            </div>
-            <div className="section-sub">
-              あなたの仕事と関心を読み取り、専属の編集部が選び、書き下ろした一冊たちです。
-            </div>
-          </div>
-        </div>
-
-        {/* グループ：いま、あなたの関心に */}
-        <div className="group-head">
-          <div className="group-title">
-            いま、あなたの関心に <span className="group-count">{interests.length}冊</span>
-          </div>
-          <div className="group-note">あなたのいまに、まっすぐ応える本。</div>
-        </div>
-        <div className="shelf-grid">
-          {interests.map((b) => (
-            <BookCard
-              key={b.id}
-              book={b}
-              authorName={authorName(b)}
-              reason={reason(b)}
-              showWhy
-              layout="row"
-            />
-          ))}
-        </div>
-
-        {/* グループ：新しい出会い */}
-        {encounters.length > 0 && (
-          <>
-            <div className="group-head group-head--spaced">
-              <div className="group-title">
-                新しい出会い <span className="group-count">{encounters.length}冊</span>
-              </div>
-              <div className="group-note">関心の少し外側から、視野を広げる本。</div>
-            </div>
-            <div className="shelf-grid">
-              {encounters.map((b) => (
-                <BookCard
-                  key={b.id}
-                  book={b}
-                  authorName={authorName(b)}
-                  reason={reason(b)}
-                  showWhy
-                  layout="row"
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </section>
+        </section>
+      </div>
     </>
   );
 }

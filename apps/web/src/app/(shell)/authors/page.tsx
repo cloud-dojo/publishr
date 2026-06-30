@@ -77,6 +77,7 @@ export default function AuthorsPage() {
           </>
         }
       />
+      <div className="scaled-page authors-page">
       <section className="page-hero">
         <div className="ph-eyebrow">Authors in your store</div>
         <h1>
@@ -133,6 +134,7 @@ export default function AuthorsPage() {
           )}
         </div>
       </section>
+      </div>
     </>
   );
 }

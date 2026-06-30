@@ -184,8 +184,8 @@ export class FirestoreProvider extends BaseProvider {
       derived.push({
         id: "ntf_arrival",
         kind: "arrival",
-        title: `最近、あなたのために${recent.length}冊が入荷しました`,
-        body: "いま、あなたの関心にまっすぐ応える一冊たちです。",
+        title: `あなたのために${recent.length}冊が届きました`,
+        body: "目の前の問いに、まっすぐ応える一冊たちです。",
         createdAt: recent[0].createdAt ?? new Date(now).toISOString(),
         read: false,
         href: "/",

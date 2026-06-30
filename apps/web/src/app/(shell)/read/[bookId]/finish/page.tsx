@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { StarRating } from "@/components/postread/StarRating";
+import { BackLink } from "@/components/shell/NavigationHistory";
 import { Topbar } from "@/components/shell/Topbar";
 import { toggleFavorite, useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
@@ -12,7 +12,7 @@ import { useActions, useProvider } from "@/data/hooks";
 export default function FinishPage() {
   const params = useParams<{ bookId: string }>();
   const provider = useProvider();
-  const { sendFeedback, notifyFavoriteAuthor, saveToLibrary } = useActions();
+  const { sendFeedback, notifyFavoriteAuthor } = useActions();
   // お気に入りは /authors と同じ正本ストア（localStorage＋Firestore favoriteAuthors）を読む。
   const favorites = useFavorites();
   const book = provider.getBook(params.bookId);
@@ -20,12 +20,11 @@ export default function FinishPage() {
   const [rating, setRating] = useState<number | null>(book?.feedback.rating ?? null);
   const [impression, setImpression] = useState(book?.feedback.impression ?? "");
   const [saved, setSaved] = useState(false);
-  const [savedToLibrary, setSavedToLibrary] = useState(false);
 
   if (!book) {
     return (
       <>
-        <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
+        <Topbar back={{ href: "/", label: "‹ 書店へ戻る" }} />
         <div className="page">{provider.ready ? "本が見つかりません。" : "読み込み中…"}</div>
       </>
     );
@@ -33,14 +32,6 @@ export default function FinishPage() {
 
   const persona = provider.getPersona(book.authorPersonaId);
   const isFav = persona ? favorites.has(persona.id) : false;
-  // 書庫保存：移動済み(shelf=library) か、この画面で押した直後なら「保存済み」。一方向。
-  const inLibrary = book.shelf === "library" || savedToLibrary;
-
-  const onSaveToLibrary = () => {
-    if (inLibrary) return;
-    void saveToLibrary(book.id); // shelf=library に。入荷一覧から外れ、書庫に残る。
-    setSavedToLibrary(true);
-  };
 
   const onRate = (n: number) => {
     setRating(n);
@@ -56,7 +47,8 @@ export default function FinishPage() {
 
   return (
     <>
-      <Topbar back={{ href: "/", label: "‹ あなたの書店にもどる" }} />
+      <Topbar back={{ href: "/", label: "‹ 書店へ戻る" }} />
+      <div className="scaled-page finish-page">
       <div className="page-hero">
         <div className="ph-eyebrow">You finished a book</div>
         <h1>
@@ -67,12 +59,12 @@ export default function FinishPage() {
 
       <div className="postread">
         <div className="panel">
-          <div style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "var(--text-100)", marginBottom: 18 }}>
+          <div className="postread-book-title">
             『{book.title}』 ／ {persona?.name}
           </div>
           <StarRating value={rating} onChange={onRate} />
-          <div className="muted" style={{ fontSize: 12.5, marginTop: 12 }}>
-            {rating ? `★${rating} を記録しました。次の入荷に反映されます。` : "星をタップして評価してください。"}
+          <div className="muted postread-help">
+            {rating ? `★${rating} を記録しました。次に届く本に反映されます。` : "星をタップして評価してください。"}
           </div>
 
           <div className="pr-actions">
@@ -100,16 +92,16 @@ export default function FinishPage() {
         </div>
 
         <div className="panel">
-          <div style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "var(--text-100)", marginBottom: 6 }}>
+          <div className="postread-panel-title">
             この本の感想
           </div>
-          <div className="muted" style={{ fontSize: 12.5, marginBottom: 12 }}>
+          <div className="muted postread-lead">
             心に残った一節や、明日から試したいこと。自由に書き残せます。
           </div>
           <textarea
             className="impression-input"
             rows={5}
-            placeholder="例：『任せる』と『放る』は違う、という一文が刺さった。来週の1on1で、権限の線引きを見直してみる。"
+            placeholder="例：『任せる』と『放る』は違う、という一文が刺さった。次の1on1で、権限の線引きを見直してみる。"
             value={impression}
             onChange={(e) => {
               setImpression(e.target.value);
@@ -126,8 +118,8 @@ export default function FinishPage() {
               感想を保存
             </button>
             {saved && (
-              <span className="muted" style={{ fontSize: 12.5 }}>
-                保存しました。あなたの言葉は次の入荷の参考になります。
+              <span className="muted postread-help">
+                保存しました。あなたの言葉は次に届く本の参考になります。
               </span>
             )}
           </div>
@@ -135,41 +127,22 @@ export default function FinishPage() {
 
         {isFav && persona && (
           <div className="sequel">
-            <div style={{ fontSize: 26 }}>✦</div>
+            <div className="sequel-icon">✦</div>
             <div style={{ flex: 1 }}>
               <div className="sq-t">お気に入りの作家が、次の一冊を考えはじめました</div>
               <div className="sq-d">
-                あなたがお気に入り登録した {persona.name} は、次回作を検討しています。新しい一冊が入荷した際はご案内します。
+                あなたがお気に入り登録した {persona.name} は、次回作を検討しています。新しい一冊が届いたらご案内します。
               </div>
             </div>
           </div>
         )}
 
-        {/* 書庫に保存：読了したこの本を蔵書に残す導線。押さないと30日で入荷から落ち書庫にも
-            入らない（curation型・手動キュレーション）。移動は一方向。 */}
-        {book.status === "published" && (
-          <div className="panel" style={{ textAlign: "center" }}>
-            <button
-              type="button"
-              className={inLibrary ? "btn btn--gold btn--block" : "btn btn--ghost btn--block"}
-              onClick={onSaveToLibrary}
-              disabled={inLibrary}
-            >
-              {inLibrary ? "📚 書庫に保存しました" : "📚 この本を書庫に保存する"}
-            </button>
-            <div className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
-              {inLibrary
-                ? "「わたしの書庫」からいつでも読み返せます。"
-                : "保存すると「わたしの書庫」に残ります。しなければ入荷一覧から自然に消えます。"}
-            </div>
-          </div>
-        )}
-
         <div className="row gap12" style={{ justifyContent: "center", marginTop: 28 }}>
-          <Link href="/" className="btn btn--ghost">
-            書店にもどる
-          </Link>
+          <BackLink href="/" className="btn btn--ghost">
+            書店へ戻る
+          </BackLink>
         </div>
+      </div>
       </div>
     </>
   );

@@ -10,12 +10,9 @@ import { DEMO_USER_ID, canManualTrigger, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
+import { isArchivedBook } from "@/lib/arrival";
 import { annotationsToHighlights, mergeHighlights } from "@/data/mock-highlights";
-import {
-  optionsFor,
-  serendipityOptions,
-  type InitialProfileInput,
-} from "@/data/profileOptions";
+import { optionsFor, type InitialProfileInput } from "@/data/profileOptions";
 import { getInitialProfile, saveInitialProfile } from "@/data/user-writes";
 
 const INDUSTRY = optionsFor("industry");
@@ -37,7 +34,6 @@ type EditForm = {
   industry: string;
   jobType: string;
   position: string;
-  serendipity: string;
   recentInterests: string[];
   readingGenres: string[];
 };
@@ -49,7 +45,6 @@ function buildInitial(user: User): EditForm {
       industry: saved.industry ?? "",
       jobType: saved.jobType ?? "",
       position: saved.position ?? "",
-      serendipity: saved.serendipity ?? "バランス重視",
       recentInterests: saved.recentInterests ?? [],
       readingGenres: saved.readingGenres ?? [],
     };
@@ -62,7 +57,6 @@ function buildInitial(user: User): EditForm {
     industry: "",
     jobType: "",
     position: "",
-    serendipity: "バランス重視",
     recentInterests: prefillInterests,
     readingGenres: [],
   };
@@ -108,13 +102,13 @@ function ProfileEditor({ user }: { user: User }) {
       position: form.position,
       recentInterests: form.recentInterests,
       readingGenres: form.readingGenres,
-      serendipity: form.serendipity,
+      serendipity: prev?.serendipity ?? "バランス重視",
       skipped: false,
       createdAt: prev?.createdAt ?? new Date().toISOString(),
     };
     try {
       await saveInitialProfile(profile);
-      setSavedMsg("プロフィールを更新しました。来週の企画から反映されます。");
+      setSavedMsg("プロフィールを更新しました。次の企画から反映されます。");
     } finally {
       setSaving(false);
     }
@@ -180,31 +174,6 @@ function ProfileEditor({ user }: { user: User }) {
         </div>
       </section>
 
-      {/* 新しい出会いの幅（旧セレンディピティ許容度） */}
-      <section className="page section">
-        <div className="section-head">
-          <div>
-            <div className="eyebrow">Serendipity</div>
-            <div className="section-title">新しい出会いの幅</div>
-            <div className="section-sub">
-              いつもの関心から、どれくらい離れた本も混ぜてほしいですか。
-            </div>
-          </div>
-        </div>
-        <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
-          {serendipityOptions.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              className={`chip ${form.serendipity === opt ? "on" : ""}`}
-              onClick={() => set("serendipity", opt)}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      </section>
-
       {/* いまの関心（タグをワンクリックでトグル） */}
       <section className="page section">
         <div className="section-head">
@@ -255,13 +224,13 @@ function ProfileEditor({ user }: { user: User }) {
         </div>
       </section>
 
-      {/* 保存ゾーン（登録情報・出会いの幅・関心・読み口の変更をまとめて反映） */}
+      {/* 保存ゾーン（登録情報・関心・読み口の変更をまとめて反映） */}
       <section className="page section">
         <div className="acct-savebox">
           <div className="asb-text">
             <div className="asb-title">編集した内容を保存</div>
             <div className="asb-sub">
-              登録情報・新しい出会いの幅・いまの関心・好みの読み口の変更を、まとめて反映します。
+              登録情報・いまの関心・好みの読み口の変更を、まとめて反映します。
             </div>
           </div>
           <div className="asb-action">
@@ -299,10 +268,10 @@ export default function AccountPage() {
   const onTriggerPlanning = async (themeKind: "honmei" | "serendipity") => {
     setTriggering(themeKind);
     setTriggerMsg(null);
-    const label = themeKind === "serendipity" ? "新しい出会いの企画" : "本命の企画";
+    const label = themeKind === "serendipity" ? "視野を広げる本の企画" : "おすすめしたい本の企画";
     try {
       await actions.runPipeline(uid ?? DEMO_USER_ID, themeKind);
-      setTriggerMsg(`${label}を実行しました。書店に反映されるまで少し待ってください。`);
+      setTriggerMsg(`${label}を実行しました。書店に並ぶまで少し待ってください。`);
     } catch (err) {
       console.error(err);
       setTriggerMsg(`${label}に失敗しました。少し待ってから再実行してください。`);
@@ -314,10 +283,10 @@ export default function AccountPage() {
     await signOutUser();
     router.push("/login");
   };
-  // 蔵書＝ユーザーが「書庫へ移動」した本（書庫ページと一致＝published かつ shelf==="library"）。
+  // 本棚ページと同じ条件で集計する。
   const total = provider
     .listBooks()
-    .filter((b) => b.status === "published" && b.shelf === "library").length;
+    .filter((b) => b.status === "published" && isArchivedBook(b) && !b.feedback?.dropped).length;
   // ハイライト数：ハイライト画面(visibleItems)と完全に同じソース・同じ除外条件で数える
   // （note=付箋は表示しないので集計からも除外）。account 8 vs 画面 6 の食い違いを解消。
   const highlightCount = mergeHighlights(
@@ -347,6 +316,7 @@ export default function AccountPage() {
     <>
       <Topbar greeting={<b>アカウント</b>} />
 
+      <div className="scaled-page">
       <header className="acct-head page">
         <span className="acct-avatar">{displayInitial}</span>
         <div className="acct-headmeta">
@@ -355,7 +325,7 @@ export default function AccountPage() {
           {authEmail && <div className="acct-role">{authEmail}</div>}
         </div>
         <div className="acct-stats">
-          <Mini n={total} label="蔵書" />
+          <Mini n={total} label="本棚" />
           <Mini n={highlightCount} label="ハイライト" />
           <Mini n={favoriteCount} label="お気に入り作家" />
         </div>
@@ -382,8 +352,8 @@ export default function AccountPage() {
             <div className="asb-text">
               <div className="asb-title">今すぐ企画</div>
               <div className="asb-sub">
-                週次バッチを待たずに、あなた向けの企画を手動で実行します。本命はいまの関心の中心から、
-                新しい出会いは少し離れたテーマから本を仕立てます。生成には数分かかります。
+                通常の自動企画を待たずに、あなた向けの企画を手動で実行します。
+                おすすめしたい本と、視野を広げる本をそれぞれ企画します。生成には数分かかります。
               </div>
             </div>
             <div className="asb-action">
@@ -394,7 +364,7 @@ export default function AccountPage() {
                 onClick={() => onTriggerPlanning("honmei")}
                 disabled={triggering !== null}
               >
-                {triggering === "honmei" ? "企画中..." : "本命を企画"}
+                {triggering === "honmei" ? "企画中..." : "おすすめしたい本を企画"}
               </button>
               <button
                 type="button"
@@ -402,7 +372,7 @@ export default function AccountPage() {
                 onClick={() => onTriggerPlanning("serendipity")}
                 disabled={triggering !== null}
               >
-                {triggering === "serendipity" ? "企画中..." : "新しい出会いを企画"}
+                {triggering === "serendipity" ? "企画中..." : "視野を広げる本を企画"}
               </button>
             </div>
           </div>
@@ -423,6 +393,7 @@ export default function AccountPage() {
           </div>
         </div>
       </section>
+      </div>
     </>
   );
 }
