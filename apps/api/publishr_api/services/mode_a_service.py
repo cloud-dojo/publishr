@@ -200,6 +200,7 @@ def run(
             # run_token 無し（mock/直呼び）は created（wall-clock）＝手動トリガごとに振り直す。
             seed=run_token or created,
             favorite_pct=settings.favorite_feature_pct,
+            max_books=settings.set_max_books,
         )
         books, personas = map_mode_a_set_to_books(
             set_result, owner_uid=owner, created_at=created, run_token=run_token
