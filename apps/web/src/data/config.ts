@@ -66,6 +66,11 @@ const triggerUids: string[] = (process.env.NEXT_PUBLIC_TRIGGER_UIDS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+// 無認証公開ショーケースで表示/参照する実デモ owner（佐倉の実 Firebase UID）。
+// BFF の books/plans はこの owner にスコープ済み（deps.py の demo_uid）。apphosting の
+// NEXT_PUBLIC_TRIGGER_UIDS（=佐倉の実 UID）を流用し、未設定（mock/local）は DEMO_USER_ID にフォールバック。
+export const DEMO_OWNER_UID = triggerUids[0] ?? DEMO_USER_ID;
+
 /** 手動企画トリガーをこの uid に見せてよいか（方針A: allowlist 一致のみ）。 */
 export function canManualTrigger(uid: string | null | undefined): boolean {
   const allow = triggerUids.length > 0 ? triggerUids : [DEMO_USER_ID];

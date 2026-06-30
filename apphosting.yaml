@@ -18,9 +18,10 @@ runConfig:
   maxInstances: 2
 
 env:
-  # --- データソース: Firestore 実接続（mock から切替）---
+  # --- 無認証公開ショーケース（PR-A / 2026-06-30）: BFF 経由で佐倉(demo_uid)の
+  #     published 本を無ログインで表示。詳細 docs/planning/hackathon-demo-strategy.md。---
   - variable: NEXT_PUBLIC_DATA_SOURCE
-    value: firestore
+    value: bff
     availability: [BUILD, RUNTIME]
 
   # --- Cloud Run BFF ベースURL（予約/トリガー/本文hydrate/OAuth start）---
