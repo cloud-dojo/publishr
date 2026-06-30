@@ -77,6 +77,31 @@ export function canManualTrigger(uid: string | null | undefined): boolean {
   return allow.includes(uid ?? DEMO_USER_ID);
 }
 
+// 無認証デモ公開（②G）でライブ生成の「per-client 日次上限」を数える単位。
+// localStorage に UUID を発行・永続（クリア/別ブラウザで別 client＝回避可は承知の上のソフト制限。
+// 本丸はサーバ側のグローバル日次上限＋Cloud Billing）。
+export function getDemoClientId(): string {
+  if (typeof window === "undefined") return "anon";
+  const KEY = "publishr.demoClientId";
+  try {
+    let id = window.localStorage.getItem(KEY);
+    if (!id) {
+      id =
+        window.crypto?.randomUUID?.() ??
+        `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      window.localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return "anon";
+  }
+}
+
+// ②G: 無認証ライブ生成ボタンを有効化するフラグ（既定OFF=ショーケースは読み取り専用＝安全）。
+// 本番デモは NEXT_PUBLIC_DEMO_LIVE_GEN=1（web）と サーバ側 PUBLISHR_DEMO_RATE_*（Cloud Run）を
+// 同時に立てて初めて開放する。コードのデプロイだけでは晒されない（フラグOFFでボタン非表示）。
+export const demoLiveGenEnabled: boolean = process.env.NEXT_PUBLIC_DEMO_LIVE_GEN === "1";
+
 /**
  * 表紙画像の URL を返す。
  * - coverUrl が GCS object パス（covers/...png・非公開バケット）なら、BFF

@@ -48,6 +48,9 @@ class TriggerPlanningInput(_Camel):
     theme_kind: str = "honmei"
     # I-38: 安定 run_id（任意）。未指定なら API 側で生成。手動検証で再配信冪等を試すために受け取る。
     run_id: Optional[str] = None
+    # ②G デモ公開: 無認証ライブ生成のレート計数単位（クライアント発行UUID）。
+    # 送られた時だけレートガード対象（Scheduler/OIDC は送らない＝対象外）。
+    client_id: Optional[str] = None
 
 
 class DriveFolderLabelInput(_Camel):

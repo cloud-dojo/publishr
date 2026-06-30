@@ -8,7 +8,7 @@ import type {
   User,
 } from "@publishr/shared-schema";
 
-import { apiUrl, DEMO_OWNER_UID, DEMO_USER_ID, timing } from "./config";
+import { apiUrl, DEMO_OWNER_UID, DEMO_USER_ID, getDemoClientId, timing } from "./config";
 import { BaseProvider } from "./provider";
 
 async function jget<T>(path: string): Promise<T> {
@@ -116,7 +116,12 @@ export class BffProvider extends BaseProvider {
   }
 
   async runPipeline(userId: string, themeKind?: string): Promise<void> {
-    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", { userId, themeKind });
+    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", {
+      userId,
+      themeKind,
+      // ②G: 無認証ライブ生成の per-client 日次上限の計数単位。
+      clientId: getDemoClientId(),
+    });
     await this.refreshBooks();
   }
 }

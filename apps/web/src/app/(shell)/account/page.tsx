@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
-import { DEMO_USER_ID, canManualTrigger, dataSource } from "@/data/config";
+import { DEMO_USER_ID, canManualTrigger, dataSource, demoLiveGenEnabled } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
@@ -274,7 +274,13 @@ export default function AccountPage() {
       setTriggerMsg(`${label}を実行しました。書店に並ぶまで少し待ってください。`);
     } catch (err) {
       console.error(err);
-      setTriggerMsg(`${label}に失敗しました。少し待ってから再実行してください。`);
+      // ②G: サーバ側レートガード（日次上限）は 429 を返す。枠切れは案内文を分ける。
+      const overCap = err instanceof Error && err.message.includes("429");
+      setTriggerMsg(
+        overCap
+          ? "本日の体験枠は上限に達しました。また明日お試しください。"
+          : `${label}に失敗しました。少し待ってから再実行してください。`
+      );
     } finally {
       setTriggering(null);
     }
@@ -346,7 +352,11 @@ export default function AccountPage() {
       {/* 方針A（prod-live-followups #7）: 「今すぐ企画」は実 Vertex 企画＝課金を発火するため、
           allowlist 一致の uid（＝デモの佐倉）にのみ表示する。バックエンドの ALLOWED_TRIGGER_UIDS
           が実際のガード（一般ユーザーは 403）で、ここは UI を見せない側の多層防御。 */}
-      {dataSource !== "mock" && canManualTrigger(uid) && (
+      {/* ②G: 無認証公開ショーケース（bff）で NEXT_PUBLIC_DEMO_LIVE_GEN=1 のときだけ「今すぐ企画」を
+          開放（サーバ側 日次レートガード＋per-run/Cloud Billing でコスト制御）。フラグOFFは非表示＝
+          デプロイだけでは晒されない。firestore/実uid 時は従来の allowlist 限定。 */}
+      {((dataSource === "bff" && demoLiveGenEnabled) ||
+        (dataSource !== "mock" && canManualTrigger(uid))) && (
         <section className="page section">
           <div className="acct-savebox">
             <div className="asb-text">
