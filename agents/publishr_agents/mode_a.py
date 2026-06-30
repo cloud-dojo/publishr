@@ -110,6 +110,7 @@ def run_mode_a_set_pipeline(
     threshold: int = 70,
     seed: str = "",
     favorite_pct: int = 25,  # = favorites.FAVORITE_FEATURE_PCT_DEFAULT（配本ごとお気に入り起用確率%）
+    max_books: int | None = None,  # デモ用: 生成冊数の上限（None=全テーマ＝従来どおり）
 ) -> ModeASetResult:
     """観測→読者→セット企画(4テーマ)→各テーマ[キャスティング→プレビュー→装丁] を回し、棚に4冊並べる。
 
@@ -129,6 +130,11 @@ def run_mode_a_set_pipeline(
     profile = analyze_reader(bundle, user=user, llm=reader_llm)
     planning = run_planning_set(profile, theme_kind=theme_kind, threshold=threshold, llm=llm)
     plans = [PlanProposal.model_validate(p) for p in planning["planSet"]["plans"]]
+
+    # デモ用コスト削減: 冊数を先頭 max_books 件に絞る（None=全テーマ＝従来どおり・非破壊）。
+    # 企画(planning)は全テーマ走るが、重いキャスティング/プレビュー/装丁/本文を絞った冊数だけに限定。
+    if max_books is not None and max_books > 0:
+        plans = plans[:max_books]
 
     # 確率はここ（オーケストレーション層）が握る: 当たった1枠にだけ favorite を渡す＝
     # casting は「渡されたら起用」に保つ（mock の "あれば必ず混入" でも4冊を占有しない）。
