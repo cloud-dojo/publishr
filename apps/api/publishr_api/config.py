@@ -93,6 +93,12 @@ class Settings(BaseSettings):
     allowed_trigger_uids: list[str] = []
     # 同一 uid の連打を防ぐ最小間隔（秒）。mock は高速だが暴発防止に効かせる。
     trigger_min_interval_sec: float = 5.0
+    # デモ公開ライブ生成のレートガード（②G）。0=無効（mock/local 非破壊）。
+    # 本番デモは PUBLISHR_DEMO_RATE_GLOBAL_CAP=7 / PUBLISHR_DEMO_RATE_PER_CLIENT_CAP=3 を立てる。
+    demo_rate_global_cap: int = Field(default=0, validation_alias="PUBLISHR_DEMO_RATE_GLOBAL_CAP")
+    demo_rate_per_client_cap: int = Field(
+        default=0, validation_alias="PUBLISHR_DEMO_RATE_PER_CLIENT_CAP"
+    )
     # OAuth start / Drive フォルダ書込のレート制限（C4.9・同一 uid の最小間隔・秒）。
     auth_min_interval_sec: float = Field(
         default=3.0, validation_alias="PUBLISHR_AUTH_MIN_INTERVAL_SEC"

@@ -12,7 +12,7 @@ import logging
 import os
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -25,6 +25,7 @@ from ..deps import get_repository
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import ReserveInput, TriggerPlanningInput
 from ..services import reservation_service, write_queue
+from ..services.demo_rate_limit import DemoRateError, get_demo_rate_limiter
 from ..services.trigger_guard import TriggerError, TriggerGuard
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,8 @@ trigger_guard = TriggerGuard(
     min_interval_sec=settings.trigger_min_interval_sec,
     allowed_uids=settings.allowed_trigger_uids,
 )
+# ②G デモ公開: 無認証ライブ生成の日次レートガード（グローバル＋per-client）。caps=0 で無効。
+demo_rate_limiter = get_demo_rate_limiter()
 
 
 def _ensure_firebase_app() -> None:
@@ -198,6 +201,14 @@ def api_trigger_planning(
     user_id = uid or payload.user_id or settings.demo_uid
     owner = uid or settings.demo_uid or user_id
     key = uid or user_id or "anon"
+    # ②G: 無認証ライブ生成のレートガード。client_id がある＝web ボタン経由のみ対象
+    # （Scheduler/OIDC は client_id を送らない＝対象外）。日付は JST 基準で日次集計。
+    if payload.client_id:
+        day = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
+        try:
+            demo_rate_limiter.acquire(payload.client_id, day=day)
+        except DemoRateError as exc:
+            raise HTTPException(status_code=exc.status, detail=exc.message) from exc
     try:
         trigger_guard.acquire(key, now=time.monotonic())
     except TriggerError as exc:
