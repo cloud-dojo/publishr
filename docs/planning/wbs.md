@@ -93,7 +93,12 @@
 
 ---
 
-## 🧭 現在地サマリ（最新: 2026-06-29）
+## 🧭 現在地サマリ（最新: 2026-06-30）
+
+> **いまどこ（2026-06-30・UI Fix 完了）**: 鉄田担当の UI 最終調整は **PR#95 `codex/finalize-publishr-ui`** で main へマージ済み（merge commit `40840c8`）。ユーザー最終確認OKを受け、UIはこの内容で Fix。
+> - **完了範囲**: 書店/本棚の用語統一、トップ・本棚・ハイライト/ブックマーク・作家・サイトマップ・アカウント・本概要・読書・読了ページの密度/余白/見出し/表紙/文言調整、旧仕様文言（予約/週次/入荷強調/セレンディピティタグ等）の除去、ブラウザ戻る導線の修正。
+> - **確認**: PR CI `verify` 成功。main 取り込み後ローカル `localhost:3000` で `/`, `/library`, `/highlights`, `/authors`, `/map`, `/account`, `/books/b_100nichi`, `/read/b_100nichi`, `/read/b_100nichi/finish` が HTTP 200。
+> - **残りの主役**: UIの追加仕様変更は原則止め、**プロンプト最終化**と **C6（デモ録画/ProtoPedia提出物）**へ移る。C6.7/P-7 の体験画像は、Fix済み実フロントからスクショを撮って差し替える段階。
 
 > **いまどこ（2026-06-29・定例MTG 決定反映）**: 製品は本番フル稼働＋品質チューニング/デモ準備フェーズ。本日のMTGで以下を決定。
 > - **機能凍結を 6/30 → 7/2 に延長**（表紙・obs4 の品質詰めの猶予を確保）。提出は **7/10 据え置き**。
@@ -102,7 +107,7 @@
 > - **企画会議の証跡（却下→再提出）はUIに見せ場を置かない＝Langfuse で追える状態で十分**（合意）。
 > - **日曜セレンディピティ運用＝最終確認OK・完了**。
 > - **公開クリーンリポ（I-34）＝一瀬に委譲**（鉄田は関与しない）。
-> - 継続担当：**プロンプトのテイストチューニング＋UI整理＝鉄田**。
+> - 継続担当：**プロンプトのテイストチューニング＋UI整理＝鉄田**（UI整理は2026-06-30にPR#95でFix済み）。
 
 > **いまどこ（2026-06-21）**: **製品は機能完成域＝本番フル稼働＋観測(Langfuse)＋プロンプト評価(CI実judge)まで整備済**。機能凍結6/30・提出7/10。残りの主役は **M5/M6（デモ/提出・鉄田主体）**。6/17サマリ以降（PR#56〜#70）の追加:
 > - **Langfuse 本番フル稼働**（PR#68/#69）: `trace_pipeline`＝①企画リーダー差し戻しループ＋grounding＋採否＋**`plan_score`/`plan_passed`(70ゲート可視化)**。さらに **ADK の各LLM呼び出しを OpenTelemetry で span 化**（`init_tracing` が global TracerProvider を張る・gemini-2.5-pro/flash・トークン計装）。手動runで全Stage着弾を実証。
@@ -152,7 +157,7 @@
 >
 > **【2026-06-04完了・鉄田単独タスク】** initialProfile選択肢リスト(G1-9・A3.2)✅／gcloud CLI×Norton 恒久対処(G1-20)✅／デモはカット割り廃止＝**動画台本2本立て**(2.5分=審査提出用／60秒=ピッチ内・C6)へ置換✅
 >
-> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **16ルートを mock で実装（ビルド緑・C4 code-complete・当初14＋C4.5で読書サブ2追加）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり・**PUBLISHR_LLM dispatcher 済**）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①UI仕上げ(C4.8) ②Firestore本接続(C4.9・一瀬待ち) ~~③App Hosting連携(B3.3)~~ →✅2026-06-06完了 ③canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。公開URL=`publishr--publishr-498123.asia-east1.hosted.app`。
+> **【フロント・backend とも mock/canned で先行実装済】** `apps/web`(Next.js) に書店UI **16ルートを mock で実装（ビルド緑・C4 code-complete・当初14＋C4.5で読書サブ2追加）**／Firebase Auth＋Firestoreプロバイダも実装済（mock時休眠）。**backend も「未着手」ではなく**、`agents/publishr_agents`（実ADKの Sequential/Parallel 配線・**出力は決定的canned**・選抜ゲートの差し戻しログも canned・`test_pipeline.py`あり・**PUBLISHR_LLM dispatcher 済**）と `apps/api`（FastAPI BFF＝books/plans/personas/users/pipeline ＋ reservation/feedback/reading サービス＋`mock_repository`）が main にある。**ただし backend は v2フローの簡略版**（調査サブ×3 grounding・キャスティング5人2軸・プレビュー編集ループ・実escalate・5冊transaction は未）。残＝**①~~UI仕上げ(C4.8)~~ →✅2026-06-30 UI Fix完了(PR#95) ②Firestore本接続(C4.9・一瀬待ち) ~~③App Hosting連携(B3.3)~~ →✅2026-06-06完了 ③canned/mock→実LLM・実Firestore差し替え(C1.x/C2.x/C3.5)**。公開URL=`publishr--publishr-498123.asia-east1.hosted.app`。
 >
 > **【提出物・GEAP方針・2026-06-05】** ProtoPedia作品ページ草案一式（ストーリー約4,000字・画像5＋システム構成図・全フィールド記入シート）を作成＝対外 `publishr_other/Protopedia提出/`（WBS **C6.7/C6.8**・P-6/P-7）。**GEAP（旧Vertex AI）はプラスアルファで②Gen AI Evaluation Service を品質ゲートに採用方針**（動くコード済・I-21/**C5.3**）、④Agent Runtimeはストレッチ（Schedulerトリガー非対応・F-7）。
 >
@@ -458,7 +463,7 @@ Publishr MVP（カテゴリWBS）
 | C4.5 | 読書画面・ハイライト・簡易FB | 本を読む画面と、ハイライト・読了/評価の保存（Firestore直書き） | 鉄田 | W3（6/22–28） | C3.1 | ハイライト保存・FB記録 (旧WP4.5) | ✅**完了**（KindleライクなUIに強化＝ドラッグ範囲ハイライト・3色選択ポップアップ・`startOffset/endOffset`文字単位記録。目次(`/contents`)・ハイライト一覧(`/highlights`)サブページ新設＋`?pi/?ch`ジャンプ機能） |
 | C4.6 | お気に入り著者保存 | 気に入った著者を保存する機能（次回企画に15%混ざる） | 鉄田 | W3（6/22–28） | C3.1 | arrayUnion保存 (旧WP4.6) | ✅**UI code-complete**（読了ページのお気に入りボタン＋favoriteAuthor通知連動済。Firestore接続はC4.9） |
 | C4.7 | わたしの書庫・通知バナー | 自分の本棚と、入荷/執筆完了のお知らせバナー（Firestore購読） | 鉄田 | W4（6/29–7/5） | C4.2 | 購読バナー（G1-15） (旧WP4.7) | ✅**UI code-complete**（サイドバー「最近読んだ本」・published本のみ最大5件・書庫表紙CSS強化。通知はNotificationBell実装済。Firestore購読接続はC4.9） |
-| C4.8 | **ローカルUI仕上げ（レイアウト/行ずれ修正・全画面QA）** | 画面のレイアウト崩れ・行ずれ・モックとの差分を実機で確認して直す。修正量が多めで**デプロイ前の山場** | 鉄田 | W2–W4（6/15–7/5） | C4.1-C4.7 | `npm run dev:web`で全画面確認・修正 (旧WP4.8) | ✅**2026-06-07 完了**（**2026-06-06実施分**: 読書ページサブページ分離・ジャンプ機能・BookToc共有コンポーネント・本の概要ページ整理・目次章番号折り返し修正・サイドバー最近読んだ本・書庫表紙CSS強化。**2026-06-07実施分**: ①フィードバックチップ条件付きレンダリング修正（ページロード時に非表示・いいね/いまいちタップで展開）②`.rail-tools`の`position:sticky`削除でナビカードのジャンプ解消③ベルアイコン(🔔)＋通知ドロップダウンパネル新設（`NotificationBell.tsx`）＝入荷/執筆完了/お気に入り作家の3種・未読バッジ・全既読ボタン・各通知から`/books/{bookId}`概要ページへリンク④`AppNotification`型・`pushNotification`/`markNotificationRead`/`markAllNotificationsRead`等をBaseProviderに実装⑤MockProviderにseedNotifications（3件・決定的シード）＋reserve完了時自動通知⑥`useNotifications()`・`notifyFavoriteAuthor()`フック⑦読了ページの「お気に入り登録」でfavoriteAuthor通知生成。**Firestore本接続後の全画面QAのみ残**（C4.9依存）） |
+| C4.8 | **ローカルUI仕上げ（レイアウト/行ずれ修正・全画面QA）** | 画面のレイアウト崩れ・行ずれ・モックとの差分を実機で確認して直す。修正量が多めで**デプロイ前の山場** | 鉄田 | W2–W4（6/15–7/5） | C4.1-C4.7 | `npm run dev:web`で全画面確認・修正 (旧WP4.8) | ✅**2026-06-30 UI Fix完了**（PR#95・merge `40840c8`）。6/7時点の読書/通知/BookToc/表紙強化に加え、**最終UI調整**として書店/本棚の用語統一、全主要ページの密度・余白・見出しサイズ・表紙サイズ・文言整合、サイトマップ刷新、読書ページのサイドバー非表示/ページ送りモーション/戻る文言、ブラウザ戻る導線、旧仕様文言（予約/週次/入荷強調/セレンディピティタグ等）の除去を完了。PR CI `verify` 成功、main取り込み後に `/`, `/library`, `/highlights`, `/authors`, `/map`, `/account`, `/books/b_100nichi`, `/read/b_100nichi`, `/read/b_100nichi/finish` の HTTP smoke 200。以後UIはデモ撮影前提でFix。 |
 | C4.9 | **Firestore本接続・Firebase Auth起動（mock→firestore切替）** | mockデータから本物のDB(Firestore)接続へ切替える。一瀬から設定値を受領後に作業 | 鉄田・一瀬 | W2–W3（6/15–28） | C3.1,B3.3,C2.1 | 一瀬から①Firebase設定値(`NEXT_PUBLIC_FIREBASE_*`)②~~ルールのデプロイ→✅C3.1完了済み~~③API3本URL・CORS④`ownerUid`規約 を受領後、`NEXT_PUBLIC_DATA_SOURCE=firestore`へ切替 (旧WP4.9) | ✅**2026-06-07 完了**（別セッションにて実施。`NEXT_PUBLIC_DATA_SOURCE=firestore`・Firebase Auth起動・Firestore読み書き接続完了） |
 
 ## C5. 品質・評価・観測・運用
@@ -489,7 +494,7 @@ Publishr MVP（カテゴリWBS）
 | C6.4 | ピッチ図解（自律アーキ・必然性） | 自律アーキ・AIの必然性・将来構想を説明するスライドを作る | 鉄田 | W4–W5（6/29–7/12） | — | スライド (旧WP8.4) | 🔜着手前 |
 | C6.5 | README仕上げ（再現可能性） | 他人が再現できるよう、起動手順・構成図を整える | 鉄田 | W5（7/6–12） | 全体 | 起動手順・構成図 (旧WP8.5) | 🔜着手前 |
 | C6.6 | **ProtoPedia提出・リポジトリpublic化（最終提出）** | ProtoPediaに作品ページを公開し、公開リポを添えて7/10締切までに最終提出する | 鉄田・一瀬 | W5（7/6–12） | C6.3,C6.5,C6.7 | ProtoPedia作品ページ公開＋7/10締切（P-3）。※公開クリーンリポ／図マスク版は WBS 外（別途作成・旧C6.8を2026-06-11に切り出し） (旧WP8.6) | 🔜着手前 |
-| C6.7 | **ProtoPedia作品ページ作成（ストーリー/画像5/システム構成/動画/各フィールド）** | 提出先ProtoPediaの作品ページを作る。草案一式は作成済＝あとは実フロントのスクショと各URL差し替え | 鉄田 | W5（7/6–12） | C6.3 | 草案＝`publishr_other/Protopedia提出/`（ストーリーv2・画像プラン・記入シート）。体験画像①②③は**実フロントのスクショ（佐倉/7名）**に差替（P-7）／動画＝YouTube限定公開／必須技術＝GEAP明記（P-6） | 🟡草案✅・本番化残 |
+| C6.7 | **ProtoPedia作品ページ作成（ストーリー/画像5/システム構成/動画/各フィールド）** | 提出先ProtoPediaの作品ページを作る。草案一式は作成済＝あとは実フロントのスクショと各URL差し替え | 鉄田 | W5（7/6–12） | C6.3 | 草案＝`publishr_other/Protopedia提出/`（ストーリーv2・画像プラン・記入シート）。体験画像①②③は**Fix済み実フロント（PR#95後・佐倉/7名）**から撮影して差替（P-7）／動画＝YouTube限定公開／必須技術＝GEAP明記（P-6） | 🟡草案✅・UI Fix✅・スクショ/URL差替残 |
 
 ---
 
