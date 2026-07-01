@@ -9,6 +9,11 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.0"
     }
+    # 中継 endpoint 保護トークン（monitoring→Discord）の生成に使用。値は state のみ（git非公開）。
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 }
 

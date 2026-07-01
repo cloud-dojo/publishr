@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 
 from .config import settings
 from .errors import ConflictError, NotFoundError
-from .routers import api, auth, books, personas, pipeline, plans, users, worker
+from .routers import api, auth, books, monitoring, personas, pipeline, plans, users, worker
 from .services.rate_limit import RateLimitError
 
 # 本番（Cloud Run）でアプリの INFO ログ（observe: 経路・trigger ok 等）を stdout へ出す。
@@ -84,5 +84,6 @@ for _router in (
     api.router,
     auth.router,
     worker.router,
+    monitoring.router,
 ):
     app.include_router(_router)

@@ -146,5 +146,18 @@ class Settings(BaseSettings):
         default="publishr-contents-498123", validation_alias="PUBLISHR_COVER_BUCKET"
     )
 
+    # ── Cloud Monitoring → Discord 中継（本文未承認published アラートの能動通知）──────
+    # GCP の webhook 通知チャネルが送るインシデントを Discord webhook へ転送する中継の設定。
+    # URL は秘匿（Secret Manager 経由で注入）。空（既定・ローカル/mock）なら endpoint は no-op＝
+    # 外部送信ゼロ・挙動不変。
+    discord_alert_webhook_url: str = Field(
+        default="", validation_alias="PUBLISHR_DISCORD_ALERT_WEBHOOK_URL"
+    )
+    # 公開 Cloud Run 上の中継 endpoint を守る共有トークン（GCP チャネルURLの `?token=` と一致必須）。
+    # 空なら検証スキップ（ローカル）。本番は terraform 生成のランダム値を注入する。
+    monitoring_webhook_token: str = Field(
+        default="", validation_alias="PUBLISHR_MONITORING_WEBHOOK_TOKEN"
+    )
+
 
 settings = Settings()
