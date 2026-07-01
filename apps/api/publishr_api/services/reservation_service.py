@@ -125,6 +125,19 @@ def reserve_now(repo: RepositoryProtocol, book_id: str, *, owner_uid: str = "") 
     )
 
 
+def release_reservation(repo: RepositoryProtocol, book_id: str) -> Optional[Book]:
+    """reserved を draft へ戻す（執筆ジョブ投入 publish 失敗時のロールバック）。
+
+    reserve_now（draft→reserved）の後に enqueue/publish が落ちると、再配信する元メッセージも無いまま
+    本が reserved（=UI「準備中」）で誰にも拾われず滞留する。それを防ぐため予約を取り消して draft に戻す。
+    reserved 以外（既に writing/published 等）は触らない＝冪等・誤巻き戻し防止。
+    """
+    book = repo.get_book(book_id)
+    if book is None or book.status != "reserved":
+        return book
+    return repo.upsert_book(book.model_copy(update={"status": "draft"}))
+
+
 def move_to_library(repo: RepositoryProtocol, book_id: str) -> Book:
     """入荷一覧から書庫へ移す（shelf="library"・動的フィルタリング）。
 
@@ -180,5 +193,15 @@ def process_write_job(repo: RepositoryProtocol, book_id: str) -> Optional[Book]:
         return book  # 既に処理済み or 予約外 → skip（冪等）
     if book.status == "reserved":
         book = repo.upsert_book(book.model_copy(update={"status": "writing"}))
-    body, edit_round = _generate_body(repo, book)
-    return _persist_published(repo, book, body, edit_round)
+    try:
+        body, edit_round = _generate_body(repo, book)
+        return _persist_published(repo, book, body, edit_round)
+    except Exception:
+        # 本文生成が落ちても writing（=UI「準備中」）で恒久滞留させない（§7-2・I-20）。reserved へ
+        # 戻して「再実行で拾える状態」にし、例外は呼び出し側（worker）へ送出して再配信可否を判断させる
+        # （transient=再配信リトライ / 非transient=ack して手動再実行）。in-process リトライ
+        # （resilience.run_with_retry_async）は _generate_body 内で既に尽きている前提。
+        current = repo.get_book(book_id)
+        if current is not None and current.status == "writing":
+            repo.upsert_book(current.model_copy(update={"status": "reserved"}))
+        raise

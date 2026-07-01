@@ -104,7 +104,27 @@ async def worker_write(
         return Response(status_code=204)  # ack（再配信ループ防止）
     # threadpool で実行＝同期 process_write_job が内部で asyncio.run（vertex本文生成）を呼んでも
     # 実行中イベントループとネストしない（C2.2/実Vertex対応）。mock経路はそのまま高速。
-    await run_in_threadpool(reservation_service.process_write_job, repo, book_id)  # 冪等
+    try:
+        await run_in_threadpool(reservation_service.process_write_job, repo, book_id)  # 冪等
+    except Exception as exc:  # noqa: BLE001 — 滞留防止の再配信制御（本は reserved へ巻き戻し済み）
+        _flush_traces()
+        from publishr_agents.llm.resilience import is_transient  # noqa: PLC0415
+
+        if is_transient(exc):
+            # transient（429/timeout/503）: 5xx で nack＝Pub/Sub が再配信して後でリトライ（quota 回復
+            # 待ち等）。process_write_job が writing→reserved に戻しているので「準備中」滞留にしない。
+            logger.warning(
+                "worker(write): transient failure book=%s, nacking for redelivery: %s",
+                book_id, type(exc).__name__,
+            )
+            raise HTTPException(status_code=503, detail="transient write failure; will retry") from exc
+        # 非transient（スキーマ違反/CostGuard 等）: 再配信しても直らない。204 で ack して再配信ストーム
+        # を止め、手動再実行に委ねる（worker_plan と同方針）。本は reserved に戻済み＝再投入で拾える。
+        logger.exception(
+            "worker(write): permanent failure book=%s, acking (manual rerun needed): %s",
+            book_id, type(exc).__name__,
+        )
+        return Response(status_code=204)
     _flush_traces()  # 本文執筆中の ADK span を Langfuse へ確実に送る（Cloud Run 終端）
     return Response(status_code=204)
 

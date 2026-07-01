@@ -9,7 +9,7 @@ from ..deps import get_repository
 from ..errors import NotFoundError
 from ..repositories.protocol import RepositoryProtocol
 from ..schemas import FeedbackInput, ReadingStateInput
-from ..services import feedback_service, reading_service, reservation_service, write_queue
+from ..services import feedback_service, reading_service, write_queue
 from .api import require_reserve_uid
 
 router = APIRouter(prefix="/books", tags=["books"])
@@ -39,9 +39,8 @@ async def reserve_book(
     _uid: str = Depends(require_reserve_uid),  # fail-closed: 課金時は認証必須
 ) -> Book:
     """旧予約モデルの互換エンドポイント（通常配本では使用しない）。"""
-    book = reservation_service.reserve_now(repo, book_id, owner_uid=_uid)
-    write_queue.enqueue(repo, book_id)
-    return book
+    # 予約→執筆ジョブ投入を1単位で（publish 失敗時は予約を draft へ戻して reserved 孤児を防ぐ）。
+    return write_queue.reserve_and_enqueue(repo, book_id, owner_uid=_uid)
 
 
 @router.post("/{book_id}/feedback", response_model=Book)
