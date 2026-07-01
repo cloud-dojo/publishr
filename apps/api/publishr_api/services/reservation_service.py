@@ -87,8 +87,10 @@ def _generate_body(repo: RepositoryProtocol, book: Book) -> tuple[str, int]:
 
     LLM は settings.publishr_llm（既定 mock＝決定的・課金ゼロ）。著者ペルソナは repo から引く
     （firestore の生成著者・fixtures の既定著者どちらも・無ければ mode_b 側で汎用著者に縮退）。
-    rounds を使い切っても編集長が最終的に revise 判定のままの場合があり得る（実Vertexで確認済み）。
-    現状はそれでも published にする（既存挙動を変えない）が、見逃さないよう warning ログを残す。
+
+    方針（企画リーダーの「3R未達は最良案承認」と統一・7/1レビューで実装）: rounds を使い切っても
+    編集長が基準未達のままの場合があり得る（実Vertexで確認済み・p2ケース）。それでも published に
+    する（デモを止めない）が、`result.forced_approve` を見て見逃さないよう warning ログを残す。
     """
     from publishr_agents.mode_b import write_body_loop  # noqa: PLC0415
 
@@ -96,7 +98,7 @@ def _generate_body(repo: RepositoryProtocol, book: Book) -> tuple[str, int]:
     result = write_body_loop(
         book, persona=persona, rounds=settings.body_edit_rounds, llm=settings.publishr_llm
     )
-    if result.body_verdict.get("decision") != "approve":
+    if result.forced_approve:
         logger.warning(
             "book %s published with unapproved body after %d edit round(s) "
             "(score=%s decision=%s weakChapters=%s)",

@@ -309,6 +309,10 @@ async def run_body_loop_vertex_async(
         else:
             break
 
+    # rounds を使い切っても current が revise のままなら「本当は未承認」（7/1レビューで実測・p2ケース）。
+    # mock と違い vertex は decision を書き換えない＝ここで明示的に検出して残す。
+    forced_approve = current is not None and current.decision != "approve"
+
     return BodyResult(
         book_id=book.id,
         chapters=chapters,
@@ -317,6 +321,7 @@ async def run_body_loop_vertex_async(
         body_verdict=verdicts[-1] if verdicts else {},
         edit_rounds=edit_rounds,
         revised_chapters=revised,
+        forced_approve=forced_approve,
     )
 
 
