@@ -21,6 +21,8 @@ resource "google_project_service" "apis" {
     "iam.googleapis.com",
     "sts.googleapis.com",            # WIF（B3.2 CI/CD 認証）
     "iamcredentials.googleapis.com", # WIF トークン発行
+    "logging.googleapis.com",        # log-based metric（本文未承認publishedアラート・7/1）
+    "monitoring.googleapis.com",     # Cloud Monitoring alert policy（同上）
   ])
   service            = each.value
   disable_on_destroy = false

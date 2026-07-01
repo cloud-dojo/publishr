@@ -66,3 +66,14 @@ variable "honmei_schedule" {
   description = "本命テーマの自律入荷 cron（水・土 06:00 JST）。"
   default     = "0 6 * * 3,6"
 }
+
+variable "body_forced_approve_notification_channels" {
+  type        = list(string)
+  description = <<-EOT
+    本文編集ループが未承認のまま published になったアラート（7/1レビュー・レベル1対応）の
+    通知先チャネルID一覧。未定なら空のまま＝アラートはCloud MonitoringのIncidentsに残るが
+    能動通知（メール/Slack等）はされない。決まり次第 google_monitoring_notification_channel
+    を作り、その .id をここへ足すだけでよい（monitoring.tf は変更不要）。
+  EOT
+  default     = []
+}
