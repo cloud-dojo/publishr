@@ -121,6 +121,7 @@ def run_body_loop_deterministic(
     verdicts.append(_verdict(0, weak=weak, approve=approve).model_dump(by_alias=True))
     edit_rounds = 1
     revises = 0
+    forced = False
     while not approve and revises < rounds and n >= 1:
         # 弱章のみ改稿（他章は不変＝全文再生成しない＝コスト抑制）。
         i = weak - 1
@@ -148,4 +149,5 @@ def run_body_loop_deterministic(
         body_verdict=verdicts[-1],
         edit_rounds=edit_rounds,
         revised_chapters=revised_chapters,
+        forced_approve=forced,
     )

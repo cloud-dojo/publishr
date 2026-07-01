@@ -182,9 +182,11 @@ def make_published_books(
     ＝`status=published`／`body`（編集ループ後の本文）／`edit_round`／`feedback.read_percent=0`。
     著者は personas から `author_persona_id` で引く（無ければ modeB 側で汎用著者に縮退）。
     `llm` は "mock"|"vertex"・`rounds` は本文の最高改稿ラウンド。冪等: すでに本文付き published は素通し。
-    `rounds` を使い切っても編集長が最終的に revise 判定のままの場合があり得る（弱章の入れ替わりで
-    収束しないケースを実Vertexで確認済み）。現状はそれでも published にする（既存挙動を変えない）
-    が、見逃さないよう warning ログを残す。
+
+    方針（企画リーダーの「3R未達は最良案承認」と統一・7/1レビューで実装）: rounds を使い切っても
+    編集長が基準未達のままの場合があり得る（弱章の入れ替わりで収束しないケースを実Vertexで確認済み・
+    p2ケース）。それでも published にする（デモを止めない）が、`result.forced_approve` を見て
+    見逃さないよう warning ログを残す。
     """
     from .mode_b import write_body_loop
 
@@ -197,7 +199,7 @@ def make_published_books(
         result = write_body_loop(
             book, persona=by_id.get(book.author_persona_id), rounds=rounds, llm=llm
         )
-        if result.body_verdict.get("decision") != "approve":
+        if result.forced_approve:
             logger.warning(
                 "book %s published with unapproved body after %d edit round(s) "
                 "(score=%s decision=%s weakChapters=%s)",
