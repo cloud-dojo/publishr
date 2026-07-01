@@ -66,6 +66,8 @@ def test_process_write_job_uses_mode_b_and_records_edit_rounds():
     assert book.status == "published"
     assert book.edit_round >= 2  # 編集ループを通った証跡（既存 Book.edit_round に記録）
     assert book.body.count("## ") >= 3  # 複数章の本文（mode_b 形式）
+    assert "## はじめに" in book.body
+    assert "## おわりに" in book.body
 
 
 def test_published_estimate_and_preface_match_body():

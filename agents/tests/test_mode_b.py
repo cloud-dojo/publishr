@@ -27,8 +27,8 @@ def test_body_loop_produces_chapters_and_revise_trace():
     persona = _persona(book.author_persona_id)
     result = write_body_loop(book, persona=persona, rounds=1, llm="mock")
 
-    # 3〜5章（手動1冊スライス）。各章に title/text。
-    assert 3 <= len(result.chapters) <= 5
+    # はじめに＋最大5番号章＋おわりに（手動1冊スライス）。各章に title/text。
+    assert 3 <= len(result.chapters) <= 7
     for ch in result.chapters:
         assert ch["title"] and ch["text"]
 
@@ -42,8 +42,10 @@ def test_body_loop_produces_chapters_and_revise_trace():
     assert result.body_verdict["weakChapters"] == []
     # 改稿対象＝round1 の弱章のみ。
     assert result.revised_chapters == result.verdicts[0]["weakChapters"]
-    # body は章見出しを含む markdown。
-    assert result.chapters[0]["title"] in result.body
+    # body は章見出しを含む markdown（はじめに／おわりには見出しのみで章タイトルを含まない）。
+    assert result.chapters[1]["title"] in result.body
+    assert "## はじめに" in result.body
+    assert "## おわりに" in result.body
 
 
 def test_body_loop_revises_only_weak_chapter():

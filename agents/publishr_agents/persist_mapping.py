@@ -24,6 +24,18 @@ from publishr_schema import (
 # 過去の本を上書きせず書庫に積み上がる。著者IDにも同じトークンを付け、本→著者の参照を保つ。
 _BOOK_ID_PREFIX = "arr_"
 _MINUTES_PER_CHAPTER = 8
+_KANJI_NUMBERS = {
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+}
 
 
 def _run_token(created_at: str) -> str:
@@ -42,11 +54,52 @@ def _persona_uid(gp: GeneratedPersona, run_token: str) -> str:
     return gp.persona_id if gp.from_favorite else f"{run_token}_{gp.persona_id}"
 
 
+def _ascii_digits(s: str) -> str:
+    return s.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+
+
+def _chapter_label(raw: str, i: int) -> tuple[str, str]:
+    """BookDraft の chapter 文字列を UI 表示用の no/title に分ける。"""
+    text = (raw or "").strip()
+    if re.match(r"^(序章|序|はじめに|まえがき)(\s|　|$)", text):
+        title = re.sub(r"^(序章|序|はじめに|まえがき)\s*", "", text).strip()
+        return "はじめに", title or "はじめに"
+    if re.match(r"^(終章|終|おわりに|あとがき|最後に)(\s|　|$)", text):
+        title = re.sub(r"^(終章|終|おわりに|あとがき|最後に)\s*", "", text).strip()
+        return "おわりに", title or "おわりに"
+
+    m = re.match(r"^(?:第)?([0-9０-９一二三四五六七八九十]+)(?:章)?[\s　]*(.*)$", text)
+    if m:
+        n_raw = _ascii_digits(m.group(1))
+        n = _KANJI_NUMBERS.get(n_raw)
+        if n is None:
+            try:
+                n = int(n_raw)
+            except ValueError:
+                n = i
+        title = m.group(2).strip()
+        return f"{n}章", title or text
+    return f"{i}章", text or f"第{i}章"
+
+
+def _has_intro(items: list[AgendaItem]) -> bool:
+    return any(item.no == "はじめに" or item.title in {"はじめに", "まえがき", "序章"} for item in items)
+
+
+def _has_outro(items: list[AgendaItem]) -> bool:
+    return any(item.no == "おわりに" or item.title in {"おわりに", "あとがき", "終章", "最後に"} for item in items)
+
+
 def _agenda(raw: list[dict[str, Any]]) -> list[AgendaItem]:
-    return [
-        AgendaItem(no=f"{i:02d}", title=e.get("chapter", f"第{i}章"), desc=e.get("summary", ""))
-        for i, e in enumerate(raw or [], 1)
-    ]
+    items: list[AgendaItem] = []
+    for i, e in enumerate(raw or [], 1):
+        no, title = _chapter_label(str(e.get("chapter", "")), i)
+        items.append(AgendaItem(no=no, title=title, desc=e.get("summary", "")))
+    if not _has_intro(items):
+        items.insert(0, AgendaItem(no="はじめに", title="はじめに", desc="この本の入口"))
+    if not _has_outro(items):
+        items.append(AgendaItem(no="おわりに", title="おわりに", desc="明日からの最初の一歩"))
+    return items
 
 
 def _book(
