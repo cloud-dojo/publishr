@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import warnings
 from typing import Any, Optional
 
@@ -149,7 +150,60 @@ _EDITOR_INPUTS = """# 本文（全章結合）
 {{readerProfile}}
 # 著者ペルソナ
 {{persona}}
+# 過去ラウンドの指摘（無ければ無視）
+{{priorFeedback}}
 BodyVerdict のJSONのみを出力せよ（弱い章は weakChapters に章番号=1始まりで列挙）。"""
+
+# ── 機械チェック（B・7/1レビュー）: book.delivery_reason（固有の生情報に触れてよい唯一の場所）
+# から本文に漏れてはいけない固有名詞候補を抽出する。単一英字+社/日付/氏名敬称の狭いパターンに
+# 絞り、「他社」「弊社」等の一般語を誤検出しない（p1「A社」がそのまま本文に残った実例の再発防止）。
+_COMPANY_PAT = re.compile(r"[A-Za-zＡ-Ｚａ-ｚ]社")
+_DATE_PATS = [re.compile(r"\d{1,2}/\d{1,2}"), re.compile(r"\d{1,2}月\d{1,2}日")]
+_PERSON_PAT = re.compile(r"[一-龠]{2,4}(?:さん|様|氏)")
+
+
+def _extract_raw_terms(text: Optional[str]) -> list[str]:
+    """delivery_reason から本文に漏れてはいけない固有名詞候補を抽出する。"""
+    if not text:
+        return []
+    terms: set[str] = set()
+    terms.update(_COMPANY_PAT.findall(text))
+    for pat in _DATE_PATS:
+        terms.update(pat.findall(text))
+    terms.update(_PERSON_PAT.findall(text))
+    return sorted(terms)
+
+
+def _chapters_containing(chapters: list[dict[str, Any]], terms: list[str]) -> list[int]:
+    """terms のいずれかを含む章のインデックス（1始まり）を返す。"""
+    if not terms:
+        return []
+    hits: list[int] = []
+    for i, ch in enumerate(chapters, start=1):
+        if any(t in (ch.get("text") or "") for t in terms):
+            hits.append(i)
+    return hits
+
+
+def _mechanical_override(
+    verdict: Optional[BodyVerdict], chapters: list[dict[str, Any]], raw_terms: list[str]
+) -> Optional[BodyVerdict]:
+    """judge が approve でも、読者プロファイル由来の固有名詞が本文に残っていれば revise へ強制する。
+
+    p1: 編集長R1が「A社」漏れを一度指摘したのに、R2で見逃して承認した実例の再発防止（7/1レビュー）。
+    LLMの判定を全面的に信頼せず、この一点だけは決定的に照合する。
+    """
+    if verdict is None:
+        return None
+    hit_chapters = _chapters_containing(chapters, raw_terms)
+    if not hit_chapters or set(hit_chapters) <= set(verdict.weak_chapters):
+        return verdict
+    note = f"[機械チェック] 読者プロファイル由来の固有情報が本文に残存: {raw_terms}（型へ一般化すること）"
+    merged_weak = sorted(set(verdict.weak_chapters) | set(hit_chapters))
+    feedback = f"{verdict.editor_feedback}\n{note}" if verdict.editor_feedback else note
+    return verdict.model_copy(
+        update={"decision": "revise", "weak_chapters": merged_weak, "editor_feedback": feedback}
+    )
 
 
 def build_author_agent() -> LlmAgent:
@@ -273,13 +327,24 @@ async def run_body_loop_vertex_async(
     def _body(chs: list[dict[str, Any]]) -> str:
         return "\n\n".join(c["text"] for c in chs)
 
+    # 本文に漏れてはいけない固有名詞候補（delivery_reason 由来）。ラウンドをまたいだ機械チェックに使う。
+    raw_terms = _extract_raw_terms(book.delivery_reason)
+    # 過去ラウンドの editorFeedback 履歴（次ラウンドの judge に渡し、既出の指摘を再確認させる）。
+    prior_feedback_lines: list[str] = []
+
     verdicts: list[dict[str, Any]] = []
     revised: list[int] = []
     edit_rounds = 1
 
-    v = await _run_verdict(editor, {"body": _body(chapters), "readerProfile": profile_dump, "persona": persona_dump})
+    v = await _run_verdict(
+        editor,
+        {"body": _body(chapters), "readerProfile": profile_dump, "persona": persona_dump, "priorFeedback": None},
+    )
+    v = _mechanical_override(v, chapters, raw_terms)
     if v is not None:
         verdicts.append(v.model_dump(by_alias=True))
+        if v.editor_feedback:
+            prior_feedback_lines.append(f"R1: {v.editor_feedback}")
 
     # 編集長が revise の間、弱章のみ改稿→再採点を最高 rounds 回（§6-2「最高3R」）。
     # NOTE: 弱章が複数の場合、各章に同じ editor_feedback を渡し prev_summary=None で改稿する
@@ -301,16 +366,27 @@ async def run_body_loop_vertex_async(
                     revised.append(ch_no)
         revises += 1
         edit_rounds = 1 + revises
+        prior_feedback = "\n".join(prior_feedback_lines) if prior_feedback_lines else None
         current = await _run_verdict(
-            editor, {"body": _body(chapters), "readerProfile": profile_dump, "persona": persona_dump}
+            editor,
+            {
+                "body": _body(chapters),
+                "readerProfile": profile_dump,
+                "persona": persona_dump,
+                "priorFeedback": prior_feedback,
+            },
         )
+        current = _mechanical_override(current, chapters, raw_terms)
         if current is not None:
             verdicts.append(current.model_dump(by_alias=True))
+            if current.editor_feedback:
+                prior_feedback_lines.append(f"R{edit_rounds}: {current.editor_feedback}")
         else:
             break
 
     # rounds を使い切っても current が revise のままなら「本当は未承認」（7/1レビューで実測・p2ケース）。
     # mock と違い vertex は decision を書き換えない＝ここで明示的に検出して残す。
+    # _mechanical_override 済みの current を使うため、機械チェックでの residual もここに反映される。
     forced_approve = current is not None and current.decision != "approve"
 
     return BodyResult(
