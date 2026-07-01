@@ -8,10 +8,13 @@ CLI（run_mode_a.py / seed_arrivals.py）と BFF サービス（mode_a_service.p
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any, NamedTuple, Optional
 
 from publishr_schema import Book, GeneratedPersona, Persona, PlanProposal, User
+
+logger = logging.getLogger(__name__)
 
 
 class ModeAResult(NamedTuple):
@@ -179,6 +182,9 @@ def make_published_books(
     ＝`status=published`／`body`（編集ループ後の本文）／`edit_round`／`feedback.read_percent=0`。
     著者は personas から `author_persona_id` で引く（無ければ modeB 側で汎用著者に縮退）。
     `llm` は "mock"|"vertex"・`rounds` は本文の最高改稿ラウンド。冪等: すでに本文付き published は素通し。
+    `rounds` を使い切っても編集長が最終的に revise 判定のままの場合があり得る（弱章の入れ替わりで
+    収束しないケースを実Vertexで確認済み）。現状はそれでも published にする（既存挙動を変えない）
+    が、見逃さないよう warning ログを残す。
     """
     from .mode_b import write_body_loop
 
@@ -191,6 +197,16 @@ def make_published_books(
         result = write_body_loop(
             book, persona=by_id.get(book.author_persona_id), rounds=rounds, llm=llm
         )
+        if result.body_verdict.get("decision") != "approve":
+            logger.warning(
+                "book %s published with unapproved body after %d edit round(s) "
+                "(score=%s decision=%s weakChapters=%s)",
+                book.id,
+                result.edit_rounds,
+                result.body_verdict.get("score"),
+                result.body_verdict.get("decision"),
+                result.body_verdict.get("weakChapters"),
+            )
         fb = book.feedback.model_copy(update={"read_percent": 0})
         out.append(
             book.model_copy(

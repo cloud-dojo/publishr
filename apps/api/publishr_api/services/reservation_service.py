@@ -7,6 +7,7 @@ advance:     reserved → writing → published（非同期・タイマー）
 from __future__ import annotations
 
 import asyncio
+import logging
 import math
 import re
 from typing import Optional
@@ -18,6 +19,7 @@ from ..errors import NotFoundError
 from ..repositories.protocol import RepositoryProtocol
 from . import body_store
 
+logger = logging.getLogger(__name__)
 
 _CHARS_PER_MIN = 500  # 日本語のおおまかな読書速度（字/分）
 _CHAPTER_RE = re.compile(r"(?m)^##\s")  # 本文の章見出し（## ）
@@ -85,6 +87,8 @@ def _generate_body(repo: RepositoryProtocol, book: Book) -> tuple[str, int]:
 
     LLM は settings.publishr_llm（既定 mock＝決定的・課金ゼロ）。著者ペルソナは repo から引く
     （firestore の生成著者・fixtures の既定著者どちらも・無ければ mode_b 側で汎用著者に縮退）。
+    rounds を使い切っても編集長が最終的に revise 判定のままの場合があり得る（実Vertexで確認済み）。
+    現状はそれでも published にする（既存挙動を変えない）が、見逃さないよう warning ログを残す。
     """
     from publishr_agents.mode_b import write_body_loop  # noqa: PLC0415
 
@@ -92,6 +96,16 @@ def _generate_body(repo: RepositoryProtocol, book: Book) -> tuple[str, int]:
     result = write_body_loop(
         book, persona=persona, rounds=settings.body_edit_rounds, llm=settings.publishr_llm
     )
+    if result.body_verdict.get("decision") != "approve":
+        logger.warning(
+            "book %s published with unapproved body after %d edit round(s) "
+            "(score=%s decision=%s weakChapters=%s)",
+            book.id,
+            result.edit_rounds,
+            result.body_verdict.get("score"),
+            result.body_verdict.get("decision"),
+            result.body_verdict.get("weakChapters"),
+        )
     return result.body, result.edit_rounds
 
 
