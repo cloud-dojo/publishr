@@ -129,6 +129,68 @@ def test_resolve_volume_zero_target_yields_no_hint(monkeypatch):
     assert per_chapter_hint == ""
 
 
+def test_extract_raw_terms_finds_company_date_person():
+    """delivery_reason から会社名(単一英字+社)・日付・氏名敬称のみを狭く抽出する（7/1レビュー・
+    p1「A社」流出の再発防止）。「他社」「弊社」等の一般語は拾わない。"""
+    from publishr_agents.mode_b.vertex_agent import _extract_raw_terms
+
+    text = (
+        "来週6月8日のエンジニアリング全体会議、そして10日の取締役会報告をカレンダーで拝見しました。"
+        "重要顧客A社の更新提案に向けて、佐藤さんとも相談のうえ、他社事例も参考にしつつ進めます。"
+    )
+    terms = _extract_raw_terms(text)
+    assert "A社" in terms
+    assert "6月8日" in terms
+    assert "佐藤さん" in terms
+    assert "他社" not in terms  # 一般語（自社/弊社/他社等）は誤検出しない
+
+
+def test_extract_raw_terms_empty_when_no_text():
+    from publishr_agents.mode_b.vertex_agent import _extract_raw_terms
+
+    assert _extract_raw_terms(None) == []
+    assert _extract_raw_terms("") == []
+
+
+def test_chapters_containing_finds_matching_index():
+    from publishr_agents.mode_b.vertex_agent import _chapters_containing
+
+    chapters = [
+        {"no": "はじめに", "title": "はじめに", "text": "一般的な導入文。"},
+        {"no": "1章", "title": "第1章", "text": "健全なA社は…という説明。"},
+        {"no": "おわりに", "title": "おわりに", "text": "まとめ。"},
+    ]
+    assert _chapters_containing(chapters, ["A社"]) == [2]
+    assert _chapters_containing(chapters, []) == []
+    assert _chapters_containing(chapters, ["存在しない語"]) == []
+
+
+def test_mechanical_override_forces_revise_when_raw_term_survives():
+    """judge が approve でも、読者プロファイル由来の固有名詞が本文に残っていれば revise へ強制する
+    （p1: 編集長が一度「A社」漏れを指摘したのに次ラウンドで見逃して承認した実例の再発防止）。"""
+    from publishr_agents.mode_b.vertex_agent import _mechanical_override
+    from publishr_schema.agent_io import BodyVerdict
+
+    chapters = [{"no": "1章", "title": "第1章", "text": "健全なA社は…という説明。"}]
+    verdict = BodyVerdict(score=90, decision="approve", weak_chapters=[], editor_feedback=None)
+
+    overridden = _mechanical_override(verdict, chapters, ["A社"])
+    assert overridden.decision == "revise"
+    assert overridden.weak_chapters == [1]
+    assert "A社" in overridden.editor_feedback
+
+
+def test_mechanical_override_noop_when_no_raw_terms_present():
+    from publishr_agents.mode_b.vertex_agent import _mechanical_override
+    from publishr_schema.agent_io import BodyVerdict
+
+    chapters = [{"no": "1章", "title": "第1章", "text": "型へ一般化された説明。"}]
+    verdict = BodyVerdict(score=90, decision="approve", weak_chapters=[], editor_feedback=None)
+
+    unchanged = _mechanical_override(verdict, chapters, ["A社"])
+    assert unchanged is verdict  # 変更なし・同一オブジェクトを返す
+
+
 def test_body_loop_up_to_three_rounds():
     """最高3R: 初稿→2回改稿で3ラウンド到達し承認（編集長⇄著者の差し戻しが複数回）。"""
     book = _book()
