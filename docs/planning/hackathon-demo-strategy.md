@@ -1,8 +1,18 @@
 # ハッカソン提出・審査デモ方針（無認証公開＋ライブ生成のキャップ運用）
 
-> 作成: 2026-06-28 ／ 最終更新: 2026-06-30 ／ 対象: DevOps × AI Agent Hackathon（Findy）提出〜審査
+> 作成: 2026-06-28 ／ 最終更新: 2026-07-01 ／ 対象: DevOps × AI Agent Hackathon（Findy）提出〜審査
 > 結論: **「無認証の公開ショーケース（佐倉）＋ 匿名でも押せるライブ生成ボタン（厳格にキャップ）」**。
 > OAuthはTestingのまま。審査員に自分のGoogle連携はさせない。コストは多層キャップ＋Cloud Billingで$50前後に固定。
+
+> **実装現状（2026-07-01）**: PR #96（無認証ショーケース）・#97（レートガード）ともに **main マージ・本番デプロイ済み**。
+> - ✅ **稼働中**: 無認証の読み取り専用ショーケース。審査員はログイン無しで佐倉の書店 / 3企画(reject_log) / 入荷理由を閲覧・読書できる（実機で 200 / CORS許可 / bffビルド反映 / BFFデータ 佐倉published 20冊 を確認）。
+> - 😴 **dormant（コード反映済・未点火）**: ライブ生成ボタン＋日次レートガード。`NEXT_PUBLIC_DEMO_LIVE_GEN` 未設定＋caps=0＝**ボタン非表示・レート無効＝晒されない**。デモ当日に env で点火する。
+> - **1冊化**: `PUBLISHR_SET_MAX_BOOKS` キルスイッチ実装済（既定=全冊・非破壊／点火時 `=1`）。
+> - **残タスク**: C（/connect導線外し）／F（締切前の佐倉プール生成）／ブラウザ目視確認／当日の env 点火＋通しテスト。
+>
+> **点火チェックリスト（デモ当日・全部同時に）**: `web: NEXT_PUBLIC_DEMO_LIVE_GEN=1` ／ `Cloud Run: PUBLISHR_DEMO_RATE_GLOBAL_CAP=7 / PUBLISHR_DEMO_RATE_PER_CLIENT_CAP=3 / PUBLISHR_SET_MAX_BOOKS=1` ／ `GCP: Cloud Billing 予算上限` ／ `Scheduler: honmei/serendipity 一時停止`。
+>
+> 環境: web=`publishr--publishr-498123.asia-east1.hosted.app`（App Hosting・`NEXT_PUBLIC_DATA_SOURCE=bff`）／ BFF=`publishr-api`(asia-northeast1)／ demo_uid=`5JLLGOc3rpXiGN9KXmsISBNAKty2`（佐倉）。関連コード: `services/demo_rate_limit.py`・`data/config.ts`(DEMO_OWNER_UID / getDemoClientId / demoLiveGenEnabled)・`account/page.tsx`・`mode_a.py`(max_books)。
 
 ---
 
