@@ -79,3 +79,12 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  # --- ②G デモ公開: 無認証ショーケースで「今すぐ企画」ボタンを開放（=1）。押下＝実Vertex
+  #     ライブ生成。バックエンドの日次レートガード（PUBLISHR_DEMO_RATE_*・Cloud Run 設定済）＋
+  #     Cloud Billing 予算上限（要設定）とセットで多層防御。OFF に戻すなら "0" にして再デプロイ。 ---
+  - variable: NEXT_PUBLIC_DEMO_LIVE_GEN
+    value: "1"
+    availability:
+      - BUILD
+      - RUNTIME
