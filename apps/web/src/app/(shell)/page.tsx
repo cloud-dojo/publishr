@@ -165,13 +165,38 @@ export default function HomePage() {
     <>
       <Topbar
         greeting={
-          <>
-            {greeting}、<b>{readerName}</b> さん。
-          </>
+          dataSource === "bff" ? (
+            // 無認証ショーケース: 「ようこそ、佐倉さん」は viewer=佐倉 に読まれ誤解を生むため、
+            // 「佐倉さんの書店（デモ）」＝閲覧者中立の表現にする。
+            <>
+              <b>{readerName}</b> さんの書店（デモ）
+            </>
+          ) : (
+            <>
+              {greeting}、<b>{readerName}</b> さん。
+            </>
+          )
         }
       />
 
       <div className="home-page">
+        {/* デモ文脈バナー（bff・無認証時のみ）: 「佐倉って誰？」を価値説明に変える。
+            佐倉=サンプルユーザー、並ぶ本は AI が彼女の Google 観測から企画・入荷したもの、と明示。 */}
+        {dataSource === "bff" && (
+          <div
+            style={{
+              margin: "0 0 1rem",
+              padding: "0.7rem 1rem",
+              borderRadius: 10,
+              background: "var(--color-surface-alt, #f5f0e6)",
+              border: "1px solid var(--color-border, #e2dac9)",
+              fontSize: "0.85rem",
+              lineHeight: 1.6,
+            }}
+          >
+            <b>デモ：{readerName}さんの書店</b> — Publishr がこのユーザーの Google（Drive・カレンダー・タスク）を観測し、AIが3案から選んで企画・入荷した本です。
+          </div>
+        )}
         <section className="page-hero">
           <div className="ph-eyebrow">Your bookstore</div>
           <h1>
