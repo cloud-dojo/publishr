@@ -8,7 +8,7 @@ import type {
   User,
 } from "@publishr/shared-schema";
 
-import { apiUrl, timing } from "./config";
+import { apiUrl, DEMO_OWNER_UID, DEMO_USER_ID, getDemoClientId, timing } from "./config";
 import { BaseProvider } from "./provider";
 
 async function jget<T>(path: string): Promise<T> {
@@ -36,12 +36,19 @@ export class BffProvider extends BaseProvider {
       jget<Book[]>("/books"),
       jget<Plan[]>("/plans"),
       jget<Persona[]>("/personas"),
-      jget<User>("/users/u_sakura").catch(() => null),
+      // 実デモ owner（佐倉=demo_uid）のユーザーを読む。旧 "u_sakura" は Firestore 未存在で
+      // 挨拶/プロフィールが空になっていた（uid不整合）。
+      jget<User>(`/users/${DEMO_OWNER_UID}`).catch(() => null),
     ]);
     books.forEach((b) => this.books.set(b.id, b));
     plans.forEach((p) => this.plans.set(p.id, p));
     personas.forEach((p) => this.personas.set(p.id, p));
-    if (user) this.users.set(user.id, user);
+    if (user) {
+      this.users.set(user.id, user);
+      // 無認証ショーケースのページは getUser(uid ?? DEMO_USER_ID) で引くため、
+      // DEMO_USER_ID キーにも同じ佐倉ユーザーを載せて解決できるようにする。
+      this.users.set(DEMO_USER_ID, user);
+    }
   }
 
   private async refreshBooks(): Promise<void> {
@@ -109,7 +116,12 @@ export class BffProvider extends BaseProvider {
   }
 
   async runPipeline(userId: string, themeKind?: string): Promise<void> {
-    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", { userId, themeKind });
+    await jpost<{ ok: boolean; booksAdded: number }>("/api/trigger/planning", {
+      userId,
+      themeKind,
+      // ②G: 無認証ライブ生成の per-client 日次上限の計数単位。
+      clientId: getDemoClientId(),
+    });
     await this.refreshBooks();
   }
 }

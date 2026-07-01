@@ -149,6 +149,25 @@ def _persona_for_plan(plan: Plan, base: Book) -> Persona:
     return personas[base.author_persona_id]
 
 
+def _normalize_agenda_no(no: str, i: int) -> str:
+    raw = no.strip()
+    if raw in {"序", "序章", "はじめに", "まえがき"}:
+        return "はじめに"
+    if raw in {"終", "終章", "おわりに", "あとがき", "最後に"}:
+        return "おわりに"
+    if raw.isdigit():
+        return f"{int(raw)}章"
+    return raw or f"{i + 1}章"
+
+
+def _is_intro_item(item: AgendaItem) -> bool:
+    return item.no == "はじめに" or item.title in {"はじめに", "まえがき", "序章"}
+
+
+def _is_outro_item(item: AgendaItem) -> bool:
+    return item.no == "おわりに" or item.title in {"おわりに", "あとがき", "終章", "最後に"}
+
+
 def _agenda_from_outline(plan: Plan, base: Book) -> list[AgendaItem]:
     desc_by_title = {item.title: item.desc for item in base.agenda}
     items: list[AgendaItem] = []
@@ -156,16 +175,29 @@ def _agenda_from_outline(plan: Plan, base: Book) -> list[AgendaItem]:
     for i, outline in enumerate(plan.agenda_outline):
         no, _, title = outline.partition(":")
         title = title.strip() or outline
+        label = _normalize_agenda_no(no, i)
+        display_title = label if label in {"はじめに", "おわりに"} else title
         locked = i >= max(2, last_index - 1)
         items.append(
             AgendaItem(
-                no=no.strip() or f"{i + 1:02d}",
-                title=title,
-                desc=desc_by_title.get(title, plan.core_message if i == 0 else plan.differentiator),
+                no=label,
+                title=display_title,
+                desc=desc_by_title.get(
+                    title,
+                    title
+                    if label in {"はじめに", "おわりに"}
+                    else (plan.core_message if i == 0 else plan.differentiator),
+                ),
                 # MVPでは未執筆の後半章をロックして、予約後に開く体験を残す。
                 locked=locked,
                 note="★ いちおし" if "権限の設計図" in outline else ("🔒 執筆後" if locked else None),
             )
+        )
+    if not any(_is_intro_item(item) for item in items):
+        items.insert(0, AgendaItem(no="はじめに", title="はじめに", desc="この本の入口"))
+    if not any(_is_outro_item(item) for item in items):
+        items.append(
+            AgendaItem(no="おわりに", title="おわりに", desc="明日からの最初の一歩", locked=last_index >= 2)
         )
     return items
 

@@ -53,6 +53,14 @@ def test_each_book_draft_has_seven_fields():
         assert d.preface_sample    # ⑦ はじめに
 
 
+def test_agenda_has_intro_numbered_chapters_and_outro():
+    results = run_preview_deterministic(_plan(), _personas())
+    for r in results:
+        d = BookDraft.model_validate(r["bookDraft"])
+        labels = [item.chapter.split()[0] for item in d.agenda]
+        assert labels == ["はじめに", "1章", "2章", "3章", "おわりに"]
+
+
 def test_verdict_validates_and_persona_linked():
     results = run_preview_deterministic(_plan(), _personas())
     persona_ids = {p.persona_id for p in _personas()}

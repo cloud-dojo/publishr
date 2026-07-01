@@ -52,6 +52,38 @@ def _max_chapters() -> int:
         return _DEFAULT_MAX_CHAPTERS
 
 
+def _is_intro(no: str, title: str) -> bool:
+    return no in {"はじめに", "序章", "序", "まえがき"} or title in {"はじめに", "まえがき"}
+
+
+def _is_outro(no: str, title: str) -> bool:
+    return no in {"おわりに", "終章", "終", "あとがき", "最後に"} or title in {"おわりに", "あとがき", "最後に"}
+
+
+def _display_no(no: str) -> str:
+    raw = no.strip()
+    if raw.isdigit():
+        return f"{int(raw)}章"
+    return raw
+
+
+def _normalize_chapter(a: Any) -> Any:
+    if _is_intro(a.no, a.title):
+        return a.model_copy(update={"no": "はじめに", "title": a.title if a.title != "はじめに" else "はじめに"})
+    if _is_outro(a.no, a.title):
+        return a.model_copy(update={"no": "おわりに", "title": a.title if a.title != "おわりに" else "おわりに"})
+    return a.model_copy(update={"no": _display_no(a.no)})
+
+
+def _select_chapters(book: Book) -> list[Any]:
+    """はじめに＋最大N番号章＋おわりにを採用する。Nは番号章だけに適用する。"""
+    agenda = list(book.agenda or [])
+    intro = [a for a in agenda if _is_intro(a.no, a.title)][:1]
+    outro = [a for a in agenda if _is_outro(a.no, a.title)][:1]
+    numbered = [a for a in agenda if not _is_intro(a.no, a.title) and not _is_outro(a.no, a.title)]
+    return [_normalize_chapter(a) for a in (intro + numbered[:_max_chapters()] + outro)]
+
+
 def _resolve_volume(n_chapters: int) -> tuple[str, str]:
     """本全体の目安と各章の目標文字数を解決する（I-35・パラメータ化）。
 
@@ -207,7 +239,7 @@ async def run_body_loop_vertex_async(
     editor = build_editor_agent()
     persona_dump = persona.model_dump(by_alias=True) if persona else None
     profile_dump = reader_profile.model_dump(by_alias=True) if reader_profile else None
-    sel = list((book.agenda or [])[:_max_chapters()])
+    sel = _select_chapters(book)
     body_volume, target_chars = _resolve_volume(len(sel))
     book_dump = {
         "title": book.title,

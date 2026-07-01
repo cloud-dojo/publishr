@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # 配本パイプライン: True=4テーマ1-1-1-1のセット企画（予約制廃止改定 2026-06-23・既定）/
     # False=旧・単一テーマ（ロールバック用キルスイッチ）。
     set_pipeline: bool = Field(default=True, validation_alias="PUBLISHR_SET_PIPELINE")
+    # デモ用: set 配本で生成する冊数の上限（未指定=全テーマ＝従来どおり・非破壊）。
+    # PUBLISHR_SET_MAX_BOOKS=1 で「1冊だけ published 生成」＝ライブ生成のコスト削減（②G・デモ公開）。
+    set_max_books: int | None = Field(default=None, validation_alias="PUBLISHR_SET_MAX_BOOKS")
     # お気に入り著者の「再登板（新刊）」を1配本で起用する確率（%）。既定25（≒4冊中1冊の体感）。
     # システム側で決定的に抽選（seed=配本トークン）。0=無効。比率/ランダム性は将来A/B（mvp-scope §9）。
     favorite_feature_pct: int = Field(default=25, validation_alias="PUBLISHR_FAVORITE_FEATURE_PCT")
@@ -90,6 +93,12 @@ class Settings(BaseSettings):
     allowed_trigger_uids: list[str] = []
     # 同一 uid の連打を防ぐ最小間隔（秒）。mock は高速だが暴発防止に効かせる。
     trigger_min_interval_sec: float = 5.0
+    # デモ公開ライブ生成のレートガード（②G）。0=無効（mock/local 非破壊）。
+    # 本番デモは PUBLISHR_DEMO_RATE_GLOBAL_CAP=7 / PUBLISHR_DEMO_RATE_PER_CLIENT_CAP=3 を立てる。
+    demo_rate_global_cap: int = Field(default=0, validation_alias="PUBLISHR_DEMO_RATE_GLOBAL_CAP")
+    demo_rate_per_client_cap: int = Field(
+        default=0, validation_alias="PUBLISHR_DEMO_RATE_PER_CLIENT_CAP"
+    )
     # OAuth start / Drive フォルダ書込のレート制限（C4.9・同一 uid の最小間隔・秒）。
     auth_min_interval_sec: float = Field(
         default=3.0, validation_alias="PUBLISHR_AUTH_MIN_INTERVAL_SEC"

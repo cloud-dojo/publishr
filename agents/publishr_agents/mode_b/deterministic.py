@@ -16,9 +16,29 @@ _REVISE_MARK = "（改稿）"
 _MAX_CHAPTERS = 5
 
 
+def _is_intro(no: str, title: str) -> bool:
+    return no in {"はじめに", "序章", "序", "まえがき"} or title in {"はじめに", "まえがき"}
+
+
+def _is_outro(no: str, title: str) -> bool:
+    return no in {"おわりに", "終章", "終", "あとがき", "最後に"} or title in {"おわりに", "あとがき", "最後に"}
+
+
+def _display_no(no: str) -> str:
+    raw = no.strip()
+    if raw.isdigit():
+        return f"{int(raw)}章"
+    return raw
+
+
 def _select_chapters(book: Book) -> list[tuple[str, str, str]]:
-    """agenda から最大5章を採用（手動1冊スライス）。(no, title, desc)。"""
-    return [(a.no, a.title, a.desc) for a in (book.agenda or [])[:_MAX_CHAPTERS]]
+    """agenda から、はじめに＋最大5番号章＋おわりにを採用。(no, title, desc)。"""
+    agenda = list(book.agenda or [])
+    intro = [a for a in agenda if _is_intro(a.no, a.title)][:1]
+    outro = [a for a in agenda if _is_outro(a.no, a.title)][:1]
+    numbered = [a for a in agenda if not _is_intro(a.no, a.title) and not _is_outro(a.no, a.title)]
+    selected = intro + numbered[:_MAX_CHAPTERS] + outro
+    return [(a.no, a.title, a.desc) for a in selected]
 
 
 def _author_text(
@@ -26,8 +46,14 @@ def _author_text(
 ) -> str:
     """著者ペルソナを着た章本文（canned・決定的）。revised で弱章の改稿版。"""
     voice = persona.name if persona else "担当作家"
+    if _is_intro(no, title):
+        heading = "## はじめに"
+    elif _is_outro(no, title):
+        heading = "## おわりに"
+    else:
+        heading = f"## {_display_no(no)} {title}"
     text = (
-        f"## {no} {title}\n\n"
+        f"{heading}\n\n"
         f"{desc or title}。この章では、いま現場で起きていることを言語化し、次の一歩へ落とす。\n\n"
         f"――{voice} は、読者の局面に即して具体例を重ねていく。\n"
     )

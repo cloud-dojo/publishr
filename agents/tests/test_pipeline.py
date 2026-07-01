@@ -71,11 +71,14 @@ def test_author_agenda_uses_plan_and_persona_voice():
     result = run_pipeline("u_sakura")
     toi = next(b for b in result.books if b.plan_id == "plan_toi")
     assert "現場に答えがある" in toi.preface_sample
+    assert [item.no for item in toi.agenda] == ["はじめに", "1章", "2章", "3章", "4章", "おわりに"]
     assert [item.title for item in toi.agenda] == [
-        "指示は、現場を止める",
+        "はじめに",
         "「問い」の三つの型",
         "朝会を、問いの場に変える",
-        "問いが文化になるとき",
+        "フィードバックを問いに変える",
+        "任せる問いをチームに残す",
+        "おわりに",
     ]
 
 

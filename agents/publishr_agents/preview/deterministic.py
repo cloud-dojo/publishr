@@ -46,6 +46,10 @@ def _draft(plan: PlanProposal, persona: GeneratedPersona, profile: Optional[Read
             f"あなたの『{challenge[:18]}』に名指しで寄り添う「はじめに」。"
         )
 
+    agenda = [AgendaEntry(chapter="はじめに", summary="読者の局面に入り、この本の問いを開く")]
+    agenda.extend(AgendaEntry(chapter=f"{i}章 {s}", summary=s) for i, s in enumerate(outline, 1))
+    agenda.append(AgendaEntry(chapter="おわりに", summary="本全体を振り返り、明日からの最初の一歩へつなぐ"))
+
     return BookDraft(
         title=f"{plan.tentative_title}（{persona.name}）",
         subtitle=plan.core_message or plan.diff_from_market,
@@ -53,8 +57,8 @@ def _draft(plan: PlanProposal, persona: GeneratedPersona, profile: Optional[Read
         problem_to_solve=problem_to_solve,
         # ⑤ coreMessage（voiceStyle を前面に＝②観点）
         core_message=f"{plan.core_message}—{persona.voice_style}で迷いを判断に変える。",
-        # ⑥ agenda（章＋一行サマリー）
-        agenda=[AgendaEntry(chapter=f"第{i}章", summary=s) for i, s in enumerate(outline, 1)],
+        # ⑥ agenda（はじめに＋章＋おわりに）
+        agenda=agenda,
         preface_sample=preface_sample,
     )
 

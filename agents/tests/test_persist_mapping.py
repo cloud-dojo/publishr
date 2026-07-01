@@ -84,7 +84,8 @@ def test_book_carries_detail_and_cover():
     assert b0.delivery_reason  # 入荷理由（UIの reason フォールバック）
     assert b0.problem_to_solve and b0.core_message and b0.preface_sample
     assert b0.cover_variant == "b1"
-    assert b0.agenda and b0.agenda[0].title == "第1章" and b0.agenda[0].desc == "現状"
+    assert [item.no for item in b0.agenda] == ["はじめに", "1章", "2章", "おわりに"]
+    assert b0.agenda[1].title == "第1章" and b0.agenda[1].desc == "現状"
     # cover_url は埋まる本もある
     assert books[1].cover_url == ".dev-logs/covers/book_p2.png"
 
