@@ -62,7 +62,7 @@
 | ☑ | **Cloud Build↔GitHub接続方式** | G1-18 | ✅確定（6/5）＝**方式A（GitHub App直結）**。GitHub組織化→鉄田にオーナー権限付与で所有者依存が解消されるため、鉄田が GitHub App 直結で接続（旧推奨B=Actions主導は不採用）。現状トリガー未接続。実装はW4 |
 | ☑ | **OAuth公開ステータスの最終確認** | G1-19 | ✅確定（6/5）＝**Production維持**（Testingだとrefreshトークン7日失効で週次自律バッチが停止）。OAuth実装担当=一瀬へ認識共有済 |
 | ☑ | **Firebase App Hosting の GitHub連携**（フロント本番ホスティング） | G1-7 | ✅確定（6/5）＝フロント＝`apps/web` を App Hosting で公開。**組織移管（`cloud-dojo/publishr`）・鉄田オーナー権限は✅2026-06-05完了→鉄田が GitHub App 連携を実施**。設定値: live=`main`／root=`apps/web`／region=`asia-east1`／環境変数は `apps/web/apphosting.yaml` 済。鉄田準備(`apps/web/apphosting.yaml`・mockビルド)は**main マージ済み**(commit `29d5d3e`／旧PR #2=new-concept-v2統合で取込済)。残＝**鉄田が backend 作成＋GitHub App 連携→自動デプロイ→URL確認（W1）** |
-| ☐ | **フロント本接続の前提一式**（鉄田が一瀬から受領・C4.9） | G1-3/7 | フロント(`apps/web`)は **mock で実装済**（Auth/Firestoreプロバイダ含む・休眠中）。本接続(mock→firestore)に一瀬から次を受領: ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**API3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**。これらが揃えば `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続。※デプロイ前は鉄田が**ローカルUI仕上げ(C4.8・行ずれ等の修正)**を先行 |
+| ☑ | **フロント本接続の前提一式**（鉄田が一瀬から受領・C4.9） | G1-3/7 | フロント(`apps/web`)は **mock で実装済**（Auth/Firestoreプロバイダ含む・休眠中）。本接続(mock→firestore)に一瀬から次を受領: ①**Firebase Web設定値**(`NEXT_PUBLIC_FIREBASE_*`) ②**Firestoreセキュリティルールのデプロイ** ③**API3本**(reserve/OAuth/trigger)の**URL・CORS** ④**Firestore docが`@publishr/shared-schema`形で保存・`ownerUid`規約**。これらが揃えば `NEXT_PUBLIC_DATA_SOURCE=firestore` で本接続。※デプロイ前は鉄田が**ローカルUI仕上げ(C4.8・行ずれ等の修正)**を先行。**✅2026-06-07完了（wbs.md C4.9）＝`NEXT_PUBLIC_DATA_SOURCE=firestore`へ切替済み（2026-07-01 plan-audit棚卸しで反映）** |
 
 ---
 
