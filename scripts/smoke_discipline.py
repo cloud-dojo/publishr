@@ -831,7 +831,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     p = argparse.ArgumentParser(description="STEP1–5 プロンプト規律スモーク（決定的・$0）")
     p.add_argument("--role", required=True, help="registry のrole（plan_owner / plan_leader / sub_market 等）")
     p.add_argument("--input", required=True, help="被験者出力JSONのパス")
-    p.add_argument("--context", help="任意: input_plan/good_example/market_gap/theme_kind を持つJSON")
+    p.add_argument(
+        "--context",
+        help=(
+            "任意: input_plan/good_example/market_gap/theme_kind/raw_terms を持つJSON。"
+            "raw_terms は modeb_author の check_body_abstraction が生情報漏れを見る唯一の手がかり"
+            "（readerProfile/approvedPlan 由来の顧客名・実名・固有プロジェクト名の配列）。"
+            "渡し忘れると flags が常に空になり見た目上パスする＝毎回渡したか確認すること。"
+        ),
+    )
     p.add_argument("--json", action="store_true", help="機械可読JSONで出力")
     args = p.parse_args(argv)
 
