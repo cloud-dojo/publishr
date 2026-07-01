@@ -65,7 +65,7 @@
 | I-7 | favoriteAuthors の上限件数 | 🟡MVP10件上限 | 超過は古いものから削除 or UI制限【API §6-7】 |
 | I-8 | favoriteAuthors の参照方式 | 🟡コピー保持推奨 | name/style をコピーしorphan防止【FIRESTORE §5-6】 |
 | I-9 | 読書ログの置き場所（feedback集約 か logs/サブコレクション） | ✅確定（MTG 2026-06-05） | **`books/{bookId}.feedback` に集約（`{rating,wantsSequel,readPercent,dropped}`）／ハイライトのみサブコレクション** で確定→ ルールが `onlyChanged(['feedback'])` 1行で済む。滞在ログ(dwellSec)はMVP対象外【FIRESTORE §5-2】 |
-| I-10 | 本文(GCS)の保護（署名付きURL/IAM） | 🟡優先度中 | Firestoreルール範囲外。提出リポジトリに残すなら明記【FIRESTORE §5-3】 |
+| I-10 | 本文(GCS)の保護（署名付きURL/IAM） | ✅実装済（C3.3） | 非公開バケット`publishr-contents-498123`＋サーバ側read。`GET /api/books/{id}/body`（`apps/api/publishr_api/routers/api.py`）がFirebase IDトークンのuidと`book.owner_uid`を照合（不一致403）。署名URLはクライアントへ発行せずBFF経由で本文/表紙を配信。Firestoreルール範囲外だがAPI層で保護完了【FIRESTORE §5-3】 |
 | I-11 | personas 読み取りを全認証ユーザーに開放してよいか | 🟡MVPは可 | 商用化時に再検討【FIRESTORE §5-4】 |
 | I-12 | 編集長の本文ルーブリック（執筆品質の採点観点） | ✅確定 | **5観点で確定（2026-06-03）**：①構成の一貫性 ②各章の掴み（引き込み） ③読者状況への的中 ④著者ペルソナの一貫性 ⑤実践性・具体性（行動に落ちる・水増し検出）【AGENT §7】 |
 | I-13 | 実在著者モデル参照の知財リスク | 🟡架空化方針 | 実在著者は作風参考に留め、名前・経歴は架空。規約の知財条項も要確認【構想 §10-11・ARCH §12】 |

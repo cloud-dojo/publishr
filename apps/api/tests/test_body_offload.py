@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from publishr_api.deps import get_repository
 from publishr_api.main import app
 from publishr_api.repositories.mock_repository import MockRepository
+from publishr_api.routers.api import _uid_from_token
 from publishr_api.services import body_store, reservation_service
 
 client = TestClient(app)
@@ -100,3 +101,42 @@ def test_body_endpoint_rehydrates_from_store(monkeypatch):
 def test_body_endpoint_404_for_unknown_book():
     res = client.get("/api/books/does-not-exist/body")
     assert res.status_code == 404
+
+
+def test_body_endpoint_403_for_non_owner():
+    """所有者チェック（C3.3・I-10）: book.ownerUid が設定済みで要求 uid と不一致なら403。"""
+    repo = get_repository()
+    bid = _a_draft_id(repo)
+    reservation_service.reserve_now(repo, bid)
+    reservation_service.process_write_job(repo, bid)
+    book = repo.get_book(bid)
+    assert book is not None
+    book.owner_uid = "u_owner"
+    repo.upsert_book(book)
+
+    app.dependency_overrides[_uid_from_token] = lambda: "u_someone_else"
+    try:
+        res = client.get(f"/api/books/{bid}/body")
+    finally:
+        app.dependency_overrides.pop(_uid_from_token, None)
+    assert res.status_code == 403
+
+
+def test_body_endpoint_200_for_matching_owner():
+    """所有者一致なら通常どおり本文を返す。"""
+    repo = get_repository()
+    bid = _a_draft_id(repo)
+    reservation_service.reserve_now(repo, bid)
+    reservation_service.process_write_job(repo, bid)
+    book = repo.get_book(bid)
+    assert book is not None
+    book.owner_uid = "u_owner"
+    repo.upsert_book(book)
+
+    app.dependency_overrides[_uid_from_token] = lambda: "u_owner"
+    try:
+        res = client.get(f"/api/books/{bid}/body")
+    finally:
+        app.dependency_overrides.pop(_uid_from_token, None)
+    assert res.status_code == 200
+    assert res.json()["body"]

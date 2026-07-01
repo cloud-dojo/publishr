@@ -443,7 +443,7 @@ Publishr MVP（カテゴリWBS）
 |---|---|---|---|---|---|---|---|
 | C3.1 | Firestoreスキーマ＋セキュリティルール デプロイ | 設計したデータベースの保存形式とアクセスルールを、実際にクラウドへ反映する（設計はA2.5） | **鉄田** | W0（6/1–7）→**6/6完了** | B1.1 | ルール本文デプロイ（読書ログfeedback集約I-9・観測束ObservationBundleのmatch追加I-19＝MTG 2026-06-05で確定済を反映） (旧WP3.1) | ✅**2026-06-06完了**（firebase.json・.firebaserc・firestore.rules・firestore.indexes.json 生成→`firebase deploy --only firestore:rules` 本番デプロイ済み）／**2026-06-07：`users/{uid}` update を『本人なら initialProfile/favoriteAuthors 変更可』に緩和し再デプロイ**（旧「initialProfileは初回のみ」制約が登録・プロフィール編集を黙ってpermission denied化していた・I-6） |
 | C3.2 | 複合インデックス列挙＋firestore.indexes.json | 一覧画面の検索が速く正しく動くよう、DBに索引を登録する（無いと実行時エラーになる） | **鉄田** | W2–W3（6/15–28） | C4.2,C4.7 | 実行時エラー回避（I-15） (旧WP3.2) | 🔜着手前（C4のクエリが固まり次第追記・firestore.indexes.json骨格は✅） |
-| C3.3 | GCS本文保護（署名付きURL or IAM） | 本文ファイルを他人が読めないよう、アクセス制限をかける | **鉄田** | W3（6/22–28） | C2.3 | 他者本文を読めない（I-10） (旧WP3.3) | 🔜着手前 |
+| C3.3 | GCS本文保護（署名付きURL or IAM） | 本文ファイルを他人が読めないよう、アクセス制限をかける | **鉄田** | W3（6/22–28） | C2.3 | 他者本文を読めない（I-10） (旧WP3.3) | ✅完了（PR#43前後で本番live・冒頭メモ参照）: `apps/api/publishr_api/routers/api.py` の `GET /api/books/{id}/body` がFirebase IDトークン検証uidと`book.owner_uid`を照合（不一致403）、非公開バケット`publishr-contents-498123`からサーバ側readでhydrate（署名URL発行なし・GCSオブジェクト非公開）。`test_body_offload.py`でカバー。表紙も同型実装（所有者チェックは非機微画像のため意図的に省略） |
 | C3.4 | 観測ログ保存先コレクション（`users/{uid}/observations/{YYYY-MM-DD}`） | STEP0で集めた観測データを保存する場所（コレクション）を用意する | **鉄田** | W0（6/6完了・C3.1に内包） | C1.1.1 | STEP0が書込可＝`users/{uid}/observations/{YYYY-MM-DD}` サブコレクション（日付docID＝冪等・フル束インライン・サーバ書込/本人read／I-19＝MTG 2026-06-05で確定） (旧WP3.4) | ✅完了（C3.1に内包）firestore.rules の `match /users/{uid}/observations/{date}` で owner読み・書込み=false（サーバ専用）を宣言済み |
 | C3.5 | **BFF（apps/api）の Firestore リポジトリ実装＋mock→firestore切替** | `apps/api` は `protocol.py`＋`mock_repository.py` のリポジトリパターンで実装済み。`RepositoryProtocol` の Firestore 実装を足し、mock から切替える（＝抜け漏れ補完・2026-06-05起票） | **鉄田** | W0（6/6完了） | C3.1 | Firestore実装を追加し `DATA_SOURCE=firestore` で起動可（フロントC4.9・モードB C2.x の本接続前提）。mock側✅ | ✅**2026-06-06完了**（`firestore_repository.py` 実装・`firebase-admin>=6.5` 追加・`deps.py`でDATA_SOURCE切替・`uv run python -m pytest` 11件グリーン） |
 
@@ -510,7 +510,7 @@ Publishr MVP（カテゴリWBS）
 | C0 ローカル基盤(H0) | **C0.1/C0.2✅** | | | | | |
 | C1 エージェント(モードA) | **C1.0.1✅** | **C1.1-C1.3✅** | **C1.4-C1.7✅**※ | | | |
 | C2 エージェント(モードB) | | **✅C2.1-2.3（前倒し・6/9）** | | ~~C2.1-2.3~~ | | |
-| C3 データ基盤（鉄田） | **✅C3.1/3.4/3.5**（6/6完了） | | C3.2 | C3.3 | | |
+| C3 データ基盤（鉄田） | **✅C3.1/3.4/3.5**（6/6完了） | | C3.2 | **✅C3.3** | | |
 | C4 フロント | | | C4.1-4.3 | C4.4-4.6 | C4.7 | |
 | C5 品質・観測・運用 | C0.1(mock Eval)✅ | C5.1/5.7/5.8 | C5.2/5.4 | C5.9 | C5.3(GEAP)/5.5/5.6 | |
 | C6 デモ・提出 | | C6.1 | | | C6.4 | C6.2/6.3/6.5/6.6/**6.7** |
