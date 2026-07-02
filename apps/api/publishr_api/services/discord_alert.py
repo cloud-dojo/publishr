@@ -43,13 +43,18 @@ def format_discord_content(incident: dict[str, Any]) -> str:
     return content
 
 
+# Discord(Cloudflare) は既定の `Python-urllib/x.y` UA を bot として 403（Cloudflare error 1010）で弾く。
+# 明示的な User-Agent を必ず付ける（付けないと中継が全く届かない）。
+_USER_AGENT = "Publishr-Alert-Relay/1.0 (+https://github.com/cloud-dojo/publishr)"
+
+
 def post_to_discord(webhook_url: str, content: str) -> bool:
     """Discord webhook へ content を POST する（best-effort・stdlib のみ）。成否を返す。"""
     data = json.dumps({"content": content}).encode("utf-8")
     req = urllib.request.Request(  # noqa: S310 — 送信先は運用が設定する Discord webhook（固定スキーム）
         webhook_url,
         data=data,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "User-Agent": _USER_AGENT},
         method="POST",
     )
     try:

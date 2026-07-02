@@ -123,3 +123,31 @@ def test_format_discord_content_truncates_long_summary():
     incident = {"summary": "あ" * 5000, "policy_name": "p", "state": "open"}
     content = discord_alert.format_discord_content(incident)
     assert len(content) <= 2000
+
+
+def test_post_to_discord_sets_non_default_user_agent(monkeypatch):
+    """Discord(Cloudflare) は既定 `Python-urllib` UA を 403(1010) で弾くため、明示 UA が必須。"""
+    import urllib.request
+
+    captured: dict = {}
+
+    class _Resp:
+        status = 204
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_a):
+            return False
+
+    def _fake_urlopen(req, timeout=None):
+        captured["req"] = req
+        return _Resp()
+
+    monkeypatch.setattr(urllib.request, "urlopen", _fake_urlopen)
+    ok = discord_alert.post_to_discord("https://discord.test/webhooks/1/x", "hi")
+
+    assert ok is True
+    ua = captured["req"].get_header("User-agent")
+    assert ua, "User-Agent が未設定＝Cloudflare 1010 で弾かれる"
+    assert "urllib" not in ua.lower()  # 既定の Python-urllib ではない
