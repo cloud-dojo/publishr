@@ -151,6 +151,21 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "PUBLISHR_COVER_BUCKET"
         value = "publishr-contents-498123"
       }
+      # ── デモ公開のライブ生成ガード（hackathon-demo-strategy）。live に gcloud で直接投入されていた
+      #    ドリフトを terraform に明文化＝以後の apply が誤って剥がさないようにする（7/2 発見）。
+      #    日次上限7 / 匿名1人あたり3 / 1配本で published 生成は1冊。
+      env {
+        name  = "PUBLISHR_DEMO_RATE_GLOBAL_CAP"
+        value = "7"
+      }
+      env {
+        name  = "PUBLISHR_DEMO_RATE_PER_CLIENT_CAP"
+        value = "3"
+      }
+      env {
+        name  = "PUBLISHR_SET_MAX_BOOKS"
+        value = "1"
+      }
       env {
         name  = "PUBLISHR_BODY_CHARS_PER_CHAPTER"
         value = "1500"
@@ -250,10 +265,38 @@ resource "google_cloud_run_v2_service" "api" {
           }
         }
       }
+      # 本文未承認publishedアラートの Discord 通知先 URL（値は Secret Manager へ手動投入・git非公開）。
+      env {
+        name = "PUBLISHR_DISCORD_ALERT_WEBHOOK_URL"
+        value_source {
+          secret_key_ref {
+            secret  = "PUBLISHR_DISCORD_ALERT_WEBHOOK_URL"
+            version = "latest"
+          }
+        }
+      }
+      # 中継 endpoint 保護トークン（monitoring.tf の random_password 由来・版まで terraform 生成）。
+      # secret_key_ref にするのは、平文envに sensitive を載せると plan の env 差分が全マスクされ
+      # 不可読になるのを避けるため。チャネルURLの ?token= と同値を照合する。
+      env {
+        name = "PUBLISHR_MONITORING_WEBHOOK_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = "PUBLISHR_MONITORING_WEBHOOK_TOKEN"
+            version = "latest"
+          }
+        }
+      }
     }
   }
 
-  depends_on = [google_project_service.apis]
+  # secret 箱（bff）と中継トークンの版は env の secret_key_ref が参照するため、サービス更新前に
+  # 存在している必要がある（トークンは版まで terraform 生成／Discord URL の版は手動投入・下記 runbook）。
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret.bff,
+    google_secret_manager_secret_version.monitoring_webhook_token,
+  ]
 
   lifecycle {
     # イメージは gcloud run deploy --source / CI(B3.2) が更新するため terraform 管理外。

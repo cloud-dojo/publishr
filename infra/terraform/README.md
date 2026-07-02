@@ -60,9 +60,32 @@ terraform plan   # ← no changes になるよう .tf を実態に合わせる
 
 import で差分が出たら **実態に合わせて .tf を直す**（terraform を正とせず、まず一致させる）。差分ゼロにできたら以後は terraform を正本にする。
 
+### C. Discord アラート中継の有効化（本文未承認published）
+
+`monitoring.tf` の alert policy → `google_monitoring_notification_channel.discord` → publishr-api の
+`/api/monitoring/discord-alert` → Discord へ転送する。Discord webhook URL は Secret Manager に**手動投入**する
+（git/state/plan に出さない）。Cloud Run の `secret_key_ref version=latest` は版が無いと revision 起動に失敗するため、
+**箱を作る → 値を投入 → 本 apply** の順で行う:
+
+```bash
+cd infra/terraform
+# 1) secret の箱だけ先に作る（URL 用。既存 secret は no-op）
+terraform apply -target=google_secret_manager_secret.bff
+# 2) Discord webhook URL を投入（Discord 側で Reset 発行した新URL・チャットや git には出さない）
+printf '%s' '<Discord webhook URL>' | \
+  gcloud secrets versions add PUBLISHR_DISCORD_ALERT_WEBHOOK_URL --data-file=- --project=publishr-498123
+# 3) 本 apply（通知チャネル・保護トークン・Cloud Run env を反映）
+terraform apply
+```
+
+中継トークン（`PUBLISHR_MONITORING_WEBHOOK_TOKEN`）は `random_password` で版まで terraform が生成するので手動投入不要。
+endpoint は `?token=` 不一致を 401 で弾き、`PUBLISHR_DISCORD_ALERT_WEBHOOK_URL` 未設定なら no-op（ローカル/mock は無効）。
+中継 endpoint を含むイメージがデプロイ済みであること（`gcloud run deploy --source` / CI）。
+
 ## 設計メモ
 
 - **URL 自己参照回避**: `PUBSUB_PUSH_AUDIENCE` 等は Cloud Run の自 URL を必要とするが、リソース定義内での自己参照は循環するため `locals.base_url`（project-number 形式）で決定的に組み立てている。
 - **mock 既定の徹底**: `PUBLISHR_LLM=mock`／`DATA_SOURCE=firestore`。実 LLM/Imagen（課金）は env を手動で `vertex` に上げたときだけ。CLAUDE.md のコスト規律に従う。
 - **冪等性 I-20**: push sub は `retry_policy` でリトライ。二重配信はワーカー側の冪等ガード（`process_write_job`：writeable 状態でなければ skip）で吸収する前提。
 - **セキュリティ（C4.9 で強化予定）**: 現状 Cloud Run は `allUsers` invoker（web 直叩きのため）。push/trigger は OIDC で別途保護。本番は「トークン由来 owner・allowlist・fail-closed」を C4.9 で入れる。
+- **env ドリフトの明文化（7/2）**: デモ公開のライブ生成ガード（`PUBLISHR_DEMO_RATE_GLOBAL_CAP=7`／`PUBLISHR_DEMO_RATE_PER_CLIENT_CAP=3`／`PUBLISHR_SET_MAX_BOOKS=1`）は live に gcloud で直接投入されていて main.tf に無かった＝**任意の `terraform apply` がこれらを剥がす**状態だった。Discord 中継 PR で main.tf に取り込み、apply が誤って消さないようにした。Cloud Run の env は terraform を正本にする（今後の live 直変更は必ず .tf にも反映）。

@@ -8,11 +8,12 @@
 locals {
   # BFF が参照する secret 名（= secret_id）。全て automatic replication。
   bff_secrets = toset([
-    "GOOGLE_OAUTH_CLIENT_SECRET",  # OAuth クライアントシークレット
-    "PUBLISHR_OAUTH_STATE_SECRET", # OAuth state（CSRF/uid 紐付け）の HMAC 署名鍵
-    "LANGFUSE_HOST",               # Langfuse トレーシング接続先
-    "LANGFUSE_PUBLIC_KEY",         # Langfuse 公開鍵
-    "LANGFUSE_SECRET_KEY",         # Langfuse 秘密鍵
+    "GOOGLE_OAUTH_CLIENT_SECRET",         # OAuth クライアントシークレット
+    "PUBLISHR_OAUTH_STATE_SECRET",        # OAuth state（CSRF/uid 紐付け）の HMAC 署名鍵
+    "LANGFUSE_HOST",                      # Langfuse トレーシング接続先
+    "LANGFUSE_PUBLIC_KEY",                # Langfuse 公開鍵
+    "LANGFUSE_SECRET_KEY",                # Langfuse 秘密鍵
+    "PUBLISHR_DISCORD_ALERT_WEBHOOK_URL", # 本文未承認publishedアラートの Discord 通知先（7/2）
   ])
 }
 
