@@ -4,22 +4,16 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import type { Granularity, HighlightColor, ReadingAnnotation } from "@publishr/shared-schema";
+import type { HighlightColor, ReadingAnnotation } from "@publishr/shared-schema";
 
 import { MermaidDiagram } from "@/components/book/MermaidDiagram";
 import { Topbar } from "@/components/shell/Topbar";
 import { BackLink } from "@/components/shell/NavigationHistory";
-import { applyGranularity, parseBook, splitChapter } from "@/data/bookText";
+import { parseBook, splitChapter } from "@/data/bookText";
 import { useActions, useProvider } from "@/data/hooks";
 
 const GOOD_REASONS = ["参考になった", "共感した", "実践したい", "もっと知りたい"];
 const BAD_REASONS = ["一般論すぎる", "自分には合わない", "内容が難しい", "文体が読みづらい"];
-const GRANULARITY_LABELS: Record<Granularity, string> = {
-  full: "フル",
-  summary: "要約",
-  excerpt: "ここだけ",
-};
-const SEGMENTS: Granularity[] = ["full", "summary"];
 const FONT_STEPS = [
   { label: "小", scale: 0.88 },
   { label: "中", scale: 1 },
@@ -142,6 +136,9 @@ export default function ReaderPage() {
     const cw = clip.clientWidth;
     const n = cw >= SPREAD_MIN ? 2 : 1;
     const colW = Math.max(1, Math.floor((cw - (n - 1) * PAGE_GAP) / n));
+    // Mermaid 図解の高さ上限＝ページ列高から図の上下マージン分を差し引いた値。
+    // 縦長 flowchart が列高を超えて下端で見切れるのを防ぐ（CSS が --rd-page-h を参照）。
+    flow.style.setProperty("--rd-page-h", `${Math.max(160, clip.clientHeight - 60)}px`);
     flow.style.width = `${cw}px`;
     flow.style.columnCount = `${n}`;
     flow.style.columnWidth = `${colW}px`;
@@ -280,7 +277,7 @@ export default function ReaderPage() {
   const persona = provider.getPersona(book.authorPersonaId);
   const annotations = draftAnnotations ?? book.annotations ?? [];
   const allBlocks = parseBook(book.body, book.prefaceSample);
-  const blocks = applyGranularity(allBlocks, book.granularity);
+  const blocks = allBlocks;
 
   const leftCol = view * colsPerView;
   const leftPage = leftCol + 1;
@@ -436,17 +433,6 @@ export default function ReaderPage() {
           </div>
         </div>
         <div style={{ marginLeft: "auto" }} className="row gap12">
-          <div className="segment">
-            {SEGMENTS.map((g) => (
-              <button
-                key={g}
-                className={book.granularity === g ? "on" : ""}
-                onClick={() => updateReadingState(book.id, { granularity: g, annotations })}
-              >
-                {GRANULARITY_LABELS[g]}
-              </button>
-            ))}
-          </div>
           <div className="segment aa-segment" title="文字サイズ">
             <span className="aa-mark">Aa</span>
             {FONT_STEPS.map((f, i) => (

@@ -166,13 +166,17 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "PUBLISHR_SET_MAX_BOOKS"
         value = "1"
       }
+      # 重厚な ~20p を狙う（各章~2,000字×番号章4＝はじめに含め約6章）。
+      # 実Vertexサニティ(run_body_once)で 2,500字/章は生成が気前よく伸び ~30p 相当と判明したため
+      # 2,000 に較正。生成時間・コスト増と timeout_seconds(prod 300s) に注意。
+      # 微調整は live 1冊生成の実ページ数を見て env 更新（gcloud run services update・再デプロイ不要）。
       env {
         name  = "PUBLISHR_BODY_CHARS_PER_CHAPTER"
-        value = "1500"
+        value = "2000"
       }
       env {
         name  = "PUBLISHR_BODY_MAX_CHAPTERS"
-        value = "3"
+        value = "4"
       }
       env {
         name  = "PUBLISHR_BODY_EDIT_ROUNDS"
