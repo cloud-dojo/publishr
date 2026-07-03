@@ -964,11 +964,13 @@ mark.hl:not(.hl-yellow):not(.hl-blue):not(.hl-pink) { background: linear-gradien
    超えると下端で見切れるため、図解は利用可能なページ高さ（--rd-page-h・reader が算出）
    に収まるよう viewBox 比率を保って縮小する。 */
 .mermaid-wrap { margin: 18px 0; break-inside: avoid; text-align: center; }
-/* 図が横に溢れる場合はクリップせず横スクロールで逃がす（縦は列高で制御）。 */
+/* 横長図は等倍で描画され列幅を超えるため、クリップせず横スクロールで逃がす
+   （縦長/通常図は width:100% で収まりスクロールは出ない）。 */
 .mermaid-diagram { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
-/* width:100% で列幅いっぱいに引き伸ばし（小さすぎ防止）、max-height で
-   viewBox 比率を保ったまま列高に収める（縦見切れ防止）。 */
-.mermaid-diagram svg { display: block; margin: 0 auto; width: 100%; height: auto; max-width: 100%; max-height: var(--rd-page-h, 56vh); }
+/* 通常/縦長図：width:100% で列幅いっぱいに引き伸ばし（小さすぎ防止）、max-height で
+   viewBox 比率を保ったまま列高に収める（縦見切れ防止）。横長図はサイズを reader が
+   等倍でインライン指定するため、ここでの width/height 指定は当てない。 */
+.mermaid-diagram svg { display: block; margin: 0 auto; max-height: var(--rd-page-h, 56vh); }
 .mermaid-error { font-size: .82em; color: var(--brass); text-align: center; padding: 12px; opacity: .75; }
 
 .rd-nav { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--ink-800); color: var(--gold-bright); font-size: 18px; line-height: 1; cursor: pointer; display: grid; place-items: center; z-index: 4; transition: border-color .2s, box-shadow .2s, opacity .2s; }
