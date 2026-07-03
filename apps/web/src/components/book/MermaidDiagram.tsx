@@ -62,15 +62,32 @@ export function MermaidDiagram({ chart }: { chart: string }) {
       }
 
       containerRef.current.innerHTML = svg;
-      // 固定の width/height 属性を外し、列幅いっぱい＋ページ高上限で
-      // viewBox 比率を保って拡縮させる（小さすぎ／縦見切れの両方を防ぐ）。
       const svgEl = containerRef.current.querySelector("svg");
       if (svgEl) {
         svgEl.removeAttribute("height");
         svgEl.removeAttribute("width");
-        svgEl.style.width = "100%";
-        svgEl.style.height = "auto";
-        svgEl.style.maxWidth = "100%";
+        // viewBox の自然サイズ（w×h・px相当）を取り、列幅に対して大きすぎるか判定する。
+        const [, , w, h] = (svgEl.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
+        const colW = containerRef.current.clientWidth; // ≒ 段組み1列の幅（≈400px）
+        // 自然幅が列幅の 1.6 倍を超える図は width:100% で潰すと文字が読めなくなる
+        // （縮小率<0.6→本文比で極小）。等倍で描き、列高を超える分だけ縦を縮小し、
+        // はみ出す横幅は .mermaid-diagram の overflow-x で横スクロールさせる。
+        // figure は列幅のままなので段組みのページ送りは壊れない。
+        const tooBig = w > 0 && h > 0 && colW > 0 && w > colW * 1.6;
+        if (tooBig) {
+          const pageH = parseFloat(
+            getComputedStyle(containerRef.current).getPropertyValue("--rd-page-h"),
+          );
+          const dispH = pageH > 0 && h > pageH ? pageH : h; // 高い図だけページ高に縮小
+          svgEl.style.height = `${dispH}px`;
+          svgEl.style.width = `${w * (dispH / h)}px`;
+          svgEl.style.maxWidth = "none";
+        } else {
+          // 列幅に収まる図：列幅いっぱい＋ページ高上限（viewBox 比率で拡縮）。
+          svgEl.style.width = "100%";
+          svgEl.style.height = "auto";
+          svgEl.style.maxWidth = "100%";
+        }
       }
     }).catch(() => {
       if (!cancelled) setFailed(true);
