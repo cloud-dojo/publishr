@@ -22,6 +22,8 @@ export function BookCover({
   const titleStyle: CSSProperties | undefined = titleSize
     ? { fontSize: `${titleSize}px` }
     : undefined;
+  // ⚠️ DORMANT: 表紙の画像生成（Imagen）は今回スコープ外で park。現行 coverUrl は常に null のため
+  // この分岐は現状使われず、下の CSS variant フォールバックが常用される。将来の画像生成再結線用に温存。
   // coverUrl（実Imagen等の文字なしアイコン装画）があれば最優先で「上＝固定タイトル帯／下＝アイコン装画」
   // の2段に組む（日本語タイトルは Imagen で焼けないため UI 側で上段に重ねる）。imagen が無いときに
   // 簡易表紙/CSS装丁へフォールバックする。

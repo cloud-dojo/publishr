@@ -1,4 +1,6 @@
-"""表紙画像(Imagen)の保存先抽象（本文C3.3 body_store と同方針・GCSオフロード＋IAM保護）。
+"""⚠️ DORMANT: 表紙の画像生成は今回スコープ外で park（現行メインパイプライン未接続・将来実装で復活）。
+
+表紙画像(Imagen)の保存先抽象（本文C3.3 body_store と同方針・GCSオフロード＋IAM保護）。
 
 ENABLE_IMAGEN=true のとき `agents/cover/imagen.py` が非公開 GCS バケットへ PNG を退避し、
 Firestore の books には `coverUrl`（object パス `covers/...png`）だけを残す。

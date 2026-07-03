@@ -1,7 +1,12 @@
-"""STEP5 装丁（C1.6）。プレビュー5冊に coverVariant(CSS)＋coverPrompt(Imagen用)＋coverUrl を付与。
+"""表紙処理パッケージ。
 
-既定はオフライン決定的（PUBLISHR_LLM=mock・coverUrl=None）。PUBLISHR_LLM=vertex で coverPrompt を
-Flash 生成、さらに ENABLE_IMAGEN=true で実 Imagen 画像を生成して coverUrl を埋める（隔離・課金）。
+現行メインパイプラインの表紙は CSS variant のみ（`assign_cover_variants`・オフライン決定的・
+coverUrl=None・画像生成なし）。
+
+⚠️ 画像生成（Imagen）による装丁 `design_covers` は今回スコープ外で park（将来実装予定）。
+   PUBLISHR_LLM=vertex で Flash が coverPrompt を生成し ENABLE_IMAGEN=true で実画像を作る
+   フルパイプラインは温存する（削除しない）が、現行メインパイプライン（mode_a）からは呼ばれない。
+   再結線するときは mode_a の `assign_cover_variants` 呼び出しを `design_covers` に戻す。
 """
 
 from __future__ import annotations
@@ -11,7 +16,7 @@ from typing import Any, Optional
 
 from publishr_schema import GeneratedPersona
 
-from .deterministic import design_covers_deterministic
+from .deterministic import assign_cover_variants, design_covers_deterministic
 
 
 def _imagen_enabled(flag: Optional[bool]) -> bool:
@@ -28,10 +33,11 @@ def design_covers(
     enable_imagen: Optional[bool] = None,
     plan: Optional[Any] = None,
 ) -> list[dict[str, Any]]:
-    """STEP5 の入口。llm 未指定なら PUBLISHR_LLM で解決（mock=決定的 / vertex=Flash＋任意Imagen）。
+    """⚠️ PARKED（将来実装・画像生成）: 現行メインパイプライン未接続。
 
-    `plan`（この配本の企画書＝PlanProposal）を渡すと vertex 経路が表紙を企画書ベースの1対1で生成する。
-    mock（決定的）経路は plan を使わない＝出力不変（C0.2）。
+    表紙の画像/ロゴ生成（Imagen）を含むフル装丁の入口。llm 未指定なら PUBLISHR_LLM で解決
+    （mock=決定的 / vertex=Flash＋任意Imagen）。今回はスコープ外で main からは呼ばれない
+    （main は `assign_cover_variants`＝CSS variant のみ）。将来再結線用に温存する。
     """
     mode = (llm or os.environ.get("PUBLISHR_LLM", "mock")).lower()
     if mode == "mock":
@@ -45,4 +51,4 @@ def design_covers(
     raise ValueError(f"unknown PUBLISHR_LLM={mode!r}")
 
 
-__all__ = ["design_covers", "design_covers_deterministic"]
+__all__ = ["assign_cover_variants", "design_covers", "design_covers_deterministic"]

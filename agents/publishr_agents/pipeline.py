@@ -1,8 +1,9 @@
 """企画会議パイプラインの組み立てと実行。
 
 SequentialAgent: observe → reader → ParallelAgent(企画3体) → 選抜ゲート
-                 → 著者アジェンダ → 装丁
-実行後、セッション状態から PipelineResult を組み立てて返す。"""
+                 → 著者アジェンダ（表紙 CSS variant 付与）
+実行後、セッション状態から PipelineResult を組み立てて返す。
+表紙の画像生成（Imagen）は今回スコープ外で park（将来実装）。"""
 
 from __future__ import annotations
 
@@ -22,7 +23,6 @@ from . import canned  # noqa: E402
 from . import state_keys as K  # noqa: E402
 from .agents import (  # noqa: E402
     AuthorAgendaAgent,
-    CoverAgent,
     ObserveAgent,
     PlanningAgent,
     ReaderAgent,
@@ -71,7 +71,6 @@ def _build_mock_pipeline(user_id: str) -> SequentialAgent:
             planning_team,
             SelectionGateAgent(name="selection_leader"),
             AuthorAgendaAgent(name="author_engine"),
-            CoverAgent(name="cover_designer"),
         ],
     )
 

@@ -1,4 +1,6 @@
-"""モードA 完全縦串の共有オーケストレーション（STEP0観測→1読者→2企画→3著者→4プレビュー→5装丁）。
+"""モードA 完全縦串の共有オーケストレーション（STEP0観測→1読者→2企画→3著者→4プレビュー）。
+
+表紙は CSS variant を装飾として付与するのみ（画像生成＝Imagen は今回スコープ外で park・将来実装）。
 
 CLI（run_mode_a.py / seed_arrivals.py）と BFF サービス（mode_a_service.py）が共通で使う単一の
 入口。各 STEP は既存モジュールに委譲し、ここは「順番に呼んで成果をまとめる」だけ（mock挙動不変）。
@@ -44,16 +46,17 @@ def run_mode_a_pipeline(
     seed: str = "",
     favorite_pct: int = 25,  # = favorites.FAVORITE_FEATURE_PCT_DEFAULT（配本ごとお気に入り起用確率%）
 ) -> ModeAResult:
-    """観測→読者→企画→キャスティング→プレビュー→装丁 を一気通貫で回す。
+    """観測→読者→企画→キャスティング→プレビュー を一気通貫で回す（表紙は CSS variant 装飾のみ）。
 
     source は ObservationSource（FixtureObservationSource / GoogleObservationSource）。
-    各 *_llm は "mock" | "vertex"。limit はプレビューで生成する冊数（コスト制御）。
+    各 *_llm は "mock" | "vertex"（cover_llm / enable_imagen は画像生成 park により現行 no-op・将来用に温存）。
+    limit はプレビューで生成する冊数（コスト制御）。
     past_books＝ユーザの過去公開本（C1.8 学習ループ＝反応/選択を読者分析に反映・無ければ no-op）。
     お気に入り著者は配本ごとに約 favorite_pct%（既定25）で1枠に起用（seed で配本ごとに振り直し）。
     """
     from .casting import cast_personas
     from .casting.favorites import choose_favorite_feature
-    from .cover import design_covers
+    from .cover import assign_cover_variants
     from .observe import collect_observation
     from .planning import run_planning
     from .preview import run_preview
@@ -73,8 +76,8 @@ def run_mode_a_pipeline(
         plan, reader_profile=profile, favorite_authors=([feature[1]] if feature else []), llm=llm
     )
     books = run_preview(plan, persona_set.personas, reader_profile=profile, limit=limit, llm=preview_llm)
-    # 採用企画（plan）を表紙へ渡す＝企画書ベースの1対1（vertex 経路のみ反映・mock は不変）。
-    shelved = design_covers(books, persona_set.personas, llm=cover_llm, enable_imagen=enable_imagen, plan=plan)
+    # 表紙は CSS variant を装飾付与するのみ（画像生成＝design_covers/Imagen は park・将来実装）。
+    shelved = assign_cover_variants(books, persona_set.personas)
     return ModeAResult(plan=plan, shelved=shelved, personas=list(persona_set.personas), planning=planning)
 
 
@@ -115,15 +118,17 @@ def run_mode_a_set_pipeline(
     favorite_pct: int = 25,  # = favorites.FAVORITE_FEATURE_PCT_DEFAULT（配本ごとお気に入り起用確率%）
     max_books: int | None = None,  # デモ用: 生成冊数の上限（None=全テーマ＝従来どおり）
 ) -> ModeASetResult:
-    """観測→読者→セット企画(4テーマ)→各テーマ[キャスティング→プレビュー→装丁] を回し、棚に4冊並べる。
+    """観測→読者→セット企画(4テーマ)→各テーマ[キャスティング→プレビュー] を回し、棚に4冊並べる。
 
-    各 *_llm は "mock" | "vertex"。1テーマ=1著者=1冊（多様性は配本属性＋テーマ別著者で担保）。
+    表紙は CSS variant を装飾付与するのみ（画像生成＝Imagen は park・将来実装）。
+    各 *_llm は "mock" | "vertex"（cover_llm / enable_imagen は画像生成 park により現行 no-op・将来用に温存）。
+    1テーマ=1著者=1冊（多様性は配本属性＋テーマ別著者で担保）。
     お気に入り著者は「配本ごとに約 favorite_pct%（既定25）で誰か1人を1テーマだけ起用」する決定的抽選。
     seed（配本トークン）で配本ごとに振り直し・同一配本は再現的。
     """
     from .casting import cast_author
     from .casting.favorites import choose_favorite_feature
-    from .cover import design_covers
+    from .cover import assign_cover_variants
     from .observe import collect_observation
     from .planning import run_planning_set
     from .preview import run_preview
@@ -135,7 +140,7 @@ def run_mode_a_set_pipeline(
     plans = [PlanProposal.model_validate(p) for p in planning["planSet"]["plans"]]
 
     # デモ用コスト削減: 冊数を先頭 max_books 件に絞る（None=全テーマ＝従来どおり・非破壊）。
-    # 企画(planning)は全テーマ走るが、重いキャスティング/プレビュー/装丁/本文を絞った冊数だけに限定。
+    # 企画(planning)は全テーマ走るが、重いキャスティング/プレビュー/本文を絞った冊数だけに限定。
     if max_books is not None and max_books > 0:
         plans = plans[:max_books]
 
@@ -162,8 +167,8 @@ def run_mode_a_set_pipeline(
                 else ch.model_copy(update={"persona_id": f"cast_{plan.proposal_id}"})
             ]
         drafts = run_preview(plan, chosen, reader_profile=profile, limit=1, llm=preview_llm)
-        # この1テーマの企画書（plan）を表紙へ渡す＝1企画書=1冊=1画像の1対1（vertex 経路のみ反映）。
-        shelved = design_covers(drafts, chosen, llm=cover_llm, enable_imagen=enable_imagen, plan=plan)
+        # 表紙は CSS variant を装飾付与するのみ（画像生成＝design_covers/Imagen は park・将来実装）。
+        shelved = assign_cover_variants(drafts, chosen)
         out.append(ModeABook(plan=plan, shelved=shelved, personas=chosen))
     return ModeASetResult(books=out, planning=planning)
 

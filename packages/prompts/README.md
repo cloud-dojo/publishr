@@ -20,7 +20,7 @@
 
 ## ファイル一覧（パイプライン順・出版社モデル v4・2026-06-18）
 
-> 「小さな出版社」モデル: 編集長が4サブテーマを決め各チームA/B/C/Dへ割当 → 各チーム（リーダー＋調査3人）が企画書 → 編集長が企画会議でセット承認 → 各リーダーが著者を候補から選抜 → 著者が本文フル執筆 → 担当編集がレビュー → デザイン担当が表紙。詳細は [`agent-io-contract.md`](../../docs/design/agent-io-contract.md)。
+> 「小さな出版社」モデル: 編集長が4サブテーマを決め各チームA/B/C/Dへ割当 → 各チーム（リーダー＋調査3人）が企画書 → 編集長が企画会議でセット承認 → 各リーダーが著者を候補から選抜 → 著者が本文フル執筆 → 担当編集がレビュー。詳細は [`agent-io-contract.md`](../../docs/design/agent-io-contract.md)。（表紙は CSS 装丁のみ／デザイン担当による画像生成表紙 `step5_cover.md` は park・将来実装）
 
 | ファイル | エージェント | モデル | 出力スキーマ（IO契約） |
 |---|---|---|---|
@@ -36,7 +36,7 @@
 | `step4_editor_preview.md` | 担当編集（棚カード採点） | **Pro** | `EditorVerdict`（プレビュー3観点）§5-2b |
 | `modeB_author_body.md` | 著者（本文フル執筆・Mermaid図解） | **Pro** | 本文MD（{{body_volume}}・既定1万〜2万字）§7 |
 | `modeB_editor_body.md` | 担当編集（本文採点） | **Pro** | 本文ルーブリック5観点 §7 |
-| `step5_cover.md` | デザイン担当（カバー方針→Imagenプロンプト） | Flash＋Imagen | `coverPrompt`（英語）§6 |
+| `step5_cover.md` ⚠️PARKED | デザイン担当（カバー方針→Imagenプロンプト）※画像生成は今回スコープ外で park・将来実装（未結線・温存） | Flash＋Imagen | `coverPrompt`（英語）§6 |
 | `eval_judge.md` | Eval judge | **Pro** | 企画4観点（per-planと共通）§8 |
 
 ### 旧ファイル（後継へ移行・registry配線切替まで併存）

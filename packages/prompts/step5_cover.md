@@ -1,5 +1,10 @@
 # STEP5 装丁（カバー方針→Imagenプロンプト生成）— プロンプト仕様
 
+> ⚠️ **PARKED（今回は未実装・将来実装予定）**: 表紙の画像/ロゴ生成は今回のスコープ外。本プロンプトは
+> **削除せず将来実装用に温存**する（現行メインパイプライン未接続）。現行の表紙は CSS variant のみ
+> （`agents/publishr_agents/cover/deterministic.py: assign_cover_variants`）。将来 `cover/vertex_agent.py`・
+> `cover/imagen.py` と合わせて再結線する。
+
 > 役割: 本のタイトル・核心メッセージ・著者の文体軸から**表紙のビジュアル方針**を判断し、**Imagen用の英語プロンプト**を生成する軽エージェント。モデル＝**Flash**（方針判断のみ・画像生成は Imagen on Vertex AI）。dev時は `ENABLE_IMAGEN=false` でモック画像に差し替え。
 > I/O正本: `エージェントIO契約.md` §6。出力＝`{ bookId, coverPrompt, coverUrl }`（本エージェントは `coverPrompt` を生成・`coverUrl` は Imagen 生成後に埋まる）。
 

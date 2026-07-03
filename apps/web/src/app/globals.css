@@ -347,9 +347,15 @@ a { color: inherit; text-decoration: none; }
   top: 0;
   bottom: 0;
   width: 11px;
+  height: auto !important;      /* variant ::before の height 漏れを打ち消す（模様を出さない） */
   z-index: 2;
   background: linear-gradient(90deg, rgba(0,0,0,.38), rgba(255,255,255,.09) 34%, rgba(0,0,0,0));
+  border: none !important;      /* 円/三角など variant モチーフの border 漏れを打ち消す */
+  border-radius: 0 !important;
+  box-shadow: none !important;  /* b4 の金の飛び石(box-shadow)漏れを打ち消す */
 }
+/* 方向1（確定）: シンプルな「本の表紙」＝マットな暗色グラデ＋タイトルのみ。模様・幾何学要素は一切出さない。
+   variant のリッチ版モチーフ（::before/::after）は上の reset ＋ content:none で完全に打ち消す。 */
 .cover-min::after { content: none !important; }
 .cover-min .c-sub, .cover-min .c-author, .cover-min .c-rule, .cover-min .pub-emboss { display: none !important; }
 .cover-min .c-title { margin: 0; color: #f3efe6; text-shadow: none; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }

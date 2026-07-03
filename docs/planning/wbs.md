@@ -215,7 +215,7 @@
 | **docs** | WBS 更新 — C4.8 ✅完了・日次ログ追記 | 全体 |
 | **C1.1** | **STEP0 観測ツール 実装（live検証残）** — `agents/publishr_agents/observe/`（純粋transform＋`FixtureObservationSource`既定＋`GoogleObservationSource`隔離・`PUBLISHR_OBSERVE`切替）。型付き`ObservationBundle`/`ConnectedSources`をschema(py/ts)へ。CLI`run_observe.py`＋`google_oauth_bootstrap.py`、`@pytest.mark.google`。±14日窓/4000字/Tasks絞り/folderIdスコープをtransform一元化。**masked回帰も修正**＝`91d3282`で消えた`u_tadokoro`をusers.jsonへ復元（canned pipeline緑化）＋test_fixtures整合。`make verify`(84 passed,2 skipped)/eval/pipeline/smoke 緑。残＝OAuth同意→実3ソースのlive検証。ブランチ`feat/c1.1-step0-observation` | C1.1 |
 | **C1.2** | **STEP1 読者分析 実装＋実Vertex live実証** — `agents/publishr_agents/reader/`（`deterministic.py`既定＋`vertex_agent.py`実Gemini Pro＋`__init__`=PUBLISHR_LLM dispatch）。step1プロンプト/registry/model_for(Pro)結線。CLI`run_reader.py`（STEP0→STEP1縦串）。**live実証**＝fixture観測→実Pro→3層ReaderProfile（佐藤健一/競合A社/田中健太まで踏込・evidence紐付き）。`make verify` pytest 95 passed,3 skipped・typecheck緑（web lintはmain既存1件のみ）。同ブランチ継続 | C1.2 |
-| **C1.6** | **STEP5 装丁 実装＋実Imagen live実証（モードA STEP0→5 完成）** — `agents/publishr_agents/cover/`（`deterministic.py`=coverVariant(CSS)＋canned prompt／`vertex_agent.py`=Flash coverPrompt／`imagen.py`=実Imagen(imagen-3.0・us-central1)→PNG→coverUrl／`__init__`=PUBLISHR_LLM＋ENABLE_IMAGEN）。CLI`run_mode_a.py`（STEP0→5 完全縦串）。live: 実表紙2枚生成（`.dev-logs/covers/`・896×1280・著者軸で作風差別化・文字焼かず）。`make verify` pytest 136 passed,7 skipped・typecheck緑。code-review Approve。同ブランチ継続 | C1.6 |
+| **C1.6** | **⚠️ 2026-07-03に今回scope外へpark（下記は実装済み履歴）＝表紙の画像生成（Imagen）はメインパイプラインから外し将来実装に温存。現行の表紙は CSS variant のみ（`cover/deterministic.py: assign_cover_variants`）**。**STEP5 装丁 実装＋実Imagen live実証（モードA STEP0→5 完成）** — `agents/publishr_agents/cover/`（`deterministic.py`=coverVariant(CSS)＋canned prompt／`vertex_agent.py`=Flash coverPrompt／`imagen.py`=実Imagen(imagen-3.0・us-central1)→PNG→coverUrl／`__init__`=PUBLISHR_LLM＋ENABLE_IMAGEN）。CLI`run_mode_a.py`（STEP0→5 完全縦串）。live: 実表紙2枚生成（`.dev-logs/covers/`・896×1280・著者軸で作風差別化・文字焼かず）。`make verify` pytest 136 passed,7 skipped・typecheck緑。code-review Approve。同ブランチ継続 | C1.6 |
 | **C1.5** | **STEP4 プレビュー編集 実装＋実Vertex live実証（モードA縦串 完走）** — `agents/publishr_agents/preview/`（`deterministic.py`＝5冊BookDraft(7項目)＋編集長1R実演／`vertex_agent.py`＝author/editor Pro を Pythonで著者→編集長→1R改稿・`limit`／`__init__`=dispatch）。CLI`run_preview.py`（**STEP0→1→2→3→4 フル縦串＝棚5冊draft**・段階別LLM切替）。mock で5冊draft完走、live で STEP4 2冊（「7人の意思決定を、設計しなさい。」「あなたのいない会議室で」＝観測grounded・著者で作風差別化）。`make verify` pytest 127 passed,6 skipped・typecheck緑。code-review Approve。同ブランチ継続 | C1.5 |
 | **C1.4** | **STEP3 キャスティング 実装＋実Vertex live実証** — `agents/publishr_agents/casting/`（`deterministic.py`既定＝5著者を voiceStyle×format 2軸で分散・favorite 1枠／`vertex_agent.py`＝persona_generator Pro・output_schema=GeneratedPersonaSet／`__init__`=PUBLISHR_LLM dispatch）。CLI`run_casting.py`（STEP0→1→2→3 縦串）。live: 実Proで5著者2軸分散を確認（gated test・Pro1コール）。`make verify` pytest 117 passed,5 skipped・typecheck緑。code-review Approve（LOW2点反映）。同ブランチ継続 | C1.4 |
 | **C1.3** | **STEP2 企画3階層 実装＋実Vertex live実証（必然性の本丸）** — `agents/publishr_agents/planning/`（`deterministic.py`既定＝3サブ→owner→leaderループ reject→approve trace／`vertex_agent.py`＝`Sequential[Parallel[3サブ]→Loop[owner→leader→miniloop.LoopBreakAgent]]`・miniloop不変で再利用／`__init__`=PUBLISHR_LLM dispatch）。CLI`run_planning.py`（STEP0→1→2縦串・`--llm`/`--reader-llm`/`--theme`/`--threshold`）。**live実証2回**: ①threshold85→R1 approve(97) escalate脱出・観測grounded企画 ②threshold101→R1 revise(98)→R2 approve(102)＝差し戻し理由「失敗談で差別化」をR2が実反映＝reject→再提出の必然性。3サブB/Cは実Google検索grounding。`make verify` pytest 107 passed,4 skipped・typecheck緑。code-review Approve（M1 serendipityテーマ導出を修正反映）。同ブランチ継続 | C1.3 |
@@ -238,7 +238,7 @@
 
 | 領域 | やったこと | WBS |
 |---|---|---|
-| **C1.1–C1.6** | **モードA企画パイプライン全STEP実装**（観測→読者→企画3階層→キャスティング→プレビュー→装丁）。各STEP＝決定的mock既定＋実Vertex隔離・TDD・code-review・live実証。`run_mode_a.py` で STEP0→5 縦串。実Imagen表紙2枚も生成。PR #1 で main マージ | C1.1〜C1.6 |
+| **C1.1–C1.6** | **モードA企画パイプライン全STEP実装**（観測→読者→企画3階層→キャスティング→プレビュー／装丁は下記注記）。各STEP＝決定的mock既定＋実Vertex隔離・TDD・code-review・live実証。`run_mode_a.py` で縦串。※装丁(C1.6)の画像生成は2026-07-03に今回scope外へpark（将来実装・現行は CSS variant のみ）。PR #1 で main マージ | C1.1〜C1.6 |
 | **C1.7** | **自律トリガー（曜日別・ローカル/mock・課金ゼロ）**。`scheduler.py`（水/土=本命・日=セレンディピティ）＋`run_scheduler.py`（--once/--watch）。PR #2 で main マージ | C1.7 |
 | **C4結線** | **モードA成果→Firestore→書店arrivals**。`persist_mapping.py`（v2出力→Book[arrivals/draft/ownerUid]＋Persona）・`upsert_persona`をRepositoryProtocol/mock/firestoreへ追加・`seed_arrivals.py`（mock生成→map→upsert・dry-run既定）。**共有Firestoreへ佐倉の入荷5冊＋著者を live投入**（mock＝LLM課金ゼロ・新規`arr_*`ID・非破壊）。書店トップに実5冊が並ぶ状態に。残＝Plan永続化(detail panel)・BFF trigger差替・本番Scheduler | C4.9系 |
 
@@ -269,7 +269,7 @@ Publishr MVP（カテゴリWBS）
     │   ├─ C1.3 STEP2 企画3階層（調査サブ→担当者→リーダー）
     │   ├─ C1.4 STEP3 キャスティング
     │   ├─ C1.5 STEP4 プレビュー編集
-    │   ├─ C1.6 STEP5 装丁
+    │   ├─ C1.6 STEP5 装丁（⚠️画像生成は park・将来実装／現行 CSS variant のみ）
     │   └─ C1.7 自律トリガー(Scheduler)
     ├─ C2 エージェント・モードB（後追い執筆）（一瀬）
     ├─ C3 データ/状態基盤（Firestore/GCS）（**鉄田**へ巻取り・一瀬外れ）
