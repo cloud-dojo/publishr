@@ -16,7 +16,10 @@ export function sanitizeMermaid(src: string): string {
     if (/[()[\]{}#]/.test(t)) return `|"${t}"|`;
     return m;
   });
-  // 2) 改行タグは自己終端 <br/> に寄せる（一部バージョンで <br> が不安定）。
+  // 2) 空ノードラベル ("")/[""]/{""} は mermaid がパースに失敗する。最小の可視ラベルに置換
+  //    （RACI表の空セル等で LLM が出しがち）。
+  out = out.replace(/([([{])\s*""\s*([)\]}])/g, '$1"-"$2');
+  // 3) 改行タグは自己終端 <br/> に寄せる（一部バージョンで <br> が不安定）。
   out = out.replace(/<br\s*>/gi, "<br/>");
   return out;
 }
