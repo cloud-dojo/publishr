@@ -24,9 +24,12 @@ export function MermaidDiagram({ chart }: { chart: string }) {
     }).then(({ svg }) => {
       if (!cancelled && containerRef.current) {
         containerRef.current.innerHTML = svg;
-        // SVG にレスポンシブ幅を付与
+        // SVG にレスポンシブ幅＋ページ高さ上限を付与。
+        // 固定の height 属性を外し、CSS の max-height（--rd-page-h）で
+        // viewBox 比率を保ったまま縮小させる（縦長図がページ枠で見切れるのを防ぐ）。
         const svgEl = containerRef.current.querySelector("svg");
         if (svgEl) {
+          svgEl.removeAttribute("height");
           svgEl.style.maxWidth = "100%";
           svgEl.style.height = "auto";
         }
