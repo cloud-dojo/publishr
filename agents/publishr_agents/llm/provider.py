@@ -30,6 +30,7 @@ _ROLE_TIER: dict[str, str] = {
     "persona_generator": "pro",
     "author_preview": "pro",
     "editor_preview": "pro",
+    # ⚠️ PARKED（将来実装・画像生成）: cover は現行メインパイプライン未接続。将来の装丁再結線用に温存。
     "cover": "flash",
     "modeb_author": "pro",
     "modeb_editor": "pro",

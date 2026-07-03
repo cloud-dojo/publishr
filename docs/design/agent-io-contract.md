@@ -61,10 +61,9 @@ STEP4 編集ループ（編集長×1 ⇄ 著者エンジン人格着せ替え・
         出力: BookDraft（title/prefaceSample/coreMessage/agenda）＝4冊
         │ books/{bookId} に status=draft で保存
         ▼
-STEP5 装丁（軽エージェント＋Imagen）
-   入力: BookDraft（title/coreMessage）＋persona（voiceStyle/format）
-   出力: coverUrl（GCS）／ books/{bookId}.coverUrl 更新
-        ▼
+[STEP5 装丁（軽エージェント＋Imagen）— ⚠️ PARKED（将来実装・画像生成／現行メイン未接続）]
+   ※今回スコープ外。現行は表紙に CSS variant（coverVariant）を決定的付与＝coverUrl は常に null。
+   将来実装（温存）入力: BookDraft（title/coreMessage）＋persona／出力: coverUrl（GCS）
         ▼
 本文編集ループ（同一バッチ内で全4冊・編集長×1 ⇄ 著者エンジン×1・最高3ラウンド・ともにPro）★予約を待たず全冊フル執筆（§7）
    入力: BookDraft ＋ persona ＋ approvedPlan ＋ ReaderProfile
@@ -76,7 +75,7 @@ STEP5 装丁（軽エージェント＋Imagen）
 
 [セレンディピティ（日・★別ロジック・別パス・★2026-06-18改定: 5冊→4冊/1セット）]
    STEP1 読者分析を参照しつつ主テーマ従属を弱め、**隣接関心/反対視点/異業種・異時代への飛躍/ニッチな問い** から
-   【4テーマ→4冊】（完全分散可）。各冊に"なぜ今この読者に出すのか"を薄く付す。STEP3以降（著者→プレビュー→装丁→本文）は本命と同じ＝本文まで作り切る。
+   【4テーマ→4冊】（完全分散可）。各冊に"なぜ今この読者に出すのか"を薄く付す。STEP3以降（著者→プレビュー→本文）は本命と同じ＝本文まで作り切る（表紙は CSS 装丁／画像生成は park・将来実装）。
         ▼
    ＝＝＝ 棚にセレンディピティ4冊が"入荷"（日曜限定・週1セット=4冊・本文まで完成） ＝＝＝
 
@@ -447,7 +446,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
   // ── システム ──
   "editRound": 1,                              // 何ラウンド目か（最高1R改稿）
   "status": "draft",
-  "coverUrl": null,                            // STEP5で埋まる
+  "coverUrl": null,                            // 現行は常に null（STEP5 画像生成は park・将来実装）
   "bodyUrl": null,                             // モードBで埋まる
   "feedback": null
 }
@@ -497,7 +496,9 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 
 ---
 
-## 6. STEP5：装丁（軽エージェント＋Imagen）
+## 6. STEP5：装丁（軽エージェント＋Imagen）— ⚠️ PARKED（将来実装・画像生成）
+
+> ⚠️ **今回スコープ外で park**: 表紙の画像/ロゴ生成は今回やらない。現行メインパイプラインは表紙に CSS variant（`coverVariant`）を決定的付与するだけ（`coverUrl` は常に null）。本節は将来実装の仕様として温存する（`cover/vertex_agent.py`・`cover/imagen.py`・`packages/prompts/step5_cover.md` を再結線）。
 
 **役割**: ビジュアル方針を判断し、Imagenで表紙を先行生成（棚を賑やかにする）。
 **使用モデル**: Flash（方針判断）＋ Imagen on Vertex AI（生成）。
@@ -534,7 +535,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 > **【予約制廃止改定】** 旧「モードB：ユーザーが予約した本だけ後追い執筆」は廃止。各配本runで生成した**全4冊を、同一バッチ内で予約を待たず本文まで作り切る**（STEP4プレビュー編集の本文版＝より重い最高3R）。ユーザーの選択を待たないので「予約上限」「reserved 状態」「Pub/Sub執筆発火」は不要になった。
 
 **役割**: その配本runの**全4冊**を、**編集長⇄著者の編集ループ**で本文（約100ページ）まで作り込む。
-**トリガー**: STEP5装丁の完了後、同一配本バッチが自動で連続実行（ユーザー操作不要）。`books/{bookId}.status: draft→writing→published`。
+**トリガー**: STEP4プレビューの完了後、同一配本バッチが自動で連続実行（ユーザー操作不要）。`books/{bookId}.status: draft→writing→published`。
 **配本数の天井**: 週3回×4冊＝**週12冊**に固定されることで本文Pro生成のコストが天井留めされる（旧「予約制＋同時上限5冊」に代わる歯止め）。
 **使用モデル**: **著者（章生成）・編集長（採点）ともに Gemini Pro**。配本数が週12冊に固定されるため全冊にProを投下できる。本文は読者が読む唯一の成果物＝品質が直接体験価値（基準4）。
 **Firestore/GCS**: 本文MDをCloud Storageへ、`books/{bookId}.bodyUrl` 更新、`status: writing→published`。
@@ -632,7 +633,7 @@ Eval Set 8件 → LLM-as-judge（Gemini Pro・4観点共通ルーブリック）
 | STEP3 著者キャスティング（都度生成5人） | **Pro**（1コール） | 人格設計は判断が重い。多様性・読者適合・お気に入り混入を加味 |
 | STEP4 著者プレビュー執筆 | **Pro**（コスト調整時Flash可） | 選択を左右する成果物＝品質重視 |
 | STEP4 編集長（プレビュー採点） | **Pro** | 3観点採点・1R差し戻し |
-| STEP5 装丁方針 | Flash ＋ Imagen | 方針判断＋画像生成 |
+| ~~STEP5 装丁方針~~ ⚠️PARKED | Flash ＋ Imagen | 方針判断＋画像生成（今回スコープ外・将来実装／現行は CSS 装丁） |
 | 本文 著者 ＋ 編集長（全4冊・予約なし） | **Pro（最高品質）** | 配本数が週12冊（週3回×4冊）に固定されるため全冊にProを集中投下できる。読者が読む唯一の成果物（基準4） |
 | Eval judge | **Pro** | スコアリングの一貫性 |
 

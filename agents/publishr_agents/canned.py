@@ -245,7 +245,7 @@ def compose_arrival_books(plan_ids: list[str] | None = None) -> list[Book]:
 
 
 def cover_variant_for(plan_id: str, author_persona_id: str, title: str) -> str:
-    """Imagen代替の決定的な装丁variant割当。globals.css の cover--b1..b10 に対応。"""
+    """表紙 CSS variant の決定的割当（装飾）。globals.css の cover--b1..b10 に対応。"""
     plan_variants = {
         "plan_makase": "b1",
         "plan_toi": "b2",

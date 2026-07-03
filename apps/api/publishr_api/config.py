@@ -142,6 +142,7 @@ class Settings(BaseSettings):
     )
     # 表紙画像(Imagen)の退避先 GCS バケット（本文と同バケット・prefix covers/）。空なら
     # cover 配信エンドポイントは無効（GCS read 不可）。本文と同方針＝非公開・サーバ側 read。
+    # ⚠️ DORMANT: 表紙の画像生成は今回スコープ外で park。現行は未使用（将来の Imagen 再結線用に温存）。
     cover_bucket: str = Field(
         default="publishr-contents-498123", validation_alias="PUBLISHR_COVER_BUCKET"
     )

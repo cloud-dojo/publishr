@@ -1,4 +1,7 @@
-"""実 Imagen 画像生成（ENABLE_IMAGEN=true 時のみ・隔離・課金あり）。
+"""⚠️ PARKED（将来実装・画像生成）: 現行メインパイプライン未接続（今回スコープ外）。
+削除せず将来実装用に温存する（表紙の画像/ロゴ生成は今回やらない方針）。
+
+実 Imagen 画像生成（ENABLE_IMAGEN=true 時のみ・隔離・課金あり）。
 
 google.genai（Vertex 経由）で Imagen を呼び、表紙画像を生成して coverUrl を返す。
 Imagen はリージョン制約があるため `PUBLISHR_IMAGEN_LOCATION`（既定 us-central1）で別管理。

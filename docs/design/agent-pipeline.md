@@ -1,7 +1,7 @@
 # Publishr エージェント連携設計（フェーズ × Agent × プロンプト × データ）
 
 > どのフェーズで・どのエージェントが・どんなデータから・どんなプロンプトを組み立て・何を次に渡すか。
-> 正本コード: `agents/publishr_agents/`（`mode_a.py` / `observe` / `reader` / `planning` / `casting` / `preview` / `cover` / `mode_b` / `prompts/registry.py`）。
+> 正本コード: `agents/publishr_agents/`（`mode_a.py` / `observe` / `reader` / `planning` / `casting` / `preview` / `mode_b` / `prompts/registry.py`）。表紙は CSS variant のみ（`cover/` の画像生成は park・将来実装）。
 > プロンプト本文: `packages/prompts/*.md`。状態キー: `agents/publishr_agents/state_keys.py`。
 
 ---
@@ -16,8 +16,7 @@ flowchart TD
         RDR --> PLN[STEP2 企画会議<br/>3サブ + owner⇄leader ループ]
         PLN --> CAST[STEP3 キャスティング<br/>persona_generator Pro]
         CAST --> PRV[STEP4 プレビュー<br/>author⇄editor ループ]
-        PRV --> COV[STEP5 装丁<br/>cover Flash + Imagen]
-        COV --> ARR[(入荷<br/>Firestore books/personas)]
+        PRV --> ARR[(入荷<br/>Firestore books/personas)]
     end
 
     subgraph B["モードB: 予約 → 執筆 → 納本（reserve → worker）"]
@@ -42,13 +41,13 @@ flowchart TD
 ### 1.1 ディスパッチャ（mock / vertex）
 各フェーズは `llm="mock"|"vertex"` で実装を切替える。**mock=決定的キャンド出力（LLM未使用・$0）**、**vertex=実Gemini（ADK経由）**。
 例）`mode_b/__init__.py: write_body_loop()` が `llm=="vertex"` で `run_body_loop_vertex` に委譲。
-`mode_a.py` は `reader_llm / llm / preview_llm / cover_llm` を**段階別に**切替可（コスト制御）。
+`mode_a.py` は `reader_llm / llm / preview_llm` を**段階別に**切替可（コスト制御）。`cover_llm` は画像生成 park により現行 no-op（将来用に温存）。
 
 ### 1.2 モデル割当（Pro / Flash ハイブリッド） — `llm/provider.py: model_for(role)`
 | tier | 使うrole | 方針 |
 |---|---|---|
 | **Pro**（`gemini-2.5-pro`） | reader_analyst / plan_owner / plan_leader / persona_generator / author_preview / editor_preview / modeb_author / modeb_editor / eval_judge | 判断・執筆が重い工程 |
-| **Flash**（`gemini-2.5-flash`） | sub_reader_context / sub_market / sub_theme_insight / cover | 観測・調査・補助寄り |
+| **Flash**（`gemini-2.5-flash`） | sub_reader_context / sub_market / sub_theme_insight | 観測・調査・補助寄り（`cover` は画像生成 park で現行未使用・将来実装） |
 
 ### 1.3 プロンプトの組み立て — `prompts/registry.py` + `prompts/render.py`
 役割（role）ごとに**何を読み・何を出すか**を1か所に集約（`REGISTRY`）。プロンプトは2部構成で動的生成する。
@@ -69,7 +68,7 @@ flowchart TD
 ```
 observation → reader_profile → (subReaderContext / subMarket / subThemeInsight)
             → planDraft → leaderVerdict / rejectionFeedback → approvedPlan
-            → generatedPersonaSet → (BookDraft) → editorVerdict → cover → books
+            → generatedPersonaSet → (BookDraft) → editorVerdict → books
 ```
 値は **camelCase**で、プロンプトの `{{var}}` 名と一致させる（`adk-control-flow.md §4`）。
 
@@ -77,7 +76,7 @@ observation → reader_profile → (subReaderContext / subMarket / subThemeInsig
 
 ## 2. モードA フェーズ詳細
 
-オーケストレーション本体: `mode_a.py: run_mode_a_pipeline()`（observe→reader→planning→casting→preview→cover）。
+オーケストレーション本体: `mode_a.py: run_mode_a_pipeline()`（observe→reader→planning→casting→preview）。表紙は CSS variant を装飾付与するのみ（画像生成は park・将来実装）。
 
 ### レジストリ早見表（`prompts/registry.py`）
 | STEP | role | model | プロンプト(`packages/prompts/`) | 入力（主なstate/データ） | 出力スキーマ → state |
@@ -91,7 +90,7 @@ observation → reader_profile → (subReaderContext / subMarket / subThemeInsig
 | 3 | `persona_generator` | Pro | `step3_casting_editor.md` | approvedPlan + readerProfile + 好み著者 | `GeneratedPersonaSet`(5著者) → `generatedPersonaSet` |
 | 4a | `author_preview` | Pro | `step4_author_preview.md` | plan + persona + readerProfile | `BookDraft`(7項目ピッチ) |
 | 4b | `editor_preview` | Pro(採点) | `step4_editor_preview.md` | BookDraft + readerProfile | `EditorVerdict` → `editorVerdict` |
-| 5 | `cover` | Flash | `step5_cover.md` | BookDraft（title/coreMessage） | coverPrompt（→ Imagen で画像化・任意） |
+| ~~5~~ | `cover` ⚠️PARKED | Flash | `step5_cover.md` | BookDraft（title/coreMessage） | coverPrompt（→ Imagen で画像化）※画像生成は今回スコープ外で park・将来実装。現行の表紙は CSS variant のみ |
 
 ### STEP0 観測（observe）— **非LLM**
 `observe/collect_observation(user, now, source)`。`source` は `FixtureObservationSource`（mock）/ `GoogleObservationSource`（実: **Drive + Calendar + Tasks** の3ソース・`drive.readonly` を含め **live 有効化済＝C1.1.3**）。
@@ -120,11 +119,12 @@ observation → reader_profile → (subReaderContext / subMarket / subThemeInsig
 1. **著者** `author_preview`(Pro): `BookDraft`（タイトル/サブ/序文サンプル/アジェンダ等 7項目のピッチ）を執筆。
 2. **編集長** `editor_preview`(Pro・採点): `EditorVerdict` で採点 → 弱ければ `editorFeedback` を返し著者が改稿（最高1R）。
 
-### STEP5 装丁（cover）
-`cover`(Flash) が `coverPrompt`（テキスト）を生成 → `ENABLE_IMAGEN=1` のとき **Imagen**（`imagen-3.0`・3:4）で表紙画像を生成。mock は CSS バリアント装丁。
+### STEP5 装丁（cover）— ⚠️ PARKED（将来実装・画像生成）
+表紙の画像/ロゴ生成は今回スコープ外で park。現行メインパイプラインは表紙に **CSS variant**（`cover/deterministic.py: assign_cover_variants`・globals.css `cover--b1..b10`）を決定的付与するだけ（オフライン・coverUrl=None）。
+将来実装（温存）: `cover`(Flash) が `coverPrompt`（テキスト）を生成 → `ENABLE_IMAGEN=1` のとき **Imagen**（`imagen-3.0`・3:4）で表紙画像を生成（`cover/vertex_agent.py`・`cover/imagen.py`・`step5_cover.md` を再結線）。
 
 ### 入荷（arrivals）
-`BookDraft`＋装丁 → shared-schema の `Book`/`Persona` に**マッピング**して Firestore（`books`/`personas`）へ upsert。書店UIに「入荷理由つき」で並ぶ。
+`BookDraft`＋表紙（CSS variant）→ shared-schema の `Book`/`Persona` に**マッピング**して Firestore（`books`/`personas`）へ upsert。書店UIに「入荷理由つき」で並ぶ。
 
 ---
 

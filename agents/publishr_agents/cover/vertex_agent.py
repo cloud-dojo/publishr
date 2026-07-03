@@ -1,4 +1,10 @@
-"""STEP5 装丁の実Vertex実装（PUBLISHR_LLM=vertex・隔離）。
+"""⚠️ PARKED（将来実装・画像生成）: 現行メインパイプライン未接続（今回スコープ外）。
+
+表紙の画像/ロゴ生成は今回やらない方針のため、mode_a は `assign_cover_variants`（CSS variant のみ）
+を使う。本モジュール（実 Vertex 装丁）は削除せず将来実装用に温存する。再結線するには mode_a の
+`assign_cover_variants` 呼び出しを `design_covers` に戻す。
+
+STEP5 装丁の実Vertex実装（PUBLISHR_LLM=vertex・隔離）。
 
 Flash 軽エージェントが各本の coverPrompt（Imagen用英語・文字焼かない）を生成。coverVariant は
 決定的(CSS)。ENABLE_IMAGEN=true なら imagen.py で実画像を生成して coverUrl を埋める。

@@ -13,14 +13,13 @@ def test_mock_default_builds_existing_tree(monkeypatch):
     root = build_pipeline("u_sakura")
     assert isinstance(root, SequentialAgent)
     assert root.name == "editorial_pipeline"
-    # 現行の木と同一（observe→reader→planning_team→selection→author→cover）。
+    # 現行の木（observe→reader→planning_team→selection→author）。表紙 CSS variant は author 段で付与。
     assert [a.name for a in root.sub_agents] == [
         "observe",
         "reader_analyst",
         "planning_team",
         "selection_leader",
         "author_engine",
-        "cover_designer",
     ]
 
 

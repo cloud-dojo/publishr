@@ -61,7 +61,7 @@ publishr/
 | `design/api-contract.md` | フロント⇔バック境界（認証・登録・予約・OAuth・トリガー） | フロント/API実装 |
 | `design/firestore-security-rules.md` | Firestoreルール（所有権・直書き範囲） | Firestore実装 |
 | `design/security-data-handling.md` | 保存対象・保存場所・インシデント予防策 | Cloud Run/Firestore/Vertex公開前 |
-| `design/cost-estimate.md` | LLM/Imagenコスト概算・上限ガード | 予算管理 |
+| `design/cost-estimate.md` | LLM/Imagen(park・将来)コスト概算・上限ガード | 予算管理 |
 | `design/langfuse-tracing.md` | トレース設計（企画スコア・編集ループ・grounding） | Observability計装 |
 
 ### planning/（実行管理）

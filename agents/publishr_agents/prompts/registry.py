@@ -111,6 +111,8 @@ REGISTRY: dict[str, StepSpec] = {
         "editor_preview", "step4_editor_preview", "editor_preview",
         True, True, EditorVerdict, K.EDITOR_VERDICT,
     ),
+    # ⚠️ PARKED（将来実装・画像生成）: step5_cover は削除せず温存。現行メインパイプライン未接続
+    # （表紙は CSS variant のみ）。将来の装丁（Imagen）再結線用にレジストリ登録だけ残す。
     "cover": StepSpec(
         "cover", "step5_cover", "cover",
         False, False, None, None,

@@ -192,6 +192,7 @@ def run(
             reader_llm=mode_llm,
             llm=mode_llm,
             preview_llm=mode_llm,
+            # ⚠️ DORMANT: 表紙画像生成 park により cover_llm / enable_imagen は現行 no-op（mode_a は無視）。
             cover_llm=mode_llm,
             enable_imagen=settings.enable_imagen,
             theme_kind=theme_kind,
@@ -236,6 +237,7 @@ def run(
         reader_llm=mode_llm,
         llm=mode_llm,
         preview_llm=mode_llm,
+        # ⚠️ DORMANT: 表紙画像生成 park により cover_llm / enable_imagen は現行 no-op（mode_a は無視）。
         cover_llm=mode_llm,
         enable_imagen=settings.enable_imagen,
         theme=None,
