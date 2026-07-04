@@ -97,11 +97,6 @@ export function getDemoClientId(): string {
   }
 }
 
-// ②G: 無認証ライブ生成ボタンを有効化するフラグ（既定OFF=ショーケースは読み取り専用＝安全）。
-// 本番デモは NEXT_PUBLIC_DEMO_LIVE_GEN=1（web）と サーバ側 PUBLISHR_DEMO_RATE_*（Cloud Run）を
-// 同時に立てて初めて開放する。コードのデプロイだけでは晒されない（フラグOFFでボタン非表示）。
-export const demoLiveGenEnabled: boolean = process.env.NEXT_PUBLIC_DEMO_LIVE_GEN === "1";
-
 /**
  * 表紙画像の URL を返す。
  * - coverUrl が GCS object パス（covers/...png・非公開バケット）なら、BFF
