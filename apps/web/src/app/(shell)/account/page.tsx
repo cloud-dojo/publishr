@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
-import { DEMO_USER_ID, canManualTrigger, dataSource, demoLiveGenEnabled } from "@/data/config";
+import { DEMO_USER_ID, canManualTrigger, dataSource } from "@/data/config";
 import { useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
@@ -352,11 +352,10 @@ export default function AccountPage() {
       {/* 方針A（prod-live-followups #7）: 「今すぐ企画」は実 Vertex 企画＝課金を発火するため、
           allowlist 一致の uid（＝デモの佐倉）にのみ表示する。バックエンドの ALLOWED_TRIGGER_UIDS
           が実際のガード（一般ユーザーは 403）で、ここは UI を見せない側の多層防御。 */}
-      {/* ②G: 無認証公開ショーケース（bff）で NEXT_PUBLIC_DEMO_LIVE_GEN=1 のときだけ「今すぐ企画」を
-          開放（サーバ側 日次レートガード＋per-run/Cloud Billing でコスト制御）。フラグOFFは非表示＝
-          デプロイだけでは晒されない。firestore/実uid 時は従来の allowlist 限定。 */}
-      {((dataSource === "bff" && demoLiveGenEnabled) ||
-        (dataSource !== "mock" && canManualTrigger(uid))) && (
+      {/* ②G の無認証ショーケース向けライブ生成開放（NEXT_PUBLIC_DEMO_LIVE_GEN）は、押下後の
+          「企画中…」が画面停止に見えるため 2026-07-04 に撤去し、無認証デモは読み取り専用へ戻した。
+          残す allowlist 経路は認証済み佐倉のみに出る（匿名デモ visitor には出ない）。 */}
+      {dataSource !== "mock" && canManualTrigger(uid) && (
         <section className="page section">
           <div className="acct-savebox">
             <div className="asb-text">
