@@ -71,6 +71,21 @@ def test_get_book_camel_case():
     assert "readPercent" in body["feedback"]
 
 
+def test_list_books_omits_body_but_detail_includes_it():
+    """一覧(/books)は本文(body)を落として軽量化し、詳細(/books/{id})は本文を含む。
+
+    書店トップは本文を使わない（表紙/理由/著者名/概要のみ）。本文は1冊 ~18KB あり一覧に載せると
+    初回ロードの主ゲートになるため、一覧では body=None にする。読書ページは GET /books/{id} で
+    本文を遅延取得する（BffProvider.getBook）。
+    """
+    listed = client.get("/books").json()
+    assert listed, "本が1冊以上あること"
+    assert all(b.get("body") is None for b in listed), "一覧は本文を落とすこと"
+    # 詳細では本文が復活する（本文を持つ本が最低1冊）。
+    bodies = [client.get(f"/books/{b['id']}").json().get("body") for b in listed]
+    assert any(bodies), "詳細(/books/{id})では本文が返ること"
+
+
 def test_get_book_404():
     assert client.get("/books/nope").status_code == 404
 

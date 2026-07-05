@@ -21,7 +21,11 @@ def list_books(
     shelf: Optional[str] = Query(None),
     repo: RepositoryProtocol = Depends(get_repository),
 ) -> list[Book]:
-    return repo.list_books(status=status, shelf=shelf)
+    # 書店一覧は本文(body)を使わない（表紙/理由/著者名/概要のみ）。本文は1冊 ~18KB あり、
+    # 一覧に載せると初回ロードの主ゲートになる（6冊で ~350KB／うち約9割が body）。ここで body を
+    # 落として一覧を軽量化し、読書ページは GET /books/{id} で本文を遅延取得する（BffProvider.getBook）。
+    return [b.model_copy(update={"body": None})
+            for b in repo.list_books(status=status, shelf=shelf)]
 
 
 @router.get("/{book_id}", response_model=Book)
