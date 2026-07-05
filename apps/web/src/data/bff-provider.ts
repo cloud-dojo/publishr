@@ -30,24 +30,63 @@ async function jpost<T>(path: string, body?: unknown): Promise<T> {
 export class BffProvider extends BaseProvider {
   private polling = false;
   private trackedBookIds = new Set<string>();
+  // 本文を遅延 hydrate 中/済みの bookId（getBook からの多重フェッチ防止）。
+  private hydratingBody = new Set<string>();
 
   protected async load(): Promise<void> {
-    const [books, plans, personas, user] = await Promise.all([
-      jget<Book[]>("/books"),
-      jget<Plan[]>("/plans"),
-      jget<Persona[]>("/personas"),
-      // 実デモ owner（佐倉=demo_uid）のユーザーを読む。旧 "u_sakura" は Firestore 未存在で
-      // 挨拶/プロフィールが空になっていた（uid不整合）。
-      jget<User>(`/users/${DEMO_OWNER_UID}`).catch(() => null),
-    ]);
-    books.forEach((b) => this.books.set(b.id, b));
-    plans.forEach((p) => this.plans.set(p.id, p));
-    personas.forEach((p) => this.personas.set(p.id, p));
-    if (user) {
-      this.users.set(user.id, user);
-      // 無認証ショーケースのページは getUser(uid ?? DEMO_USER_ID) で引くため、
-      // DEMO_USER_ID キーにも同じ佐倉ユーザーを載せて解決できるようにする。
-      this.users.set(DEMO_USER_ID, user);
+    // 書店トップのカード表示に要る最小データ（本＋企画理由）を先に描画し、著者名・ユーザーは
+    // 後追いで埋める。4本を Promise.all で待つと最も重いレスポンスが初回描画をゲートするため、
+    // 届いた順に notify する（本カードは著者名 ?? "" のフォールバックがあり、名前は少し遅れて入る）。
+    const booksP = jget<Book[]>("/books").then((books) => {
+      books.forEach((b) => this.books.set(b.id, b));
+      this.notify();
+    });
+    const plansP = jget<Plan[]>("/plans").then((plans) => {
+      plans.forEach((p) => this.plans.set(p.id, p));
+      this.notify();
+    });
+    const personasP = jget<Persona[]>("/personas").then((personas) => {
+      personas.forEach((p) => this.personas.set(p.id, p));
+      this.notify();
+    });
+    // 実デモ owner（佐倉=demo_uid）のユーザーを読む。旧 "u_sakura" は Firestore 未存在で
+    // 挨拶/プロフィールが空になっていた（uid不整合）。ユーザー取得失敗は致命でない（挨拶が中立に落ちるだけ）。
+    const userP = jget<User>(`/users/${DEMO_OWNER_UID}`)
+      .then((user) => {
+        if (!user) return;
+        this.users.set(user.id, user);
+        // 無認証ショーケースのページは getUser(uid ?? DEMO_USER_ID) で引くため、
+        // DEMO_USER_ID キーにも同じ佐倉ユーザーを載せて解決できるようにする。
+        this.users.set(DEMO_USER_ID, user);
+        this.notify();
+      })
+      .catch(() => {});
+    await Promise.all([booksP, plansP, personasP, userP]);
+  }
+
+  // 一覧(/books)は本文(body)を落として配るため、本文が要る読書/概要ページで getBook が呼ばれた
+  // ときにだけ GET /books/{id}（本文込み・無認証で読める）で遅延 hydrate する。トップの BookCard は
+  // getBook を呼ばない＝過剰取得にならない。取得後は notify で読書ページが本文込みに再描画される。
+  getBook(id: string): Book | undefined {
+    const book = this.books.get(id);
+    if (book && !book.body && !this.hydratingBody.has(id)) {
+      this.hydratingBody.add(id);
+      void this.hydrateBody(id);
+    }
+    return book;
+  }
+
+  private async hydrateBody(id: string): Promise<void> {
+    try {
+      const full = await jget<Book>(`/books/${encodeURIComponent(id)}`);
+      const cur = this.books.get(id);
+      if (full.body) {
+        this.books.set(id, cur ? { ...cur, body: full.body } : full);
+        this.notify();
+      }
+    } catch (err) {
+      console.error(err);
+      this.hydratingBody.delete(id); // 失敗は次回 getBook で再試行
     }
   }
 
