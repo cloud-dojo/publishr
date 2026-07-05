@@ -191,6 +191,89 @@ def test_mechanical_override_noop_when_no_raw_terms_present():
     assert unchanged is verdict  # 変更なし・同一オブジェクトを返す
 
 
+def test_extract_mermaid_blocks_finds_multiple_fences():
+    from publishr_agents.mode_b.vertex_agent import _extract_mermaid_blocks
+
+    text = (
+        "本文\n```mermaid\nflowchart TD\n  A --> B\n```\n"
+        "続く本文\n```mermaid\nflowchart LR\n  X --> Y\n```\n"
+    )
+    blocks = _extract_mermaid_blocks(text)
+    assert len(blocks) == 2
+    assert blocks[0].startswith("flowchart TD")
+    assert blocks[1].startswith("flowchart LR")
+
+
+def test_mermaid_layout_violations_detects_lr_wide_and_node_overflow():
+    from publishr_agents.mode_b.vertex_agent import _mermaid_layout_violations
+
+    # LRで4ノード横並び → 横方向の規律違反
+    lr_wide = "flowchart LR\n  A[a] --> B[b] --> C[c] --> D[d]"
+    reasons = _mermaid_layout_violations(lr_wide)
+    assert any("横並び" in r for r in reasons)
+
+    # 総ノード8個 → 7個以内の規律違反
+    many_nodes = "flowchart TD\n" + "\n".join(
+        f"  n{i}[node{i}] --> n{i + 1}[node{i + 1}]" for i in range(8)
+    )
+    reasons = _mermaid_layout_violations(many_nodes)
+    assert any("総ノード数" in r for r in reasons)
+
+    # subgraphが2個以上 → 横幅を過大に食う規律違反
+    two_subgraphs = (
+        "flowchart TD\n"
+        '  subgraph g1["前提"]\n    A[a]\n  end\n'
+        '  subgraph g2["結果"]\n    B[b]\n  end\n'
+        "  A --> B"
+    )
+    reasons = _mermaid_layout_violations(two_subgraphs)
+    assert any("subgraph" in r for r in reasons)
+
+    # subgraph宣言行のIDはノード数にカウントしない（誤検出防止）
+    one_subgraph = 'flowchart TD\n  subgraph g1["前提"]\n    A[a] --> B{b}\n  end'
+    assert _mermaid_layout_violations(one_subgraph) == []
+
+    # 規律内の図 → 違反なし
+    ok = "flowchart TD\n  A[a] --> B{b}\n  B -->|yes| C[c]\n  B -->|no| D[d]"
+    assert _mermaid_layout_violations(ok) == []
+
+
+def test_mermaid_layout_override_forces_revise_on_violation():
+    from publishr_agents.mode_b.vertex_agent import _mermaid_layout_override
+    from publishr_schema.agent_io import BodyVerdict
+
+    chapters = [
+        {
+            "no": "1章",
+            "title": "第1章",
+            "text": "本文\n```mermaid\nflowchart LR\n  A[a] --> B[b] --> C[c] --> D[d]\n```",
+        }
+    ]
+    verdict = BodyVerdict(score=90, decision="approve", weak_chapters=[], editor_feedback=None)
+
+    overridden = _mermaid_layout_override(verdict, chapters)
+    assert overridden.decision == "revise"
+    assert overridden.weak_chapters == [1]
+    assert "図解が規律超過" in overridden.editor_feedback
+
+
+def test_mermaid_layout_override_noop_when_within_budget():
+    from publishr_agents.mode_b.vertex_agent import _mermaid_layout_override
+    from publishr_schema.agent_io import BodyVerdict
+
+    chapters = [
+        {
+            "no": "1章",
+            "title": "第1章",
+            "text": "本文\n```mermaid\nflowchart TD\n  A[a] --> B{b}\n```",
+        }
+    ]
+    verdict = BodyVerdict(score=90, decision="approve", weak_chapters=[], editor_feedback=None)
+
+    unchanged = _mermaid_layout_override(verdict, chapters)
+    assert unchanged is verdict  # 変更なし・同一オブジェクトを返す
+
+
 def test_body_loop_up_to_three_rounds():
     """最高3R: 初稿→2回改稿で3ラウンド到達し承認（編集長⇄著者の差し戻しが複数回）。"""
     book = _book()

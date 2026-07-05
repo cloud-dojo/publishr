@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 
 let _mermaidId = 0;
 
+// これ未満のscaleまで縮めると本文フォント比で文字が潰れて読めなくなる目安（暫定値）。
+const MIN_SCALE = 0.55;
+
 // LLM が出す Mermaid は編集記号の取りこぼしで壊れやすい。描画前に頻出の
 // 破綻パターンだけ保守的に補正する（正しい図はできるだけ素通しする）。
 export function sanitizeMermaid(src: string): string {
@@ -69,21 +72,28 @@ export function MermaidDiagram({ chart }: { chart: string }) {
         // viewBox の自然サイズ（w×h・px相当）を取り、列幅に対して大きすぎるか判定する。
         const [, , w, h] = (svgEl.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
         const colW = containerRef.current.clientWidth; // ≒ 段組み1列の幅（≈400px）
-        // 自然幅が列幅の 1.6 倍を超える図は width:100% で潰すと文字が読めなくなる
-        // （縮小率<0.6→本文比で極小）。等倍で描き、列高を超える分だけ縦を縮小し、
-        // はみ出す横幅は .mermaid-diagram の overflow-x で横スクロールさせる。
-        // figure は列幅のままなので段組みのページ送りは壊れない。
-        const tooBig = w > 0 && h > 0 && colW > 0 && w > colW * 1.6;
-        if (tooBig) {
-          const pageH = parseFloat(
-            getComputedStyle(containerRef.current).getPropertyValue("--rd-page-h"),
-          );
-          const dispH = pageH > 0 && h > pageH ? pageH : h; // 高い図だけページ高に縮小
-          svgEl.style.height = `${dispH}px`;
-          svgEl.style.width = `${w * (dispH / h)}px`;
-          svgEl.style.maxWidth = "none";
+        const pageH = parseFloat(
+          getComputedStyle(containerRef.current).getPropertyValue("--rd-page-h"),
+        );
+        if (w > 0 && h > 0 && colW > 0 && pageH > 0) {
+          // contain-fit: 縦横比を保ったまま列幅×ページ高の枠に必ず収める
+          // （scale=min(横方向の縮小率, 縦方向の縮小率)。1超は拡大しない＝等倍上限）。
+          const scale = Math.min(colW / w, pageH / h, 1);
+          if (scale >= MIN_SCALE) {
+            svgEl.style.width = `${w * scale}px`;
+            svgEl.style.height = `${h * scale}px`;
+            svgEl.style.maxWidth = "100%";
+          } else {
+            // 縮小しすぎると可読性が失われる複雑な図だけ、高さをページ高に合わせて
+            // 等倍描画し、はみ出す横幅は .mermaid-diagram の overflow-x で横スクロールさせる
+            // （プロンプト側の規律を守れなかった図への保険）。
+            const dispH = h > pageH ? pageH : h;
+            svgEl.style.height = `${dispH}px`;
+            svgEl.style.width = `${w * (dispH / h)}px`;
+            svgEl.style.maxWidth = "none";
+          }
         } else {
-          // 列幅に収まる図：列幅いっぱい＋ページ高上限（viewBox 比率で拡縮）。
+          // pageH 未取得時など：列幅に収まる図として引き伸ばす（従来のフォールバック）。
           svgEl.style.width = "100%";
           svgEl.style.height = "auto";
           svgEl.style.maxWidth = "100%";

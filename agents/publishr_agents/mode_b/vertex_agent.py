@@ -206,6 +206,68 @@ def _mechanical_override(
     )
 
 
+_MERMAID_BLOCK_PAT = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL)
+_FLOW_DIR_PAT = re.compile(r"flowchart\s+(TD|LR|TB|RL|BT)", re.IGNORECASE)
+_NODE_ID_PAT = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*[\[({]")
+_SUBGRAPH_PAT = re.compile(r"^\s*subgraph\b", re.IGNORECASE | re.MULTILINE)
+
+
+def _extract_mermaid_blocks(text: str) -> list[str]:
+    """章本文から ```mermaid フェンス内のソースを抽出する（複数可）。"""
+    return [m.strip() for m in _MERMAID_BLOCK_PAT.findall(text or "")]
+
+
+def _mermaid_layout_violations(src: str) -> list[str]:
+    """1つの mermaid ソースに対する規律違反理由を返す（空なら違反なし）。
+
+    Mermaid はブラウザ専用ライブラリのためサーバ側でレンダリング検証はできない。
+    正規表現による近似（ノードID数・方向・矢印数・subgraph数のカウント）に限定し、
+    誤検出を許容してでも「明らかに複雑すぎる図」だけを弾く保守的な閾値にする
+    （閾値は modeB_author_body.md の図解規律＝縦ステップ4〜8・総ノード7以内・subgraph1個以内と一致させる）。
+    """
+    reasons: list[str] = []
+    dir_match = _FLOW_DIR_PAT.search(src)
+    direction = dir_match.group(1).upper() if dir_match else "TD"
+    # subgraph 宣言行はノードIDと誤カウントしやすいので除いてから数える。
+    body_wo_subgraph = _SUBGRAPH_PAT.sub("", src)
+    total_nodes = len(set(_NODE_ID_PAT.findall(body_wo_subgraph)))
+    if total_nodes > 7:
+        reasons.append(f"総ノード数{total_nodes}個（7個以内の規律超過）")
+    if direction in ("LR", "RL") and total_nodes >= 4:
+        reasons.append(f"{direction}方向で{total_nodes}ノードが横並び（横方向は最大3ノードの規律違反）")
+    arrow_count = len(re.findall(r"-->", src))
+    if direction in ("TD", "TB") and arrow_count > 8:
+        reasons.append(f"矢印{arrow_count}本（縦ステップ4〜8の規律超過）")
+    subgraph_count = len(_SUBGRAPH_PAT.findall(src))
+    if subgraph_count > 1:
+        reasons.append(f"subgraph{subgraph_count}個（1図につき1個以内の規律超過。横幅を過大に食う）")
+    return reasons
+
+
+def _mermaid_layout_override(
+    verdict: Optional[BodyVerdict], chapters: list[dict[str, Any]]
+) -> Optional[BodyVerdict]:
+    """図解が規律（総ノード7以内・横3以内・縦8以内）を超過した章を weak_chapters に強制する。"""
+    if verdict is None:
+        return None
+    hit: dict[int, list[str]] = {}
+    for i, ch in enumerate(chapters, start=1):
+        for block in _extract_mermaid_blocks(ch.get("text") or ""):
+            reasons = _mermaid_layout_violations(block)
+            if reasons:
+                hit.setdefault(i, []).extend(reasons)
+    hit_chapters = sorted(hit)
+    if not hit_chapters or set(hit_chapters) <= set(verdict.weak_chapters):
+        return verdict
+    detail = "; ".join(f"第{i}章: {', '.join(rs)}" for i, rs in hit.items())
+    note = f"[機械チェック] 図解が規律超過: {detail}（ノードを間引く/図を分割/箇条書きに置換すること）"
+    merged_weak = sorted(set(verdict.weak_chapters) | set(hit_chapters))
+    feedback = f"{verdict.editor_feedback}\n{note}" if verdict.editor_feedback else note
+    return verdict.model_copy(
+        update={"decision": "revise", "weak_chapters": merged_weak, "editor_feedback": feedback}
+    )
+
+
 def build_author_agent() -> LlmAgent:
     def instruction(ctx: Any) -> str:
         base = render.build_system_text("modeb_author", ctx.state)
@@ -341,6 +403,7 @@ async def run_body_loop_vertex_async(
         {"body": _body(chapters), "readerProfile": profile_dump, "persona": persona_dump, "priorFeedback": None},
     )
     v = _mechanical_override(v, chapters, raw_terms)
+    v = _mermaid_layout_override(v, chapters)
     if v is not None:
         verdicts.append(v.model_dump(by_alias=True))
         if v.editor_feedback:
@@ -377,6 +440,7 @@ async def run_body_loop_vertex_async(
             },
         )
         current = _mechanical_override(current, chapters, raw_terms)
+        current = _mermaid_layout_override(current, chapters)
         if current is not None:
             verdicts.append(current.model_dump(by_alias=True))
             if current.editor_feedback:
