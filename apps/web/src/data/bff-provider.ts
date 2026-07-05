@@ -11,6 +11,14 @@ import type {
 import { apiUrl, DEMO_OWNER_UID, DEMO_USER_ID, getDemoClientId, timing } from "./config";
 import { BaseProvider } from "./provider";
 
+// 書庫の per-client ローカルオーバーレイ（無認証ショーケース用）。
+// 無認証デモは佐倉(DEMO_OWNER_UID)の本を全訪問者で共有表示する読み取り専用ビュー。「本棚に保存/外す」を
+// バックエンドへ書くと全訪問者に波及し、かつ匿名は所有者データを書くべきでない。そこで保存(archivedAt)/
+// 除外(dropped)は localStorage の per-client オーバーレイに持ち、/books 取得のたびに適用する
+// （ハードリロードでも保持＝本棚から消えない）。お気に入り著者(favorites-store)と同じ設計。
+type LibraryOverlayEntry = { archivedAt?: string; dropped?: boolean };
+const LIBRARY_OVERLAY_KEY = `publishr.bff.libraryOverlay.${DEMO_OWNER_UID}`;
+
 async function jget<T>(path: string): Promise<T> {
   const res = await fetch(`${apiUrl}${path}`);
   if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
@@ -38,7 +46,7 @@ export class BffProvider extends BaseProvider {
     // 後追いで埋める。4本を Promise.all で待つと最も重いレスポンスが初回描画をゲートするため、
     // 届いた順に notify する（本カードは著者名 ?? "" のフォールバックがあり、名前は少し遅れて入る）。
     const booksP = jget<Book[]>("/books").then((books) => {
-      books.forEach((b) => this.books.set(b.id, b));
+      this.setBooksWithOverlay(books);
       this.notify();
     });
     const plansP = jget<Plan[]>("/plans").then((plans) => {
@@ -93,8 +101,42 @@ export class BffProvider extends BaseProvider {
   private async refreshBooks(): Promise<void> {
     const books = await jget<Book[]>("/books");
     this.books.clear();
-    books.forEach((b) => this.books.set(b.id, b));
+    this.setBooksWithOverlay(books);
     this.notify();
+  }
+
+  // --- 書庫オーバーレイ（localStorage・per-client）------------------------------
+  private readOverlay(): Record<string, LibraryOverlayEntry> {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = window.localStorage.getItem(LIBRARY_OVERLAY_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, LibraryOverlayEntry>) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private writeOverlay(overlay: Record<string, LibraryOverlayEntry>): void {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(LIBRARY_OVERLAY_KEY, JSON.stringify(overlay));
+    } catch {
+      /* localStorage 不可（quota/プライベートモード）でもデモは続行する */
+    }
+  }
+
+  private mergeOverlay(book: Book, entry: LibraryOverlayEntry | undefined): Book {
+    if (!entry) return book;
+    let merged = book;
+    if (entry.archivedAt) merged = { ...merged, archivedAt: entry.archivedAt };
+    if (entry.dropped) merged = { ...merged, feedback: { ...merged.feedback, dropped: true } };
+    return merged;
+  }
+
+  /** /books 取得直後に per-client オーバーレイ（保存/除外）を重ねて books マップへ格納する。 */
+  private setBooksWithOverlay(books: Book[]): void {
+    const overlay = this.readOverlay();
+    books.forEach((b) => this.books.set(b.id, this.mergeOverlay(b, overlay[b.id])));
   }
 
   private startPolling(): void {
@@ -135,16 +177,25 @@ export class BffProvider extends BaseProvider {
     this.notify();
   }
 
+  // 無認証ショーケースでは「本棚に保存/外す」は per-client のローカル操作。バックエンド（共有の
+  // 佐倉データ）へは書かず localStorage オーバーレイに永続する＝ハードリロードでも保持し、他の訪問者
+  // の書店にも波及しない。書店/書庫の表示は archivedAt / feedback.dropped で判定される（lib/arrival）。
   async saveToLibrary(id: string): Promise<void> {
     const book = this.books.get(id);
     if (!book) return;
-    this.books.set(id, { ...book, archivedAt: new Date().toISOString() });
+    const archivedAt = new Date().toISOString();
+    this.books.set(id, { ...book, archivedAt });
+    const overlay = this.readOverlay();
+    this.writeOverlay({ ...overlay, [id]: { ...overlay[id], archivedAt } });
     this.notify();
   }
 
   async removeFromLibrary(id: string): Promise<void> {
-    const book = await jpost<Book>(`/books/${id}/feedback`, { dropped: true });
-    this.books.set(id, book);
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, { ...book, feedback: { ...book.feedback, dropped: true } });
+    const overlay = this.readOverlay();
+    this.writeOverlay({ ...overlay, [id]: { ...overlay[id], dropped: true } });
     this.notify();
   }
 
