@@ -14,15 +14,16 @@ export default function LibraryPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const authorName = (b: Book) => provider.getPersona(b.authorPersonaId)?.name ?? "";
 
-  // 書庫＝ユーザーが「書庫へ移動」した本だけのキュレーション集（shelf==="library"）。
-  // 入荷(arrivals/odd)は直近30日の新着ビュー。移動しないと30日で入荷から落ち、書庫にも入らない
-  // （検索からは到達可）。新しい順。
-  // 書庫＝「書庫へ移動」した本（archivedAt セット or shelf=library）。saveToLibrary は archivedAt のみ
-  // 更新するため生 shelf ではなく isArchivedBook で判定する（I-30）。書庫から外した本（feedback.dropped）
-  // は除外。新しい順。
+  // 書庫＝ユーザーが「書庫へ移動」した本だけのキュレーション集。入荷(arrivals/odd)は直近30日の
+  // 新着ビューで、移動しないと30日で入荷から落ち書庫にも入らない（検索からは到達可）。新しい順。
+  // 判定は archivedAt セット or shelf=library（saveToLibrary は archivedAt のみ更新するため生 shelf
+  // ではなく isArchivedBook で見る・I-30）。書庫から外した本（feedback.dropped）は除外。
+  // ※ status は問わない：本命/セレンディピティを含む書店の本は mock だと draft のことがあり、
+  //   以前 status==="published" を要求していたため保存しても本棚に出なかった。ユーザーが明示的に
+  //   保存(archivedAt)した本は draft でも「あなたの本棚」に並べる（保存意思を尊重する）。
   const library = provider
     .listBooks()
-    .filter((b) => b.status === "published" && isArchivedBook(b) && !b.feedback?.dropped)
+    .filter((b) => isArchivedBook(b) && !b.feedback?.dropped)
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   const handleRemove = async (book: Book) => {
     if (

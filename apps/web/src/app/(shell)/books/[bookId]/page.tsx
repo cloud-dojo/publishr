@@ -51,6 +51,9 @@ export default function BookDetailPage() {
       <div className="detail">
         <div className="detail-cover-col">
           <BookCover
+            bookId={book.id}
+            kind={book.kind}
+            shelf={book.shelf}
             variant={book.coverVariant}
             coverUrl={coverSrc(book.id, book.coverUrl)}
             title={book.title}

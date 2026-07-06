@@ -48,6 +48,9 @@ export function BookCard({
     return (
       <Link className="book book--row reveal" href={hrefFor(book)}>
         <BookCover
+          bookId={book.id}
+          kind={book.kind}
+          shelf={book.shelf}
           variant={book.coverVariant}
           coverUrl={coverSrc(book.id, book.coverUrl)}
           title={book.title}
@@ -77,6 +80,9 @@ export function BookCard({
   return (
     <Link className="book reveal" href={hrefFor(book)}>
       <BookCover
+        bookId={book.id}
+        kind={book.kind}
+        shelf={book.shelf}
         variant={book.coverVariant}
         coverUrl={coverSrc(book.id, book.coverUrl)}
         title={book.title}

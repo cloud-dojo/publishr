@@ -1,8 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { simpleCoverFallback } from "@/data/config";
+import { coverColorVars } from "@/lib/coverColor";
 
 export function BookCover({
+  bookId,
+  kind,
+  shelf,
   variant,
   coverUrl,
   title,
@@ -11,6 +15,11 @@ export function BookCover({
   titleSize,
   badge,
 }: {
+  // bookId + kind + shelf から表紙色を決定的に導く（honmei=青系 / serendipity=暖色・本ごとに固定）。
+  // shelf==="odd"（視野を広げる本）も暖色扱い（kind が honmei のままの出会い本を拾う）。
+  bookId?: string;
+  kind?: string | null;
+  shelf?: string | null;
   variant: string;
   coverUrl?: string | null;
   title: string;
@@ -22,6 +31,8 @@ export function BookCover({
   const titleStyle: CSSProperties | undefined = titleSize
     ? { fontSize: `${titleSize}px` }
     : undefined;
+  // --cover-bg を注入。globals.css の .cover-min が var(--cover-bg, <既定暗色>) で参照する。
+  const coverStyle = coverColorVars(bookId ?? "", kind, shelf) as CSSProperties;
   // ⚠️ DORMANT: 表紙の画像生成（Imagen）は今回スコープ外で park。現行 coverUrl は常に null のため
   // この分岐は現状使われず、下の CSS variant フォールバックが常用される。将来の画像生成再結線用に温存。
   // coverUrl（実Imagen等の文字なしアイコン装画）があれば最優先で「上＝固定タイトル帯／下＝アイコン装画」
@@ -47,7 +58,7 @@ export function BookCover({
   // タイトル左上だけのミニマル装丁にする（色は variant でばらける）。NEXT_PUBLIC_SIMPLE_COVER=0 で無効化。
   if (simpleCoverFallback) {
     return (
-      <div className={`cover cover--${variant || "b1"} cover-min`}>
+      <div className={`cover cover--${variant || "b1"} cover-min`} style={coverStyle}>
         <div className="c-title" style={titleStyle}>
           {title}
         </div>
