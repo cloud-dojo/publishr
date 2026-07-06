@@ -333,7 +333,9 @@ a { color: inherit; text-decoration: none; }
    ※クラス名は単ダッシュ（cover-min）。二重ダッシュ .x--y は Lightning CSS に黙ってdropされるため。 */
 .cover-min {
   justify-content: flex-start; align-items: flex-start; text-align: left; padding: 20px 18px;
-  background: linear-gradient(160deg, #232a37 0%, #0c0e15 80%) !important;
+  /* 色は本ごとに決定的に算出した --cover-bg（lib/coverColor.ts）で差し込む。
+     未設定時は従来の暗紺グラデにフォールバック。 */
+  background: var(--cover-bg, linear-gradient(160deg, #232a37 0%, #0c0e15 80%)) !important;
   border-left: 1px solid rgba(255,255,255,.09);
   border-right: 1px solid rgba(0,0,0,.38);
   box-shadow:
@@ -360,27 +362,9 @@ a { color: inherit; text-decoration: none; }
 .cover-min .c-sub, .cover-min .c-author, .cover-min .c-rule, .cover-min .pub-emboss { display: none !important; }
 .cover-min .c-title { margin: 0; color: #f3efe6; text-shadow: none; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .book--row .cover-min { padding: 13px 12px; }
-/* シックな暗色を variant で割り当て、色をばらけさせる（黒一色にしない・最近読んだ本の質感）。 */
-.cover-min.cover--b1 { background: linear-gradient(160deg, #1b2440, #0c1226) !important; }
-.cover-min.cover--b2 { background: linear-gradient(160deg, #28402f, #11231a) !important; }
-.cover-min.cover--b3 { background: linear-gradient(160deg, #2a2d34, #0c0d10) !important; }
-.cover-min.cover--b4 { background: linear-gradient(160deg, #38404e, #181c25) !important; }
-.cover-min.cover--b5 { background: linear-gradient(160deg, #8a4326, #3d1b0f) !important; }
-.cover-min.cover--b6 { background: linear-gradient(160deg, #1d3a39, #0c1a1a) !important; }
-.cover-min.cover--b7 { background: linear-gradient(160deg, #3a1822, #180a10) !important; }
-.cover-min.cover--b8 { background: linear-gradient(160deg, #2b2620, #0e0c08) !important; }
-.cover-min.cover--b9 { background: linear-gradient(160deg, #8a4326, #3d1b0f) !important; }
-.cover-min.cover--b10 { background: linear-gradient(160deg, #272447, #0e0d1a) !important; }
-/* 名前付き variant（書庫/fixtures の本: midnight/forest/slate/wine/sand/rust/ink）にも cover-min
-   グラデを割り当てる。これが無いと base .cover-min（暗紺）に落ちて「書庫が黒一色」になる。
-   サイドバー「最近読んだ本」(SPINE) と同系統。rust/sand = シックなオレンジ系（要望の追加色）。 */
-.cover-min.cover--midnight { background: linear-gradient(160deg, #1b2440, #0c1226) !important; }
-.cover-min.cover--forest   { background: linear-gradient(160deg, #28402f, #11231a) !important; }
-.cover-min.cover--slate    { background: linear-gradient(160deg, #38404e, #181c25) !important; }
-.cover-min.cover--wine     { background: linear-gradient(160deg, #3a1822, #180a10) !important; }
-.cover-min.cover--ink      { background: linear-gradient(160deg, #2b2620, #0e0c08) !important; }
-.cover-min.cover--rust     { background: linear-gradient(160deg, #8a4326, #3d1b0f) !important; }
-.cover-min.cover--sand     { background: linear-gradient(160deg, #8a4326, #3d1b0f) !important; }
+/* 表紙色は本ごとに --cover-bg（lib/coverColor.ts）で決定的に注入する（honmei=青系 / serendipity=暖色）。
+   以前の variant(b1..b10 / midnight..sand) 別の色割り当ては、位置由来で本命/出会いと無関係だったため撤去。
+   var() が効かない古環境では上の base .cover-min の暗紺グラデにフォールバックする。 */
 .book:hover .cover-min {
   transform: none;
   box-shadow:

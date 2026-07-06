@@ -8,6 +8,7 @@ import { fixtures } from "@publishr/shared-schema";
 
 import { DEMO_USER_ID } from "@/data/config";
 import { useProvider } from "@/data/hooks";
+import { coverGradient } from "@/lib/coverColor";
 import { watchAuth } from "@/lib/firebase";
 
 const NAV = [
@@ -18,12 +19,8 @@ const NAV = [
   { href: "/map", ico: "✦", label: "サイトマップ" },
 ];
 
-const SPINE: Record<string, string> = {
-  midnight: "linear-gradient(160deg,#1b2440,#0c1226)",
-  forest: "linear-gradient(160deg,#28402f,#11231a)",
-  slate: "linear-gradient(160deg,#38404e,#181c25)",
-  rust: "linear-gradient(160deg,#8a4326,#3d1b0f)",
-};
+// 背表紙の既定色（本ごとの色が出せない時のフォールバック）。表紙(cover-min)と同じ暗紺。
+const SPINE_FALLBACK = "linear-gradient(160deg,#232a37,#0c0e15)";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -80,7 +77,7 @@ export function Sidebar() {
           <Link key={b.id} href={`/read/${b.id}`} className="mini-book">
             <span
               className="mini-spine"
-              style={{ background: SPINE[b.coverVariant] ?? "linear-gradient(160deg,#2a2d34,#0c0d10)" }}
+              style={{ background: coverGradient(b.id, b.kind, b.shelf) ?? SPINE_FALLBACK }}
             />
             <span className="mini-meta">
               <span className="mini-title">{b.title}</span>
