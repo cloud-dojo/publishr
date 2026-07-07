@@ -511,6 +511,15 @@ resource "google_project_iam_member" "runner_run_invoker" {
   member  = "serviceAccount:${google_service_account.runner.email}"
 }
 
+# runner: 自SAでカスタムトークンを署名できる（Firebase create_custom_token＝ゲストログイン
+# /api/demo-token 用）。Cloud Run は鍵レス実行のため署名は IAM signBlob 経由で行われ、
+# 自分自身に tokenCreator（signBlob 権限）が必要。未付与だと 500 TokenSignError になる。
+resource "google_service_account_iam_member" "runner_self_token_creator" {
+  service_account_id = google_service_account.runner.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${google_service_account.runner.email}"
+}
+
 # per-uid OAuth トークン保存用の最小権限カスタムロール（secret作成＋版追加。読取は secretAccessor）。
 resource "google_project_iam_custom_role" "publishr_token_store" {
   role_id     = "publishrTokenStore"
