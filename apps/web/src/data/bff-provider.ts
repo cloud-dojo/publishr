@@ -125,6 +125,27 @@ export class BffProvider extends BaseProvider {
     }
   }
 
+  /**
+   * ログアウト時にローカル本棚オーバーレイ（保存/除外）を消し、次セッション（匿名/ゲスト）を
+   * 原状へ戻す。overlay キーは DEMO_OWNER_UID 固定でログイン uid に依存しないため、消さないと
+   * ログイン→保存→ログアウト→再ログインで棚が残り続ける。レート計数の demoClientId は消さない
+   * （別キー・別責務）。/books を取り直して in-memory の archivedAt/dropped も落とす。
+   */
+  async clearLocalLibrary(): Promise<void> {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(LIBRARY_OVERLAY_KEY);
+      } catch {
+        /* localStorage 不可でも続行 */
+      }
+    }
+    try {
+      await this.refreshBooks();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   private mergeOverlay(book: Book, entry: LibraryOverlayEntry | undefined): Book {
     if (!entry) return book;
     let merged = book;

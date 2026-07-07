@@ -290,6 +290,8 @@ export default function AccountPage() {
     }
   };
   const onLogout = async () => {
+    // ログアウトで per-client のローカル本棚をリセット（次セッション＝匿名/ゲストを原状へ）。
+    void provider.clearLocalLibrary();
     await signOutUser();
     router.push("/login");
   };
