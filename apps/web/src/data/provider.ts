@@ -171,6 +171,15 @@ export abstract class BaseProvider {
   abstract runPipeline(userId: string, themeKind?: string): Promise<void>;
 
   /**
+   * ログアウト時に per-client のローカル本棚オーバーレイを消す（無認証ショーケース＝bff用）。
+   * 既定は no-op。BffProvider だけが localStorage の overlay を消し、次セッションを原状へ戻す。
+   * mock/firestore はローカルオーバーレイを持たない（保存は fixtures / Firestore 直）。
+   */
+  async clearLocalLibrary(): Promise<void> {
+    // no-op
+  }
+
+  /**
    * 初回体験：登録直後に「最初の本棚」を仕立てる。
    * 既定は本生成パイプラインのトリガー（firestore は Cloud Run、結果は購読で反映）。
    * MockProvider は決定的な時間差入荷でこれを上書きする。
