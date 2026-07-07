@@ -11,7 +11,6 @@ export default function LoginPage() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [demoPassword, setDemoPassword] = useState("");
   const [demoBusy, setDemoBusy] = useState(false);
 
   const getNextPath = () => {
@@ -44,17 +43,13 @@ export default function LoginPage() {
   };
 
   const onDemoLogin = async () => {
-    if (!demoPassword) return;
     setDemoBusy(true);
     setError(null);
     try {
-      const resp = await fetch(`${apiUrl}/api/demo-token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: demoPassword }),
-      });
+      // パスワードレス（ワンクリック）: BFF が佐倉uidのカスタムトークンを返す。
+      const resp = await fetch(`${apiUrl}/api/demo-token`, { method: "POST" });
       if (!resp.ok) {
-        setError(resp.status === 401 ? "パスワードが違います。" : "デモログインに失敗しました。");
+        setError("ゲストログインに失敗しました。");
         return;
       }
       const { token } = await resp.json();
@@ -63,10 +58,10 @@ export default function LoginPage() {
         const done = await hasCompletedOnboarding(user.uid);
         router.push(done ? getNextPath() : "/onboarding");
       } else {
-        setError("デモログインに失敗しました。");
+        setError("ゲストログインに失敗しました。");
       }
     } catch {
-      setError("デモログインに失敗しました。もう一度お試しください。");
+      setError("ゲストログインに失敗しました。もう一度お試しください。");
     } finally {
       setDemoBusy(false);
     }
@@ -102,34 +97,20 @@ export default function LoginPage() {
           {busy ? "サインイン中…" : "Googleでログイン"}
         </button>
 
-        {/* デモアカウントログイン（Firebase設定済みのみ表示・I-32） */}
+        {/* ゲストログイン（Firebase設定済みのみ表示・I-32）: パスワード不要のワンクリック。
+            佐倉uidのセッションになり、佐倉の書店をそのまま体験できる。 */}
         {isFirebaseConfigured && (
           <>
             <div className="auth-or">または</div>
             <div className="auth-demo">
-              <p className="auth-demo-label">デモアカウントでログイン</p>
-              <div className="auth-demo-field">
-                <span className="auth-demo-id-label">ID</span>
-                <span className="auth-demo-id-value">publishr</span>
-              </div>
-              <div className="auth-demo-field">
-                <span className="auth-demo-id-label">Password</span>
-                <input
-                  type="password"
-                  className="auth-demo-input"
-                  placeholder="パスワードを入力"
-                  value={demoPassword}
-                  onChange={(e) => setDemoPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && onDemoLogin()}
-                />
-              </div>
+              <p className="auth-demo-label">アカウント登録なしで体験する</p>
               <button
                 type="button"
                 className="btn btn--outline btn--block"
                 onClick={onDemoLogin}
-                disabled={demoBusy || !demoPassword}
+                disabled={demoBusy}
               >
-                {demoBusy ? "ログイン中…" : "デモでログイン"}
+                {demoBusy ? "ログイン中…" : "ゲストログイン"}
               </button>
             </div>
           </>

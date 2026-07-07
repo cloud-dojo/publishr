@@ -17,7 +17,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
 from publishr_schema import Book
 
 from ..config import settings
@@ -237,23 +236,16 @@ def api_trigger_planning(
     return {"ok": True, "queued": queued}
 
 
-class DemoTokenInput(BaseModel):
-    password: str
-
-
 @router.post("/demo-token")
-def api_demo_token(payload: DemoTokenInput) -> dict:
-    """デモ用 Firebase Custom Token 発行（I-32）。
+def api_demo_token() -> dict:
+    """ゲスト用 Firebase Custom Token 発行（I-32・パスワードレス）。
 
-    PUBLISHR_DEMO_PASSWORD が設定済みでかつ一致した場合のみ、
-    settings.demo_uid で署名されたカスタムトークンを返す。
-    フロントは signInWithCustomToken でそのまま佐倉uidとしてログインできる。
+    settings.demo_uid（佐倉）で署名したカスタムトークンを返す＝ワンクリックのゲストログイン。
+    フロントは signInWithCustomToken で佐倉uidセッションになる。無認証ショーケースは佐倉の書店を
+    誰でも閲覧できる読み取り専用ビューなので、閲覧目的のゲスト昇格に追加の認証は課さない。
+    課金導線（今すぐ企画＝実Vertex）は custom-token セッションには出さない（web account ページで
+    providerId 判定し、Google ログインの佐倉本人のみに表示）。demo_uid 未設定なら 503。
     """
-    expected = os.getenv("PUBLISHR_DEMO_PASSWORD", "")
-    if not expected:
-        raise HTTPException(status_code=503, detail="デモ認証は無効です")
-    if payload.password != expected:
-        raise HTTPException(status_code=401, detail="パスワードが違います")
     uid = settings.demo_uid
     if not uid:
         raise HTTPException(status_code=503, detail="demo_uid 未設定")

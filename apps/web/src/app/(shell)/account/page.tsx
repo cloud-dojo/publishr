@@ -253,6 +253,9 @@ export default function AccountPage() {
   const [uid, setUid] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
+  // 実 Google ログインか（providerId=google.com）。パスワードレスのゲストログイン（custom-token）は
+  // providerData が空になるため false。課金導線（今すぐ企画）を佐倉本人だけに出すための判定。
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
   // 実行中の企画種別（"honmei" | "serendipity" | null）。種別ごとにボタンを個別に無効化する。
   const [triggering, setTriggering] = useState<string | null>(null);
   const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
@@ -260,6 +263,7 @@ export default function AccountPage() {
     setUid(u?.uid ?? null);
     setAuthEmail(u?.email ?? null);
     setAuthDisplayName(u?.displayName ?? null);
+    setIsGoogleUser(u?.providerData?.some((p) => p.providerId === "google.com") ?? false);
   }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
@@ -350,12 +354,12 @@ export default function AccountPage() {
       </section>
 
       {/* 方針A（prod-live-followups #7）: 「今すぐ企画」は実 Vertex 企画＝課金を発火するため、
-          allowlist 一致の uid（＝デモの佐倉）にのみ表示する。バックエンドの ALLOWED_TRIGGER_UIDS
-          が実際のガード（一般ユーザーは 403）で、ここは UI を見せない側の多層防御。 */}
+          allowlist 一致の uid（＝佐倉）かつ **実 Google ログイン** のときだけ表示する。
+          パスワードレスのゲストログイン（custom-token・providerData 空）は佐倉uidでも isGoogleUser=false
+          になり非表示＝誰でも押せる課金導線を塞ぐ。バックエンドの ALLOWED_TRIGGER_UIDS が実ガード。 */}
       {/* ②G の無認証ショーケース向けライブ生成開放（NEXT_PUBLIC_DEMO_LIVE_GEN）は、押下後の
-          「企画中…」が画面停止に見えるため 2026-07-04 に撤去し、無認証デモは読み取り専用へ戻した。
-          残す allowlist 経路は認証済み佐倉のみに出る（匿名デモ visitor には出ない）。 */}
-      {dataSource !== "mock" && canManualTrigger(uid) && (
+          「企画中…」が画面停止に見えるため 2026-07-04 に撤去し、無認証デモは読み取り専用へ戻した。 */}
+      {dataSource !== "mock" && isGoogleUser && canManualTrigger(uid) && (
         <section className="page section">
           <div className="acct-savebox">
             <div className="asb-text">

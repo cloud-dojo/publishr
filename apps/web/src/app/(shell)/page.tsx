@@ -167,9 +167,9 @@ export default function HomePage() {
         greeting={
           dataSource === "bff" ? (
             // 無認証ショーケース: 「ようこそ、佐倉さん」は viewer=佐倉 に読まれ誤解を生むため、
-            // 「佐倉さんの書店（デモ）」＝閲覧者中立の表現にする。
+            // 「佐倉さんの書店」＝閲覧者中立の三人称表現にする。
             <>
-              <b>{readerName}</b> さんの書店（デモ）
+              <b>{readerName}</b> さんの書店
             </>
           ) : (
             <>
@@ -180,7 +180,7 @@ export default function HomePage() {
       />
 
       <div className="home-page">
-        {/* デモ文脈バナー（bff・無認証時のみ）: 「佐倉って誰？」を価値説明に変える。
+        {/* 文脈バナー（bff・無認証時のみ）: 「佐倉って誰？」を価値説明に変える。
             佐倉=サンプルユーザー、並ぶ本は AI が彼女の Google 観測から企画・入荷したもの、と明示。 */}
         {dataSource === "bff" && (
           <div
@@ -194,7 +194,7 @@ export default function HomePage() {
               lineHeight: 1.6,
             }}
           >
-            <b>デモ：{readerName}さんの書店</b> — Publishr がこのユーザーの Google（Drive・カレンダー・タスク）を観測し、AIが3案から選んで企画・入荷した本です。
+            <b>{readerName}さんの書店</b> — Publishr がこのユーザーの Google（Drive・カレンダー・タスク）を観測し、AIが3案から選んで企画・入荷した本です。
           </div>
         )}
         <section className="page-hero">
