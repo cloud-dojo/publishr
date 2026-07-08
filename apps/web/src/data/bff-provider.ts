@@ -51,6 +51,10 @@ export class BffProvider extends BaseProvider {
   private trackedBookIds = new Set<string>();
   // 本文を遅延 hydrate 中/済みの bookId（getBook からの多重フェッチ防止）。
   private hydratingBody = new Set<string>();
+  // hydrate 済みの本文キャッシュ（id→body）。/books 再取得（refreshBooks）は本文を落として配るため、
+  // これを重ねて「開いた本の本文が消える→ページ数が出ない/ハイライトが描けない」を防ぐ
+  // （FirestoreProvider の bodyCache と同設計）。
+  private bodyCache = new Map<string, string>();
 
   protected async load(): Promise<void> {
     // 書店トップのカード表示に要る最小データ（本＋企画理由）を先に描画し、著者名・ユーザーは
@@ -100,6 +104,7 @@ export class BffProvider extends BaseProvider {
       const full = await jget<Book>(`/books/${encodeURIComponent(id)}`);
       const cur = this.books.get(id);
       if (full.body) {
+        this.bodyCache.set(id, full.body); // refreshBooks（body strip）を跨いで本文を保持
         this.books.set(id, cur ? { ...cur, body: full.body } : full);
         this.notify();
       }
@@ -146,6 +151,11 @@ export class BffProvider extends BaseProvider {
     if (typeof window !== "undefined") {
       try {
         window.localStorage.removeItem(LIBRARY_OVERLAY_KEY);
+        // 読書位置 read_view_<bookId> も per-client 状態＝ログアウトで初期化する。別キーのため
+        // overlay 削除では消えず、進捗は0に戻るのに本が途中ページから開く不整合が出ていた。
+        for (const key of Object.keys(window.localStorage)) {
+          if (key.startsWith("read_view_")) window.localStorage.removeItem(key);
+        }
       } catch {
         /* localStorage 不可でも続行 */
       }
@@ -173,7 +183,12 @@ export class BffProvider extends BaseProvider {
   /** /books 取得直後に per-client オーバーレイ（保存/除外）を重ねて books マップへ格納する。 */
   private setBooksWithOverlay(books: Book[]): void {
     const overlay = this.readOverlay();
-    books.forEach((b) => this.books.set(b.id, this.mergeOverlay(b, overlay[b.id])));
+    books.forEach((b) => {
+      // hydrate 済みの本文は /books 再取得（body strip）を跨いで復元する（本文消え防止）。
+      const cachedBody = this.bodyCache.get(b.id);
+      const withBody = cachedBody && !b.body ? { ...b, body: cachedBody } : b;
+      this.books.set(b.id, this.mergeOverlay(withBody, overlay[b.id]));
+    });
   }
 
   private startPolling(): void {
