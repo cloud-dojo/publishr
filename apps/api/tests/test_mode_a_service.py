@@ -85,6 +85,39 @@ def test_run_set_pipeline_books_are_published_with_body():
         assert stored.body
 
 
+def test_run_set_pipeline_passes_past_feedback_books_to_reader(monkeypatch):
+    """C1.8 学習ループ: 既定の set 経路でも repo の反応付き published 本が読者分析へ渡る。
+
+    反応の無い本は除外・他 owner の本も除外（旧・単一テーマ経路と同じ絞り込み）。
+    """
+    from publishr_agents.reader.preferences import has_feedback
+
+    repo = MockRepository()
+    first = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+    target = first.books[0]
+    fb = target.feedback.model_copy(update={"rating": 5})
+    repo.upsert_book(target.model_copy(update={"feedback": fb}))
+    # 他 owner の反応付き本は絞り込みで除外される。
+    repo.upsert_book(
+        target.model_copy(update={"id": "b_other_owner", "owner_uid": "uid_other", "feedback": fb})
+    )
+
+    captured: dict = {}
+    orig = mode_a_service.run_mode_a_set_pipeline
+
+    def spy(user, **kwargs):
+        captured["past_books"] = kwargs.get("past_books")
+        return orig(user, **kwargs)
+
+    monkeypatch.setattr(mode_a_service, "run_mode_a_set_pipeline", spy)
+    mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+
+    past = captured.get("past_books") or []
+    assert any(b.id == target.id for b in past), "反応が付いた自分の本が読者分析へ渡る"
+    assert all(b.id != "b_other_owner" for b in past), "他 owner の本は渡らない"
+    assert all(has_feedback(b) for b in past), "反応の無い本は含めない"
+
+
 def test_run_legacy_flag_falls_back_to_single_theme(monkeypatch):
     """キルスイッチ PUBLISHR_SET_PIPELINE=0 で旧・単一テーマ経路に戻る（ロールバック可）。"""
     monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)

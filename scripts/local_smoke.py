@@ -183,8 +183,10 @@ def run_e2e_flow(web_base: str) -> None:
     published_arrivals = [b for b in published_books if b.get("shelf") == "arrivals"]
     if not published_arrivals:
         raise SmokeError("no published arrival book available after pipeline run")
-    published = published_arrivals[0]
-    book_id = published["id"]
+    book_id = published_arrivals[0]["id"]
+    # 一覧は軽量化のため body を落とす（routers/books.py）。本文は読書ページと同じく
+    # GET /books/{id} の遅延取得で確認する。
+    published = request_json("GET", f"/books/{book_id}")
     if not published.get("body"):
         raise SmokeError(f"published book has no body: {book_id}")
     print(f"Published arrival ok: {book_id}")

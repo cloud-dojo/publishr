@@ -184,6 +184,16 @@ def run(
     # fixture は決定的アンカー（役員報告が±14日窓内）。実Googleは「今」を基準に±14日を読む。
     anchor = now or (datetime.now(JST) if is_google else _DEMO_NOW)
 
+    # C1.8 学習ループ: ユーザの過去公開本のうち「反応がある」ものを読者分析へ渡す
+    # （set/旧単一テーマ 両経路共通。反応が1冊も無ければ空＝mock 既定挙動は不変）。
+    from publishr_agents.reader.preferences import has_feedback  # noqa: PLC0415
+
+    past_books = [
+        b
+        for b in repo.list_books(status="published")
+        if has_feedback(b) and (not b.owner_uid or b.owner_uid == owner)
+    ]
+
     if settings.set_pipeline:
         set_result = run_mode_a_set_pipeline(
             user,
@@ -197,6 +207,7 @@ def run(
             enable_imagen=settings.enable_imagen,
             theme_kind=theme_kind,
             threshold=70,
+            past_books=past_books,
             # お気に入り起用の抽選 seed＝配本トークン（再配信は同一・別配本は振り直し）。
             # run_token 無し（mock/直呼び）は created（wall-clock）＝手動トリガごとに振り直す。
             seed=run_token or created,
@@ -220,15 +231,6 @@ def run(
         )
 
     # ── 旧・単一テーマ（ロールバック用キルスイッチ PUBLISHR_SET_PIPELINE=0）──
-
-    # C1.8 学習ループ: ユーザの過去公開本のうち「反応がある」ものを読者分析へ渡す。
-    from publishr_agents.reader.preferences import has_feedback  # noqa: PLC0415
-
-    past_books = [
-        b
-        for b in repo.list_books(status="published")
-        if has_feedback(b) and (not b.owner_uid or b.owner_uid == owner)
-    ]
 
     result = run_mode_a_pipeline(
         user,
