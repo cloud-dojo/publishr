@@ -7,6 +7,7 @@ STEP2企画は readerProfile 経由で受け取る＝配線を増やさず学習
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional
 
 from publishr_schema import Book, User
@@ -19,6 +20,7 @@ _POS_REACTION = {"good", "helpful", "like"}  # いいね系
 _NEG_REACTION = {"bad", "meh", "unhelpful", "dislike"}  # いまいち系
 _MAX = 3
 _IMPRESSION_EXCERPT = 160  # 自由記述感想の抜粋上限（プロンプトに入る量を抑える）
+_ANNOT_EXCERPT = 120  # ハイライト/メモ抜粋の上限（プロンプトに入る量を抑える）
 
 
 def _reaction_polarity(raw: Optional[str]) -> str:
@@ -36,6 +38,36 @@ def has_feedback(book: Book) -> bool:
     return bool(
         f.rating or f.wants_sequel or f.dropped or f.read_percent or f.reading_reaction or f.impression
     )
+
+
+def has_learning_signal(book: Book) -> bool:
+    """学習ループの対象か（反応 or ハイライト/しおり等の注釈のどちらかがあれば真）。"""
+    return has_feedback(book) or bool(book.annotations)
+
+
+def _recency_key(book: Book) -> str:
+    """recent_first のソートキー。UTC正規化したISO文字列を返す。
+
+    last_read_at はUTC書き（feedback_service）・created_at はJST書き（mode_a_service）と
+    オフセットが混在するため、素の辞書順比較では実時刻と逆転し得る。tz無しはUTCとみなす
+    （環境ローカルtzに依存させない＝決定的）。解析不能な文字列はそのまま返す。
+    """
+    raw = book.feedback.last_read_at or book.created_at or ""
+    try:
+        dt = datetime.fromisoformat(raw)
+    except ValueError:
+        return raw
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).isoformat()
+
+
+def recent_first(books: list[Book]) -> list[Book]:
+    """最近読んだ/作られた順に並べる（last_read_at 優先・無ければ created_at）。
+
+    抜粋の上限3件が「最近の関心」を拾うための前処理。安定ソートで同値は元の順序を保つ＝決定的。
+    """
+    return sorted(books, key=_recency_key, reverse=True)
 
 
 def summarize_feedback(past_books: Optional[list[Book]]) -> str:
@@ -80,6 +112,39 @@ def summarize_feedback(past_books: Optional[list[Book]]) -> str:
     ][:_MAX]
     if notes:
         parts.append("感想(ユーザー記述・データ): " + " ".join(notes))
+    return "／".join(parts)
+
+
+def summarize_annotations(past_books: Optional[list[Book]]) -> str:
+    """過去本のハイライト/メモ/しおりを内容サマリ文字列にする（注釈が1つも無ければ ""）。
+
+    件数は全量・本文抜粋とメモは先頭3件×抜粋キャップ＝データが増えても出力は頭打ち
+    （新しい順に拾いたい呼び出し側は recent_first で並べてから渡す）。
+    抜粋（ユーザー選択）とメモ（ユーザー記述）は untrusted。「データ」ラベルで足す＝
+    reader プロンプト側のインジェクションガードと合わせて『指示でなく嗜好の手掛かり』として読ませる。
+    """
+    books = [b for b in (past_books or []) if b.annotations]
+    if not books:
+        return ""
+    highlights = [
+        (b, a) for b in books for a in b.annotations if a.kind in ("highlight", "note")
+    ]
+    bookmarks = sum(1 for b in books for a in b.annotations if a.kind == "bookmark")
+    parts: list[str] = [f"過去{len(books)}冊にハイライト{len(highlights)}件・しおり{bookmarks}件"]
+    excerpts = [
+        f"「{(a.text or '').strip()[:_ANNOT_EXCERPT]}」(『{b.title}』)"
+        for b, a in highlights
+        if (a.text or "").strip()
+    ][:_MAX]
+    if excerpts:
+        parts.append("刺さった箇所(ユーザー選択・データ): " + " ".join(excerpts))
+    notes = [
+        f"「{(a.note or '').strip()[:_ANNOT_EXCERPT]}」"
+        for _, a in highlights
+        if (a.note or "").strip()
+    ][:_MAX]
+    if notes:
+        parts.append("メモ(ユーザー記述・データ): " + " ".join(notes))
     return "／".join(parts)
 
 

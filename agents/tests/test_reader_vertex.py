@@ -31,6 +31,28 @@ def test_reader_agent_builds_offline():
     assert agent.output_schema is ReaderProfile3Layer
 
 
+def test_init_state_includes_learning_loop_keys():
+    """_init_state が C1.8 の学習素材（highlightsSummary 含む）を state に積む（オフライン）。"""
+    from publishr_schema import Book, ReadingAnnotation
+
+    from publishr_agents.reader.vertex_agent import _init_state
+
+    user = next(u for u in load_users() if u.id == "u_sakura")
+    bundle = collect_observation(user, now=NOW, source=FixtureObservationSource())
+    past = [
+        Book(
+            id="b1", plan_id="p1", status="published", author_persona_id="px",
+            title="任せ方の本", cover_variant="midnight", shelf="library",
+            annotations=[
+                ReadingAnnotation(id="a1", kind="highlight", paragraph_index=0, text="刺さった一文")
+            ],
+        )
+    ]
+    state = _init_state(bundle, user, None, past)
+    assert "刺さった一文" in state["highlightsSummary"]
+    assert state["recentReads"] == ["任せ方の本"]
+
+
 @pytest.mark.vertex
 @pytest.mark.skipif(
     os.environ.get("PUBLISHR_RUN_VERTEX") != "1",

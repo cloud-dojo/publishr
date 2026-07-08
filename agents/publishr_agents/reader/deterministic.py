@@ -21,7 +21,12 @@ from publishr_schema import (
     User,
 )
 
-from .preferences import recent_read_titles, style_preference_from_user, summarize_feedback
+from .preferences import (
+    recent_read_titles,
+    style_preference_from_user,
+    summarize_annotations,
+    summarize_feedback,
+)
 
 _SEREN = {
     "高": "high",
@@ -170,7 +175,9 @@ def analyze_reader_deterministic(
     )
     behavior = ReaderBehavior(
         recent_reads=recent_read_titles(past_books),  # 既読＝次サイクルの被り回避材料
-        highlights_summary=(f"{len(fb.highlights)}件のハイライト" if fb.highlights else ""),
+        # 過去本のハイライト/しおり（C1.8）優先・無ければ従来の readingFB 件数表示（mock不変）。
+        highlights_summary=summarize_annotations(past_books)
+        or (f"{len(fb.highlights)}件のハイライト" if fb.highlights else ""),
         feedback_summary=feedback_summary,
         serendipity_tolerance=_serendipity(user.profile.serendipity_tolerance if user else "mid"),
         style_preference=style_preference_from_user(user),
