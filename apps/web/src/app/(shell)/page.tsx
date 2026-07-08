@@ -180,23 +180,6 @@ export default function HomePage() {
       />
 
       <div className="home-page">
-        {/* 文脈バナー（bff・無認証時のみ）: 「佐倉って誰？」を価値説明に変える。
-            佐倉=サンプルユーザー、並ぶ本は AI が彼女の Google 観測から企画・入荷したもの、と明示。 */}
-        {dataSource === "bff" && (
-          <div
-            style={{
-              margin: "0 0 1rem",
-              padding: "0.7rem 1rem",
-              borderRadius: 10,
-              background: "var(--color-surface-alt, #f5f0e6)",
-              border: "1px solid var(--color-border, #e2dac9)",
-              fontSize: "0.85rem",
-              lineHeight: 1.6,
-            }}
-          >
-            <b>{readerName}さんの書店</b> — Publishr がこのユーザーの Google（Drive・カレンダー・タスク）を観測し、AIが3案から選んで企画・入荷した本です。
-          </div>
-        )}
         <section className="page-hero">
           <div className="ph-eyebrow">Your bookstore</div>
           <h1>
