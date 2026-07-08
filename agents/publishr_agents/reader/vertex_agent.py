@@ -23,7 +23,12 @@ from publishr_schema import Book, ObservationBundle, ReaderProfile3Layer, User  
 from .. import state_keys as K  # noqa: E402
 from ..llm.provider import model_for  # noqa: E402
 from ..prompts import loader, render  # noqa: E402
-from .preferences import recent_read_titles, style_preference_from_user, summarize_feedback  # noqa: E402
+from .preferences import (  # noqa: E402
+    recent_read_titles,
+    style_preference_from_user,
+    summarize_annotations,
+    summarize_feedback,
+)
 
 _APP = "publishr_reader"
 
@@ -72,6 +77,7 @@ def _init_state(
         "initialProfile": initial.model_dump(by_alias=True) if initial else None,
         # C1.8 学習ループの素材（空なら readingBehavior に反映しない＝従来どおり）。
         "feedbackSummary": summarize_feedback(past_books),
+        "highlightsSummary": summarize_annotations(past_books),
         "stylePreference": style_preference_from_user(user),
         "recentReads": recent_read_titles(past_books),
     }

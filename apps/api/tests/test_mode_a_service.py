@@ -118,6 +118,65 @@ def test_run_set_pipeline_passes_past_feedback_books_to_reader(monkeypatch):
     assert all(has_feedback(b) for b in past), "反応の無い本は含めない"
 
 
+def test_run_set_pipeline_includes_annotation_only_books(monkeypatch):
+    """C1.8: 反応ゼロでもハイライト/しおりが付いた本は past_books に含まれる。"""
+    from publishr_schema import ReadingAnnotation
+
+    repo = MockRepository()
+    first = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+    annotated = first.books[0].model_copy(update={
+        "annotations": [
+            ReadingAnnotation(id="a1", kind="highlight", paragraph_index=0, text="刺さった一文")
+        ],
+    })
+    repo.upsert_book(annotated)
+
+    captured: dict = {}
+    orig = mode_a_service.run_mode_a_set_pipeline
+
+    def spy(user, **kwargs):
+        captured["past_books"] = kwargs.get("past_books")
+        return orig(user, **kwargs)
+
+    monkeypatch.setattr(mode_a_service, "run_mode_a_set_pipeline", spy)
+    mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+
+    past = captured.get("past_books") or []
+    assert any(b.id == annotated.id for b in past), "注釈のみの本も学習対象に入る"
+
+
+def test_run_set_pipeline_past_books_recency_order_and_cap(monkeypatch):
+    """C1.8: past_books は新しい順（last_read_at 優先）・上限 _PAST_BOOKS_MAX で渡す。"""
+    repo = MockRepository()
+    first = mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+    fb = lambda b, ts: b.feedback.model_copy(update={"rating": 4, "last_read_at": ts})  # noqa: E731
+    oldest = first.books[0].model_copy(
+        update={"feedback": fb(first.books[0], "2026-06-20T00:00:00+09:00")}
+    )
+    older = first.books[1].model_copy(
+        update={"feedback": fb(first.books[1], "2026-07-01T00:00:00+09:00")}
+    )
+    newer = first.books[2].model_copy(
+        update={"feedback": fb(first.books[2], "2026-07-08T00:00:00+09:00")}
+    )
+    for b in (oldest, older, newer):
+        repo.upsert_book(b)
+
+    captured: dict = {}
+    orig = mode_a_service.run_mode_a_set_pipeline
+
+    def spy(user, **kwargs):
+        captured["past_books"] = kwargs.get("past_books")
+        return orig(user, **kwargs)
+
+    monkeypatch.setattr(mode_a_service, "run_mode_a_set_pipeline", spy)
+    monkeypatch.setattr(mode_a_service, "_PAST_BOOKS_MAX", 2)
+    mode_a_service.run(repo, "u_sakura", owner_uid="uid_demo")
+
+    past = captured["past_books"]
+    assert [b.id for b in past] == [newer.id, older.id]  # 新しい順・上限2で oldest は落ちる
+
+
 def test_run_legacy_flag_falls_back_to_single_theme(monkeypatch):
     """キルスイッチ PUBLISHR_SET_PIPELINE=0 で旧・単一テーマ経路に戻る（ロールバック可）。"""
     monkeypatch.setattr(mode_a_service.settings, "set_pipeline", False)

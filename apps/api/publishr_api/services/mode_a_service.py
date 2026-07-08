@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 JST = timezone(timedelta(hours=9))
 # 観測アンカー（mock 決定的・水朝6/3＝役員報告が±14日窓内）。
 _DEMO_NOW = datetime(2026, 6, 3, 6, 0, tzinfo=JST)
+# C1.8 学習ループに渡す過去本の上限。published はフルドキュメント（本文込み）で読むため、
+# 蔵書の線形増加をここで頭打ちにする（新しい順に切る＝最近の反応を優先）。
+_PAST_BOOKS_MAX = 50
 
 
 def _load_user(repo: RepositoryProtocol, user_id: str) -> User:
@@ -184,15 +187,18 @@ def run(
     # fixture は決定的アンカー（役員報告が±14日窓内）。実Googleは「今」を基準に±14日を読む。
     anchor = now or (datetime.now(JST) if is_google else _DEMO_NOW)
 
-    # C1.8 学習ループ: ユーザの過去公開本のうち「反応がある」ものを読者分析へ渡す
-    # （set/旧単一テーマ 両経路共通。反応が1冊も無ければ空＝mock 既定挙動は不変）。
-    from publishr_agents.reader.preferences import has_feedback  # noqa: PLC0415
+    # C1.8 学習ループ: ユーザの過去公開本のうち「反応 or 注釈（ハイライト/しおり）がある」ものを
+    # 新しい順（last_read_at 優先）・上限 _PAST_BOOKS_MAX で読者分析へ渡す
+    # （set/旧単一テーマ 両経路共通。シグナルが1冊も無ければ空＝mock 既定挙動は不変）。
+    from publishr_agents.reader.preferences import has_learning_signal, recent_first  # noqa: PLC0415
 
-    past_books = [
-        b
-        for b in repo.list_books(status="published")
-        if has_feedback(b) and (not b.owner_uid or b.owner_uid == owner)
-    ]
+    past_books = recent_first(
+        [
+            b
+            for b in repo.list_books(status="published")
+            if has_learning_signal(b) and (not b.owner_uid or b.owner_uid == owner)
+        ]
+    )[:_PAST_BOOKS_MAX]
 
     if settings.set_pipeline:
         set_result = run_mode_a_set_pipeline(
