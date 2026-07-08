@@ -6,7 +6,7 @@
 
 import { arrayRemove, arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
-import { DEMO_USER_ID } from "./config";
+import { DEMO_USER_ID, dataSource } from "./config";
 import type { InitialProfileInput } from "./profileOptions";
 import { getDb, getFirebaseAuth } from "@/lib/firebase";
 
@@ -144,16 +144,18 @@ type FavoriteAuthorPatch = FavoriteAuthorEntry | Pick<FavoriteAuthorEntry, "pers
 export async function addFavoriteAuthor(entry: FavoriteAuthorEntry): Promise<void> {
   const uid = currentUid();
   const db = getDb();
-  if (db) {
+  // Firestore 反映は firestore モードのみ。bff（無認証ショーケース）ではゲスト＝佐倉uidのため
+  // 共有 user doc に書くと他ゲストに波及・永続する（汚染）。bff/mock は favorites-store の
+  // localStorage が per-client 永続を担う。
+  if (db && dataSource === "firestore") {
     await setDoc(doc(db, "users", uid), { favoriteAuthors: arrayUnion(entry) }, { merge: true });
   }
-  // mock時はUI側のローカル状態で扱う（永続化は任意）。
 }
 
 export async function removeFavoriteAuthor(entry: FavoriteAuthorPatch): Promise<void> {
   const uid = currentUid();
   const db = getDb();
-  if (db) {
+  if (db && dataSource === "firestore") {
     const ref = doc(db, "users", uid);
     const snap = await getDoc(ref);
     const current = (snap.exists() ? snap.data().favoriteAuthors : []) as FavoriteAuthorEntry[];

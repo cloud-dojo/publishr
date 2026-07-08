@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID, canManualTrigger, dataSource } from "@/data/config";
-import { useFavorites } from "@/data/favorites-store";
+import { clearLocalFavorites, useFavorites } from "@/data/favorites-store";
 import { useActions, useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
 import { isArchivedBook } from "@/lib/arrival";
@@ -290,8 +290,9 @@ export default function AccountPage() {
     }
   };
   const onLogout = async () => {
-    // ログアウトで per-client のローカル本棚をリセット（次セッション＝匿名/ゲストを原状へ）。
+    // ログアウトで per-client のローカル状態をリセット（次セッション＝匿名/ゲストを原状へ）。
     void provider.clearLocalLibrary();
+    clearLocalFavorites();
     await signOutUser();
     router.push("/login");
   };

@@ -9,7 +9,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 
 import { getDb, watchAuth } from "@/lib/firebase";
 
-import { DEMO_USER_ID } from "./config";
+import { DEMO_USER_ID, dataSource } from "./config";
 import {
   addFavoriteAuthor,
   currentUid,
@@ -65,7 +65,9 @@ function hydrateFor(uid: string): void {
 
 function watchFirestoreFavorites(uid: string): void {
   const db = getDb();
-  if (!db || uid === firestoreUid) return;
+  // bff/mock は佐倉の共有 Firestore を読まない（他ゲストのお気に入りが混ざる汚染を防ぐ）。
+  // 実ユーザー別の永続・購読は firestore モードのみ。
+  if (!db || dataSource !== "firestore" || uid === firestoreUid) return;
   firestoreUnsub?.();
   firestoreUid = uid;
   firestoreUnsub = onSnapshot(
@@ -98,6 +100,22 @@ function ensureAuthWatch(): void {
     hydrateFor(uid);
     watchFirestoreFavorites(uid);
   });
+}
+
+/**
+ * ログアウト時に per-client のお気に入り作家をリセットする（bff ショーケースの初期化整合）。
+ * localStorage の favoriteAuthors.* を全消し＋メモリ状態を空にして再購読者へ通知。次の auth 変化で
+ * hydrateFor が空を読み直す。bff/mock は Firestore に書いていないので localStorage だけで完結する。
+ */
+export function clearLocalFavorites(): void {
+  if (typeof window !== "undefined") {
+    for (const key of Object.keys(window.localStorage)) {
+      if (key.startsWith("publishr.favoriteAuthors.")) window.localStorage.removeItem(key);
+    }
+  }
+  favorites = new Set();
+  hydratedUid = null;
+  emit();
 }
 
 export function toggleFavorite(entry: FavoriteAuthorEntry): void {
