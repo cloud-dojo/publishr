@@ -171,3 +171,34 @@ def test_favorite_feature_deterministic_per_seed():
     a = run_mode_a_set_pipeline(u, source=FixtureObservationSource(), now=NOW, seed="run-xyz")
     b = run_mode_a_set_pipeline(u, source=FixtureObservationSource(), now=NOW, seed="run-xyz")
     assert [mb.personas[0].persona_id for mb in a.books] == [mb.personas[0].persona_id for mb in b.books]
+
+
+# ── C1.8 学習ループ: set 縦串にも past_books が届く（読者分析への配線） ──────────
+def _past_published_book() -> Book:
+    """過去配本の1冊に★5の反応が付いた体の published 本を作る。"""
+    book = map_mode_a_set_to_books(_run(), owner_uid="u_x", created_at=NOW.isoformat())[0][0]
+    fb = book.feedback.model_copy(update={"rating": 5})
+    return book.model_copy(update={"status": "published", "feedback": fb})
+
+
+def test_set_pipeline_feeds_past_books_to_reader(monkeypatch):
+    """set 縦串でも過去本の反応が読者分析へ渡り、readingBehavior に織り込まれる（C1.8）。"""
+    import publishr_agents.reader as reader_mod
+
+    captured: dict = {}
+    orig = reader_mod.analyze_reader
+
+    def spy(observation, **kwargs):
+        profile = orig(observation, **kwargs)
+        captured["past_books"] = kwargs.get("past_books")
+        captured["profile"] = profile
+        return profile
+
+    monkeypatch.setattr(reader_mod, "analyze_reader", spy)
+    past = [_past_published_book()]
+    run_mode_a_set_pipeline(_user(), source=FixtureObservationSource(), now=NOW, past_books=past)
+
+    assert captured["past_books"] == past
+    behavior = captured["profile"].reading_behavior
+    assert "過去1冊の反応" in behavior.feedback_summary  # 反応サマリが織り込まれる
+    assert behavior.recent_reads == [past[0].title]      # 既読＝次サイクルの被り回避材料

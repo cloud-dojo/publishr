@@ -114,6 +114,7 @@ def run_mode_a_set_pipeline(
     enable_imagen: bool = False,
     theme_kind: str = "honmei",
     threshold: int = 70,
+    past_books: Optional[list[Book]] = None,
     seed: str = "",
     favorite_pct: int = 25,  # = favorites.FAVORITE_FEATURE_PCT_DEFAULT（配本ごとお気に入り起用確率%）
     max_books: int | None = None,  # デモ用: 生成冊数の上限（None=全テーマ＝従来どおり）
@@ -123,6 +124,7 @@ def run_mode_a_set_pipeline(
     表紙は CSS variant を装飾付与するのみ（画像生成＝Imagen は park・将来実装）。
     各 *_llm は "mock" | "vertex"（cover_llm / enable_imagen は画像生成 park により現行 no-op・将来用に温存）。
     1テーマ=1著者=1冊（多様性は配本属性＋テーマ別著者で担保）。
+    past_books＝ユーザの過去公開本（C1.8 学習ループ＝反応/選択を読者分析に反映・無ければ no-op）。
     お気に入り著者は「配本ごとに約 favorite_pct%（既定25）で誰か1人を1テーマだけ起用」する決定的抽選。
     seed（配本トークン）で配本ごとに振り直し・同一配本は再現的。
     """
@@ -135,7 +137,7 @@ def run_mode_a_set_pipeline(
     from .reader import analyze_reader
 
     bundle = collect_observation(user, now=now, source=source)
-    profile = analyze_reader(bundle, user=user, llm=reader_llm)
+    profile = analyze_reader(bundle, user=user, past_books=past_books, llm=reader_llm)
     planning = run_planning_set(profile, theme_kind=theme_kind, threshold=threshold, llm=llm)
     plans = [PlanProposal.model_validate(p) for p in planning["planSet"]["plans"]]
 
