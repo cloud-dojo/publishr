@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
-import { DEMO_USER_ID, canManualTrigger, dataSource } from "@/data/config";
+import { DEMO_USER_ID, dataSource } from "@/data/config";
 import { clearLocalFavorites, useFavorites } from "@/data/favorites-store";
-import { useActions, useProvider } from "@/data/hooks";
+import { useProvider } from "@/data/hooks";
 import { signOutUser, watchAuth } from "@/lib/firebase";
 import { isArchivedBook } from "@/lib/arrival";
 import { annotationsToHighlights, mergeHighlights } from "@/data/mock-highlights";
@@ -247,48 +247,18 @@ function ProfileEditor({ user }: { user: User }) {
 
 export default function AccountPage() {
   const provider = useProvider();
-  const actions = useActions();
   const router = useRouter();
   // Firebase Auth UID・email・displayName を取得。未ログイン or mock 時は DEMO_USER_ID にフォールバック
   const [uid, setUid] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
-  // 実 Google ログインか（providerId=google.com）。パスワードレスのゲストログイン（custom-token）は
-  // providerData が空になるため false。課金導線（今すぐ企画）を佐倉本人だけに出すための判定。
-  const [isGoogleUser, setIsGoogleUser] = useState(false);
-  // 実行中の企画種別（"honmei" | "serendipity" | null）。種別ごとにボタンを個別に無効化する。
-  const [triggering, setTriggering] = useState<string | null>(null);
-  const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
   useEffect(() => watchAuth((u) => {
     setUid(u?.uid ?? null);
     setAuthEmail(u?.email ?? null);
     setAuthDisplayName(u?.displayName ?? null);
-    setIsGoogleUser(u?.providerData?.some((p) => p.providerId === "google.com") ?? false);
   }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
-  // 既存ユーザー（first-run 済み）が UI から企画を再実行する導線（prod-live-followups #7）。
-  // themeKind=honmei は本命テーマ、serendipity は隣接/反対/飛躍/ニッチの出会い枠。
-  const onTriggerPlanning = async (themeKind: "honmei" | "serendipity") => {
-    setTriggering(themeKind);
-    setTriggerMsg(null);
-    const label = themeKind === "serendipity" ? "視野を広げる本の企画" : "おすすめしたい本の企画";
-    try {
-      await actions.runPipeline(uid ?? DEMO_USER_ID, themeKind);
-      setTriggerMsg(`${label}を実行しました。書店に並ぶまで少し待ってください。`);
-    } catch (err) {
-      console.error(err);
-      // ②G: サーバ側レートガード（日次上限）は 429 を返す。枠切れは案内文を分ける。
-      const overCap = err instanceof Error && err.message.includes("429");
-      setTriggerMsg(
-        overCap
-          ? "本日の体験枠は上限に達しました。また明日お試しください。"
-          : `${label}に失敗しました。少し待ってから再実行してください。`
-      );
-    } finally {
-      setTriggering(null);
-    }
-  };
   const onLogout = async () => {
     // ログアウトで per-client のローカル状態をリセット（次セッション＝匿名/ゲストを原状へ）。
     void provider.clearLocalLibrary();
@@ -356,45 +326,6 @@ export default function AccountPage() {
         </div>
         <ConnectSources initial={user.connectedSources} />
       </section>
-
-      {/* 方針A（prod-live-followups #7）: 「今すぐ企画」は実 Vertex 企画＝課金を発火するため、
-          allowlist 一致の uid（＝佐倉）かつ **実 Google ログイン** のときだけ表示する。
-          パスワードレスのゲストログイン（custom-token・providerData 空）は佐倉uidでも isGoogleUser=false
-          になり非表示＝誰でも押せる課金導線を塞ぐ。バックエンドの ALLOWED_TRIGGER_UIDS が実ガード。 */}
-      {/* ②G の無認証ショーケース向けライブ生成開放（NEXT_PUBLIC_DEMO_LIVE_GEN）は、押下後の
-          「企画中…」が画面停止に見えるため 2026-07-04 に撤去し、無認証デモは読み取り専用へ戻した。 */}
-      {dataSource !== "mock" && isGoogleUser && canManualTrigger(uid) && (
-        <section className="page section">
-          <div className="acct-savebox">
-            <div className="asb-text">
-              <div className="asb-title">今すぐ企画</div>
-              <div className="asb-sub">
-                通常の自動企画を待たずに、あなた向けの企画を手動で実行します。
-                おすすめしたい本と、視野を広げる本をそれぞれ企画します。生成には数分かかります。
-              </div>
-            </div>
-            <div className="asb-action">
-              {triggerMsg && <span className="acct-saved-msg">{triggerMsg}</span>}
-              <button
-                type="button"
-                className="btn btn--gold"
-                onClick={() => onTriggerPlanning("honmei")}
-                disabled={triggering !== null}
-              >
-                {triggering === "honmei" ? "企画中..." : "おすすめしたい本を企画"}
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => onTriggerPlanning("serendipity")}
-                disabled={triggering !== null}
-              >
-                {triggering === "serendipity" ? "企画中..." : "視野を広げる本を企画"}
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ログアウト */}
       <section className="page section">
