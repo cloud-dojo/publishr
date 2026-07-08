@@ -50,11 +50,30 @@ export async function saveInitialProfile(profile: InitialProfileInput): Promise<
     window.localStorage.setItem(LS.profile(uid), JSON.stringify(profile));
   }
   const db = getDb();
-  if (db) {
+  // Firestore 反映は firestore モードのみ。bff ではゲスト＝佐倉uid が佐倉の共有 initialProfile を
+  // 上書きし他ゲストに波及するため書かない。bff/mock は上の localStorage が per-client 永続を担う。
+  if (db && dataSource === "firestore") {
     try {
       await setDoc(doc(db, "users", uid), { initialProfile: profile }, { merge: true });
     } catch (e) {
       console.warn("initialProfile の Firestore 保存に失敗（localStorage で継続）", e);
+    }
+  }
+}
+
+/**
+ * ログアウト時に per-client の初期プロフィール/初回状態/連携トグルを消す（bff リセット整合）。
+ * bff/mock は Firestore に書いていないので localStorage を消せば原状へ戻る（uid別キーを全消し）。
+ */
+export function clearLocalProfile(): void {
+  if (typeof window === "undefined") return;
+  for (const key of Object.keys(window.localStorage)) {
+    if (
+      key.startsWith("publishr.initialProfile.") ||
+      key.startsWith("publishr.firstRun.") ||
+      key.startsWith("publishr.connectedSources.")
+    ) {
+      window.localStorage.removeItem(key);
     }
   }
 }

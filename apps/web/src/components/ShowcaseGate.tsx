@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { getProvider } from "@/data";
 import { DEMO_OWNER_UID, dataSource } from "@/data/config";
 import { clearLocalFavorites } from "@/data/favorites-store";
+import { clearLocalProfile } from "@/data/user-writes";
 import { signOutUser, watchAuth } from "@/lib/firebase";
 
 /**
@@ -49,6 +50,7 @@ function ShowcaseNotice({ name }: { name: string | null }) {
       // ログアウトで per-client のローカル状態（本棚・お気に入り）をリセット（次セッションを原状へ）。
       void getProvider().clearLocalLibrary();
       clearLocalFavorites();
+      clearLocalProfile();
       // サインアウトで watchAuth が null を通知 → blocked=false → 佐倉のデモ書店へ戻る。
       await signOutUser();
     } catch (err) {

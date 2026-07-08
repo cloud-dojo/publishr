@@ -13,7 +13,7 @@ import { signOutUser, watchAuth } from "@/lib/firebase";
 import { isArchivedBook } from "@/lib/arrival";
 import { annotationsToHighlights, mergeHighlights } from "@/data/mock-highlights";
 import { optionsFor, type InitialProfileInput } from "@/data/profileOptions";
-import { getInitialProfile, saveInitialProfile } from "@/data/user-writes";
+import { clearLocalProfile, getInitialProfile, saveInitialProfile } from "@/data/user-writes";
 
 const INDUSTRY = optionsFor("industry");
 const JOBTYPE = optionsFor("jobType");
@@ -293,6 +293,7 @@ export default function AccountPage() {
     // ログアウトで per-client のローカル状態をリセット（次セッション＝匿名/ゲストを原状へ）。
     void provider.clearLocalLibrary();
     clearLocalFavorites();
+    clearLocalProfile();
     await signOutUser();
     router.push("/login");
   };
