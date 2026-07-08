@@ -1,9 +1,12 @@
 // bffプロバイダ: FastAPI BFF 経由。状態遷移中はポーリングで追従。
 import type {
   Book,
+  Feedback,
   FeedbackInput,
+  Granularity,
   Persona,
   Plan,
+  ReadingAnnotation,
   ReadingStateInput,
   User,
 } from "@publishr/shared-schema";
@@ -11,12 +14,20 @@ import type {
 import { apiUrl, DEMO_OWNER_UID, DEMO_USER_ID, getDemoClientId, timing } from "./config";
 import { BaseProvider } from "./provider";
 
-// 書庫の per-client ローカルオーバーレイ（無認証ショーケース用）。
-// 無認証デモは佐倉(DEMO_OWNER_UID)の本を全訪問者で共有表示する読み取り専用ビュー。「本棚に保存/外す」を
-// バックエンドへ書くと全訪問者に波及し、かつ匿名は所有者データを書くべきでない。そこで保存(archivedAt)/
-// 除外(dropped)は localStorage の per-client オーバーレイに持ち、/books 取得のたびに適用する
-// （ハードリロードでも保持＝本棚から消えない）。お気に入り著者(favorites-store)と同じ設計。
-type LibraryOverlayEntry = { archivedAt?: string; dropped?: boolean };
+// per-client ローカルオーバーレイ（無認証ショーケース用）。
+// 無認証デモは佐倉(DEMO_OWNER_UID)の本を全訪問者で共有表示するビュー。訪問者の操作をバックエンド
+// （共有の佐倉データ）へ書くと全訪問者に波及し、かつ匿名は所有者データを書くべきでない。そこで
+// 「読者ごとの状態」＝本棚の保存(archivedAt)/除外(dropped)・フィードバック(feedback: 読了率/評価/感想)・
+// 読書状態(granularity/annotations=ハイライト等)を localStorage の per-client オーバーレイに持ち、
+// /books 取得のたびに適用する（ハードリロードでも保持）。他の訪問者・他端末には波及しない。
+// ログアウトで clearLocalLibrary が丸ごと消す＝次セッションは原状。お気に入り著者(favorites-store)と同設計。
+type LibraryOverlayEntry = {
+  archivedAt?: string;
+  dropped?: boolean;
+  feedback?: Partial<Feedback>; // 読了率/評価/感想などの読者ごと蓄積（佐倉共有には書かない）
+  granularity?: Granularity;
+  annotations?: ReadingAnnotation[]; // ハイライト/付箋/ブックマーク（配列まるごと）
+};
 const LIBRARY_OVERLAY_KEY = `publishr.bff.libraryOverlay.${DEMO_OWNER_UID}`;
 
 async function jget<T>(path: string): Promise<T> {
@@ -126,10 +137,10 @@ export class BffProvider extends BaseProvider {
   }
 
   /**
-   * ログアウト時にローカル本棚オーバーレイ（保存/除外）を消し、次セッション（匿名/ゲスト）を
-   * 原状へ戻す。overlay キーは DEMO_OWNER_UID 固定でログイン uid に依存しないため、消さないと
-   * ログイン→保存→ログアウト→再ログインで棚が残り続ける。レート計数の demoClientId は消さない
-   * （別キー・別責務）。/books を取り直して in-memory の archivedAt/dropped も落とす。
+   * ログアウト時に per-client オーバーレイ（本棚の保存/除外・feedback・読書状態/ハイライト）を丸ごと
+   * 消し、次セッション（匿名/ゲスト）を原状へ戻す。overlay キーは DEMO_OWNER_UID 固定でログイン uid に
+   * 依存しないため、消さないとログイン→操作→ログアウト→再ログインで状態が残り続ける。レート計数の
+   * demoClientId は消さない（別キー・別責務）。/books を取り直して in-memory の重ね状態も落とす。
    */
   async clearLocalLibrary(): Promise<void> {
     if (typeof window !== "undefined") {
@@ -150,6 +161,11 @@ export class BffProvider extends BaseProvider {
     if (!entry) return book;
     let merged = book;
     if (entry.archivedAt) merged = { ...merged, archivedAt: entry.archivedAt };
+    // 読者ごとの feedback/読書状態を佐倉の共有dataより優先して重ねる（per-client）。
+    if (entry.feedback) merged = { ...merged, feedback: { ...merged.feedback, ...entry.feedback } };
+    if (entry.granularity !== undefined) merged = { ...merged, granularity: entry.granularity };
+    if (entry.annotations) merged = { ...merged, annotations: entry.annotations };
+    // dropped は最後（本棚から外した本は feedback.dropped=true を確実に立てる）。
     if (entry.dropped) merged = { ...merged, feedback: { ...merged.feedback, dropped: true } };
     return merged;
   }
@@ -192,9 +208,22 @@ export class BffProvider extends BaseProvider {
     this.startPolling();
   }
 
+  // 無認証ショーケースでは feedback（読了率/評価/感想）も per-client のローカル操作。バックエンド
+  // （共有の佐倉data）へは書かず localStorage オーバーレイに蓄積する＝他の訪問者・他端末に波及しない。
+  // readPercent 更新は読書イベントなので lastReadAt を刻む（firestore-provider と同方針）。
   async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
-    const book = await jpost<Book>(`/books/${id}/feedback`, feedback);
-    this.books.set(id, book);
+    const book = this.books.get(id);
+    if (!book) return;
+    const stamped: FeedbackInput =
+      feedback.readPercent !== undefined
+        ? { ...feedback, lastReadAt: new Date().toISOString() }
+        : feedback;
+    this.books.set(id, { ...book, feedback: { ...book.feedback, ...stamped } });
+    const overlay = this.readOverlay();
+    this.writeOverlay({
+      ...overlay,
+      [id]: { ...overlay[id], feedback: { ...overlay[id]?.feedback, ...stamped } },
+    });
     this.notify();
   }
 
@@ -220,9 +249,20 @@ export class BffProvider extends BaseProvider {
     this.notify();
   }
 
+  // 読書状態（granularity・注釈/ハイライト）も per-client のローカル操作。佐倉共有には書かず
+  // localStorage オーバーレイに持つ＝ハイライトが他の訪問者の本文に出ない。annotations は配列まるごと差替。
   async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
-    const book = await jpost<Book>(`/books/${id}/reading-state`, state);
-    this.books.set(id, book);
+    const book = this.books.get(id);
+    if (!book) return;
+    const patch: Partial<Book> = {};
+    if (state.granularity !== undefined) patch.granularity = state.granularity;
+    if (state.annotations !== undefined) patch.annotations = state.annotations;
+    this.books.set(id, { ...book, ...patch });
+    const overlay = this.readOverlay();
+    const entry: LibraryOverlayEntry = { ...overlay[id] };
+    if (state.granularity !== undefined) entry.granularity = state.granularity;
+    if (state.annotations !== undefined) entry.annotations = state.annotations;
+    this.writeOverlay({ ...overlay, [id]: entry });
     this.notify();
   }
 
