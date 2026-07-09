@@ -77,6 +77,16 @@ def test_books_land_in_arrivals_as_draft_owned():
         assert b.plan_id == "plan_arr_01"
 
 
+def test_serendipity_books_land_in_odd_shelf():
+    """セレンディピティ企画は odd 棚（フロント「視野を広げる本」）に載せる。本命は arrivals のまま。"""
+    plan = _plan().model_copy(update={"theme_kind": "serendipity"})
+    books, _ = map_mode_a_to_books(plan, _shelved(), _personas(), owner_uid="u_x")
+    for b in books:
+        assert b.kind == "serendipity"
+        assert b.shelf == "odd", f"{b.id}: serendipity は odd 棚に載る"
+        assert b.status == "draft"  # 棚以外の属性は不変
+
+
 def test_book_carries_detail_and_cover():
     books, _ = map_mode_a_to_books(_plan(), _shelved(), _personas(), owner_uid="u_x")
     b0 = books[0]
