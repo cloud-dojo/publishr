@@ -84,6 +84,24 @@ class DemoRateLimiter:
             per_client_cap=self._per_client_cap,
         )
 
+    # client_id 無しの trigger（Scheduler/直叩き curl）の計数バケット。
+    _SERVER_CLIENT_ID = "__server__"
+
+    def acquire_server(self, *, day: str) -> None:
+        """client_id が無い呼び出しにも global 日次上限を課す（バイパス封じ・P0ハードニング）。
+
+        per-client 枠は global と同値にして実質無効化＝Scheduler/運用の複数回実行を
+        per-client 3 で縛らない。消費は global に合算（別勘定にしない）。
+        """
+        if not self.enabled:
+            return
+        self._store.reserve(
+            day=day,
+            client_id=self._SERVER_CLIENT_ID,
+            global_cap=self._global_cap,
+            per_client_cap=self._global_cap,
+        )
+
 
 class FirestoreDemoRateStore:
     """本番（実GCP）: Firestore トランザクションで日次カウンタを原子的に予約する。

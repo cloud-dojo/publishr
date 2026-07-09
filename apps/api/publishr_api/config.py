@@ -86,6 +86,20 @@ class Settings(BaseSettings):
     # 実課金デプロイ（PUBLISHR_LLM=vertex）では True 推奨。既定 False（ローカル/mockは匿名可）。
     require_reserve_auth: bool = Field(default=False, validation_alias="PUBLISHR_REQUIRE_RESERVE_AUTH")
 
+    # 読者反応の書き込み（POST /books/{id}/feedback・/reading-state）を受け付けるか。
+    # 無認証公開ショーケース中は False（403）＝共有棚の汚染（★スパム/dropped注入/巨大annotations）・
+    # 学習ループ（C1.8）への注入・書きスパムを封じる。UI(bff-provider) は localStorage 書きのため
+    # 閉じても壊れない。既定 True（ローカル/mock/smoke の従来挙動不変）。本番は env で False を注入し、
+    # デモ用の反応仕込み時だけ一時的に True へ戻す。
+    allow_feedback_writes: bool = Field(
+        default=True, validation_alias="PUBLISHR_ALLOW_FEEDBACK_WRITES"
+    )
+    # dev/テスト用の素の企画エンドポイント（POST /pipeline/run・ガード無し）を公開するか。
+    # 本番は False（403）。公開導線はレート/ロック付きの /api/trigger/planning に一本化する。
+    allow_pipeline_run: bool = Field(
+        default=True, validation_alias="PUBLISHR_ALLOW_PIPELINE_RUN"
+    )
+
     # 手動トリガー（POST /api/trigger/planning）のガード（C4前ゲート）。
     # allowed_trigger_uids が空 = dev（全許可）。
     # TODO(C4.9/本番): publishr_llm=vertex（実課金）かつ allowlist 空のままデプロイすると
