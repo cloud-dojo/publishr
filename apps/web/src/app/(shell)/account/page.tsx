@@ -2,18 +2,17 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@publishr/shared-schema";
-import { useRouter } from "next/navigation";
 
 import { ConnectSources } from "@/components/ConnectSources";
 import { Topbar } from "@/components/shell/Topbar";
 import { DEMO_USER_ID, dataSource } from "@/data/config";
-import { clearLocalFavorites, useFavorites } from "@/data/favorites-store";
+import { useFavorites } from "@/data/favorites-store";
 import { useProvider } from "@/data/hooks";
-import { signOutUser, watchAuth } from "@/lib/firebase";
+import { watchAuth } from "@/lib/firebase";
 import { isArchivedBook } from "@/lib/arrival";
 import { annotationsToHighlights, mergeHighlights } from "@/data/mock-highlights";
 import { optionsFor, type InitialProfileInput } from "@/data/profileOptions";
-import { clearLocalProfile, getInitialProfile, saveInitialProfile } from "@/data/user-writes";
+import { getInitialProfile, saveInitialProfile } from "@/data/user-writes";
 
 const INDUSTRY = optionsFor("industry");
 const JOBTYPE = optionsFor("jobType");
@@ -247,7 +246,6 @@ function ProfileEditor({ user }: { user: User }) {
 
 export default function AccountPage() {
   const provider = useProvider();
-  const router = useRouter();
   // Firebase Auth UID・email・displayName を取得。未ログイン or mock 時は DEMO_USER_ID にフォールバック
   const [uid, setUid] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
@@ -259,14 +257,6 @@ export default function AccountPage() {
   }), []);
   const user = provider.getUser(uid ?? DEMO_USER_ID);
 
-  const onLogout = async () => {
-    // ログアウトで per-client のローカル状態をリセット（次セッション＝匿名/ゲストを原状へ）。
-    void provider.clearLocalLibrary();
-    clearLocalFavorites();
-    clearLocalProfile();
-    await signOutUser();
-    router.push("/login");
-  };
   // 本棚ページと同じ条件で集計する。
   const total = provider
     .listBooks()
@@ -327,20 +317,6 @@ export default function AccountPage() {
         <ConnectSources initial={user.connectedSources} />
       </section>
 
-      {/* ログアウト */}
-      <section className="page section">
-        <div className="acct-savebox">
-          <div className="asb-text">
-            <div className="asb-title">ログアウト</div>
-            <div className="asb-sub">このデバイスのセッションを終了します。</div>
-          </div>
-          <div className="asb-action">
-            <button type="button" className="btn" onClick={onLogout}>
-              ログアウト
-            </button>
-          </div>
-        </div>
-      </section>
       </div>
     </>
   );
