@@ -53,7 +53,8 @@ class TriggerPlanningInput(_Camel):
     user_id: str = "u_sakura"
     theme_kind: str = "honmei"
     # I-38: 安定 run_id（任意）。未指定なら API 側で生成。手動検証で再配信冪等を試すために受け取る。
-    run_id: Optional[str] = None
+    # Firestore ドキュメントID になるため長さを制限（禁止文字・予約パターンは repo 側 _safe_doc_id で無害化）。
+    run_id: Optional[str] = Field(default=None, max_length=256)
     # ②G デモ公開: 無認証ライブ生成のレート計数単位（クライアント発行UUID）。
     # あり＝per-client 上限も課す。無し（Scheduler/直叩き）も global 日次上限は課される
     # （P0ハードニング: client_id 省略によるキャップバイパスを塞いだ）。

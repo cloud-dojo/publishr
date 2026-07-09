@@ -18,10 +18,17 @@ ownerUid フィルタ:
 
 from __future__ import annotations
 
+import re
 import threading
 from typing import Optional
 
 from publishr_schema import Book, Persona, Plan, User
+
+# planningJobs/{run_id} 用のドキュメントID安全化。禁止文字（Firestore ID は
+# [A-Za-z0-9_-] 以外・`/`・制御文字を含めない）を `_` に落とす。予約 `__.*__`・`.`・`..`・
+# 空・過長は下の _safe_doc_id で追加処理する。正規の run_id（planning_uid_ts_hex）は不変。
+_SAFE_DOC_ID_RE = re.compile(r"[^A-Za-z0-9_-]")
+_RESERVED_ID_RE = re.compile(r"__.*__")
 
 # ---------------------------------------------------------------------------
 # Firebase Admin SDK 初期化（プロセス全体で 1 回のみ）
@@ -189,6 +196,21 @@ class FirestoreRepository:
     # ── 企画 run の冪等ロック（I-38: 再配信ストーム対策）──────────────────────
     _PLANNING_JOBS = "planningJobs"
 
+    @staticmethod
+    def _safe_doc_id(run_id: str) -> str:
+        """run_id を Firestore ドキュメントID として安全化する（決定的）。
+
+        run_id はユーザー入力（TriggerPlanningInput.run_id）や pubsub payload 由来で未検証。
+        禁止文字（`/`・`.`・制御文字等）を `_` に落とし、予約パターン `__.*__`・`.`・`..`・空・
+        過長を回避する。これをしないと `.document("__x__")` 等が InvalidArgument(400)→worker 500
+        →Pub/Sub 再配信ストームになる（demo_rate の _safe_key と同型の境界防御）。
+        正規の run_id（planning_uid_ts_hex）は [A-Za-z0-9_-] のみなので不変＝冪等キー維持。
+        """
+        safe = _SAFE_DOC_ID_RE.sub("_", run_id)[:256]
+        if not safe or _RESERVED_ID_RE.fullmatch(safe) or safe in (".", ".."):
+            safe = f"run-{safe}"
+        return safe
+
     def begin_planning_run(self, run_id: str, owner_uid: str, user_id: str) -> bool:
         """planningJobs/{runId} を transaction で「無ければ作成し True／既存なら False」。
 
@@ -200,7 +222,7 @@ class FirestoreRepository:
             return False
         from firebase_admin import firestore as fb_firestore  # noqa: PLC0415
 
-        ref = self._db.collection(self._PLANNING_JOBS).document(run_id)
+        ref = self._db.collection(self._PLANNING_JOBS).document(self._safe_doc_id(run_id))
 
         @fb_firestore.transactional
         def _txn(txn) -> bool:
@@ -222,7 +244,7 @@ class FirestoreRepository:
             return
         from firebase_admin import firestore as fb_firestore  # noqa: PLC0415
 
-        self._db.collection(self._PLANNING_JOBS).document(run_id).set(
+        self._db.collection(self._PLANNING_JOBS).document(self._safe_doc_id(run_id)).set(
             {"status": "completed", "bookIds": list(book_ids),
              "completedAt": fb_firestore.SERVER_TIMESTAMP},
             merge=True,
@@ -233,7 +255,7 @@ class FirestoreRepository:
             return
         from firebase_admin import firestore as fb_firestore  # noqa: PLC0415
 
-        self._db.collection(self._PLANNING_JOBS).document(run_id).set(
+        self._db.collection(self._PLANNING_JOBS).document(self._safe_doc_id(run_id)).set(
             {"status": "failed", "errorType": error_type,
              "completedAt": fb_firestore.SERVER_TIMESTAMP},
             merge=True,
