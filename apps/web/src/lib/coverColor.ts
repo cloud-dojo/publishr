@@ -25,10 +25,12 @@ type Band = {
   bottomLight: number; // グラデ下端の明度(%)
 };
 
-// honmei = 青系（シアン寄り〜藍まで）で「青の本」に見える帯に寄せる。
-const COOL: Band = { hueStart: 200, hueSpan: 58, satBase: 46, topLightBase: 27, bottomLight: 13 };
-// serendipity = 暖色（ワイン/赤〜橙〜琥珀）。暗くしても赤系に見えるよう彩度と明度をやや高めに。
-const WARM: Band = { hueStart: 346, hueSpan: 66, satBase: 56, topLightBase: 30, bottomLight: 14 };
+// honmei = 青系（シアン寄り〜藍〜青紫まで）で「青の本」に見える帯に寄せる。
+// hue 180→270 まで広げ、棚に並んだ本の色が被りにくくする（寒色域は維持）。
+const COOL: Band = { hueStart: 180, hueSpan: 90, satBase: 46, topLightBase: 27, bottomLight: 13 };
+// serendipity = 暖色（桃/マゼンタ〜赤〜橙〜金）。360 をまたいで連続（下の % 360 で丸め）。
+// 暗くしても赤系に見えるよう彩度と明度をやや高めに。
+const WARM: Band = { hueStart: 330, hueSpan: 90, satBase: 56, topLightBase: 30, bottomLight: 14 };
 
 // セレンディピティ（＝暖色）判定。kind が "serendipity" のとき、または書店の
 // 「視野を広げる本」棚(shelf==="odd")のとき暖色にする。fixtures/一部データは
@@ -47,8 +49,8 @@ export function coverGradient(
   const band = isSerendipity(kind, shelf) ? WARM : COOL;
   const h = hashId(id);
   const t = (h % 10000) / 10000; // 0..1: 帯の中の色相位置
-  const satJitter = (h >>> 13) % 10; // 0..9: 本ごとの彩度ゆらぎ
-  const lightJitter = (h >>> 19) % 8; // 0..7: 本ごとの明度ゆらぎ
+  const satJitter = (h >>> 13) % 20; // 0..19: 本ごとの彩度ゆらぎ（幅を拡大）
+  const lightJitter = (h >>> 19) % 18; // 0..17: 本ごとの明度ゆらぎ（幅を拡大）
 
   const hue = Math.round((band.hueStart + t * band.hueSpan) % 360);
   const sat = band.satBase + satJitter;
