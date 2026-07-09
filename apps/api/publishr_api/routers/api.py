@@ -130,7 +130,14 @@ def api_move_to_library(
     uid: str = Depends(_uid_from_token),
 ) -> Book:
     """入荷一覧から書庫へ移す（shelf="library"・動的フィルタリング）。移動後は入荷から消え、
-    書庫（status=published）には残る。所有者チェックは body エンドポイントと同方針（不一致403）。"""
+    書庫（status=published）には残る。所有者チェックは body エンドポイントと同方針（不一致403）。
+
+    公開デモ中（PUBLISHR_ALLOW_FEEDBACK_WRITES=0）は封鎖: 匿名 uid は demo_uid にフォールバック
+    して所有者チェックを通過してしまい、共有棚（佐倉の入荷一覧）を誰でも書き換えられるため。
+    """
+    from .books import _require_feedback_writes  # noqa: PLC0415 — 循環 import 回避（books が本モジュールを import 済み）
+
+    _require_feedback_writes()
     book = repo.get_book(book_id)
     if book is None:
         raise HTTPException(status_code=404, detail=f"book {book_id} が見つかりません")
@@ -203,14 +210,18 @@ def api_trigger_planning(
     user_id = uid or payload.user_id or settings.demo_uid
     owner = uid or settings.demo_uid or user_id
     key = uid or user_id or "anon"
-    # ②G: 無認証ライブ生成のレートガード。client_id がある＝web ボタン経由のみ対象
-    # （Scheduler/OIDC は client_id を送らない＝対象外）。日付は JST 基準で日次集計。
-    if payload.client_id:
-        day = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
-        try:
+    # ②G: 無認証ライブ生成のレートガード（日付は JST 基準で日次集計）。
+    # client_id あり＝web ボタン経由は per-client 上限も課す。client_id 無し（Scheduler/直叩き）にも
+    # global 上限は課す＝「client_id を送らなければ無制限」のバイパスを塞ぐ（公開リポ前提のP0
+    # ハードニング）。caps=0 は無効＝ローカル/mock の従来挙動不変。
+    day = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
+    try:
+        if payload.client_id:
             demo_rate_limiter.acquire(payload.client_id, day=day)
-        except DemoRateError as exc:
-            raise HTTPException(status_code=exc.status, detail=exc.message) from exc
+        else:
+            demo_rate_limiter.acquire_server(day=day)
+    except DemoRateError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.message) from exc
     try:
         trigger_guard.acquire(key, now=time.monotonic())
     except TriggerError as exc:

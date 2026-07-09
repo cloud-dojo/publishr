@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from publishr_schema import Book
 
+from ..config import settings
 from ..deps import get_repository
 from ..errors import NotFoundError
 from ..repositories.protocol import RepositoryProtocol
@@ -13,6 +14,16 @@ from ..services import feedback_service, reading_service, write_queue
 from .api import require_reserve_uid
 
 router = APIRouter(prefix="/books", tags=["books"])
+
+
+def _require_feedback_writes() -> None:
+    """公開デモ（無認証）では反応書き込みを閉じる（fail-closed・P0ハードニング）。
+
+    UI(bff-provider) は localStorage 書きなので閉じても壊れない。共有棚（佐倉）への
+    ★スパム/dropped注入/巨大annotations と学習ループ（C1.8）への注入を封じる。
+    """
+    if not settings.allow_feedback_writes:
+        raise HTTPException(status_code=403, detail="読者反応の書き込みは現在受け付けていません")
 
 
 @router.get("", response_model=list[Book])
@@ -47,7 +58,9 @@ async def reserve_book(
     return write_queue.reserve_and_enqueue(repo, book_id, owner_uid=_uid)
 
 
-@router.post("/{book_id}/feedback", response_model=Book)
+@router.post(
+    "/{book_id}/feedback", response_model=Book, dependencies=[Depends(_require_feedback_writes)]
+)
 def post_feedback(
     book_id: str,
     payload: FeedbackInput,
@@ -56,7 +69,11 @@ def post_feedback(
     return feedback_service.apply_feedback(repo, book_id, payload)
 
 
-@router.post("/{book_id}/reading-state", response_model=Book)
+@router.post(
+    "/{book_id}/reading-state",
+    response_model=Book,
+    dependencies=[Depends(_require_feedback_writes)],
+)
 def post_reading_state(
     book_id: str,
     payload: ReadingStateInput,

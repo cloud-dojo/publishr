@@ -65,6 +65,24 @@ def test_day_resets_counter() -> None:
     lim.acquire("a", day="2026-07-16")  # 翌日は枠が戻る
 
 
+def test_acquire_server_uses_global_cap_only() -> None:
+    """client_id 無し（Scheduler/直叩き）は global のみ課す＝per-client 3 に縛られない。"""
+    lim = _limiter(global_cap=5, per_client_cap=1)
+    for _ in range(5):
+        lim.acquire_server(day=DAY)
+    with pytest.raises(DemoRateError):
+        lim.acquire_server(day=DAY)  # 6回目は global 超過
+
+
+def test_acquire_server_shares_global_with_clients() -> None:
+    """server 消費分も global に合算される（別勘定にしない）。"""
+    lim = _limiter(global_cap=2, per_client_cap=2)
+    lim.acquire("a", day=DAY)
+    lim.acquire_server(day=DAY)
+    with pytest.raises(DemoRateError):
+        lim.acquire("b", day=DAY)  # global 2 を使い切っている
+
+
 def test_disabled_when_caps_zero() -> None:
     # 上限 0 以下は無効（全許可）＝ローカル/mock の従来挙動を壊さない。
     lim = _limiter(global_cap=0, per_client_cap=0)
