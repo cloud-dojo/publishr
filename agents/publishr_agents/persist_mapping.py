@@ -120,7 +120,9 @@ def _book(
         subtitle=bd.get("subtitle", ""),
         cover_variant=entry.get("coverVariant", "b1"),
         cover_url=entry.get("coverUrl"),
-        shelf="arrivals",
+        # セレンディピティは odd 棚（フロント「視野を広げる本」）に載せて本命と見分けられるようにする。
+        # 本命は arrivals（「いま、おすすめしたい本」）。棚以外の属性は theme_kind で変えない。
+        shelf="odd" if theme_kind == "serendipity" else "arrivals",
         estimated_chapters=len(agenda),
         estimated_minutes=len(agenda) * _MINUTES_PER_CHAPTER,
         preface_sample=bd.get("prefaceSample", ""),
@@ -170,7 +172,8 @@ def map_mode_a_to_books(
     created_at: str = "",
     run_token: Optional[str] = None,
 ) -> tuple[list[Book], list[Persona]]:
-    """モードA成果を (Book[], Persona[]) に変換。Book は arrivals/draft、Persona は使用著者のみ。
+    """モードA成果を (Book[], Persona[]) に変換。Book は draft、Persona は使用著者のみ。
+    棚は theme_kind で分岐（honmei=arrivals / serendipity=odd）。
 
     created_at は入荷時刻（ISO8601）。書店UIの「今朝の入荷」ラベル・新着ソートに使う。
     run_token（I-38）は book/persona ID 用の run 識別子。指定時はこれを ID トークンに使い、
