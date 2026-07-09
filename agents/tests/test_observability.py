@@ -102,6 +102,79 @@ def test_trace_pipeline_partial_payload_only_one_loop():
     assert "grounding" not in spans
 
 
+def test_trace_pipeline_books_editing_loops_per_book():
+    """セット配本: 冊ごとの編集ループ（books=[{bookId, rounds}]）を editing_loop_<bookId> で送る。"""
+    client = _FakeClient()
+    status = trace_pipeline(
+        {
+            "theme": "配本セット（honmei・2冊）",
+            "approved": True,
+            "planning_rounds": [{"round": 1, "score": 84, "decision": "approve"}],
+            "books": [
+                {
+                    "bookId": "b1",
+                    "title": "一冊目",
+                    "forcedApprove": False,
+                    "rounds": [
+                        {"round": 1, "score": 64, "decision": "revise"},
+                        {"round": 2, "score": 80, "decision": "approve"},
+                    ],
+                },
+                {"bookId": "b2", "rounds": [{"round": 1, "score": 82, "decision": "approve"}]},
+            ],
+        },
+        client=client,
+    )
+    assert status == "sent"
+    spans = [name for kind, name in client.log if kind == "span"]
+    assert "editing_loop_b1" in spans
+    assert "editing_loop_b1_r1" in spans and "editing_loop_b1_r2" in spans
+    assert "editing_loop_b2" in spans and "editing_loop_b2_r1" in spans
+    assert "editing_loop" not in spans  # 単冊キー（editing_rounds）とは独立
+
+
+def test_trace_pipeline_books_metadata_carries_forced_approve():
+    """books の各編集ループ親スパンに title / forcedApprove がメタデータで載る（見逃し防止）。"""
+    metas: dict[str, dict] = {}
+
+    class _Span:
+        def start_span(self, name, **kw):
+            metas[name] = kw.get("metadata") or {}
+            return _Span()
+
+        def update(self, **kw):
+            pass
+
+        def end(self):
+            pass
+
+        def score(self, **kw):
+            pass
+
+    class _Client:
+        def start_span(self, name, **kw):
+            return _Span()
+
+        def flush(self):
+            pass
+
+    payload = {
+        "books": [
+            {
+                "bookId": "b1",
+                "title": "T",
+                "forcedApprove": True,
+                "rounds": [{"round": 1, "score": 60, "decision": "revise"}],
+            }
+        ]
+    }
+    assert trace_pipeline(payload, client=_Client()) == "sent"
+    meta = metas["editing_loop_b1"]
+    assert meta["forcedApprove"] is True
+    assert meta["title"] == "T"
+    assert meta["rounds"] == 1
+
+
 def _web(uri: str):
     return SimpleNamespace(web=SimpleNamespace(uri=uri))
 

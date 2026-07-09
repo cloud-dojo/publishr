@@ -279,3 +279,30 @@ def test_run_emits_langfuse_pipeline_trace(monkeypatch):
     p = captured["payload"]
     assert p["approved"] is True
     assert isinstance(p["planning_rounds"], list) and len(p["planning_rounds"]) >= 1
+
+
+def test_set_run_emits_langfuse_trace_with_editing_loops(monkeypatch):
+    """set 配本 run（本番既定）が trace_pipeline を planning_rounds＋books（冊ごとの編集ループ）付きで呼ぶ。
+
+    C5.6 対立②のライブ配線: 企画の差し戻し→承認に加え、各冊の本文編集ループ
+    （BodyVerdict の score/decision/forcedApprove）が1トレースに載る。
+    """
+    import publishr_agents.observability as obs
+
+    captured: dict = {}
+
+    def fake_trace(payload, **_kw):
+        captured["payload"] = payload
+        return "sent"
+
+    monkeypatch.setattr(obs, "trace_pipeline", fake_trace)
+    res = mode_a_service.run(MockRepository(), "u_sakura", owner_uid="u")
+    assert "payload" in captured  # set 経路にも計装が結線されている
+    p = captured["payload"]
+    assert p["approved"] is True
+    assert isinstance(p["planning_rounds"], list) and len(p["planning_rounds"]) >= 2  # 差し戻し→承認
+    assert len(p["books"]) == len(res.books)
+    for entry in p["books"]:
+        assert entry["bookId"]
+        assert entry["rounds"] and entry["rounds"][0]["round"] == 1
+        assert isinstance(entry["forcedApprove"], bool)

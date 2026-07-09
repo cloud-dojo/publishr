@@ -175,30 +175,41 @@ def run_mode_a_set_pipeline(
     return ModeASetResult(books=out, planning=planning)
 
 
-def make_published_books(
+class PublishedSet(NamedTuple):
+    """publish_books_with_log の成果＝published 本＋冊ごとの編集ループ証跡。"""
+
+    books: list[Book]
+    # 冊ごとの編集長⇄著者ループ証跡（Langfuse editing_loop 配線用・C5.6 対立②）:
+    # [{bookId, title, editRounds, forcedApprove, rounds: [{round, ...BodyVerdict}]}]
+    editing_log: list[dict[str, Any]]
+
+
+def publish_books_with_log(
     books: list[Book],
     personas: list[Persona],
     *,
     llm: str = "mock",
     rounds: int = 1,
-) -> list[Book]:
+) -> PublishedSet:
     """各 draft 入荷本に modeB 本文編集ループで本文を書き切り published にする（配本runの仕上げ）。
 
     予約制廃止改定（2026-06-23）: 配本 run で全冊を本文まで作り切って published にする一気通貫。
     旧・予約→Pub/Sub worker（`reservation_service.process_write_job`）と同じ遷移をオフラインで行う
     ＝`status=published`／`body`（編集ループ後の本文）／`edit_round`／`feedback.read_percent=0`。
     著者は personas から `author_persona_id` で引く（無ければ modeB 側で汎用著者に縮退）。
-    `llm` は "mock"|"vertex"・`rounds` は本文の最高改稿ラウンド。冪等: すでに本文付き published は素通し。
+    `llm` は "mock"|"vertex"・`rounds` は本文の最高改稿ラウンド。冪等: すでに本文付き published は
+    素通し（editing_log にも残さない＝このrunで編集ループは回っていない）。
 
     方針（企画リーダーの「3R未達は最良案承認」と統一・7/1レビューで実装）: rounds を使い切っても
     編集長が基準未達のままの場合があり得る（弱章の入れ替わりで収束しないケースを実Vertexで確認済み・
     p2ケース）。それでも published にする（デモを止めない）が、`result.forced_approve` を見て
-    見逃さないよう warning ログを残す。
+    見逃さないよう warning ログを残す。editing_log は同じ証跡を Langfuse に載せるための持ち出し口。
     """
     from .mode_b import write_body_loop
 
     by_id = {p.id: p for p in personas}
     out: list[Book] = []
+    editing_log: list[dict[str, Any]] = []
     for book in books:
         if book.status == "published" and book.body:
             out.append(book)
@@ -216,6 +227,15 @@ def make_published_books(
                 result.body_verdict.get("decision"),
                 result.body_verdict.get("weakChapters"),
             )
+        editing_log.append(
+            {
+                "bookId": book.id,
+                "title": book.title,
+                "editRounds": result.edit_rounds,
+                "forcedApprove": result.forced_approve,
+                "rounds": [{"round": i, **v} for i, v in enumerate(result.verdicts, 1)],
+            }
+        )
         fb = book.feedback.model_copy(update={"read_percent": 0})
         out.append(
             book.model_copy(
@@ -227,7 +247,18 @@ def make_published_books(
                 }
             )
         )
-    return out
+    return PublishedSet(books=out, editing_log=editing_log)
+
+
+def make_published_books(
+    books: list[Book],
+    personas: list[Persona],
+    *,
+    llm: str = "mock",
+    rounds: int = 1,
+) -> list[Book]:
+    """publish_books_with_log の従来互換ラッパ（books のみ返す）。詳細は同関数の docstring。"""
+    return publish_books_with_log(books, personas, llm=llm, rounds=rounds).books
 
 
 def map_mode_a_set_to_books(

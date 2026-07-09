@@ -15,8 +15,8 @@ from typing import Any, Optional
 
 from publishr_agents import PipelineResult, RejectLogEntry
 from publishr_agents.mode_a import (
-    make_published_books,
     map_mode_a_set_to_books,
+    publish_books_with_log,
     run_mode_a_pipeline,
     run_mode_a_set_pipeline,
 )
@@ -155,6 +155,37 @@ def _reject_log_set(planning: dict[str, Any]) -> list[RejectLogEntry]:
     return out
 
 
+def _trace_set_run(
+    planning: dict[str, Any],
+    editing_log: list[dict[str, Any]],
+    *,
+    theme_kind: str,
+    book_count: int,
+) -> None:
+    """Langfuse: セット配本の証跡（編集長セットゲートの差し戻し＋冊ごとの本文編集ループ）を送る。
+
+    旧単一テーマ経路の trace_pipeline 呼び出しと対になる set 経路版。planning_rounds＝
+    verdictHistory（却下→承認）、books＝publish_books_with_log の editing_log
+    （BodyVerdict の score/decision/forcedApprove）。計装失敗は致命でない。
+    """
+    try:
+        from publishr_agents.observability import trace_pipeline  # noqa: PLC0415
+
+        history = planning.get("verdictHistory") or []
+        last = history[-1] if history else {}
+        status = trace_pipeline(
+            {
+                "theme": f"配本セット（{theme_kind}・{book_count}冊）",
+                "approved": last.get("decision") == "approve",
+                "planning_rounds": history,
+                "books": editing_log,
+            }
+        )
+        logger.info("langfuse trace_pipeline(set): %s (books=%d)", status, book_count)
+    except Exception as exc:  # noqa: BLE001 — 計装失敗は致命でない
+        logger.warning("langfuse trace_pipeline(set) failed: %s", type(exc).__name__)
+
+
 def run(
     repo: RepositoryProtocol,
     user_id: str,
@@ -224,10 +255,17 @@ def run(
             set_result, owner_uid=owner, created_at=created, run_token=run_token
         )
         # 予約制廃止改定: 配本 run で全4冊を本文まで作り切って published にする（一気通貫・予約不要）。
-        books = make_published_books(
+        published = publish_books_with_log(
             books, personas, llm=mode_llm, rounds=settings.body_edit_rounds
         )
+        books = published.books
         persist_arrivals(repo, books, personas)
+        # Langfuse: セット配本の「必然性の証跡」（企画差し戻し＋冊ごとの本文編集ループ）を
+        # 1トレースで送る（C5.6 対立①②のライブ配線）。best-effort。
+        _trace_set_run(
+            set_result.planning, published.editing_log,
+            theme_kind=theme_kind, book_count=len(books),
+        )
         return PipelineResult(
             books=books,
             reject_log=_reject_log_set(set_result.planning),

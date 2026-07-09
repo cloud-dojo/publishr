@@ -68,12 +68,18 @@ def grounding_urls_from_events(events: Any) -> list[str]:
     return list(dict.fromkeys(urls))
 
 
-def _trace_loop(root: Any, name: str, rounds: Optional[list[dict[str, Any]]]) -> None:
+def _trace_loop(
+    root: Any,
+    name: str,
+    rounds: Optional[list[dict[str, Any]]],
+    *,
+    metadata: Optional[dict[str, Any]] = None,
+) -> None:
     """差し戻しループを親スパン＋各ラウンドの子スパンで可視化する（空なら何もしない）。"""
     items = list(rounds or [])
     if not items:
         return
-    span = root.start_span(name=name, metadata={"rounds": len(items)})
+    span = root.start_span(name=name, metadata={"rounds": len(items), **(metadata or {})})
     for v in items:
         child = span.start_span(name=f"{name}_r{v.get('round')}", metadata=v)
         child.end()
@@ -87,7 +93,9 @@ def trace_pipeline(payload: dict[str, Any], *, client: Any = None) -> str:
       - theme: str
       - approved: bool
       - planning_rounds: [{round, score, decision}]   … 対立①（企画リーダー差し戻し）
-      - editing_rounds:  [{round, ...}]                … 対立②（編集長の本文差し戻し）
+      - editing_rounds:  [{round, ...}]                … 対立②（編集長の本文差し戻し・単冊）
+      - books: [{bookId, title, forcedApprove, rounds:[{round, ...}]}]
+                                                       … 対立②をセット配本の冊ごとに
       - grounding_urls:  [str]                         … 調査の grounding 取得URL
 
     キー未設定/langfuse未導入なら no-op。戻り値は "sent"/"skipped..."/"error..."。
@@ -98,16 +106,28 @@ def trace_pipeline(payload: dict[str, Any], *, client: Any = None) -> str:
         return "skipped (langfuse未導入 or LANGFUSE_*キー未設定)"
     try:
         grounding = list(payload.get("grounding_urls") or [])
+        books = list(payload.get("books") or [])
         root = lf.start_span(
             name="publishr-pipeline",
             input={"theme": payload.get("theme")},
             metadata={
                 "approved": bool(payload.get("approved")),
                 "groundingCount": len(grounding),
+                **({"bookCount": len(books)} if books else {}),
             },
         )
         _trace_loop(root, "planning_loop", payload.get("planning_rounds"))
         _trace_loop(root, "editing_loop", payload.get("editing_rounds"))
+        for b in books:
+            _trace_loop(
+                root,
+                f"editing_loop_{b.get('bookId') or '?'}",
+                b.get("rounds"),
+                metadata={
+                    "title": b.get("title"),
+                    "forcedApprove": bool(b.get("forcedApprove")),
+                },
+            )
         if grounding:
             g = root.start_span(name="grounding", metadata={"urls": grounding})
             g.end()

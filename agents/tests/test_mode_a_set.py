@@ -14,6 +14,7 @@ from publishr_schema import Book, load_users
 from publishr_agents.mode_a import (
     make_published_books,
     map_mode_a_set_to_books,
+    publish_books_with_log,
     run_mode_a_set_pipeline,
 )
 from publishr_agents.observe import FixtureObservationSource
@@ -116,6 +117,40 @@ def test_make_published_books_idempotent():
     second_pass = make_published_books(first_pass, personas, llm="mock", rounds=1)
     assert [b.id for b in first_pass] == [b.id for b in second_pass]
     assert [b.body for b in first_pass] == [b.body for b in second_pass]
+
+
+def test_publish_books_with_log_editing_evidence():
+    """publish_books_with_log が books に加え、冊ごとの編集ループ証跡（editing_log）を返す。
+
+    Langfuse editing_loop 配線（C5.6 対立②）のライブ経路用: bookId/rounds/forcedApprove が
+    write_body_loop の verdicts から冊ごとに残る。books は make_published_books と同一。
+    """
+    res = _run()
+    books, personas = map_mode_a_set_to_books(res, owner_uid="u_x", created_at=NOW.isoformat())
+    published = publish_books_with_log(books, personas, llm="mock", rounds=1)
+    baseline = make_published_books(books, personas, llm="mock", rounds=1)
+    assert [b.id for b in published.books] == [b.id for b in baseline]
+    assert [b.body for b in published.books] == [b.body for b in baseline]
+    assert len(published.editing_log) == 4
+    for entry, book in zip(published.editing_log, published.books):
+        assert entry["bookId"] == book.id
+        assert entry["title"] == book.title
+        assert entry["rounds"], f"{book.id}: 編集ループのラウンド証跡が必要"
+        first_round = entry["rounds"][0]
+        assert first_round["round"] == 1
+        assert "score" in first_round and "decision" in first_round
+        assert isinstance(entry["forcedApprove"], bool)
+        assert entry["editRounds"] >= 1
+
+
+def test_publish_books_with_log_passthrough_leaves_no_log():
+    """既に published+body の本は編集ループを回さない＝証跡も残らない（冪等と整合）。"""
+    res = _run()
+    books, personas = map_mode_a_set_to_books(res, owner_uid="u_x", created_at=NOW.isoformat())
+    first = publish_books_with_log(books, personas, llm="mock", rounds=1)
+    second = publish_books_with_log(first.books, personas, llm="mock", rounds=1)
+    assert [b.id for b in second.books] == [b.id for b in first.books]
+    assert second.editing_log == []
 
 
 # ── 決定性 ─────────────────────────────────────────────────
