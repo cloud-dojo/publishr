@@ -1,0 +1,13 @@
+# Terraform: ローカルの provider キャッシュ・state はコミットしない。
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# 実値の tfvars は環境秘匿（terraform.tfvars.example のみコミット）。
+terraform.tfvars
+*.auto.tfvars
+*.auto.tfvars.json
+
+# .terraform.lock.hcl は意図的にコミットする（provider バージョン固定）＝除外しない。

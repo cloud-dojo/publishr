@@ -1,0 +1,86 @@
+# =============================================================================
+# Firebase App Hosting 設定: モノレポ内の Next.js アプリ (apps/web) を公開する
+# -----------------------------------------------------------------------------
+# - Firebase コンソール > App Hosting で backend を作成し、GitHub リポジトリ
+#   (cloud-dojo/publishr) を連携する。
+#     - live branch  = main
+#     - root directory = apps/web   ← この apphosting.yaml が読まれる
+# - npm workspaces のため install はリポジトリ root で走り、workspace 依存
+#   (@publishr/shared-schema) も解決される（next.config.ts の transpilePackages）。
+# - NEXT_PUBLIC_* は Next.js がビルド時にインライン展開するため availability に
+#   BUILD を含めること（含めないと値が埋め込まれない）。
+# - 機密値（NEXT_PUBLIC_FIREBASE_* の API キーは公開可・コミット可）と、
+#   サーバ専用シークレットは Secret Manager 参照（secret:）に分ける。
+# 参照: docs/infra/cicd.md / docs/design/api-contract.md
+# =============================================================================
+
+runConfig:
+  # 審査期間（〜7/24）: min=1 でウォームアップ維持（審査員の初回アクセスにコールドスタートを
+  # 踏ませない）・max=5 で同時アクセスの頭出しに余裕。審査後は 0/2 に戻してよい。
+  minInstances: 1
+  maxInstances: 5
+
+env:
+  # --- 無認証公開ショーケース（PR-A / 2026-06-30）: BFF 経由で佐倉(demo_uid)の
+  #     published 本を無ログインで表示。BFF リポジトリは owner_uid=demo_uid に
+  #     スコープ済み（deps.py）＝審査員はログイン・連携なしで閲覧可。詳細は
+  #     docs/planning/hackathon-demo-strategy.md。実ユーザー別の firestore 直読みは休止。 ---
+  - variable: NEXT_PUBLIC_DATA_SOURCE
+    value: bff
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # --- C4.9 / M2: Cloud Run BFF の URL（2026-06-09 修正） ---
+  # 旧値 asia-east1 は実体なし（404）。BFF は Firestore と同居の asia-northeast1 にデプロイ済み。
+  - variable: NEXT_PUBLIC_API_URL
+    value: https://publishr-api-355143691286.asia-northeast1.run.app
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # --- フェーズ3: Firebase クライアント設定（公開キー・コミット可） ---
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyDSK_sF3W81Hk6GVXYZuDpqCngi5VIjTzg"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: publishr-498123.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: publishr-498123
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: publishr-498123.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "355143691286"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:355143691286:web:f8859bd0d1b6338591d937"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # --- I-31 / prod-live-followups #7（方針A）: 「今すぐ企画」手動トリガーの表示 allowlist ---
+  # 実 Vertex 企画＝課金のため、デモの佐倉 UID にのみボタンを出す（config.ts canManualTrigger）。
+  # 未設定だと allowlist が DEMO_USER_ID("u_sakura") にフォールバックし、佐倉の実 Firebase UID
+  # では非表示になる。バックエンドの ALLOWED_TRIGGER_UIDS（Cloud Run・バック担当）と対で多層防御。
+  - variable: NEXT_PUBLIC_TRIGGER_UIDS
+    value: "5JLLGOc3rpXiGN9KXmsISBNAKty2"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # --- ②G の無認証ショーケース向けライブ生成ボタン（NEXT_PUBLIC_DEMO_LIVE_GEN）は、押下後の
+  #     「企画中…」が画面停止に見えるため 2026-07-04 に撤去。無認証デモは読み取り専用に戻した。
+  #     再開するなら NEXT_PUBLIC_DEMO_LIVE_GEN=1 と config.ts / account/page.tsx の復元が必要。 ---

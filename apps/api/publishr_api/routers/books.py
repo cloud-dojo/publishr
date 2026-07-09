@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from publishr_schema import Book
+
+from ..config import settings
+from ..deps import get_repository
+from ..errors import NotFoundError
+from ..repositories.protocol import RepositoryProtocol
+from ..schemas import FeedbackInput, ReadingStateInput
+from ..services import feedback_service, reading_service, write_queue
+from .api import require_reserve_uid
+
+router = APIRouter(prefix="/books", tags=["books"])
+
+
+def _require_feedback_writes() -> None:
+    """公開デモ（無認証）では反応書き込みを閉じる（fail-closed・P0ハードニング）。
+
+    UI(bff-provider) は localStorage 書きなので閉じても壊れない。共有棚（佐倉）への
+    ★スパム/dropped注入/巨大annotations と学習ループ（C1.8）への注入を封じる。
+    """
+    if not settings.allow_feedback_writes:
+        raise HTTPException(status_code=403, detail="読者反応の書き込みは現在受け付けていません")
+
+
+@router.get("", response_model=list[Book])
+def list_books(
+    status: Optional[str] = Query(None),
+    shelf: Optional[str] = Query(None),
+    repo: RepositoryProtocol = Depends(get_repository),
+) -> list[Book]:
+    # 書店一覧は本文(body)を使わない（表紙/理由/著者名/概要のみ）。本文は1冊 ~18KB あり、
+    # 一覧に載せると初回ロードの主ゲートになる（6冊で ~350KB／うち約9割が body）。ここで body を
+    # 落として一覧を軽量化し、読書ページは GET /books/{id} で本文を遅延取得する（BffProvider.getBook）。
+    return [b.model_copy(update={"body": None})
+            for b in repo.list_books(status=status, shelf=shelf)]
+
+
+@router.get("/{book_id}", response_model=Book)
+def get_book(book_id: str, repo: RepositoryProtocol = Depends(get_repository)) -> Book:
+    book = repo.get_book(book_id)
+    if book is None:
+        raise NotFoundError(f"book {book_id} が見つかりません")
+    return book
+
+
+@router.post("/{book_id}/reserve", response_model=Book, deprecated=True)
+async def reserve_book(
+    book_id: str,
+    repo: RepositoryProtocol = Depends(get_repository),
+    _uid: str = Depends(require_reserve_uid),  # fail-closed: 課金時は認証必須
+) -> Book:
+    """旧予約モデルの互換エンドポイント（通常配本では使用しない）。"""
+    # 予約→執筆ジョブ投入を1単位で（publish 失敗時は予約を draft へ戻して reserved 孤児を防ぐ）。
+    return write_queue.reserve_and_enqueue(repo, book_id, owner_uid=_uid)
+
+
+@router.post(
+    "/{book_id}/feedback", response_model=Book, dependencies=[Depends(_require_feedback_writes)]
+)
+def post_feedback(
+    book_id: str,
+    payload: FeedbackInput,
+    repo: RepositoryProtocol = Depends(get_repository),
+) -> Book:
+    return feedback_service.apply_feedback(repo, book_id, payload)
+
+
+@router.post(
+    "/{book_id}/reading-state",
+    response_model=Book,
+    dependencies=[Depends(_require_feedback_writes)],
+)
+def post_reading_state(
+    book_id: str,
+    payload: ReadingStateInput,
+    repo: RepositoryProtocol = Depends(get_repository),
+) -> Book:
+    return reading_service.apply_reading_state(repo, book_id, payload)

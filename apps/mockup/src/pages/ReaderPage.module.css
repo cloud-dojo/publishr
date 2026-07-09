@@ -1,0 +1,218 @@
+/* --- topBar --- */
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.crumb button:hover {
+  color: var(--gold);
+}
+.sep {
+  color: var(--bg-hairline);
+}
+.crumbAuthor {
+  color: var(--gold);
+}
+.viewTools {
+  display: flex;
+  gap: 4px;
+}
+.tool {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--bg-hairline);
+}
+.toolOn {
+  color: var(--gold-bright);
+  border-color: var(--gold-dim);
+}
+
+/* --- 本文（パーチメント） --- */
+.reader {
+  background: var(--surface-reader);
+  color: var(--surface-reader-text);
+  border-radius: var(--radius-panel);
+  padding: 56px 60px 40px;
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-serif);
+  line-height: 2.05;
+}
+.chapterLabel {
+  font-family: var(--font-display);
+  font-style: italic;
+  letter-spacing: 0.14em;
+  color: #9a7b3c;
+  font-size: 14px;
+}
+.chapterTitle {
+  font-family: var(--font-serif);
+  color: #241f17;
+  font-size: 30px;
+  margin: 8px 0 28px;
+  letter-spacing: 0.02em;
+}
+.bodyText {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.para {
+  margin: 0;
+}
+.dropcap {
+  float: left;
+  font-size: 58px;
+  line-height: 0.8;
+  padding: 6px 12px 4px 0;
+  color: #8a6a2c;
+  font-family: var(--font-serif);
+  font-weight: 600;
+}
+.hl {
+  background: linear-gradient(transparent 60%, rgba(201, 149, 60, 0.4) 0);
+  color: inherit;
+  padding: 0 1px;
+}
+.inlineNote {
+  background: #f6e9c8;
+  border: 1px solid #e0cda0;
+  border-left: 3px solid #c79a4e;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 0.86em;
+  color: #6b5836;
+  line-height: 1.8;
+}
+.pageFooter {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid #d9cdaf;
+  text-align: right;
+  font-size: 12px;
+  color: var(--surface-reader-muted);
+  font-family: var(--font-sans);
+}
+
+/* --- 右パネル --- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.panelSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.panelTitle {
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--bg-hairline);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.action {
+  flex: 1;
+  font-size: 12px;
+  padding: 9px;
+  border-radius: 6px;
+  border: 1px solid var(--bg-hairline);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+.action:hover {
+  border-color: var(--gold-dim);
+  color: var(--text-primary);
+}
+.hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+.favBtn {
+  margin-top: 4px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-size: 12.5px;
+  text-align: center;
+  transition: var(--transition);
+}
+.favBtn:hover {
+  background: rgba(201, 169, 106, 0.08);
+}
+.favOn {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #1a1206;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.reactions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reaction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--bg-hairline);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: left;
+  transition: var(--transition);
+}
+.reaction:hover {
+  border-color: var(--gold-dim);
+}
+.reactionOn {
+  background: rgba(201, 169, 106, 0.12);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+.reactionIcon {
+  color: var(--gold);
+  width: 14px;
+  text-align: center;
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ratingHint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.finishBtn {
+  margin-top: 4px;
+  padding: 11px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #1a1206;
+  font-weight: 600;
+  font-size: 13px;
+}
+.finishBtn:hover {
+  filter: brightness(1.08);
+}

@@ -1,0 +1,38 @@
+[project]
+name = "publishr-workspace"
+version = "0.0.0"
+description = "Publishr workspace root (uv) — BFF + ADK agents + shared schema"
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = [
+    "packages/shared-schema/py",
+    "agents",
+    "apps/api",
+]
+
+[tool.uv.sources]
+publishr-schema = { workspace = true }
+publishr-agents = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["packages", "agents", "apps/api"]
+markers = [
+    "vertex: requires live Vertex AI credentials; skipped unless PUBLISHR_RUN_VERTEX=1",
+    "google: requires live Google OAuth token (Drive/Calendar/Tasks); skipped unless PUBLISHR_RUN_GOOGLE=1",
+]
+pythonpath = ["packages/shared-schema/py", "agents", "apps/api"]
+filterwarnings = [
+    "ignore:.*is deprecated and will be removed.*:DeprecationWarning",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
+]

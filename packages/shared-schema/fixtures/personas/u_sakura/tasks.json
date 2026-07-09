@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "description": "Publishr デモ用 Tasks fixture。佐倉美咲のタスク15件(未完了10／完了5)。Google Tasks API tasks.list 応答を模した形。",
+    "persona": "佐倉美咲（35歳・食品メーカー マーケ課長）",
+    "source": "tasks.md と同一内容",
+    "scope": "tasks.readonly",
+    "timeZone": "Asia/Tokyo"
+  },
+  "tasks": [
+    { "id": "tsk_001", "title": "役員中間報告用のストーリーライン骨子作成", "status": "needsAction", "due": "2026-06-04", "notes": "【至急】自信が持てず手が止まっている" },
+    { "id": "tsk_002", "title": "佐藤さんとの1on1アジェンダ作成", "status": "needsAction", "due": "2026-06-03", "notes": "どう期待役割を伝えるか" },
+    { "id": "tsk_003", "title": "メンバー6名の上期評価（一次評価）ドラフト入力", "status": "needsAction", "due": "2026-06-08", "notes": "" },
+    { "id": "tsk_004", "title": "鈴木さんの新商品企画サポート依頼", "status": "needsAction", "due": null, "notes": "誰につけるか？佐藤さんは嫌がるかも" },
+    { "id": "tsk_005", "title": "しずく天然水 パッケージ刷新デザイン案の最終選定", "status": "needsAction", "due": null, "notes": "ブルー継続 or グリーン転換" },
+    { "id": "tsk_006", "title": "部下全員のキャリアヒアリングまとめ提出", "status": "needsAction", "due": null, "notes": "" },
+    { "id": "tsk_007", "title": "マーケ部 中期戦略のドラフト確認とフィードバック", "status": "needsAction", "due": null, "notes": "" },
+    { "id": "tsk_008", "title": "予算消化状況の確認と来月見込みの入力", "status": "needsAction", "due": null, "notes": "" },
+    { "id": "tsk_009", "title": "マネジメントや1on1のやり方に関する本を読む", "status": "needsAction", "due": null, "notes": "全然時間が取れない…積読3冊" },
+    { "id": "tsk_010", "title": "役員会議に向けたQ&A想定問答作成", "status": "needsAction", "due": "2026-06-04", "notes": "" },
+
+    { "id": "tsk_011", "title": "新任マネージャー研修 事前課題提出", "status": "completed", "due": "2026-05-29", "notes": "" },
+    { "id": "tsk_012", "title": "しずく天然水 競合A社新商品分析まとめ", "status": "completed", "due": "2026-05-12", "notes": "" },
+    { "id": "tsk_013", "title": "田中健太との1on1準備", "status": "completed", "due": "2026-05-30", "notes": "" },
+    { "id": "tsk_014", "title": "上期目標のチームへの共有", "status": "completed", "due": "2026-05-08", "notes": "" },
+    { "id": "tsk_015", "title": "予算申請稟議書の起案", "status": "completed", "due": "2026-05-15", "notes": "" }
+  ]
+}

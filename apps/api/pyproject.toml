@@ -1,0 +1,31 @@
+[project]
+name = "publishr-api"
+version = "0.0.0"
+description = "Publishr BFF（FastAPI）"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "publishr-schema",
+    "publishr-agents",
+    "firebase-admin>=6.5",
+    "google-cloud-pubsub>=2.21",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+# 本番の per-uid トークン保存（PUBLISHR_OAUTH_TOKEN_STORE=secret_manager・G1-5）。
+# 既定の file バックエンドはこの extra 無しで動く（オフライン/dev）。
+secret-manager = ["google-cloud-secret-manager>=2.20"]
+# 本番の本文オフロード（PUBLISHR_BODY_STORE=gcs・C3.3）。
+# 既定の inline はこの extra 無しで動く（オフライン/dev・本文はドキュメント内）。
+gcs = ["google-cloud-storage>=2.16"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["publishr_api"]

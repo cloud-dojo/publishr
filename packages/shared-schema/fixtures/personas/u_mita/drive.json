@@ -1,0 +1,101 @@
+{
+  "_meta": {
+    "description": "Publishr デモ用 Drive fixture。三田裕樹の業務資料10件。Google Drive API v3 files.list 応答＋テキスト抽出後(content)を模した形。感情・悩みの記述なし・業務成果物のみ。開発・CI・Eval で実APIを叩かずに使う。",
+    "persona": "三田裕樹（46歳・IT系SaaS企業 プロダクト本部長・従業員200名）",
+    "source": "STEP1再現性検証用（2026-06-12作成）",
+    "scope": "drive.file",
+    "generatedFor": "dev/CI/Eval（STEP1プロンプト汎用性検証・感情記述ゼロのビジネス文書のみ）"
+  },
+  "files": [
+    {
+      "id": "drv_001",
+      "name": "プロジェクト進捗報告_2026Q2",
+      "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "modifiedTime": "2026-06-09T08:30:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "プロダクト本部 2026Q2進捗報告。Phase 1完了（2026Q1）。Phase 2進行中：予定2026-05-30完了→現時点3週間遅延、現見通し2026-06-20。遅延要因：レガシーAPI移行の技術的負債（設計書参照）・外部委託エンジニアのアサイン調整。リスク：A社更新交渉（6/25）への影響可能性。P1バグ5件のうち3件は担当者未アサイン。次回報告：取締役会（6/10）。"
+    },
+    {
+      "id": "drv_002",
+      "name": "A社_更新提案書_v3",
+      "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "modifiedTime": "2026-06-07T14:20:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "A社向け契約更新提案書 第3版（v1:2026-05-10・v2:2026-05-28・v3:2026-06-07）。契約金額：前年1.5億円→本提案1.38億円（-8%）。改版履歴：v1=標準更新、v2=価格改定＋機能追加訴求、v3=導入効果ROI試算追加。未解決：A社QBR（6/1）指摘事項「導入効果の数値化が不十分」「競合B社比較への回答」。次回交渉MTG：6/25。"
+    },
+    {
+      "id": "drv_003",
+      "name": "システム移行アーキ設計書",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "modifiedTime": "2026-05-15T11:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "レガシーシステム→新アーキテクチャ移行設計書（Phase 2対象）。現状：レガシーAPI依存箇所14か所（うち7か所はPhase 1で解消済、残7か所がPhase 2対象）。新アーキ：マイクロサービス化、REST→GraphQL移行、認証基盤刷新。残存リスク：旧APIの廃止タイムライン未確定（ベンダー交渉中）。工数：全体見積780人日→実績+15%超過。未見積作業：レガシーAPI非互換4か所の対応方針未確定。"
+    },
+    {
+      "id": "drv_004",
+      "name": "2026上期_予算執行状況",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-06-05T09:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "2026上期（1-6月）予算執行状況。開発費：計画4,200万円→実績4,830万円（+15%・計画比630万超）。超過要因内訳：外部委託費+480万（Phase 2遅延に伴う工数追加）、クラウドインフラ費+150万（移行期の二重稼働）。人件費（内部）：計画内。来期（下期）見込み：採用2名完了前提の計画で試算済、未達の場合は外部委託継続で+800万超過想定。"
+    },
+    {
+      "id": "drv_005",
+      "name": "競合比較表_2026",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-06-03T16:45:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "2026年版 競合比較表（自社 vs 競合B社 vs 競合C社）。差別化軸評価：連携数=自社127/競合B社125/競合C社98（自社優位・縮小中）、AI機能=自社未リリース/競合B社2026Q1リリース済/競合C社開発中、価格競争力=自社中/競合B社低/競合C社中。A社との関連：A社QBRで「競合Bのデモを見た」と発言。競合BのAI機能：自動レポート生成・異常検知アラート。自社ロードマップ：AI機能は2026Q4予定。"
+    },
+    {
+      "id": "drv_006",
+      "name": "チーム体制図_2026上期",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-04-01T08:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "プロダクト本部 2026上期体制。三田裕樹=本部長。PM：山田（シニア・Phase 2担当）、林（ジュニア・A社CS担当）。エンジニア8名（フルタイム5名＋業務委託3名）。並走プロジェクト5件：Phase 2移行、A社CSサポート、新機能開発2件、基盤改善1件。兼務状況：エンジニア全員が2件以上兼務。PM山田は3プロジェクト兼務。備考：下期に向けてエンジニア正社員2名採用予定（採用計画書参照）。"
+    },
+    {
+      "id": "drv_007",
+      "name": "A社_QBR議事録_2026-06-01",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "modifiedTime": "2026-06-01T18:30:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "A社QBR（Quarterly Business Review）議事録 2026-06-01。参加：A社情報システム部長・調達部長、自社三田・林PM。議題：Q1-Q2利用実績報告、契約更新条件提示。A社発言：「Phase 2の遅延が業務計画に影響している」「導入効果をROIで数値化して欲しい」「先週競合Bのデモを見た。AI機能が印象的だった」「更新は最終的には7月上旬までに判断したい」。アクション：6/20までに更新提案書最終版提出（三田）、6/25に最終交渉MTG設定。"
+    },
+    {
+      "id": "drv_008",
+      "name": "プロダクトロードマップ_2026H2",
+      "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "modifiedTime": "2026-05-20T13:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "プロダクトロードマップ 2026下期（7-12月）。Q3（7-9月）：Phase 2完了（移行済）・新機能リリース2件・パフォーマンス改善。Q4（10-12月）：AI機能MVP（自動レポート生成・異常検知）・新規顧客向けオンボーディング改善。前提条件：エンジニア2名採用完了（Q3前半）。AI機能前倒し可否：現人員では対応困難。採用完了後に再評価。A社更新交渉への影響：AI機能リリースはQ4のため交渉時点では未提供。"
+    },
+    {
+      "id": "drv_009",
+      "name": "エンジニアリング課題管理表",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-06-08T17:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "エンジニアリング課題管理表（2026-06-08時点）。OPEN課題：42件。優先度別内訳：P1（重大・即対応）5件、P2（高・今スプリント対応）12件、P3（中）18件、P4（低）7件。P1課題詳細：#1012 認証基盤の既知脆弱性（担当：未アサイン）・#1034 A社環境でのデータ不整合（担当：山田PM）・#1041 Phase 2移行スクリプトエラー（担当：未アサイン）・#1045 レポート生成タイムアウト（担当：佐藤エンジニア）・#1049 APIレート制限超過（担当：未アサイン）。未アサイン3件はリソース待ち。"
+    },
+    {
+      "id": "drv_010",
+      "name": "採用計画_2026",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "modifiedTime": "2026-06-02T10:30:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "2026年度 エンジニア採用計画。目標：正社員エンジニア2名（バックエンド1名・フルスタック1名）。採用目標時期：Q3前半（7-8月）入社。現状（2026-06-02時点）：応募者16名、書類通過5名、面接実施3名、内定者0名。課題：スキルマッチ率が低い（要件：5年以上のSaaSバックエンド経験）。対応方針：エージェント追加（2社→4社）・リファラル強化・要件の見直し検討。リスク：Q3採用未達の場合、外部委託継続が必要となり下期コストが計画比+800万超過。"
+    }
+  ]
+}

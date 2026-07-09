@@ -1,0 +1,261 @@
+﻿// firestoreプロバイダ: 読み取りは onSnapshot 購読、低リスク書き込みは Firestore 直、
+// 予約/手動トリガーは Cloud Run API（Firebase IDトークン付与）。
+// 方針の正本: docs/design/api-contract.md §1 / docs/design/tech-architecture.md §3。
+//
+// ⚠️ 前提（バック担当と確定が必要・本接続前の「1回だけ同期」項目）:
+//   - Firestore ドキュメントが shared-schema（@publishr/shared-schema）の形で保存される
+//     こと（books は doc.id=Book.id、ownerUid フィールドで所有者分離）。
+//   - セキュリティルールのデプロイ（直書きが通る前提）。
+//   - Cloud Run API 3本のURL・CORS（apiUrl / NEXT_PUBLIC_API_URL）。
+// 既定の mock 運用には影響しない（dataSource==="firestore" の時のみ生成）。
+
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+  type Firestore,
+} from "firebase/firestore";
+
+import type {
+  AppNotification,
+  Book,
+  FeedbackInput,
+  Persona,
+  Plan,
+  ReadingStateInput,
+  User,
+} from "@publishr/shared-schema";
+
+import { getDb, getFirebaseAuth } from "@/lib/firebase";
+
+import { apiUrl } from "./config";
+import { BaseProvider } from "./provider";
+
+export class FirestoreProvider extends BaseProvider {
+  private db: Firestore;
+  private ownerUid: string | null = null;
+  private unsubs: Array<() => void> = [];
+  // GCS退避(C3.3)された本文の取得済みキャッシュ（id→本文）。snapshot 再取得で books が
+  // 作り直されても本文を消さずに復元するために保持する（id→body）。
+  private bodyCache = new Map<string, string>();
+  // 通知は実データ（入荷/配信）から一度だけ導出する（本番では Firestore に通知コレクションが
+  // 無く、ベルが常に空になるため）。再導出で既読状態や favoriteAuthor push を消さないよう1回限り。
+  private notificationsSeeded = false;
+
+  constructor() {
+    super();
+    const db = getDb();
+    if (!db) {
+      throw new Error(
+        "FirestoreProvider には Firebase 設定が必要です（NEXT_PUBLIC_FIREBASE_*）。"
+      );
+    }
+    this.db = db;
+  }
+
+  /** 認証済みユーザーの uid を設定して購読を張り直す。 */
+  setOwnerUid(uid: string | null): void {
+    if (uid === this.ownerUid) return;
+    this.ownerUid = uid;
+    this.subscribeAll();
+  }
+
+  protected async load(): Promise<void> {
+    // 初期 uid は現在のサインインユーザー。未ログインなら購読は setOwnerUid 後に張る。
+    this.ownerUid = getFirebaseAuth()?.currentUser?.uid ?? null;
+    this.subscribeAll();
+  }
+
+  private clearSubs(): void {
+    this.unsubs.forEach((u) => u());
+    this.unsubs = [];
+  }
+
+  private subscribeAll(): void {
+    this.clearSubs();
+    if (!this.ownerUid) return;
+    const uid = this.ownerUid;
+
+    // 棚: 自分の本のみ（ownerUid 一致）
+    this.unsubs.push(
+      onSnapshot(query(collection(this.db, "books"), where("ownerUid", "==", uid)), (snap) => {
+        this.books.clear();
+        snap.forEach((d) => {
+          const b = { id: d.id, ...d.data() } as Book;
+          // 既に GCS から hydrate 済みの本文を復元（snapshot で body="" に戻して読書ページを
+          // 序文だけに退行させない・C3.3）。Firestore 側に実体があればそちらを優先。
+          const cached = this.bodyCache.get(d.id);
+          if (cached && !b.body) b.body = cached;
+          this.books.set(d.id, b);
+        });
+        this.notify();
+        this.seedNotificationsFromData();
+        void this.hydrateBodies();
+      })
+    );
+
+    // 企画: 自分の企画のみ（ownerUid 一致）。ルール(plans:read=ownerUid==uid)に合わせてクエリ側も
+    // 絞らないと、list が「他人の企画も返しうる」と判定され listener 全体が permission-denied で拒否される。
+    // ※本番では plans は永続化されず Book に畳み込まれる想定のため通常は空（mock/bff は fixtures が入る）。
+    this.unsubs.push(
+      onSnapshot(query(collection(this.db, "plans"), where("ownerUid", "==", uid)), (snap) => {
+        this.plans.clear();
+        snap.forEach((d) => this.plans.set(d.id, { id: d.id, ...d.data() } as Plan));
+        this.notify();
+      })
+    );
+
+    // 著者ペルソナ
+    this.unsubs.push(
+      onSnapshot(collection(this.db, "personas"), (snap) => {
+        this.personas.clear();
+        snap.forEach((d) => this.personas.set(d.id, { id: d.id, ...d.data() } as Persona));
+        this.notify();
+      })
+    );
+
+    // 自分のユーザードキュメント
+    this.unsubs.push(
+      onSnapshot(doc(this.db, "users", uid), (d) => {
+        if (d.exists()) this.users.set(d.id, { id: d.id, ...d.data() } as User);
+        this.notify();
+      })
+    );
+  }
+
+  // --- 簡易FB: Firestore 直書き（books/{id}.feedback） ---
+  async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
+    const book = this.books.get(id);
+    // 読了率の更新＝読書イベント。最後に読んだ時刻を刻む（「最近読んだ本」の並び順）。
+    const stamped: FeedbackInput =
+      feedback.readPercent !== undefined
+        ? { ...feedback, lastReadAt: new Date().toISOString() }
+        : feedback;
+    await updateDoc(doc(this.db, "books", id), {
+      feedback: { ...book?.feedback, ...stamped },
+    });
+  }
+
+  // --- 読書状態: Firestore 直書き ---
+  async saveToLibrary(id: string): Promise<void> {
+    await updateDoc(doc(this.db, "books", id), {
+      archivedAt: new Date().toISOString(),
+    });
+  }
+
+  async removeFromLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    await updateDoc(doc(this.db, "books", id), {
+      feedback: { ...book?.feedback, dropped: true },
+    });
+  }
+
+  async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
+    const patch: Record<string, unknown> = {};
+    if (state.granularity !== undefined) patch.granularity = state.granularity;
+    if (state.annotations !== undefined) patch.annotations = state.annotations;
+    await updateDoc(doc(this.db, "books", id), patch);
+  }
+
+  // --- 手動トリガー（デモ用）: Cloud Run API ---
+  // themeKind を渡すと本命(honmei)/セレンディピティ(serendipity)を切替（未指定はAPI既定=honmei）。
+  async runPipeline(userId: string, themeKind?: string): Promise<void> {
+    await this.apiPost("/api/trigger/planning", { userId, themeKind });
+  }
+
+  // 実データ（入荷=最近の本、配信=最新の published 本）から通知を一度だけ導出する。
+  // 本番は Firestore に通知コレクションが無くベルが常に空になるため、最低限の通知を実本から作る。
+  // 1回限り＝既読操作や notifyFavoriteAuthor のメモリ push を消さない（重複IDはスキップ）。
+  private seedNotificationsFromData(): void {
+    if (this.notificationsSeeded || this.books.size === 0) return;
+    this.notificationsSeeded = true;
+    const now = Date.now();
+    const all = [...this.books.values()];
+    const byNewest = (a: Book, b: Book) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+    const recent = all
+      .filter((b) => b.createdAt && now - new Date(b.createdAt).getTime() <= 2 * 86_400_000)
+      .sort(byNewest);
+    const newestPublished = all.filter((b) => b.status === "published").sort(byNewest)[0];
+    const derived: AppNotification[] = [];
+    if (recent.length > 0) {
+      derived.push({
+        id: "ntf_arrival",
+        kind: "arrival",
+        title: `あなたのために${recent.length}冊が届きました`,
+        body: "目の前の問いに、まっすぐ応える一冊たちです。",
+        createdAt: recent[0].createdAt ?? new Date(now).toISOString(),
+        read: false,
+        href: "/",
+      });
+    }
+    if (newestPublished) {
+      derived.push({
+        id: "ntf_delivery",
+        kind: "delivery",
+        title: `『${newestPublished.title}』が読めます`,
+        body: "執筆が完了しました。まずは本の概要をご覧いただけます。",
+        createdAt: newestPublished.createdAt ?? new Date(now).toISOString(),
+        read: true,
+        href: `/books/${newestPublished.id}`,
+        bookId: newestPublished.id,
+      });
+    }
+    if (derived.length === 0) return;
+    const existing = new Set(this.notifications.map((n) => n.id));
+    this.notifications = [...derived.filter((n) => !existing.has(n.id)), ...this.notifications];
+    this.notify();
+  }
+
+  // 本文が GCS 退避（bodyUrl 有り＆body 空・C3.3）された本だけ、API でサーバ側 read して埋める。
+  // inline 運用では body が常に入っているので何もしない（mock/従来の読書導線は不変）。
+  // 取得した本文は bodyCache に保持し、以降の snapshot 再取得でも復元する（消えない）。
+  private async hydrateBodies(): Promise<void> {
+    const targets = [...this.books.values()].filter(
+      (b) => b.bodyUrl && !b.body && !this.bodyCache.has(b.id)
+    );
+    for (const b of targets) {
+      try {
+        const data = (await this.apiGet(`/api/books/${b.id}/body`)) as { body?: string };
+        if (data?.body) {
+          this.bodyCache.set(b.id, data.body); // snapshot を越えて保持
+          const cur = this.books.get(b.id);
+          if (cur) {
+            this.books.set(b.id, { ...cur, body: data.body });
+            this.notify();
+          }
+        }
+        // 本文が空（まだ書かれていない）なら cache に入れず、次の snapshot で再試行する。
+      } catch {
+        // 失敗は次の購読更新で再試行（cache に入れていないので再度 target になる）。
+      }
+    }
+  }
+
+  private async apiGet(path: string): Promise<unknown> {
+    const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+    const res = await fetch(`${apiUrl}${path}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
+    return res.json();
+  }
+
+  private async apiPost(path: string, body: unknown): Promise<unknown> {
+    const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+    const res = await fetch(`${apiUrl}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`POST ${path} -> ${res.status}`);
+    return res.json().catch(() => ({}));
+  }
+}
+
+

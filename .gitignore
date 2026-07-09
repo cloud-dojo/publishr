@@ -1,0 +1,84 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.turbo/
+# ルートのpackage-lock.jsonはGit管理しない
+# (apps/web/package-lock.jsonは残す - Firebase App Hosting が使用)
+# Turbopackが複数lockfileを検出するとworkspace rootを誤検知するため
+/package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.python-version
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+.env_real
+.env_real.*
+*.key.json
+service-account*.json
+local-cost-guard/
+# STEP0 観測の Google OAuth トークン/クライアント秘密（C1.1）
+.secrets/
+client_secret*.json
+
+# Docs 共有方針: design/ui/infra/planning + README を共有。ピッチ/demo台本/WBS は Drive 管理（repo外）
+.github/CODEOWNERS
+docs/*
+!docs/README.md
+!docs/design/
+!docs/ui/
+!docs/infra/
+!docs/planning/
+!docs/quality/
+# 生成された設計図(html/pdf)は非追跡
+docs/**/*.html
+docs/**/*.pdf
+.cursor/
+
+# OS / editor
+.DS_Store
+*:Zone.Identifier
+.idea/
+.vscode/
+.claude/
+
+# Firebase エミュレータのデバッグログ
+firebase-debug.log
+firestore-debug.log
+*-debug.log
+firebase-export-*/
+
+# Build / coverage
+coverage/
+htmlcov/
+.coverage
+
+# ローカル起動スクリプト(make smoke / make dev)の子プロセスログ
+.dev-logs/
+
+# verify-prompts インナーループの被験者出力の作業場（成果物はfixturesへ別途保存）
+outputs/
+artifacts/prompt-review/
+
+# Claude Code 内部ファイル
+.agents/
+skills-lock.json
+
+# 対外資料・MTG資料の置き場（リポジトリには含めない＝PII/内部資料の隔離）
+publishr_other/
+
+# プロンプト検証の使い捨て出力（成果物は fixtures / docs へ別途保存）
+tmp_verify/

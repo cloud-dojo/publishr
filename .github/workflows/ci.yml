@@ -1,0 +1,106 @@
+name: CI
+
+# B3.1 CI ＋ C5.3 Eval品質ゲート ＋ B3.2 自動デプロイ。
+# verify は mock 既定＝オフライン・$0（GCP/LLMキー不要）。eval-gate は cases 7/8 未満で exit 1
+# ＝ AI品質が基準割れならマージ/デプロイを止める（MVP §9・I-21）。
+# deploy は main push 時のみ・verify 通過後に Cloud Run へ（WIF keyless・B3.2）。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv (Python 3.12)
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install deps
+        run: make setup
+
+      - name: Verify (pytest + web lint/typecheck)
+        run: make verify
+
+      - name: Eval consistency (offline harness)
+        run: make eval
+
+      - name: Eval judge gate (cases 7/8・基準割れで停止)
+        run: make eval-gate
+
+  # doc-only（docs/** や *.md のみ）の push では Cloud Run 再デプロイを省く＝無駄ビルド削減。
+  # GitHub Actions の paths-ignore は trigger 単位でジョブには付けられないため、変更検知ジョブの
+  # 出力で deploy を gate する（verify は常に走らせる）。手動 dispatch は常にデプロイ。
+  changes:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.detect.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Detect deployable (non-docs) changes
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "手動 dispatch → deploy"; echo "app=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          changed=$(git diff --name-only HEAD^ HEAD || true)
+          echo "changed files:"; echo "$changed"
+          if echo "$changed" | grep -qvE '^docs/|\.md$'; then
+            echo "app=true (コード/設定変更あり → deploy)"
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "app=false (docs/md のみ → deploy 省略)"
+            echo "app=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # B3.2: main マージ（または手動 dispatch）で verify 通過後に BFF を Cloud Run へ自動デプロイ。
+  # 認証は WIF keyless（鍵JSON不要）。env/SA は既存リビジョンから保持される。
+  # Langfuse 3鍵は --update-secrets で Secret Manager 参照を明示注入（G1-17・再デプロイで消えない）。
+  # docs/md のみの変更は changes ジョブで gate＝deploy をスキップ（無駄ビルド削減）。
+  deploy:
+    needs: [verify, changes]
+    if: >-
+      github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      && needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: publishr-498123
+          workload_identity_provider: projects/355143691286/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: publishr-ci-deployer@publishr-498123.iam.gserviceaccount.com
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy BFF to Cloud Run
+        run: |
+          gcloud run deploy publishr-api \
+            --source . \
+            --region asia-northeast1 \
+            --service-account publishr-runner@publishr-498123.iam.gserviceaccount.com \
+            --update-env-vars=PUBLISHR_BODY_STORE=gcs,PUBLISHR_BODY_BUCKET=publishr-contents-498123,ENABLE_IMAGEN=true,PUBLISHR_COVER_BUCKET=publishr-contents-498123 \
+            --update-secrets=LANGFUSE_HOST=LANGFUSE_HOST:latest,LANGFUSE_PUBLIC_KEY=LANGFUSE_PUBLIC_KEY:latest,LANGFUSE_SECRET_KEY=LANGFUSE_SECRET_KEY:latest,GOOGLE_OAUTH_CLIENT_SECRET=GOOGLE_OAUTH_CLIENT_SECRET:latest,PUBLISHR_OAUTH_STATE_SECRET=PUBLISHR_OAUTH_STATE_SECRET:latest \
+            --quiet

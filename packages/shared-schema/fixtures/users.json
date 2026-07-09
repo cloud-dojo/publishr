@@ -1,0 +1,68 @@
+[
+  {
+    "id": "u_sakura",
+    "name": "佐倉 美咲",
+    "initial": "佐",
+    "profile": {
+      "role": "食品メーカー・マーケティング課長／部下7名",
+      "workTheme": "2026/04昇格・年上部下との関係・チームマネジメント",
+      "estimatedInterests": ["権限委譲", "1on1", "チームビルディング", "意思決定", "キャリア"],
+      "serendipityTolerance": "中"
+    },
+    "initialProfile": null,
+    "favoriteAuthors": [],
+    "connectedSources": {
+      "drive": {
+        "enabled": true,
+        "folderIds": ["fld_work"],
+        "labels": [{ "folderId": "fld_work", "label": "業務" }]
+      },
+      "calendar": { "enabled": true, "calendarIds": ["primary"] },
+      "tasks": { "enabled": true }
+    }
+  },
+  {
+    "id": "u_mita",
+    "name": "三田 裕樹",
+    "initial": "三",
+    "profile": {
+      "role": "IT系SaaS企業・プロダクト本部長／PM2名・エンジニア8名",
+      "workTheme": "レガシー移行Phase 2・A社更新交渉・競合AI対抗",
+      "estimatedInterests": ["プロダクト戦略", "顧客成功", "技術経営", "組織設計", "採用"],
+      "serendipityTolerance": "中"
+    },
+    "initialProfile": null,
+    "favoriteAuthors": [],
+    "connectedSources": {
+      "drive": {
+        "enabled": true,
+        "folderIds": ["fld_work"],
+        "labels": [{ "folderId": "fld_work", "label": "業務" }]
+      },
+      "calendar": { "enabled": true, "calendarIds": ["primary"] },
+      "tasks": { "enabled": true }
+    }
+  },
+  {
+    "id": "u_yokota",
+    "name": "横田 健三",
+    "initial": "横",
+    "profile": {
+      "role": "自動車部品メーカー・主力工場 工場長／直属約200名（生産・品質保証・生産技術・設備保全）",
+      "workTheme": "来期原価10%削減・省人化と技能伝承の両立・生産遅延リカバリ・顧客工程監査対応",
+      "estimatedInterests": ["現場改善", "品質管理", "業務標準化", "設備保全", "安全管理"],
+      "serendipityTolerance": "低"
+    },
+    "initialProfile": null,
+    "favoriteAuthors": [],
+    "connectedSources": {
+      "drive": {
+        "enabled": true,
+        "folderIds": ["fld_work"],
+        "labels": [{ "folderId": "fld_work", "label": "業務" }]
+      },
+      "calendar": { "enabled": true, "calendarIds": ["primary"] },
+      "tasks": { "enabled": true }
+    }
+  }
+]

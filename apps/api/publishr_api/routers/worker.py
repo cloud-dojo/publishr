@@ -1,0 +1,194 @@
+"""Pub/Sub push を受ける執筆ワーカー endpoint（C2.2 Phase②）。
+
+`POST /api/worker/write` に Pub/Sub の push エンベロープ（{message:{data:base64(json{bookId})}}）が届く。
+冪等に `process_write_job` を呼び、必ず 2xx を返して ack する（不正/欠損メッセージも ack＝再配信ループ防止）。
+
+公開サービス（--allow-unauthenticated）上に置くため、`PUBSUB_PUSH_AUDIENCE` が設定されている時は
+**push の OIDC トークンを自前検証**（audience＝worker URL・許可 push SA 一致）して不正 POST を弾く。
+未設定（ローカル/mock）では検証スキップ＝オフラインでテスト可能。
+"""
+
+from __future__ import annotations
+
+import base64
+import json
+import logging
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
+
+from ..config import settings
+from ..deps import get_repository
+from ..repositories.protocol import RepositoryProtocol
+from ..services import mode_a_service, reservation_service
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api", tags=["worker"])
+
+
+def _verify_push(request: Request, audience: str) -> None:
+    """Pub/Sub push の OIDC を検証（audience 設定時のみ＝本番）。失敗は 401/403。
+
+    audience は endpoint ごとに異なる（push サブスクの push_endpoint URL）。空（ローカル/mock）は
+    検証スキップ＝オフラインでテスト可能。送信元 SA は `pubsub_push_sa` で共通検証する。
+    """
+    if not audience:
+        return  # ローカル/mock: 検証スキップ
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="missing bearer token")
+    token = auth[7:]
+    try:
+        from google.auth.transport import requests as g_requests  # noqa: PLC0415
+        from google.oauth2 import id_token  # noqa: PLC0415
+
+        claims = id_token.verify_oauth2_token(token, g_requests.Request(), audience)
+    except Exception as exc:  # noqa: BLE001 — 検証失敗は 401（理由はログのみ）
+        logger.warning("push OIDC verify failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=401, detail="invalid push token") from exc
+    if settings.pubsub_push_sa and claims.get("email") != settings.pubsub_push_sa:
+        raise HTTPException(status_code=403, detail="unauthorized push service account")
+
+
+def _book_id_from_envelope(envelope: dict[str, Any]) -> str | None:
+    data_b64 = (envelope.get("message") or {}).get("data")
+    if not data_b64:
+        return None
+    try:
+        payload = json.loads(base64.b64decode(data_b64).decode("utf-8"))
+    except Exception:  # noqa: BLE001 — 壊れたメッセージは ack して捨てる
+        return None
+    book_id = payload.get("bookId")
+    return str(book_id) if book_id else None
+
+
+def _planning_job_from_envelope(envelope: dict[str, Any]) -> dict[str, str] | None:
+    message = envelope.get("message") or {}
+    data_b64 = message.get("data")
+    if not data_b64:
+        return None
+    try:
+        payload = json.loads(base64.b64decode(data_b64).decode("utf-8"))
+    except Exception:  # noqa: BLE001 — 壊れたメッセージは ack して捨てる
+        return None
+    user_id = payload.get("userId")
+    if not user_id:
+        return None
+    # I-38: 冪等ロック用の安定 run_id。payload.runId（trigger 生成）を最優先、無ければ
+    # Pub/Sub の messageId（再配信でも同一）にフォールバック。
+    run_id = payload.get("runId") or message.get("messageId") or ""
+    return {
+        "user_id": str(user_id),
+        "owner": str(payload.get("owner") or user_id),
+        "observe_uid": str(payload.get("observeUid") or ""),
+        "theme_kind": str(payload.get("themeKind") or "honmei"),
+        "run_id": str(run_id),
+    }
+
+
+@router.post("/worker/write")
+async def worker_write(
+    request: Request, repo: RepositoryProtocol = Depends(get_repository)
+) -> Response:
+    """予約された本を執筆して published にする（冪等）。常に 2xx で ack する。"""
+    _verify_push(request, settings.pubsub_push_audience)
+    try:
+        envelope = await request.json()
+    except Exception:  # noqa: BLE001
+        envelope = {}
+    book_id = _book_id_from_envelope(envelope if isinstance(envelope, dict) else {})
+    if not book_id:
+        logger.warning("worker: bad/empty message, acking")
+        return Response(status_code=204)  # ack（再配信ループ防止）
+    # threadpool で実行＝同期 process_write_job が内部で asyncio.run（vertex本文生成）を呼んでも
+    # 実行中イベントループとネストしない（C2.2/実Vertex対応）。mock経路はそのまま高速。
+    try:
+        await run_in_threadpool(reservation_service.process_write_job, repo, book_id)  # 冪等
+    except Exception as exc:  # noqa: BLE001 — 滞留防止の再配信制御（本は reserved へ巻き戻し済み）
+        _flush_traces()
+        from publishr_agents.llm.resilience import is_transient  # noqa: PLC0415
+
+        if is_transient(exc):
+            # transient（429/timeout/503）: 5xx で nack＝Pub/Sub が再配信して後でリトライ（quota 回復
+            # 待ち等）。process_write_job が writing→reserved に戻しているので「準備中」滞留にしない。
+            logger.warning(
+                "worker(write): transient failure book=%s, nacking for redelivery: %s",
+                book_id, type(exc).__name__,
+            )
+            raise HTTPException(status_code=503, detail="transient write failure; will retry") from exc
+        # 非transient（スキーマ違反/CostGuard 等）: 再配信しても直らない。204 で ack して再配信ストーム
+        # を止め、手動再実行に委ねる（worker_plan と同方針）。本は reserved に戻済み＝再投入で拾える。
+        logger.exception(
+            "worker(write): permanent failure book=%s, acking (manual rerun needed): %s",
+            book_id, type(exc).__name__,
+        )
+        return Response(status_code=204)
+    _flush_traces()  # 本文執筆中の ADK span を Langfuse へ確実に送る（Cloud Run 終端）
+    return Response(status_code=204)
+
+
+@router.post("/worker/plan")
+async def worker_plan(
+    request: Request, repo: RepositoryProtocol = Depends(get_repository)
+) -> Response:
+    """企画パイプライン（モードA）を非同期に実行して arrivals へ入荷する。常に 2xx で ack。
+
+    `/api/trigger/planning` が Pub/Sub に積んだジョブを push で受ける。実Vertex企画は重い（数分）
+    ため、サブスクの ack_deadline は長め（600s）に設定すること。生成本は Firestore に upsert され、
+    フロントは購読で受け取る（同期HTTPの 600s 張り付きを回避）。
+    """
+    _verify_push(request, settings.pubsub_plan_push_audience)
+    try:
+        envelope = await request.json()
+    except Exception:  # noqa: BLE001
+        envelope = {}
+    job = _planning_job_from_envelope(envelope if isinstance(envelope, dict) else {})
+    if not job:
+        logger.warning("worker(plan): bad/empty message, acking")
+        return Response(status_code=204)  # ack（再配信ループ防止）
+    # I-38: 重い run（実Vertex 数分）は ack_deadline(600s) を超えて Pub/Sub 再配信され得る。
+    # run_id を鍵に冪等ロックを取り、最初の1回だけ処理する。既存（running/completed）なら即 204＝
+    # **ack されるので再配信自体が止まる**（storm 撲滅）。run_id が無い旧 payload は従来どおり処理。
+    run_id = job["run_id"]
+    if run_id and not await run_in_threadpool(
+        repo.begin_planning_run, run_id, job["owner"], job["user_id"]
+    ):
+        logger.info("worker(plan): run_id=%s already in progress/done, skip+ack", run_id)
+        return Response(status_code=204)
+    # 企画は高価（実Vertex 数分）。失敗を 5xx で返すと Pub/Sub が同じジョブを再配信＝企画の連打
+    # （コスト/クォータ事故）になる。例外はログに残して **常に 204 で ack**（自動リトライしない＝
+    # 必要なら手動で再トリガー）。run_id で book ID も決定的＝ロックすり抜けレースでも上書き。
+    try:
+        result = await run_in_threadpool(
+            mode_a_service.run,
+            repo,
+            job["user_id"],
+            owner_uid=job["owner"],
+            observe_uid=job["observe_uid"] or None,
+            theme_kind=job["theme_kind"],
+            run_id=run_id or None,
+        )
+        if run_id:
+            book_ids = [b.id for b in getattr(result, "books", []) or []]
+            await run_in_threadpool(repo.complete_planning_run, run_id, book_ids)
+    except Exception as exc:  # noqa: BLE001 — 再配信ストーム防止のため握って ack
+        logger.exception("worker(plan): run failed, acking to avoid redelivery: %s", type(exc).__name__)
+        if run_id:
+            try:
+                await run_in_threadpool(repo.fail_planning_run, run_id, type(exc).__name__)
+            except Exception:  # noqa: BLE001 — ロック更新失敗は致命でない
+                pass
+    _flush_traces()  # 企画中の ADK span を Langfuse へ確実に送る（trace_pipeline と二重でも安全）
+    return Response(status_code=204)
+
+
+def _flush_traces() -> None:
+    """Langfuse の保留 span を flush（best-effort・no-op 安全）。"""
+    try:
+        from publishr_agents.observability import flush  # noqa: PLC0415
+
+        flush()
+    except Exception:  # noqa: BLE001
+        pass

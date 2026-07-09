@@ -1,0 +1,101 @@
+{
+  "_meta": {
+    "description": "Publishr デモ用 Drive fixture。横田健三の業務資料10件。Google Drive API v3 files.list 応答＋テキスト抽出後(content)を模した形。感情・悩みの記述なし・業務成果物のみ。few-shot外のクリーンな汎化プローブ被験者。",
+    "persona": "横田健三（52歳・自動車部品メーカー 主力工場長・直属約200名・serendipityTolerance=低）",
+    "source": "プロンプト汎用性検証用（2026-06-25作成・N-Hセル）",
+    "scope": "drive.file",
+    "generatedFor": "プロンプト汎用性検証（STEP1〜の汎化＝few-shot外の製造業・定量目標型・感情記述ゼロ）"
+  },
+  "files": [
+    {
+      "id": "drv_001",
+      "name": "生産実績サマリ_2026年5月",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-06-03T08:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "主力工場 2026年5月 生産実績サマリ。総生産数：計画 482,000個→実績 461,300個（達成率95.7%）。ライン別稼働率：Aライン 88.2%（目標92%・未達）、Bライン 93.5%、Cライン 91.0%。良品率：99.21%（目標99.40%・未達）。主な未達要因：Aラインの設備突発停止（5月計7回・延べ19時間）、外注部品の入荷遅延（2回）。残業時間：直接部門 月平均22.4h（前年同月18.1h）。次月課題：Aライン稼働率の回復と良品率の是正。"
+    },
+    {
+      "id": "drv_002",
+      "name": "来期_原価低減計画_ドラフト",
+      "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "modifiedTime": "2026-06-05T09:30:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "来期 原価低減計画（ドラフト・全社方針＝製造原価 前年比10%削減）。削減目標内訳：材料費 -4%（VA/VE・歩留改善）、労務費 -3%（省人化・多能工化による応援削減）、経費 -3%（設備突発停止削減・エネルギー・外注内製化）。最大の論点：省人化（自動化投資）の寄与をどこまで織り込むか。前提：Aラインへのロボット導入で直接工 4名相当の削減を見込むが、投資審議は6/16・効果発現は下期後半。リスク：技能者の退職進行で多能工化が計画通り進まない場合、応援削減が未達となる。"
+    },
+    {
+      "id": "drv_003",
+      "name": "主力ライン省人化_設備投資稟議書_v2",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "modifiedTime": "2026-06-14T11:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "設備投資稟議書 第2版（Aライン組立工程の自動化）。投資額：8,200万円（ロボットセル2基・搬送・安全柵・据付）。期待効果：直接工 4名相当の省人（年間労務費 約2,400万円減）、良品率 +0.3pt、稼働率 +3pt。投資回収：約3.4年。代替案比較：(A)全自動化＝今回案、(B)半自動＋多能工応援＝投資4,000万・省人2名、(C)現状維持。リスク：立上げ期の稼働低下、既存技能者の配置転換、保全要員のロボット保守スキル不足。役員審議：6/16。"
+    },
+    {
+      "id": "drv_004",
+      "name": "顧客OEM工程監査_是正処置報告_8D",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "modifiedTime": "2026-06-09T15:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "顧客OEM（完成車メーカー）向け 是正処置報告書（8Dレポート）。事象：4月出荷ロットで寸法公差外れの不良が後工程で1件流出（市場前に顧客受入検査で検出）。暫定対策：全数選別・該当ロット出荷停止（完了）。真因：成形金型の摩耗進行を検知できず、工程内検査の頻度が不足。恒久対策：(1)金型寿命管理の閾値見直し、(2)工程内SPCの管理点追加、(3)初物・抜取頻度の引き上げ。横展開：同型金型を使う3工程へ適用。顧客IATF工程監査：7/2。本是正の完了報告 期日：6/19。"
+    },
+    {
+      "id": "drv_005",
+      "name": "技能マップ_2026上期",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-06-02T10:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "技能マップ 2026上期（直接部門 約140名）。技能レベル：S(指導可)/A(単独可)/B(補助下可)/C(訓練中)の4段階。要注意工程：金型段取り＝S級2名のみ（うち1名が定年再雇用満了で6月末退職予定）、設備保全の高度診断＝S級1名のみ。多能工化率：保有工程数2以上の比率 38%（目標50%）。リスク工程：段取り・保全・検査の3工程がベテラン依存。対応：退職者からの技能伝承会議（6/12）、OJT計画の前倒し、作業標準書の動画化。"
+    },
+    {
+      "id": "drv_006",
+      "name": "設備保全_月次レポート_2026年5月",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-06-11T14:30:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "設備保全 月次レポート（2026年5月）。突発停止：全ライン計14回・延べ31時間（前月9回・21時間から悪化）。うちAライン7回。MTBF（平均故障間隔）：Aライン 142h（目標200h・悪化）。老朽設備：稼働15年超が主要設備の31%。予防保全実施率：計画比82%（人員逼迫で後ろ倒し）。保全要員：8名（うち高度診断S級1名）。課題：予防保全の計画達成と、自動化投資に伴うロボット保守スキルの早期育成。"
+    },
+    {
+      "id": "drv_007",
+      "name": "安全パトロール記録_2026年5月",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-06-01T17:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "安全パトロール記録（2026年5月）。指摘事項：12件（要是正3件・要注意9件）。要是正：(1)Bライン通路の仮置き滞留、(2)プレス機の安全カバー固定不良、(3)フォークリフト交差部の表示不足。ヒヤリハット報告：18件（前月11件から増加・はさまれ/つまずき系が中心）。労災：休業0件・不休2件（軽微）。傾向：残業増と応援要員の不慣れに伴う不安全行動の増加。対策：交差部の動線見直し、応援者への作業前KY強化、安全衛生委員会（6/17）で審議。"
+    },
+    {
+      "id": "drv_008",
+      "name": "工場体制図_2026上期",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "modifiedTime": "2026-04-01T08:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "主力工場 2026上期 体制。工場長=横田健三。直属 約200名。部門内訳：生産部（3ライン・直接140名・課長3名）、品質保証部（28名・課長1名）、生産技術部（18名）、設備保全課（8名）、生産管理・事務（6名）。雇用構成：正社員 約150名、期間工 約40名、業務委託 約10名。シフト：2直（昼夜交替）。並走テーマ：原価低減、Aライン省人化投資、技能伝承、顧客IATF監査対応、安全強化。"
+    },
+    {
+      "id": "drv_009",
+      "name": "Aライン生産遅延_挽回計画",
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "modifiedTime": "2026-06-04T12:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "Aライン 生産遅延 挽回計画（2026-06-04）。遅延状況：5月末時点で計画比 約20,700個の積み残し。要因：(1)設備突発停止（5月7回）、(2)外注部品の入荷遅延（2回・サプライヤ品質起因）、(3)応援要員の習熟不足による段取り時間増。挽回策：休日特別稼働2日、ボトルネック工程への保全前倒し、外注先への是正依頼と二次調達先の確保、段取り作業の標準化。挽回見込み：6月末までに積み残しの7割回収。残課題：恒久的な稼働率改善は省人化投資（6/16審議）と多能工化に依存。"
+    },
+    {
+      "id": "drv_010",
+      "name": "来期_生産計画前提",
+      "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "modifiedTime": "2026-05-28T13:00:00Z",
+      "folderLabel": "業務",
+      "folderId": "fld_work",
+      "content": "来期 生産計画 前提（ドラフト）。顧客内示：主力品番で前年比 +8%の増産要求。設備能力：現状ラインの理論能力は +8%に対し余力5%（ボトルネック=Aライン組立）。要員計画：直接工 増員6名 想定だが、期間工の採用充足率が直近70%・正社員採用は競合と取り合い。前提リスク：(1)増産と原価10%減の同時達成、(2)省人化投資の効果発現タイミング（下期後半）、(3)技能者退職による生産性低下。結論：能力確保は省人化投資・多能工化・予防保全の3点が前提条件。"
+    }
+  ]
+}

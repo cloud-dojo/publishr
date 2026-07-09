@@ -1,0 +1,26 @@
+# Cloud Build にアップロードしない（`gcloud run deploy --source .` のコンテキスト縮小＋秘密の混入防止）。
+# 注意: Dockerfile は packages/shared-schema・agents・apps/api だけを COPY するため、
+# ここで除外しても BFF イメージには影響しない（ビルド高速化と secrets 除外が目的）。
+
+# 秘密・資格情報（絶対に上げない）
+.secrets/
+*client_secret*.json
+.env
+.env.*
+
+# 依存・生成物
+**/node_modules/
+**/.next/
+.venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+
+# VCS・ログ・作業物
+.git/
+.dev-logs/
+*.log
+
+# フロント（BFFイメージに不要）
+apps/web/
+apps/mockup/

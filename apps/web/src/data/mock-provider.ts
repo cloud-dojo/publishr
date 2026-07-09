@@ -1,0 +1,173 @@
+// mockプロバイダ: フィクスチャ種・タイマー状態機械（API不要・デモ安全網）。
+import { fixtures } from "@publishr/shared-schema";
+import type { FeedbackInput, ReadingStateInput } from "@publishr/shared-schema";
+
+import {
+  CANNED_APPROVED_PLAN_IDS,
+  CANNED_CANDIDATES,
+  CANNED_DEBATE,
+  CANNED_OBSERVATION,
+  CANNED_READER_PROFILE,
+} from "./canned";
+import { buildFirstRunBooks } from "./firstRunCatalog";
+import { ensureBookFrame } from "./bookText";
+import type { InitialProfileInput } from "./profileOptions";
+import { BaseProvider } from "./provider";
+import { EXTRA_LIBRARY_BOOKS, SAMPLE_BODIES } from "./sampleLibrary";
+
+const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+export class MockProvider extends BaseProvider {
+  private firstRunStarted = false;
+  protected async load(): Promise<void> {
+    // デモが常に新鮮になるよう、draft の入荷日時(createdAt)を実行時に直近30日内へ生成。
+    // 旧「press棚の draft（もうすぐ）」概念は廃止し、関心(arrivals)の draft として扱う。
+    const now = Date.now();
+    fixtures.books.forEach((b, i) => {
+      const shelf = b.shelf === "press" && b.status === "draft" ? "arrivals" : b.shelf;
+      const createdAt =
+        b.status === "draft"
+          ? new Date(now - (i % 6) * 86_400_000).toISOString()
+          : new Date(now - 30 * 86_400_000).toISOString();
+      this.books.set(b.id, { ...b, shelf, createdAt });
+    });
+    // 読書ページ検証用：追加蔵書をマージ＋薄い body を複数章ダミーに差し替え（mock専用）。
+    EXTRA_LIBRARY_BOOKS.forEach((b) => this.books.set(b.id, b));
+    this.books.forEach((b, id) => {
+      const body = SAMPLE_BODIES[id];
+      if (body) this.books.set(id, { ...b, body: ensureBookFrame(body, b.prefaceSample, b.title) });
+    });
+    fixtures.plans.forEach((p) => this.plans.set(p.id, p));
+    fixtures.personas.forEach((p) => this.personas.set(p.id, p));
+    fixtures.users.forEach((u) => this.users.set(u.id, u));
+    this.observation = CANNED_OBSERVATION;
+    this.readerProfile = CANNED_READER_PROFILE;
+    this.candidates = CANNED_CANDIDATES;
+    this.approvedPlanIds = CANNED_APPROVED_PLAN_IDS;
+    this.debate = CANNED_DEBATE;
+    this.seedNotifications();
+  }
+
+  /** デモ初期表示用に、3種の通知を決定的にシードする（mock専用）。 */
+  private seedNotifications(): void {
+    const now = Date.now();
+    const all = [...this.books.values()];
+    const freshDraft = all.filter((b) => b.status === "draft");
+    const published = all.filter((b) => b.status === "published");
+    const arrivalCount = Math.min(3, Math.max(1, freshDraft.length));
+    // 書庫着の本（執筆完了済み＝published を優先）。
+    const lib = published[0] ?? all.find((b) => b.body) ?? all[0];
+    // お気に入り作家の「新しい一冊」＝ lib とは別の draft（新刊）を優先。
+    const favBook = freshDraft.find((b) => b.id !== lib?.id) ?? freshDraft[0] ?? all[0];
+    const favPersona = favBook ? this.personas.get(favBook.authorPersonaId) : undefined;
+    const favName = favPersona?.name ?? "あなたのお気に入りの作家";
+
+    // 新しい順に積みたいので、古い→新しい の順で push（listNotifications で再ソート）。
+    this.notifications = [
+      {
+        id: "ntf_seed_delivery",
+        kind: "delivery",
+        title: lib ? `『${lib.title}』が本棚に加わりました` : "新しい本が本棚に加わりました",
+        body: "執筆が完了しました。まずは本の概要をご覧いただけます。",
+        createdAt: new Date(now - 3 * 3_600_000).toISOString(),
+        read: true,
+        href: lib ? `/books/${lib.id}` : "/library",
+        bookId: lib?.id,
+      },
+      {
+        id: "ntf_seed_favorite",
+        kind: "favoriteAuthor",
+        title: favBook
+          ? `お気に入りの作家 ${favName} の新しい一冊が届きました`
+          : `お気に入りの作家 ${favName} が、次の一冊を構想中です`,
+        body: favBook
+          ? "どんな本を書いたのか、概要をご覧いただけます。"
+          : "新しい一冊が届いたら、ここでご案内します。",
+        createdAt: new Date(now - 40 * 60_000).toISOString(),
+        read: false,
+        href: favBook ? `/books/${favBook.id}` : "/authors",
+        bookId: favBook?.id,
+        personaId: favPersona?.id,
+      },
+      {
+        id: "ntf_seed_arrival",
+        kind: "arrival",
+        title: `あなたのために${arrivalCount}冊が届きました`,
+        body: "目の前の問いに、まっすぐ応える一冊たちです。",
+        createdAt: new Date(now - 3 * 60_000).toISOString(),
+        read: false,
+        href: "/",
+      },
+    ];
+  }
+
+  async sendFeedback(id: string, feedback: FeedbackInput): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    // 読了率の更新時に「最後に読んだ時刻」を刻む（「最近読んだ本」の並び順）。
+    const stamped: FeedbackInput =
+      feedback.readPercent !== undefined
+        ? { ...feedback, lastReadAt: new Date().toISOString() }
+        : feedback;
+    this.books.set(id, { ...book, feedback: { ...book.feedback, ...stamped } });
+    this.notify();
+  }
+
+  async saveToLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, { ...book, archivedAt: new Date().toISOString() });
+    this.notify();
+  }
+
+  async removeFromLibrary(id: string): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, { ...book, feedback: { ...book.feedback, dropped: true } });
+    this.notify();
+  }
+
+  async updateReadingState(id: string, state: ReadingStateInput): Promise<void> {
+    const book = this.books.get(id);
+    if (!book) return;
+    this.books.set(id, {
+      ...book,
+      granularity: state.granularity ?? book.granularity,
+      annotations: state.annotations ?? book.annotations ?? [],
+    });
+    this.notify();
+  }
+
+  // 引数（userId/themeKind）は canned 出力では不要。抽象シグネチャは引数省略でも満たせる。
+  async runPipeline(): Promise<void> {
+    this.observation = CANNED_OBSERVATION;
+    this.readerProfile = CANNED_READER_PROFILE;
+    this.candidates = CANNED_CANDIDATES;
+    this.approvedPlanIds = CANNED_APPROVED_PLAN_IDS;
+    this.debate = CANNED_DEBATE;
+    this.notify();
+  }
+
+  /**
+   * 初回体験（mock）：新規ユーザーの「最初の本棚」を決定的に時間差入荷する。
+   * 既存のデモ本を一旦すべて消して空状態にし、本命8＋セレンディピティ4を
+   * 1冊ずつ入荷させる（onSnapshot 相当の notify で棚が埋まっていく）。
+   */
+  async runFirstRun(_userId: string, profile?: unknown): Promise<void> {
+    if (this.firstRunStarted) return;
+    this.firstRunStarted = true;
+    await this.ensureLoaded();
+
+    // 新規ユーザー状態：在庫・通知をクリアして空の書店から始める。
+    this.books.clear();
+    this.notifications = [];
+    this.notify();
+
+    const books = buildFirstRunBooks((profile as InitialProfileInput | null) ?? null);
+    for (const b of books) {
+      await delay(650);
+      this.books.set(b.id, { ...b, createdAt: new Date().toISOString() });
+      this.notify();
+    }
+  }
+}

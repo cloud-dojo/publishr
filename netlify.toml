@@ -1,0 +1,21 @@
+# =============================================================================
+# Netlify 設定: npm workspaces モノレポ内の Next.js アプリ (apps/web) を公開する
+# -----------------------------------------------------------------------------
+# - リポジトリ root から `npm install` が走り、workspace 依存
+#   (@publishr/shared-schema) も一緒にインストールされる。
+# - その後 root の `build:web` スクリプトが apps/web で `next build` を実行。
+# - 出力 (apps/web/.next) を Netlify の Next.js ランタイムが配信する。
+# =============================================================================
+
+[build]
+  # root で実行（base は未指定＝リポジトリ root のまま。workspace を解決するため）
+  command = "npm run build:web"
+  publish = "apps/web/.next"
+
+[build.environment]
+  # Next.js 16 / React 19 は Node 20 以上が必要
+  NODE_VERSION = "20"
+
+# Next.js を subdir(apps/web) に置いているため、ランタイムを明示的に有効化する
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

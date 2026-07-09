@@ -1,0 +1,19 @@
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--gold-dim);
+  letter-spacing: 1px;
+}
+.star {
+  line-height: 1;
+}
+.on {
+  color: var(--gold-bright);
+}
+.clickable {
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+.clickable:hover {
+  transform: scale(1.15);
+}

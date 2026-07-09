@@ -1,0 +1,16 @@
+[project]
+name = "publishr-schema"
+version = "0.0.0"
+description = "Publishr 共有スキーマ: pydanticモデル + フィクスチャローダ"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["publishr_schema"]

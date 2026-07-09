@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "description": "Publishr デモ用 Tasks fixture。横田健三のタスク10件。Google Tasks API tasks.list 応答を模した形。ビジネスタスクのみ・個人メモなし。",
+    "persona": "横田健三（52歳・自動車部品メーカー 主力工場長・直属約200名・serendipityTolerance=低）",
+    "source": "プロンプト汎用性検証用（2026-06-25作成・N-Hセル）",
+    "scope": "tasks.readonly",
+    "timeZone": "Asia/Tokyo"
+  },
+  "tasks": [
+    { "id": "tsk_001", "title": "来期 原価低減計画（前年比10%減）の部門案策定", "status": "needsAction", "due": "2026-06-12", "notes": "" },
+    { "id": "tsk_002", "title": "顧客OEM工程監査 是正処置報告書(8D)の提出", "status": "needsAction", "due": "2026-06-19", "notes": "" },
+    { "id": "tsk_003", "title": "主力ライン省人化（自動化）投資 稟議資料の作成", "status": "needsAction", "due": "2026-06-15", "notes": "" },
+    { "id": "tsk_004", "title": "定年再雇用満了者の技能伝承計画の作成", "status": "needsAction", "due": null, "notes": "" },
+    { "id": "tsk_005", "title": "Aライン 生産遅延の挽回計画策定", "status": "needsAction", "due": "2026-06-08", "notes": "" },
+    { "id": "tsk_006", "title": "多能工化スキルマップの更新", "status": "needsAction", "due": null, "notes": "" },
+    { "id": "tsk_007", "title": "設備突発停止の削減（予防保全計画の見直し）", "status": "needsAction", "due": "2026-06-20", "notes": "" },
+    { "id": "tsk_008", "title": "安全パトロール指摘事項3件の是正", "status": "needsAction", "due": "2026-06-10", "notes": "" },
+
+    { "id": "tsk_009", "title": "5月度 生産実績・稼働率レポート作成", "status": "completed", "due": "2026-06-03", "notes": "" },
+    { "id": "tsk_010", "title": "5月度 ヒヤリハット報告の集計", "status": "completed", "due": "2026-06-02", "notes": "" }
+  ]
+}

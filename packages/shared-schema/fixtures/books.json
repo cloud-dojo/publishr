@@ -1,0 +1,708 @@
+[
+  {
+    "id": "b_makasekata",
+    "planId": "plan_makase",
+    "status": "draft",
+    "authorPersonaId": "p_kirishima",
+    "title": "チームを、ひとりで背負わない。",
+    "subtitle": "任せ方の設計図",
+    "coverVariant": "b1",
+    "coverUrl": null,
+    "shelf": "arrivals",
+    "estimatedChapters": 6,
+    "estimatedMinutes": 90,
+    "granularity": "full",
+    "prefaceSample": "あなたはいま、メンバー全員の名前と顔を、すべて思い浮かべられるはずだ。誰が何を抱え、どこでつまずいているか――その地図は、あなたの頭の中にしかない。\n\nそれは強みだった。けれど、いまは枷になりつつある。チーム全員の判断を、あなた一人が背負う必要はもうない。\n\nこの本は「権限委譲のすすめ」ではない。あなたのチームを、ひとつの設計図として描き直す試みだ――",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "なぜ、あなたは抱えこむのか",
+        "desc": "「自分がやった方が早い」という罠の構造",
+        "locked": false
+      },
+      {
+        "no": "01",
+        "title": "「任せられない」の正体",
+        "desc": "能力ではなく、設計の不在",
+        "locked": false
+      },
+      {
+        "no": "02",
+        "title": "チームの役割を描く",
+        "desc": "誰に・何を・どこまで渡せるかの可視化",
+        "locked": false
+      },
+      {
+        "no": "03",
+        "title": "権限の設計図",
+        "desc": "あなたの現場に合わせた委譲の三層モデル",
+        "locked": false
+      },
+      {
+        "no": "04",
+        "title": "失敗を許容する仕組み",
+        "desc": "任せた後に手を出さないための装置",
+        "locked": true
+      },
+      {
+        "no": "終",
+        "title": "あなたが現場を離れる日",
+        "desc": "メンバーが自走するチームのかたち",
+        "locked": true
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_toi",
+    "planId": "plan_toi",
+    "status": "draft",
+    "authorPersonaId": "p_azumi",
+    "title": "\"問い\"で動かす現場",
+    "subtitle": "指示を減らし、自走を増やす",
+    "coverVariant": "b2",
+    "coverUrl": null,
+    "shelf": "arrivals",
+    "estimatedChapters": 4,
+    "estimatedMinutes": 60,
+    "granularity": "full",
+    "prefaceSample": "指示を出すたびに、現場は少しずつ考えるのをやめていく。今日は、その逆の話をしよう。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "指示は、現場を止める",
+        "desc": "良かれと思った一言が自走を奪う",
+        "locked": false
+      },
+      {
+        "no": "01",
+        "title": "「問い」の三つの型",
+        "desc": "確認・発見・委譲の問い",
+        "locked": false
+      },
+      {
+        "no": "02",
+        "title": "朝会を、問いの場に変える",
+        "desc": "5分でできる転換",
+        "locked": true
+      },
+      {
+        "no": "終",
+        "title": "問いが文化になるとき",
+        "desc": "あなたが黙っても回る現場へ",
+        "locked": true
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_shijizero",
+    "planId": "plan_shijizero",
+    "status": "draft",
+    "authorPersonaId": "p_yuki",
+    "title": "指示ゼロでも回る仕組み",
+    "subtitle": "属人化からの脱出",
+    "coverVariant": "b3",
+    "coverUrl": null,
+    "shelf": "arrivals",
+    "estimatedChapters": 4,
+    "estimatedMinutes": 70,
+    "granularity": "full",
+    "prefaceSample": "あなたがいないと回らない。それは誇りではなく、設計の負債だ。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "なぜ、あなたがいないと回らないのか",
+        "desc": "属人化という負債",
+        "locked": false
+      },
+      {
+        "no": "01",
+        "title": "属人化を見える化する",
+        "desc": "暗黙知の棚卸し",
+        "locked": false
+      },
+      {
+        "no": "02",
+        "title": "標準化の最小単位",
+        "desc": "やりすぎない仕組み化",
+        "locked": true
+      },
+      {
+        "no": "終",
+        "title": "増員に耐える仕組み",
+        "desc": "+5名でも崩れない設計",
+        "locked": true
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_suuji",
+    "planId": "plan_suuji",
+    "status": "draft",
+    "authorPersonaId": "p_azumi",
+    "title": "数字で語るリーダー",
+    "subtitle": "感覚を、根拠に変える",
+    "coverVariant": "b4",
+    "coverUrl": null,
+    "shelf": "arrivals",
+    "estimatedChapters": 3,
+    "estimatedMinutes": 50,
+    "granularity": "full",
+    "prefaceSample": "「なんとなく良くなっています」。その報告が、もう通らない季節が来る。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "「なんとなく良い」では、もう通らない",
+        "desc": "定量報告の時代",
+        "locked": false
+      },
+      {
+        "no": "01",
+        "title": "現場の数字を三つに絞る",
+        "desc": "見るべき指標の選び方",
+        "locked": false
+      },
+      {
+        "no": "終",
+        "title": "数字で語るリーダーへ",
+        "desc": "経営会議で戦う言葉",
+        "locked": true
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_getsuyo",
+    "planId": "plan_toi",
+    "status": "writing",
+    "authorPersonaId": "p_nanao",
+    "title": "あなたの月曜が変わる5つの会話",
+    "subtitle": "週はじめの15分設計",
+    "coverVariant": "b5",
+    "coverUrl": null,
+    "shelf": "press",
+    "estimatedChapters": 5,
+    "estimatedMinutes": 75,
+    "granularity": "full",
+    "prefaceSample": "月曜の朝、最初の15分で、その週のチームの空気は決まる。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "月曜は、設計できる",
+        "desc": "週のはじまりを味方に",
+        "locked": false
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 32,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_kimekiru",
+    "planId": "plan_makase",
+    "status": "draft",
+    "authorPersonaId": "p_yuki",
+    "title": "決めきる技術",
+    "subtitle": "迷いを断つ意思決定",
+    "coverVariant": "b6",
+    "coverUrl": null,
+    "shelf": "press",
+    "estimatedChapters": 4,
+    "estimatedMinutes": 60,
+    "granularity": "full",
+    "prefaceSample": "決められないのは情報不足ではない。決め方が決まっていないからだ。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "なぜ、決めきれないのか",
+        "desc": "意思決定の停滞構造",
+        "locked": false
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_shikarazu",
+    "planId": "plan_toi",
+    "status": "draft",
+    "authorPersonaId": "p_aoi",
+    "title": "叱らずに伝える",
+    "subtitle": "関係を壊さない指摘の作法",
+    "coverVariant": "b7",
+    "coverUrl": null,
+    "shelf": "press",
+    "estimatedChapters": 4,
+    "estimatedMinutes": 55,
+    "granularity": "full",
+    "prefaceSample": "伝えたいのに、叱ると関係が壊れる。その間に、橋を架ける。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "叱責の前に、できること",
+        "desc": "心理的安全性という土台",
+        "locked": false
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_chashitsu",
+    "planId": "plan_makase",
+    "status": "draft",
+    "authorPersonaId": "p_kirishima",
+    "title": "茶室の経営学",
+    "subtitle": "\"間\"と\"余白\"の効用",
+    "coverVariant": "b8",
+    "coverUrl": null,
+    "shelf": "odd",
+    "estimatedChapters": 5,
+    "estimatedMinutes": 80,
+    "granularity": "full",
+    "prefaceSample": "予定を詰めるほど、組織から余裕が消える。茶室には、なぜ余白があるのか。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "なぜ、茶室には余白があるのか",
+        "desc": "間という設計",
+        "locked": false
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_tozan",
+    "planId": "plan_makase",
+    "status": "draft",
+    "authorPersonaId": "p_nanao",
+    "title": "登山隊に学ぶ撤退",
+    "subtitle": "引き返す勇気の作法",
+    "coverVariant": "b9",
+    "coverUrl": null,
+    "shelf": "odd",
+    "estimatedChapters": 5,
+    "estimatedMinutes": 78,
+    "granularity": "full",
+    "prefaceSample": "頂上を諦めた隊が、なぜ全員生きて還れたのか。撤退は、敗北ではない。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "撤退は、敗北ではない",
+        "desc": "引き返す判断の重さ",
+        "locked": false
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_shogi",
+    "planId": "plan_makase",
+    "status": "draft",
+    "authorPersonaId": "p_yuki",
+    "title": "将棋の大局観",
+    "subtitle": "趣味フォルダより",
+    "coverVariant": "b10",
+    "coverUrl": null,
+    "shelf": "odd",
+    "estimatedChapters": 4,
+    "estimatedMinutes": 65,
+    "granularity": "full",
+    "prefaceSample": "一手の損得ではなく、盤面全体を読む。それは、意思決定の話でもある。",
+    "agenda": [
+      {
+        "no": "序",
+        "title": "大局観とは何か",
+        "desc": "部分最適からの脱出",
+        "locked": false
+      }
+    ],
+    "body": null,
+    "feedback": {
+      "readPercent": 0,
+      "dropped": false,
+      "rating": null,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_100nichi",
+    "planId": "plan_makase",
+    "status": "published",
+    "authorPersonaId": "p_kirishima",
+    "title": "最初の100日の設計図",
+    "subtitle": "着任直後にやるべきこと",
+    "coverVariant": "midnight",
+    "coverUrl": null,
+    "shelf": "library",
+    "estimatedChapters": 6,
+    "estimatedMinutes": 180,
+    "granularity": "full",
+    "prefaceSample": "最初の100日で、その後の3年が決まる。焦らず、しかし手は止めない。",
+    "agenda": [
+      {
+        "no": "第1章",
+        "title": "100日という締切",
+        "desc": "なぜ最初が効くのか。土台を据える100日の意味",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "着任の作法",
+        "desc": "1on1・挨拶・観察。関係の器を最初の30日で作る",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "観察から仮説へ",
+        "desc": "数字に表れない情報を読む。仮説を立て、軽く検証する",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "最初の意思決定",
+        "desc": "何を断るか、何を決めるか。判断基準を組織に配布する",
+        "locked": false
+      },
+      {
+        "no": "第5章",
+        "title": "権限の設計図",
+        "desc": "三層モデルで委譲の線を引く。安全に失敗できる組織を作る",
+        "locked": false
+      },
+      {
+        "no": "第6章",
+        "title": "あなたが現場を離れる日",
+        "desc": "不在に耐える組織の強さが、リーダーの本当の成果だ",
+        "locked": false
+      }
+    ],
+    "body": "## 第1章 100日という締切\n\n着任直後の100日は、組織があなたを観察している期間だ。ここで設計したものが、その後の数年を決める――",
+    "feedback": {
+      "readPercent": 100,
+      "dropped": false,
+      "rating": 5,
+      "wantsSequel": true
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_jiso",
+    "planId": "plan_toi",
+    "status": "published",
+    "authorPersonaId": "p_azumi",
+    "title": "現場が自走する組織",
+    "subtitle": "指示待ちからの卒業",
+    "coverVariant": "forest",
+    "coverUrl": null,
+    "shelf": "library",
+    "estimatedChapters": 5,
+    "estimatedMinutes": 150,
+    "granularity": "full",
+    "prefaceSample": "自走とは、放置ではない。問いと信頼で、現場は動き出す。",
+    "agenda": [
+      {
+        "no": "第1章",
+        "title": "自走と放置は違う",
+        "desc": "「任せる」と「放る」の違い。自走の前提を整える",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "基準を言語化する",
+        "desc": "共有された判断基準が、不在でも動く組織を作る",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "信頼の残高",
+        "desc": "信頼は口座。約束を守る積み重ねが残高になる",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "問いで動かす",
+        "desc": "指示は行動を生む。問いは思考を生む",
+        "locked": false
+      },
+      {
+        "no": "第5章",
+        "title": "あなたが黙っても回る",
+        "desc": "不在が事故にならない組織。自走の完成形",
+        "locked": false
+      }
+    ],
+    "body": "## 第1章 自走と放置は違う\n\n「任せる」と「放る」を混同すると、現場は不安になる。自走の前提は、明確な問いと、揺るがない信頼だ。",
+    "feedback": {
+      "readPercent": 100,
+      "dropped": false,
+      "rating": 4,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_kaigi",
+    "planId": "plan_shijizero",
+    "status": "published",
+    "authorPersonaId": "p_yuki",
+    "title": "会議を半分にする問い",
+    "subtitle": "時間を取り戻す技術",
+    "coverVariant": "slate",
+    "coverUrl": null,
+    "shelf": "library",
+    "estimatedChapters": 5,
+    "estimatedMinutes": 150,
+    "granularity": "full",
+    "prefaceSample": "その会議は、本当に必要か。問いひとつで、時間は半分になる。",
+    "agenda": [
+      {
+        "no": "第1章",
+        "title": "その会議、要りますか",
+        "desc": "見えないコストを可視化し、惰性の定例を棚卸しする",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "決める会議と考える会議",
+        "desc": "目的が違えば設計も違う。混ぜると両方が死ぬ",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "問いの立て方",
+        "desc": "アジェンダを「問い」に変えると議論が動き始める",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "沈黙とファシリテーション",
+        "desc": "発言量と貢献は比例しない。沈黙を活かす技術",
+        "locked": false
+      },
+      {
+        "no": "第5章",
+        "title": "会議を半分にする",
+        "desc": "削減した後に空いた時間で何をするか。それが本番だ",
+        "locked": false
+      }
+    ],
+    "body": "## 第1章 その会議、要りますか\n\nまず問うべきは「この会議の意思決定は何か」だ。決めることがない会議は、報告で代替できる。",
+    "feedback": {
+      "readPercent": 100,
+      "dropped": false,
+      "rating": 4,
+      "wantsSequel": false
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  },
+  {
+    "id": "b_dokusho",
+    "planId": "plan_makase",
+    "status": "published",
+    "authorPersonaId": "p_nanao",
+    "title": "リーダーの読書術",
+    "subtitle": "忙しい人のための一冊の選び方",
+    "coverVariant": "rust",
+    "coverUrl": null,
+    "shelf": "library",
+    "estimatedChapters": 4,
+    "estimatedMinutes": 120,
+    "granularity": "full",
+    "prefaceSample": "読む時間がないのではない。読む一冊を、選べていないだけだ。",
+    "agenda": [
+      {
+        "no": "第1章",
+        "title": "積読の正体",
+        "desc": "積読は意志の問題ではなく、選書の問題だ",
+        "locked": false
+      },
+      {
+        "no": "第2章",
+        "title": "問いを増やす読書",
+        "desc": "答えを探すより、問いを増やす読み方へ",
+        "locked": false
+      },
+      {
+        "no": "第3章",
+        "title": "一冊の選び方",
+        "desc": "ベストセラーより「今の局面」に効く一冊を選ぶ",
+        "locked": false
+      },
+      {
+        "no": "第4章",
+        "title": "読書を仕事に還す",
+        "desc": "読んだだけでは変わらない。翌日の一歩が全てだ",
+        "locked": false
+      }
+    ],
+    "body": "## 第1章 積読の正体\n\n積読は意志の弱さではない。選書の基準を持たないまま、良さそうな本を集めてしまうからだ。",
+    "feedback": {
+      "readPercent": 100,
+      "dropped": false,
+      "rating": 5,
+      "wantsSequel": true
+    },
+    "ownerUid": "u_sakura",
+    "kind": "honmei",
+    "deliveryReason": "",
+    "problemToSolve": "",
+    "coreMessage": "",
+    "editRound": 0,
+    "bodyUrl": null,
+    "createdAt": "2026-06-05T00:00:00Z"
+  }
+]
