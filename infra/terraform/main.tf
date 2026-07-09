@@ -64,6 +64,9 @@ resource "google_cloud_run_v2_service" "api" {
     timeout         = "3600s"
 
     scaling {
+      # 審査期間（〜7/24）は min=1 でウォームアップ維持＝審査員の初回アクセスが
+      # コールドスタート（ADK/genai の重い import 数秒）を踏まないようにする。審査後は 0 に戻してよい。
+      min_instance_count = 1
       max_instance_count = 3
     }
 
@@ -151,9 +154,22 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "PUBLISHR_COVER_BUCKET"
         value = "publishr-contents-498123"
       }
+      # ── P0ハードニング（公開リポ＋無認証ショーケース前提・2026-07-09）────────────
+      # 読者反応の書き込み（feedback/reading-state）を閉じる＝共有棚の汚染・学習ループ注入・
+      # 書きスパム封じ。デモ用の反応仕込み時だけ一時的に 1 へ（gcloud）→ 戻す。
+      env {
+        name  = "PUBLISHR_ALLOW_FEEDBACK_WRITES"
+        value = "0"
+      }
+      # dev用の素の企画エンドポイント POST /pipeline/run（ガード無し）は本番では閉じる。
+      env {
+        name  = "PUBLISHR_ALLOW_PIPELINE_RUN"
+        value = "0"
+      }
       # ── デモ公開のライブ生成ガード（hackathon-demo-strategy）。live に gcloud で直接投入されていた
       #    ドリフトを terraform に明文化＝以後の apply が誤って剥がさないようにする（7/2 発見）。
       #    日次上限7 / 匿名1人あたり3 / 1配本で published 生成は1冊。
+      #    ※ client_id 無しの trigger（Scheduler/直叩き）も global 上限を消費する（P0ハードニング）。
       env {
         name  = "PUBLISHR_DEMO_RATE_GLOBAL_CAP"
         value = "7"
