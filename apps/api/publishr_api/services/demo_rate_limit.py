@@ -85,7 +85,10 @@ class DemoRateLimiter:
         )
 
     # client_id 無しの trigger（Scheduler/直叩き curl）の計数バケット。
-    _SERVER_CLIENT_ID = "__server__"
+    # Firestore の map キー/フィールド名は `__.*__` を予約するため、二重アンダースコア囲みは使えない
+    # （書くと本番トランザクションが InvalidArgument で落ち Scheduler が500になる）。UUID の client_id
+    # とは衝突しない平文にする。
+    _SERVER_CLIENT_ID = "server-aggregate"
 
     def acquire_server(self, *, day: str) -> None:
         """client_id が無い呼び出しにも global 日次上限を課す（バイパス封じ・P0ハードニング）。
@@ -121,8 +124,19 @@ class FirestoreDemoRateStore:
         self._db = fb_firestore.client()
         self._fs = fb_firestore
 
+    @staticmethod
+    def _safe_key(client_id: str) -> str:
+        """client_id を Firestore map キーとして安全化する。
+
+        Firestore はフィールド名/map キーの `__.*__` を予約する。UUID の正規 client_id は該当
+        しないが、悪意ある `__x__` を送られると予約名違反で 500 になる。全キーを "c:" 接頭で包み、
+        入力に関わらず予約パターンに一致させない（server-aggregate センチネルも同様に安全化）。
+        """
+        return f"c:{client_id}"
+
     def reserve(self, *, day: str, client_id: str, global_cap: int, per_client_cap: int) -> None:
         ref = self._db.collection(self._COLL).document(day)
+        key = self._safe_key(client_id)
 
         @self._fs.transactional
         def _txn(transaction) -> None:  # type: ignore[no-untyped-def]
@@ -130,7 +144,7 @@ class FirestoreDemoRateStore:
             data = snap.to_dict() or {}
             total = int(data.get("total", 0))
             clients = dict(data.get("clients", {}) or {})
-            cc = int(clients.get(client_id, 0))
+            cc = int(clients.get(key, 0))
             if total >= global_cap:
                 raise DemoRateError(
                     "本日の体験枠（全体）が上限に達しました。また明日お試しください。"
@@ -139,7 +153,7 @@ class FirestoreDemoRateStore:
                 raise DemoRateError(
                     "本日のあなたの体験枠が上限に達しました。また明日お試しください。"
                 )
-            clients[client_id] = cc + 1
+            clients[key] = cc + 1
             transaction.set(ref, {"total": total + 1, "clients": clients})
 
         _txn(self._db.transaction())

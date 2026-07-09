@@ -65,6 +65,29 @@ def test_day_resets_counter() -> None:
     lim.acquire("a", day="2026-07-16")  # 翌日は枠が戻る
 
 
+def test_server_sentinel_is_not_firestore_reserved() -> None:
+    """server バケットの client_id は Firestore の予約フィールド名（__.*__）に該当しない。
+
+    Firestore の map キー/フィールド名は `__.*__` を予約しており、`__server__` を書くと
+    本番トランザクションが InvalidArgument(400) で落ちる（Scheduler 経路が500になる）。
+    """
+    import re
+
+    from publishr_api.services.demo_rate_limit import DemoRateLimiter
+
+    assert not re.fullmatch(r"__.*__", DemoRateLimiter._SERVER_CLIENT_ID)
+
+
+def test_firestore_safe_key_never_reserved() -> None:
+    """Firestore ストアのキー安全化: 予約パターン `__.*__` を送っても安全なキーに包む。"""
+    import re
+
+    from publishr_api.services.demo_rate_limit import FirestoreDemoRateStore
+
+    for cid in ("__server__", "__x__", "550e8400-e29b-41d4-a716-446655440000", "anon"):
+        assert not re.fullmatch(r"__.*__", FirestoreDemoRateStore._safe_key(cid))
+
+
 def test_acquire_server_uses_global_cap_only() -> None:
     """client_id 無し（Scheduler/直叩き）は global のみ課す＝per-client 3 に縛られない。"""
     lim = _limiter(global_cap=5, per_client_cap=1)
