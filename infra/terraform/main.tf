@@ -178,9 +178,12 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "PUBLISHR_DEMO_RATE_PER_CLIENT_CAP"
         value = "3"
       }
+      # 公開期間（〜7/24）は「棚が育つ」を見せるため 4冊/配本（全テーマ）で運用（2026-07-09 決定・
+      # gcloud 適用済）。1配本 ≈ ¥200-400・所要 ~40-50分。ライブ生成ボタンを点火する場合は
+      # 1押下=4冊になる点に注意（コスト重視なら 1 に戻す）。
       env {
         name  = "PUBLISHR_SET_MAX_BOOKS"
-        value = "1"
+        value = "4"
       }
       # 重厚な ~20p を狙う（各章~2,000字×番号章4＝はじめに含め約6章）。
       # 実Vertexサニティ(run_body_once)で 2,500字/章は生成が気前よく伸び ~30p 相当と判明したため
