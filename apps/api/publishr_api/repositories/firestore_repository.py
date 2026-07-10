@@ -90,8 +90,12 @@ class FirestoreRepository:
         return [self._to_book(doc) for doc in q.stream()]
 
     def get_book(self, book_id: str) -> Optional[Book]:
+        # ID 直指定でも owner を検証する。Admin SDK は rules をバイパスするため、これが無いと
+        # ID を知れば他 owner の book を読める（IDOR）。owner_uid="" の全件モードは従来どおり素通し。
         doc = self._db.collection(self._BOOKS).document(book_id).get()
-        return self._to_book(doc) if doc.exists else None
+        if not doc.exists or not self._owned(doc):
+            return None
+        return self._to_book(doc)
 
     def upsert_book(self, book: Book) -> Book:
         """Book をそのまま Firestore へ保存（set = 全フィールド上書き）。
@@ -150,8 +154,12 @@ class FirestoreRepository:
         return [self._to_plan(doc) for doc in q.stream()]
 
     def get_plan(self, plan_id: str) -> Optional[Plan]:
+        # get_book と同じ owner ガード。Plan モデルは owner_uid を持たない（extra=ignore で脱落）
+        # ため、_owned は検証前の raw doc の ownerUid を見る。
         doc = self._db.collection(self._PLANS).document(plan_id).get()
-        return self._to_plan(doc) if doc.exists else None
+        if not doc.exists or not self._owned(doc):
+            return None
+        return self._to_plan(doc)
 
     # ── personas ───────────────────────────────────────────────────────────
 
@@ -181,6 +189,11 @@ class FirestoreRepository:
                 for doc in self._db.collection(self._USERS).stream()]
 
     def get_user(self, user_id: str) -> Optional[User]:
+        # User はドキュメント ID がそのまま owner（別の ownerUid フィールドは無い）。スコープ済み
+        # リポジトリは自分の doc だけ返す（list_users と同じ方針）＝他 uid の profile/接続情報を
+        # ID 直指定で読めないようにする。owner_uid="" の全件モードは従来どおり任意 uid を返す。
+        if self._owner_uid and user_id != self._owner_uid:
+            return None
         doc = self._db.collection(self._USERS).document(user_id).get()
         return self._to_user(doc) if doc.exists else None
 
@@ -262,6 +275,18 @@ class FirestoreRepository:
         )
 
     # ── private helpers ────────────────────────────────────────────────────
+
+    def _owned(self, doc) -> bool:
+        """スコープ owner での ID 直指定取得を許すか（books/plans 用）。
+
+        owner_uid="" の全件モード（recompute_estimates / 複数 owner 集計）は常に許可。
+        owner_uid 指定時は doc の ownerUid が一致する時だけ許可＝list_* の where と同じ境界を
+        get_* にも課し、Admin SDK が rules をバイパスしても他 owner を ID 直指定で読めなくする。
+        """
+        if not self._owner_uid:
+            return True
+        data = doc.to_dict() or {}
+        return data.get("ownerUid") == self._owner_uid
 
     @staticmethod
     def _raw(doc) -> dict:

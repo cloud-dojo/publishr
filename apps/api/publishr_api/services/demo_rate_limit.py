@@ -159,16 +159,49 @@ class FirestoreDemoRateStore:
         _txn(self._db.transaction())
 
 
+# 実課金(vertex)で PUBLISHR_DEMO_RATE_* が未設定のままデプロイされた場合の最後の砦。
+# env ドリフト（このプロジェクトで実際に発生実績あり）で上限が欠落しても、匿名ライブ生成が
+# 無制限に実 Vertex を叩かないよう組込みの保守的上限を強制する。値は本番の想定値（terraform）と
+# 同じ 7/3＝正しく env が設定されていれば発動せず挙動は不変。
+_VERTEX_FAILSAFE_GLOBAL_CAP = 7
+_VERTEX_FAILSAFE_PER_CLIENT_CAP = 3
+
+
+def _effective_caps(llm: str, global_cap: int, per_client_cap: int) -> tuple[int, int]:
+    """実効 caps を返す。vertex（実課金）で上限が未設定(<=0)なら組込み上限で埋める。
+
+    - mock/local（llm != "vertex"）は素通し＝caps 0 なら無効のまま（従来挙動不変）。
+    - 明示設定された正の値は尊重する（フェイルセーフは欠けた側を埋める floor であって、
+      設定値を緩めたり厳しくしたりはしない）。
+    """
+    if llm == "vertex" and (global_cap <= 0 or per_client_cap <= 0):
+        g = global_cap if global_cap > 0 else _VERTEX_FAILSAFE_GLOBAL_CAP
+        c = per_client_cap if per_client_cap > 0 else _VERTEX_FAILSAFE_PER_CLIENT_CAP
+        return g, c
+    return global_cap, per_client_cap
+
+
 def get_demo_rate_limiter() -> DemoRateLimiter:
     """設定からレートリミッタを構築（プロセス内で1回・api.py が保持）。
 
     caps が 0 なら無効（全許可）＝mock/local 非破壊。firestore モードのみ Firestore 永続、
-    それ以外（mock/test）はインメモリ。
+    それ以外（mock/test）はインメモリ。ただし vertex（実課金）で caps 未設定のときは
+    `_effective_caps` が組込み上限を強制する（env ドリフト保険）。
     """
+    import logging  # noqa: PLC0415
+
     from ..config import settings  # noqa: PLC0415
 
-    g = settings.demo_rate_global_cap
-    c = settings.demo_rate_per_client_cap
+    g, c = _effective_caps(
+        settings.publishr_llm,
+        settings.demo_rate_global_cap,
+        settings.demo_rate_per_client_cap,
+    )
+    if (g, c) != (settings.demo_rate_global_cap, settings.demo_rate_per_client_cap):
+        logging.getLogger(__name__).warning(
+            "demo rate caps unset under llm=vertex; applying failsafe caps global=%d per_client=%d",
+            g, c,
+        )
     store: DemoRateStore
     if g > 0 and c > 0 and settings.data_source == "firestore":
         store = FirestoreDemoRateStore()

@@ -5,7 +5,8 @@ Firestore モードでは MockProvider のマージが走らないため、
 本文（body フィールド）が null のまま読書ページが空になる問題を修正する。
 
 使い方:
-  python scripts/patch_book_bodies.py
+  python scripts/patch_book_bodies.py            # DRY-RUN（何も書き込まない・既定）
+  python scripts/patch_book_bodies.py --apply    # 実 PATCH
 
 実行前提:
   - gcloud auth application-default login 済みであること
@@ -13,12 +14,16 @@ Firestore モードでは MockProvider のマージが走らないため、
 
 冪等: updateMask.fieldPaths=body で body フィールドのみを上書きするため
      何度でも安全に実行できる。
-安全策: Firestore に存在する book だけに PATCH する（存在しない id への PATCH は
-     upsert で body だけの孤児ドキュメントを作るため、必ずスキップする）。
+安全策:
+  - 既定は DRY-RUN（書込ゼロ）。実 PATCH は `--apply` を明示した時のみ。対象は本番
+    publishr-498123 固定のため、引数なし実行での誤上書きを防ぐ。
+  - Firestore に存在する book だけに PATCH する（存在しない id への PATCH は upsert で
+    body だけの孤児ドキュメントを作るため、必ずスキップする）。
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -119,10 +124,30 @@ def _patch_body(token: str, book_id: str, body_text: str) -> tuple[bool, object]
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="sampleLibrary.ts の SAMPLE_BODIES を Firestore books に PATCH する"
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="実際に PATCH する（既定は DRY-RUN で書込ゼロ）。本番誤上書き防止のフェイルセーフ。",
+    )
+    args = parser.parse_args()
+
+    mode = "APPLY（実 PATCH）" if args.apply else "DRY-RUN（書込なし）"
+    print(f"[{mode}] project={PROJECT}")
     print(f"sampleLibrary.ts から SAMPLE_BODIES を抽出中: {SAMPLE_LIBRARY}")
     bodies = _extract_sample_bodies()
     book_ids = list(bodies.keys())
     print(f"  {len(bodies)} 件のエントリを検出: {book_ids}")
+
+    if not args.apply:
+        # DRY-RUN: トークン取得も存在チェックもしない（ADC 無しの誤実行でも安全に終わる）。
+        print("  [DRY-RUN] 存在する book の body を PATCH 対象にします（書込なし）。")
+        for book_id in book_ids:
+            print(f"  [DRY-RUN] books/{book_id} を PATCH予定")
+        print("\nDRY-RUN 完了（何も書き込んでいません）。実 PATCH は --apply を付けて再実行。")
+        return
 
     print("ADC トークンを取得中...")
     token = _get_token()
