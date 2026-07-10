@@ -36,9 +36,14 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "google.subject"             = "assertion.sub"
     "attribute.repository"       = "assertion.repository"
     "attribute.repository_owner" = "assertion.repository_owner"
+    "attribute.ref"              = "assertion.ref"
   }
-  # cloud-dojo 組織のリポジトリからのトークンのみ受理
-  attribute_condition = "assertion.repository_owner == 'cloud-dojo'"
+  # cloud-dojo/publishr の main ブランチからのトークンのみ受理（P1-4 ハードニング）。
+  # 旧: repository_owner=='cloud-dojo'（org全体・任意 ref/PR）＝広すぎた。
+  # 正規の WIF 利用は「ci.yml の deploy（main push のみ）」と「prompt-eval（main/dispatch）」だけで、
+  # どちらも main 実行に揃えたため、ここを repo 限定かつ main ブランチ限定に絞る。
+  # ※これに合わせ prompt-eval.yml の pull_request トリガーは撤去（PR では実 Vertex を回さない）。
+  attribute_condition = "assertion.repository == 'cloud-dojo/publishr' && assertion.ref == 'refs/heads/main'"
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
