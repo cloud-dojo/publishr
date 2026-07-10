@@ -112,3 +112,39 @@ def test_disabled_when_caps_zero() -> None:
     for _ in range(100):
         lim.acquire("a", day=DAY)  # いくら叩いても通る
     assert lim.enabled is False
+
+
+# ── フェイルセーフ cap（env ドリフト保険・②G P0ハードニング）─────────────────────
+# 実課金(vertex)なのに PUBLISHR_DEMO_RATE_* が欠落したままデプロイされても、匿名ライブ生成が
+# 無制限に実 Vertex を叩かないよう組込みの保守的上限を強制する。純関数なので Firestore/設定不要。
+from publishr_api.services.demo_rate_limit import (  # noqa: E402
+    _VERTEX_FAILSAFE_GLOBAL_CAP,
+    _VERTEX_FAILSAFE_PER_CLIENT_CAP,
+    _effective_caps,
+)
+
+
+def test_effective_caps_mock_is_passthrough() -> None:
+    # mock（非課金）は従来どおり素通し＝caps 0 なら無効のまま（挙動不変）。
+    assert _effective_caps("mock", 0, 0) == (0, 0)
+    assert _effective_caps("mock", 7, 3) == (7, 3)
+
+
+def test_effective_caps_vertex_unset_forces_failsafe() -> None:
+    # 実課金なのに未設定 → 組込み上限を強制（無制限化を防ぐ最後の砦）。
+    assert _effective_caps("vertex", 0, 0) == (
+        _VERTEX_FAILSAFE_GLOBAL_CAP,
+        _VERTEX_FAILSAFE_PER_CLIENT_CAP,
+    )
+
+
+def test_effective_caps_vertex_partial_unset_is_filled() -> None:
+    # 片方だけ未設定でも欠けた側だけ組込み値で埋める。
+    assert _effective_caps("vertex", 0, 3) == (_VERTEX_FAILSAFE_GLOBAL_CAP, 3)
+    assert _effective_caps("vertex", 5, 0) == (5, _VERTEX_FAILSAFE_PER_CLIENT_CAP)
+
+
+def test_effective_caps_vertex_explicit_caps_respected() -> None:
+    # 明示設定は尊重（フェイルセーフは floor であって、緩くも厳しくも上書きしない）。
+    assert _effective_caps("vertex", 5, 2) == (5, 2)
+    assert _effective_caps("vertex", 100, 50) == (100, 50)
