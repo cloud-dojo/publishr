@@ -1,22 +1,19 @@
 name: Prompt Eval (real judge)
 
 # 実 Gemini Pro judge で「企画プロンプト」の品質を採点するゲート（C5.3 の vertex 版）。
-# 毎push では回さない＝プロンプト/評価/企画ロジックを変えた PR・push のときだけ走る
-# （on.*.paths で限定）。手動 dispatch でも実行可。コストは「プロンプトをいじった時」に限定される。
+# プロンプト/評価/企画ロジックを変えた main push のときだけ走る（on.*.paths で限定）。手動 dispatch も可。
+# コストは「プロンプトをいじった時」に限定される。
+#
+# 【P1-4 ハードニング】pull_request トリガーは撤去。WIF プロバイダを main ブランチ限定に絞ったため
+#   （infra/terraform/cicd.tf）、PR からは federated token を取得できない＝PR で実 Vertex は回さない。
+#   マージ前にどうしても実 judge を回したい場合は main 上で workflow_dispatch を使う。
 #
 # 認証: WIF keyless で CI SA(publishr-ci-deployer)を借りる。**この SA に roles/aiplatform.user が必要**
-#   （未付与だと Vertex 403 で失敗）。付与コマンドは docs/infra/prod-live-followups.md 参照。
+#   （未付与だと Vertex 403 で失敗）。
 # 判定: eval_set 8件を実 judge で採点し 7/8 で PASS（scripts/eval_gate.py）。現状スコアは
 #   high=88〜94 / low=8〜20 と余裕があり、LLM のばらつき(±数点)では合否は揺れない想定。
 
 on:
-  pull_request:
-    paths:
-      - "packages/prompts/**"
-      - "eval/**"
-      - "agents/publishr_agents/planning/**"
-      - "scripts/eval_gate.py"
-      - ".github/workflows/prompt-eval.yml"
   push:
     branches: [main]
     paths:
