@@ -2,7 +2,7 @@
 
 ## Core Rules
 
-MVPスコープの補助参照は `docs/design/mvp-scope.md`（ローカル一まわり／旧`docs/IMPLEMENTATION_PLAN.md`はリポジトリに実在しないデッドリンクのため2026-07-01に差し替え）。ハッカソン提出までの作業分解・実装順序・ハードゲートの正本は `docs/planning/wbs.md` を優先する。
+設計/MVPスコープと、作業分解・実装順序・ハードゲートの正本（WBS）は、公開リポジトリには含めず非公開（repo外）で管理している。公開リポジトリ上ではこの `CLAUDE.md` の Core Rules を正本として扱う（`docs/` 配下の設計・計画ドキュメントはリポジトリに存在しない）。
 
 - 最優先はC0.1: `make verify`、`make eval`、`make pipeline`、`make smoke` を緑に戻すこと。赤い間は他の実装を広げない。
 - C0.2まではmock挙動差分ゼロを守る。v2 schema、prompt loader、LLM dispatcherは追加してよいが、`PUBLISHR_LLM=mock` の導線を壊さない。

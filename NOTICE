@@ -1,0 +1,21 @@
+Publishr
+Copyright (c) 2026 Publishr
+
+This work is licensed under the Creative Commons Attribution 4.0
+International License (CC BY 4.0). See the LICENSE file, or
+https://creativecommons.org/licenses/by/4.0/ for the full text.
+
+When redistributing or adapting this work, please attribute it as:
+  "Publishr" — https://github.com/cloud-dojo/publishr
+
+======================================================================
+Synthetic data notice
+======================================================================
+
+All persona, user, and observation fixtures in this repository — including
+the files under packages/shared-schema/fixtures/ and eval/prompt_inputs/
+(names, ages, roles, calendar entries, tasks, and 1-on-1 meeting notes) — are
+FICTIONAL, synthetic data created solely for demos, tests, and evaluation.
+
+They do not describe any real person. Any resemblance to actual persons,
+living or dead, or to actual events, is purely coincidental.
