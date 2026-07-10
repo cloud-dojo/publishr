@@ -46,7 +46,12 @@ docs/*
 # 生成された設計図(html/pdf)は非追跡
 docs/**/*.html
 docs/**/*.pdf
+# MTG議事録は repo 外管理（!docs/planning/ の否定で再包含されるため明示除外）
+docs/planning/meeting-notes/
 .cursor/
+
+# 使い捨ての作業メモ置き場（本文下書き等・repoに含めない）
+scratch/
 
 # OS / editor
 .DS_Store
