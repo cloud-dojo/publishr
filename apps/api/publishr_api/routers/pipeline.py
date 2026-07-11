@@ -16,6 +16,14 @@ def _require_exposed() -> None:
     # 本番（PUBLISHR_ALLOW_PIPELINE_RUN=0）ではこの素ルートを閉じる（実Vertex課金の無ガード入口封じ）。
     if not settings.allow_pipeline_run:
         raise HTTPException(status_code=403, detail="このエンドポイントは公開されていません")
+    # フェイルセーフ: 実LLM(vertex)構成では、レート制限も所有者検証も無いこの素ルートを常に閉じる。
+    # 課金は必ずレートcap付きの /api/trigger/planning を通す。env ドリフトで allow_pipeline_run が
+    # True に戻っても、無制限課金の入口にならないための code 側 backstop。
+    if settings.publishr_llm == "vertex":
+        raise HTTPException(
+            status_code=403,
+            detail="実LLM構成ではこの素ルートは無効です（/api/trigger/planning を使用）",
+        )
 
 
 @router.post("/run", response_model=PipelineResult, dependencies=[Depends(_require_exposed)])

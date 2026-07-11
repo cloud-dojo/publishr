@@ -15,7 +15,11 @@ export default function LoginPage() {
 
   const getNextPath = () => {
     const rawNext = new URLSearchParams(window.location.search).get("next");
-    return rawNext?.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+    // "/\evil.com" は WHATWG URL 解析で "//evil.com" 相当になりオープンリダイレクトになる。
+    // 先頭 "/" かつ "//" でなく、バックスラッシュを含まない相対パスだけ許可する。
+    return rawNext?.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes("\\")
+      ? rawNext
+      : "/";
   };
 
   const onLogin = async () => {

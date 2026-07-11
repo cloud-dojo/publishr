@@ -10,7 +10,7 @@ import threading
 
 import pytest
 from publishr_api.config import settings
-from publishr_api.errors import ConflictError
+from publishr_api.errors import ConflictError, NotFoundError
 from publishr_api.repositories.mock_repository import MockRepository
 from publishr_api.services import reservation_service
 
@@ -86,12 +86,30 @@ def test_reserve_cap_is_owner_scoped():
 
     for bid in a_ids:
         reservation_service.reserve_now(repo, bid, owner_uid="ownerA")
-    # ownerA は cap 到達 → 6冊目は弾く。
-    with pytest.raises(ConflictError):
-        reservation_service.reserve_now(repo, b_id, owner_uid="ownerA")
-    # ownerB は独立 cap なので予約できる。
+    # ownerB は独立 cap なので、ownerA が満杯でも自分の本を予約できる。
     reservation_service.reserve_now(repo, b_id, owner_uid="ownerB")
     assert repo.get_book(b_id).status == "reserved"
+
+
+def test_reserve_rejects_other_owners_draft():
+    """他 owner の draft は予約できない（IDOR/課金発火の write 版・P0-1 の予約経路）。
+
+    read 系（get_book）は owner 不一致で NotFound。予約（draft→reserved＝実Vertex執筆の発火）も
+    同様に他 owner の本には効かず、存在秘匿のため NotFound を返す。
+    """
+    repo = MockRepository()
+    bid = _draft_ids(repo)[0]
+    b = repo.get_book(bid)
+    repo.upsert_book(b.model_copy(update={"owner_uid": "ownerA"}))
+
+    # ownerB は ownerA の draft を予約できない（存在秘匿の NotFound）。
+    with pytest.raises(NotFoundError):
+        reservation_service.reserve_now(repo, bid, owner_uid="ownerB")
+    assert repo.get_book(bid).status == "draft"  # 状態は変わっていない
+
+    # 本人（ownerA）は予約できる（正常系は不変）。
+    reservation_service.reserve_now(repo, bid, owner_uid="ownerA")
+    assert repo.get_book(bid).status == "reserved"
 
 
 def test_reserve_atomic_under_concurrency_never_exceeds_cap():

@@ -65,6 +65,9 @@ class MockRepository:
             book = self._books.get(book_id)
             if book is None:
                 raise NotFoundError(f"book {book_id} が見つかりません")
+            if owner_uid and book.owner_uid and book.owner_uid != owner_uid:
+                # 他 owner の draft を予約できないようにする（Firestore 実装と同じ IDOR 防御）。
+                raise NotFoundError(f"book {book_id} が見つかりません")
             if book.status != "draft":
                 raise ConflictError(f"予約できません（現在の状態: {book.status}）")
             active = sum(

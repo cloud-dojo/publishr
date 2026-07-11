@@ -116,15 +116,23 @@ def test_reserve_blocked_for_external_when_auth_required(monkeypatch):
 
 
 def test_reserve_allowed_for_logged_in_when_auth_required(monkeypatch):
-    """require_reserve_auth=True でも 有効トークン（ログイン済み）なら誰でも予約可。"""
+    """require_reserve_auth=True でも、自分が所有する draft なら有効トークンで予約可。
+
+    他 owner の本は予約できない（IDOR/課金の write 版・test_reservation_cap 参照）ため、
+    ログイン uid が所有する本を対象にする。
+    """
     from publishr_api import config
     from publishr_api.routers import api as api_mod
 
     monkeypatch.setattr(config.settings, "require_reserve_auth", True)
     monkeypatch.setattr(api_mod, "_verify_uid", lambda _auth: "u_loggedin")
+    # 予約対象を u_loggedin 所有にする（自分の本の予約は正常系）。
+    bid = _a_draft_id()
+    repo = get_repository()
+    repo.upsert_book(repo.get_book(bid).model_copy(update={"owner_uid": "u_loggedin"}))
     res = client.post(
         "/api/reserve",
-        json={"bookId": _a_draft_id()},
+        json={"bookId": bid},
         headers={"Authorization": "Bearer valid"},
     )
     assert res.status_code == 200
