@@ -39,6 +39,9 @@ export function MermaidDiagram({ chart }: { chart: string }) {
     import("mermaid").then(async ({ default: mermaid }) => {
       mermaid.initialize({
         startOnLoad: false,
+        // XSS対策: 図ソースは AI/Drive 由来テキスト。HTMLラベルを無効化し SVG を
+        // DOMPurify で無害化する mermaid の strict を明示（既定値だが将来の設定変更で緩まないよう固定）。
+        securityLevel: "strict",
         theme: "neutral",
         fontFamily: "inherit",
         fontSize: 13,

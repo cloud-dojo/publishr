@@ -129,6 +129,11 @@ class FirestoreRepository:
             if not snap.exists:
                 raise NotFoundError(f"book {book_id} が見つかりません")
             data = self._raw(snap)
+            book_owner = data.get("ownerUid")
+            if owner and book_owner and book_owner != owner:
+                # 他 owner の draft を予約（＝実Vertex執筆の発火）できないようにする。
+                # 存在秘匿のため read 系 IDOR と同じく NotFound を返す（P0-1 の write 版）。
+                raise NotFoundError(f"book {book_id} が見つかりません")
             if data.get("status") != "draft":
                 raise ConflictError(f"予約できません（現在の状態: {data.get('status')}）")
             q = self._db.collection(self._BOOKS).where("status", "in", ["reserved", "writing"])

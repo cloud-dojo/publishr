@@ -34,10 +34,10 @@ jobs:
       GOOGLE_CLOUD_LOCATION: us-central1 # Pro クォータのある region（asia-northeast1 は 429 回避）
       GOOGLE_GENAI_USE_VERTEXAI: "TRUE"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup uv (Python 3.12)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           python-version: "3.12"
           enable-cache: true
@@ -46,14 +46,14 @@ jobs:
         run: make setup-py
 
       - name: Auth to GCP (Workload Identity Federation)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           project_id: publishr-498123
           workload_identity_provider: projects/355143691286/locations/global/workloadIdentityPools/github-pool/providers/github-provider
           service_account: publishr-ci-deployer@publishr-498123.iam.gserviceaccount.com
 
       - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2
 
       - name: Eval judge gate (real Gemini Pro · cases 7/8)
         run: make eval-gate-vertex

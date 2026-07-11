@@ -29,6 +29,11 @@ ENV PUBLISHR_FIXTURES_DIR=/app/packages/shared-schema/fixtures
 # mode_b 実Vertex 等は packages/prompts/*.md を読む（pip install 後は相対パスが壊れるため明示）。
 ENV PUBLISHR_PROMPTS_DIR=/app/packages/prompts
 
+# 非root実行: アプリRCE/依存脆弱性の被害を局限する（Cloud Run は任意UIDを許容）。
+# --create-home で HOME を用意し、ライブラリのキャッシュ書込みを appuser 配下に収める。
+RUN useradd --create-home --uid 10001 appuser && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 8080
 
 # Cloud Run は PORT 環境変数（既定 8080）でポートを指定する。sh 経由で展開する。
