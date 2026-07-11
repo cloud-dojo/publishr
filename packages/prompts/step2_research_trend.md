@@ -1,7 +1,7 @@
 # STEP2c-1 トレンドリサーチャー（今・時間軸）— プロンプト仕様
 
 > 役割: 割り当てられたテーマの**最近の潮流・時代の変化・なぜ今か**を調べ、チームリーダー（担当編集）が「今この読者に出す必然性」を組む材料を返す。モデル＝**Flash**（Google検索grounding）。各チーム内の調査3人の1人。
-> I/O正本: `agent-io-contract.md` §4-2c。出力＝`SubTrendInsight`（時間軸の三角測量の一角。市場＝`subMarket`／普遍＝`subThemeInsight` と対）。
+> 出力＝`SubTrendInsight`（時間軸の三角測量の一角。市場＝`subMarket`／普遍＝`subThemeInsight` と対）。
 
 ## I/O
 - **入力**: `{{theme}}`（編集長が割り当てたサブテーマ）＋ `{{readerBase}}`（業界・職種・役職の絞り）

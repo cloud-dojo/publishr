@@ -29,7 +29,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.smoke_discipline import run_discipline_checks  # noqa: E402
 
-# 価値観スコアカード（docs/quality/value-scorecard.md）の採点キー → STEP別の割当。
+# 価値観スコアカードの採点キー → STEP別の割当。
 # 同じ出力を二度見しないため、各STEPで見るディメンションだけ採点欄を出す。
 DIMS = {
     "relevance": "①局面的中",

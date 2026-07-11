@@ -11,7 +11,6 @@
 #   BUILD を含めること（含めないと値が埋め込まれない）。
 # - 機密値（NEXT_PUBLIC_FIREBASE_* の API キーは公開可・コミット可）と、
 #   サーバ専用シークレットは Secret Manager 参照（secret:）に分ける。
-# 参照: docs/infra/cicd.md / docs/design/api-contract.md
 # =============================================================================
 
 runConfig:
@@ -24,7 +23,7 @@ env:
   # --- 無認証公開ショーケース（PR-A / 2026-06-30）: BFF 経由で佐倉(demo_uid)の
   #     published 本を無ログインで表示。BFF リポジトリは owner_uid=demo_uid に
   #     スコープ済み（deps.py）＝審査員はログイン・連携なしで閲覧可。詳細は
-  #     docs/planning/hackathon-demo-strategy.md。実ユーザー別の firestore 直読みは休止。 ---
+  #     実ユーザー別の firestore 直読みは休止。 ---
   - variable: NEXT_PUBLIC_DATA_SOURCE
     value: bff
     availability:

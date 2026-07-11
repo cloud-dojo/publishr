@@ -118,7 +118,7 @@ class Settings(BaseSettings):
         default=3.0, validation_alias="PUBLISHR_AUTH_MIN_INTERVAL_SEC"
     )
 
-    # ── Google OAuth 連携（Drive/Calendar/Tasks・api-contract.md §4）─────────────
+    # ── Google OAuth 連携（Drive/Calendar/Tasks）─────────────
     # OAuth クライアント（GCP コンソール発行・Web アプリ）。空なら start は 503。
     google_oauth_client_id: str = Field(default="", validation_alias="GOOGLE_OAUTH_CLIENT_ID")
     google_oauth_client_secret: str = Field(
@@ -146,7 +146,7 @@ class Settings(BaseSettings):
     # inline（既定）= body を books ドキュメントにそのまま持つ（mock/dev・課金ゼロ・従来挙動）。
     # gcs = 本文を非公開バケットへ退避し、ドキュメントには bodyUrl だけ残す（本番・実GCP）。
     body_store: str = Field(default="inline", validation_alias="PUBLISHR_BODY_STORE")
-    # gcs 退避先（非公開バケット・docs/infra/gcp-setup-log.md）。
+    # gcs 退避先（非公開バケット）。
     body_bucket: str = Field(
         default="publishr-contents-498123", validation_alias="PUBLISHR_BODY_BUCKET"
     )

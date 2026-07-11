@@ -1,10 +1,5 @@
 // Publishr 共有型（camelCase = JSON / API のシェイプ）。
 // Python 側 packages/shared-schema/py/publishr_schema/models.py と一致させる。
-//
-// 正本:
-//   - エージェント I/O: docs/design/agent-io-contract.md
-//   - API 境界:        docs/design/api-contract.md
-//   - Firestore ルール: docs/design/firestore-security-rules.md
 
 export type BookStatus = "draft" | "reserved" | "writing" | "published";
 export type Shelf = "arrivals" | "press" | "odd" | "library";
@@ -38,7 +33,6 @@ export interface UserProfile {
   serendipityTolerance: string;
 }
 
-// api-contract.md §2-a
 export interface InitialProfile {
   industry: string;
   jobType: string;
@@ -49,7 +43,7 @@ export interface InitialProfile {
   skipped: boolean;
 }
 
-// tech-architecture.md §3: connectedSources（観測ソース接続・3ソース）
+// connectedSources（観測ソース接続・3ソース）
 // Google Picker でフォルダ単位選択した folderIds[] をサーバ保持（G1-13）。
 export interface DriveFolderLabel {
   folderId: string;
@@ -67,10 +61,9 @@ export interface User {
   name: string;
   initial: string;
   profile: UserProfile;
-  // api-contract.md §2-a / §3-a
   initialProfile?: InitialProfile | null;
   favoriteAuthors?: Array<{ personaId: string; name: string; voiceStyle: string; format: string; savedAt: string }>;
-  // tech-architecture.md §3: 観測ソース接続（STEP0 の入力・Picker=C4.1 が書込）
+  // 観測ソース接続（STEP0 の入力・Picker=C4.1 が書込）
   connectedSources?: ConnectedSources | null;
 }
 
@@ -98,7 +91,6 @@ export interface Persona {
   persona: PersonaDetail;
   expertise: string[];
   pastBooks: PastBook[];
-  // agent-io-contract.md §5-3a
   voiceStyle?: string;       // narrative axis（文体軸）
   format?: string;           // writing format（形式軸）
   fromFavorite?: boolean;    // お気に入り著者由来か
@@ -113,7 +105,7 @@ export interface Plan {
   differentiator: string;
   agendaOutline: string[];
   recommendedAuthorTypes: string[];
-  // agent-io-contract.md §4-2b (PlanProposal)
+  // PlanProposal
   proposalId?: string;
   themeKind?: ThemeKind | string;
   round?: number;
@@ -129,7 +121,7 @@ export interface Observation {
   signals: string[];
 }
 
-// agent-io-contract.md §3: ReaderProfile 3 層構造
+// ReaderProfile 3 層構造
 export interface ReaderProfileBase {
   industry: string;
   jobType: string;
@@ -162,7 +154,7 @@ export interface ReaderProfile {
   interests: string[];
   signals: string[];
   serendipityTolerance: string;
-  // agent-io-contract.md §3: 3 層構造（エージェント実装側で使う）
+  // 3 層構造（エージェント実装側で使う）
   base?: ReaderProfileBase | null;
   currentWork?: ReaderProfileCurrentWork | null;
   readingBehavior?: ReaderProfileReadingBehavior | null;
@@ -225,7 +217,7 @@ export interface Book {
   annotations: ReadingAnnotation[];
   feedback: Feedback;
   createdAt?: string;
-  // agent-io-contract.md §5-2a (BookDraft) 追加フィールド
+  // BookDraft 追加フィールド
   ownerUid?: string;          // Firestore セキュリティルールの根幹
   kind?: ThemeKind | string;  // "honmei" | "serendipity"
   deliveryReason?: string;    // 書店 UI「入荷理由」表示
@@ -292,7 +284,7 @@ export interface AppNotification {
 }
 
 // ===========================================================================
-// 以下: agent-io-contract.md 由来の新規型（エージェント I/O 専用）
+// 以下: エージェント I/O 専用の新規型
 // ===========================================================================
 
 // ---------------------------------------------------------------------------

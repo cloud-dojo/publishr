@@ -66,7 +66,7 @@ def reconcile_favorite_ids(
 # ── 「お気に入りの誰かを配本ごと約N%で1冊だけ起用」する決定的ゲート ──────────────
 # 確率はここ（オーケストレーション層が呼ぶ純関数）が握る＝LLMの気まぐれや mock の
 # 「あれば必ず混入」に依存しない。同一配本(seed)で再現的・seed が変われば配本ごとに振り直す。
-# 設計: docs/design/agent-io-contract.md §5-3a / mvp-scope.md §9（比率は将来A/B）。
+# 比率は将来 A/B テスト予定。
 FAVORITE_FEATURE_PCT_DEFAULT = 25  # 既定25%（≒「4冊中1冊はお気に入りの誰か」の体感）。0=無効・100=必ず。
 
 

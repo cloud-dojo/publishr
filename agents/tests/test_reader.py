@@ -1,7 +1,7 @@
 """STEP1 読者分析（C1.2）の決定的オフラインテスト。
 
 ObservationBundle(+initialProfile+prevProfile) → ReaderProfile3Layer の決定的抽出を、
-実LLMを使わず検証する。正本: docs/design/agent-io-contract.md §3 / packages/prompts/step1_reader_analyst.md。
+実LLMを使わず検証する。正本: packages/prompts/step1_reader_analyst.md。
 """
 
 from __future__ import annotations

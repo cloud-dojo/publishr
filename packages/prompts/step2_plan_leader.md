@@ -1,7 +1,7 @@
 # STEP2a 企画リーダー（スコアゲート）— プロンプト仕様
 
 > 役割: 担当者の企画書を**4観点×各0〜25点（総合100）**で採点し、閾値で承認/差し戻し。モデル＝**Pro**。最高3R・3R到達は最良案を承認。
-> I/O正本: `エージェントIO契約.md` §4-2a。出力＝`LeaderVerdict`。Eval judge（§8）と**同一ルーブリック**。
+> 出力＝`LeaderVerdict`。Eval judge（§8）と**同一ルーブリック**。
 
 ## I/O
 - **入力**: `{{planDraft}}`（PlanProposal）＋ `{{readerProfile}}`＋ `{{themeKind}}`＋ `{{threshold}}`（既定70）

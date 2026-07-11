@@ -1,7 +1,7 @@
 """STEP4 プレビュー編集（C1.5）の決定的オフラインテスト。
 
 承認企画＋5著者 → 各著者が BookDraft(7項目) → 編集長3観点採点 → 1R改稿 → 棚5冊draft。
-正本: docs/design/agent-io-contract.md §5-2 / packages/prompts/step4_*.md。
+正本: packages/prompts/step4_*.md。
 """
 
 from __future__ import annotations

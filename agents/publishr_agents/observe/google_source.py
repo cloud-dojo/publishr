@@ -22,7 +22,7 @@ from .transform import DEFAULT_WINDOW_DAYS, build_observation_bundle, folder_lab
 
 logger = logging.getLogger(__name__)
 
-# tech-architecture.md §3: 3ソース・同一 OAuth・読み取り専用スコープ
+# 3ソース・同一 OAuth・読み取り専用スコープ
 ALL_SCOPES = {
     "drive": "https://www.googleapis.com/auth/drive.readonly",
     "calendar": "https://www.googleapis.com/auth/calendar.readonly",

@@ -1,7 +1,7 @@
 # STEP1 読者分析エージェント — プロンプト仕様
 
 > 役割: 観測束から「いまのこの人」を**3層ReaderProfile**に統合。モデル＝**Pro**。週1回（土朝）。
-> I/O正本: `エージェントIO契約.md` §3。出力＝`ReaderProfile = { base, currentWork, readingBehavior }`。
+> 出力＝`ReaderProfile = { base, currentWork, readingBehavior }`。
 
 ## I/O
 - **入力**: `{{observationBundle}}`（STEP0・Drive抜粋/Calendar±14日/Tasks/readingFB）＋ `{{prevProfile}}`（前回・初回null）＋ `{{initialProfile}}`（登録時入力）

@@ -1,7 +1,7 @@
 """C1.7 自律トリガー（曜日別スケジュール）の決定的テスト。
 
 Cloud Scheduler 週3回（水/土=本命・日=セレンディピティ）の判定ロジックを、隠れ時計を持たず
-（now を引数で受ける）決定的に検証する。正本: docs/planning/wbs.md C1.7 / 構想 §6。
+（now を引数で受ける）決定的に検証する。
 """
 
 from __future__ import annotations

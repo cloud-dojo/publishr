@@ -1,6 +1,5 @@
 ﻿// firestoreプロバイダ: 読み取りは onSnapshot 購読、低リスク書き込みは Firestore 直、
 // 予約/手動トリガーは Cloud Run API（Firebase IDトークン付与）。
-// 方針の正本: docs/design/api-contract.md §1 / docs/design/tech-architecture.md §3。
 //
 // ⚠️ 前提（バック担当と確定が必要・本接続前の「1回だけ同期」項目）:
 //   - Firestore ドキュメントが shared-schema（@publishr/shared-schema）の形で保存される

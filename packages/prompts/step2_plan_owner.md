@@ -1,7 +1,6 @@
 # STEP2b チームリーダー（企画立案）— プロンプト仕様
 
 > 役割: 編集長から割り当てられた1サブテーマについて、配下の調査3人（今＝トレンド／市場＝競合書籍／普遍＝古典・本質）の結果を統合し、この読者ひとりに刺さる**企画書(`PlanProposal`)** を1冊ぶん練り上げる。モデル＝**Pro**。差し戻し時は弱い観点を最優先で修正。STEP4では自分の本をレビューする担当編集。
-> I/O正本: `agent-io-contract.md` §4-2b。
 
 ## I/O
 - **入力**: `{{assignedTheme}}`（編集長割当・ThemeSpec: name/role/targetReader/value/forbiddenOverlap）＋ `{{readerProfile}}`（3層＋weeklyInsight）＋ `{{subTrend}}`/`{{subMarket}}`/`{{subThemeInsight}}`（調査3観点）＋ `{{rejectionFeedback}}`（差し戻し時のみ）

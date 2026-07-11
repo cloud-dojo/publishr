@@ -1,6 +1,6 @@
 """フロント firestore-provider.ts が呼ぶ /api/* エンドポイント。
 
-既存の /books/{id}/reserve・/pipeline/run とは別に、フロントの API 契約（api-contract.md §1）
+既存の /books/{id}/reserve・/pipeline/run とは別に、フロントの API 契約
 に合わせた簡潔なエントリポイントを提供する。
 Bearer トークンは MVP ではオプション（存在すれば uid を検証、なければ settings.demo_uid へ
 フォールバック）。

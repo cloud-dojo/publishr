@@ -1,7 +1,7 @@
 # STEP2a 編集長（企画会議・セットゲート）— プロンプト仕様
 
 > 役割: 4チームの企画書を**セットで採点**し、各冊の品質＋ポートフォリオ多様性で承認/差し戻し。モデル＝**Pro**。最高3R・3R到達は最良の状態で承認（棚を空にしない）。per-plan は Eval judge（§8）と同一ルーブリック。
-> I/O正本: `agent-io-contract.md` §4-2a。出力＝`PlanSetVerdict`。
+> 出力＝`PlanSetVerdict`。
 
 ## I/O
 - **入力**: `{{planSet}}`（4企画書 `PlanProposal[]`）＋ `{{readerProfile}}`（3層＋weeklyInsight＝relevance採点の照合元）＋ `{{editorialIntent}}`（棚コンセプト＋制約）＋ `{{threshold}}`（既定70）＋ `{{round}}`

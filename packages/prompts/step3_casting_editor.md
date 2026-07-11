@@ -1,7 +1,7 @@
 # STEP3 キャスティング編集者 — プロンプト仕様
 
 > 役割: 承認企画に合う**架空著者4人を人格生成**。voiceStyle×format の2軸で分散。persona本体はリッチに。モデル＝**Pro**（1コール4人）。
-> I/O正本: `エージェントIO契約.md` §5-3a。出力＝`GeneratedPersonaSet.personas[4]`。
+> 出力＝`GeneratedPersonaSet.personas[4]`。
 
 ## I/O
 - **入力**: `{{approvedPlan}}`（8項目・recommendedAuthorTypes）＋ `{{readerProfile}}`（stylePreference）＋ `{{favoriteAuthors}}`（任意・混入候補）＋ `{{personaInspiration}}`（任意・著者ペルソナ集.md要約）

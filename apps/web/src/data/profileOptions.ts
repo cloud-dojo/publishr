@@ -1,5 +1,4 @@
 // 初期プロフィール（initialProfile）の選択肢。
-// 正本: docs/design/api-contract.md §2-a（2026-06-03確定）。
 // Firestore保存先: users/{uid}.initialProfile（フェーズ3でFirestore直書き）。
 
 export type ProfileStepKey =

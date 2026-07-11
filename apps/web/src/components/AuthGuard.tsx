@@ -13,7 +13,6 @@ export function AuthGuard() {
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     // 無認証公開ショーケース（bff）では誰でも佐倉(demo_uid)を閲覧する設計のため /login へ誘導しない。
-    // 詳細: docs/planning/hackathon-demo-strategy.md
     if (dataSource === "bff") return;
 
     let redirectTimer: ReturnType<typeof setTimeout> | null = null;

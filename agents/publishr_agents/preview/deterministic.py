@@ -1,7 +1,7 @@
 """STEP4 プレビュー編集の決定的オフライン実装（PUBLISHR_LLM=mock・既定）。
 
 各著者が BookDraft(7項目)を書き、編集長が3観点で採点（1冊だけ1R改稿を実演）→棚5冊draft。
-本格的な執筆・採点は実Vertex（vertex_agent）が担う。正本: agent-io-contract.md §5-2。
+本格的な執筆・採点は実Vertex（vertex_agent）が担う。
 """
 
 from __future__ import annotations

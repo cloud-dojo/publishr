@@ -1,7 +1,7 @@
 """scripts/smoke_discipline.py の決定的テスト（オフライン・$0）。
 
 良い被験者出力＝違反なし、意図的に壊した出力＝確定違反を検出することを回す。
-正本: docs/planning（プロンプト改修インナーループ）。scripts は testpaths 外のため
+scripts は testpaths 外のため
 ここ（apps/api/tests）に置いて make verify(pytest) で拾わせる。
 """
 

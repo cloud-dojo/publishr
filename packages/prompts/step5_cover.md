@@ -6,7 +6,7 @@
 > `cover/imagen.py` と合わせて再結線する。
 
 > 役割: 本のタイトル・核心メッセージ・著者の文体軸から**表紙のビジュアル方針**を判断し、**Imagen用の英語プロンプト**を生成する軽エージェント。モデル＝**Flash**（方針判断のみ・画像生成は Imagen on Vertex AI）。dev時は `ENABLE_IMAGEN=false` でモック画像に差し替え。
-> I/O正本: `エージェントIO契約.md` §6。出力＝`{ bookId, coverPrompt, coverUrl }`（本エージェントは `coverPrompt` を生成・`coverUrl` は Imagen 生成後に埋まる）。
+> 出力＝`{ bookId, coverPrompt, coverUrl }`（本エージェントは `coverPrompt` を生成・`coverUrl` は Imagen 生成後に埋まる）。
 
 ## I/O
 - **入力（1冊ぶんの企画書＝1対1）**: この本1冊の確定企画だけを受け取る。`{{bookDraft}}`（`title` / `coreMessage`）＋ `{{plan}}`（企画書＝STEP2 `PlanProposal` を確定したもの: `emotionalTone` / `bookRole` / `keyInsights` / `targetSegment` / `readerSituation`）＋ `{{persona}}`（`voiceStyle` / `format`）。**1企画書につき1回だけ呼ぶ**（複数冊をまとめて渡さない・1呼び出しで1冊だけ扱う）。

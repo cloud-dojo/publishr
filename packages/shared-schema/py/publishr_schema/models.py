@@ -3,11 +3,6 @@
 フィクスチャ/API/Firestore で同一スキーマを保つための単一の型定義。
 フィールドは Python 慣習の snake_case で定義し、JSON 入出力は camelCase
 （`to_camel` エイリアス）で扱う。
-
-正本:
-  - エージェント I/O: docs/design/agent-io-contract.md
-  - API 境界:        docs/design/api-contract.md
-  - Firestore ルール: docs/design/firestore-security-rules.md
 """
 
 from __future__ import annotations
@@ -55,7 +50,7 @@ class UserProfile(_Base):
 
 
 # ---------------------------------------------------------------------------
-# api-contract.md §2-a: ユーザー登録時の初期プロフィール（Firestore 直書き）
+# ユーザー登録時の初期プロフィール（Firestore 直書き）
 # ---------------------------------------------------------------------------
 class InitialProfile(_Base):
     industry: str
@@ -68,7 +63,7 @@ class InitialProfile(_Base):
 
 
 # ---------------------------------------------------------------------------
-# tech-architecture.md §3: connectedSources（観測ソース接続・3ソース）
+# connectedSources（観測ソース接続・3ソース）
 # Google Picker でフォルダ単位選択した folderIds[] をサーバ保持（G1-13）。
 # ---------------------------------------------------------------------------
 class DriveFolderLabel(_Base):
@@ -104,11 +99,11 @@ class User(_Base):
     name: str
     initial: str
     profile: UserProfile
-    # api-contract.md §2-a / §3-a 追加フィールド
+    # 追加フィールド
     initial_profile: Optional[InitialProfile] = None
     favorite_authors: list[dict[str, Any]] = Field(default_factory=list)
     # favorite_authors 各要素: {personaId, name, voiceStyle, format, savedAt}
-    # tech-architecture.md §3: 観測ソース接続（STEP0 の入力）
+    # 観測ソース接続（STEP0 の入力）
     connected_sources: Optional[ConnectedSources] = None
 
 
@@ -136,7 +131,7 @@ class Persona(_Base):
     persona: PersonaDetail
     expertise: list[str] = Field(default_factory=list)
     past_books: list[PastBook] = Field(default_factory=list)
-    # agent-io-contract.md §5-3a 追加フィールド
+    # 追加フィールド
     voice_style: str = ""       # narrative axis（文体軸）
     format: str = ""            # writing format（形式軸）
     from_favorite: bool = False # お気に入り著者由来か（15% 混入ロジック）
@@ -151,7 +146,7 @@ class Plan(_Base):
     differentiator: str = ""
     agenda_outline: list[str] = Field(default_factory=list)
     recommended_author_types: list[str] = Field(default_factory=list)
-    # agent-io-contract.md §4-2b (PlanProposal) 追加フィールド
+    # PlanProposal 追加フィールド
     proposal_id: str = ""
     theme_kind: ThemeKind | str = ""     # "honmei" | "serendipity"
     round: int = 0
@@ -168,7 +163,7 @@ class Observation(_Base):
 
 
 # ---------------------------------------------------------------------------
-# agent-io-contract.md §3: ReaderProfile 3 層構造
+# ReaderProfile 3 層構造
 # ---------------------------------------------------------------------------
 class ReaderProfileBase(_Base):
     """STEP1 読者分析: 基本属性層。"""
@@ -205,7 +200,7 @@ class ReaderProfile(_Base):
     interests: list[str] = Field(default_factory=list)
     signals: list[str] = Field(default_factory=list)
     serendipity_tolerance: str = ""
-    # agent-io-contract.md §3: 3 層構造（エージェント実装側で使う）
+    # 3 層構造（エージェント実装側で使う）
     base: Optional[ReaderProfileBase] = None
     current_work: Optional[ReaderProfileCurrentWork] = None
     reading_behavior: Optional[ReaderProfileReadingBehavior] = None
@@ -245,7 +240,7 @@ class ReadingAnnotation(_Base):
 
 
 # ===========================================================================
-# 以下: agent-io-contract.md 由来の新規モデル（エージェント I/O 専用）
+# 以下: エージェント I/O 専用の新規モデル
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
@@ -416,7 +411,7 @@ class Book(_Base):
     body: Optional[str] = None
     annotations: list[ReadingAnnotation] = Field(default_factory=list)
     feedback: Feedback = Field(default_factory=Feedback)
-    # agent-io-contract.md §5-2a (BookDraft) 追加フィールド
+    # BookDraft 追加フィールド
     owner_uid: str = ""             # Firestore セキュリティルールの根幹
     kind: ThemeKind | str = ""      # "honmei" | "serendipity"
     delivery_reason: str = ""       # 書店 UI「入荷理由」表示に使用
