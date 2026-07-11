@@ -17,8 +17,8 @@ from publishr_schema import GeneratedPersona
 
 
 def cover_variant_for(index: int) -> str:
-    """globals.css の cover--b1..b10 に対応する決定的 variant 割当。"""
-    return f"b{(index % 10) + 1}"
+    """globals.css の cover--b1..b20 に対応する決定的 variant 割当。"""
+    return f"b{(index % 20) + 1}"
 
 
 def assign_cover_variants(

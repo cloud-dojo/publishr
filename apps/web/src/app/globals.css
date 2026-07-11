@@ -214,49 +214,32 @@ a { color: inherit; text-decoration: none; }
 .cover.cover--image .c-sub { font-size: clamp(8px, 5.2cqw, 12px); font-weight: 600; line-height: 1.5; color: rgba(255,255,255,.74); margin-top: 7px; }
 .cover.cover--image .c-author { font-family: var(--font-display); font-size: clamp(8px, 5.2cqw, 12px); color: rgba(255,255,255,.82); margin-top: 10px; }
 
-.cover--b1,.cover--b2,.cover--b3,.cover--b4,.cover--b5,.cover--b6,.cover--b7,.cover--b8,.cover--b9,.cover--b10 { position: relative; isolation: isolate; }
-.cover--b1 { background: linear-gradient(160deg, #0e1e42 0%, #07102a 100%); }
-.cover--b1::before { content: "30"; position: absolute; right: -8px; bottom: 10px; font-family: var(--font-en); font-size: 130px; font-weight: 700; line-height: 1; color: rgba(255,255,255,.055); z-index: 1; pointer-events: none; }
-.cover--b1 .c-title { color: #fff; font-size: 24px; }
-.cover--b1 .c-sub { color: rgba(255,255,255,.65); }
-.cover--b2 { background: linear-gradient(150deg, #1a3329 0%, #0c1f18 100%); }
-.cover--b2::before { content: ""; position: absolute; right: 14px; top: 14px; width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,.13); z-index: 1; }
-.cover--b2 .c-title { color: #c8f0de; font-size: 22px; }
-.cover--b2 .c-sub { color: rgba(200,240,222,.6); }
-.cover--b3 { background: #1a1d24; }
-.cover--b3::before { content: ""; position: absolute; right: 0; bottom: 0; left: 0; height: 60px; background: linear-gradient(90deg, var(--gold), var(--brass)); clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 100%); z-index: 1; }
-.cover--b3 .c-title { color: #fff; font-size: 21px; }
-.cover--b3 .c-sub { color: rgba(255,255,255,.6); }
-.cover--b3 .c-author { color: var(--gold-bright); }
-.cover--b4 { background: #0a0c12; background-image: repeating-linear-gradient(90deg, transparent 0px, transparent 14px, rgba(201,163,95,.06) 14px, rgba(201,163,95,.06) 16px); }
-.cover--b4::before { content: ""; position: absolute; right: 18px; bottom: 24px; width: 5px; height: 55%; background: var(--gold); opacity: .7; z-index: 1; border-radius: 2px; box-shadow: 10px 20px 0 var(--brass), 20px 8px 0 var(--gold-bright), 30px 35px 0 var(--brass); }
-.cover--b4 .c-title { color: var(--gold-bright); font-size: 22px; }
-.cover--b5 { background: linear-gradient(160deg, #8a6020, #5a3e12 100%); }
-.cover--b5::before { content: "MON"; position: absolute; bottom: 16px; right: 10px; font-family: var(--font-en); font-size: 54px; font-weight: 700; line-height: 1; color: rgba(255,255,255,.1); z-index: 1; letter-spacing: -2px; }
-.cover--b5 .c-title { color: #fff4d6; font-size: 19px; }
-.cover--b5 .c-sub { color: rgba(255,244,214,.65); }
-.cover--b5 .c-author { color: rgba(255,244,214,.9); border-color: rgba(255,244,214,.25); }
-.cover--b6 { background: linear-gradient(155deg, #2a3142, #141922 100%); }
-.cover--b6::before { content: ""; position: absolute; right: -20px; top: -20px; width: 130px; height: 130px; border-radius: 50%; background: rgba(201,163,95,.1); z-index: 1; }
-.cover--b6 .c-title { color: #fff; font-size: 26px; letter-spacing: 2px; }
-.cover--b6 .c-author { color: var(--gold-bright); }
-.cover--b7 { background: linear-gradient(155deg, #4a1e2c, #240f17 100%); }
-.cover--b7::before { content: ""; position: absolute; left: -20px; bottom: -20px; width: 140px; height: 140px; border-radius: 50%; border: 2px solid rgba(255,160,160,.15); z-index: 1; }
-.cover--b7 .c-title { color: #ffd4d9; font-size: 23px; }
-.cover--b7 .c-sub { color: rgba(255,212,217,.6); }
-.cover--b8 { background: linear-gradient(160deg, #181410, #0c0a08 100%); }
-.cover--b8::before { content: ""; position: absolute; right: 28px; top: 16px; bottom: 16px; width: 1px; background: linear-gradient(180deg, transparent, rgba(201,163,95,.5), transparent); z-index: 1; }
-.cover--b8 .c-title { color: #e8dcc8; font-size: 24px; letter-spacing: 3px; }
-.cover--b8 .c-sub { color: rgba(232,220,200,.55); letter-spacing: 1px; }
-.cover--b8 .c-author { color: var(--gold); border-color: rgba(201,163,95,.3); }
-.cover--b9 { background: linear-gradient(160deg, #6e3318, #2d150a 100%); }
-.cover--b9::before { content: ""; position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 44px solid rgba(255,255,255,.08); z-index: 1; }
-.cover--b9 .c-title { color: #ffebd8; font-size: 22px; }
-.cover--b9 .c-sub { color: rgba(255,235,216,.6); }
-.cover--b10 { background: #080a0e; background-image: linear-gradient(rgba(201,163,95,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(201,163,95,.07) 1px, transparent 1px); background-size: 18px 18px; }
-.cover--b10::before { content: "\2617"; position: absolute; right: 10px; bottom: 18px; font-size: 80px; color: rgba(201,163,95,.14); z-index: 1; line-height: 1; }
-.cover--b10 .c-title { color: var(--gold-bright); font-size: 24px; letter-spacing: 2px; }
-.cover--b10 .c-author { color: rgba(201,163,95,.9); }
+/* 伝統色パレット 20色（本命系 b1-b10 青系 + 出会い系 b11-b20 赤系）+ 幾何学パターン */
+.cover--b1,.cover--b2,.cover--b3,.cover--b4,.cover--b5,.cover--b6,.cover--b7,.cover--b8,.cover--b9,.cover--b10,.cover--b11,.cover--b12,.cover--b13,.cover--b14,.cover--b15,.cover--b16,.cover--b17,.cover--b18,.cover--b19,.cover--b20 { position: relative; isolation: isolate; }
+
+/* 本命系（b1-b10）青・紫・緑系 */
+.cover--b1 { background: #2E4053; background-image: linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 16px 16px; }
+.cover--b2 { background: #3D5A80; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.08) 10px, rgba(255,255,255,.08) 12px); }
+.cover--b3 { background: #4B5A7C; background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent); background-size: 20px 20px; }
+.cover--b4 { background: #4A7C7E; background-image: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,.08) 10px, rgba(255,255,255,.08) 12px); }
+.cover--b5 { background: #4D3E7B; background-image: radial-gradient(circle, rgba(255,255,255,.08) 2px, transparent 2px); background-size: 14px 14px; }
+.cover--b6 { background: #9E8BA5; background-image: linear-gradient(135deg, transparent 48%, rgba(255,255,255,.06) 50%, transparent 52%); background-size: 16px 16px; }
+.cover--b7 { background: #7D5BA6; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0px, rgba(255,255,255,.08) 2px, transparent 2px, transparent 8px); }
+.cover--b8 { background: #674172; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,.08) 1.5px, transparent 1.5px); background-size: 8px 8px; }
+.cover--b9 { background: #5B6C4B; background-image: linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)), linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)); background-size: 12px 12px; background-position: 0 0, 6px 6px; }
+.cover--b10 { background: #7AC74F; background-image: conic-gradient(rgba(255,255,255,.08) 0deg 90deg, transparent 90deg 180deg, rgba(255,255,255,.08) 180deg 270deg, transparent 270deg); background-size: 20px 20px; }
+
+/* 出会い系（b11-b20）赤・オレンジ・黄系 */
+.cover--b11 { background: #924E4E; background-image: linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 16px 16px; }
+.cover--b12 { background: #A23B48; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.08) 10px, rgba(255,255,255,.08) 12px); }
+.cover--b13 { background: #B85C75; background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent); background-size: 20px 20px; }
+.cover--b14 { background: #E8B4D4; background-image: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,.08) 10px, rgba(0,0,0,.08) 12px); }
+.cover--b15 { background: #8B6F47; background-image: radial-gradient(circle, rgba(255,255,255,.08) 2px, transparent 2px); background-size: 14px 14px; }
+.cover--b16 { background: #F4D03F; background-image: linear-gradient(135deg, transparent 48%, rgba(0,0,0,.06) 50%, transparent 52%); background-size: 16px 16px; color: #2a1c06; }
+.cover--b17 { background: #D4AF37; background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0px, rgba(0,0,0,.08) 2px, transparent 2px, transparent 8px); color: #2a1c06; }
+.cover--b18 { background: #5C4033; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,.08) 1.5px, transparent 1.5px); background-size: 8px 8px; }
+.cover--b19 { background: #4A4A4A; background-image: linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)), linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)); background-size: 12px 12px; background-position: 0 0, 6px 6px; }
+.cover--b20 { background: #1C1C35; background-image: conic-gradient(rgba(255,255,255,.08) 0deg 90deg, transparent 90deg 180deg, rgba(255,255,255,.08) 180deg 270deg, transparent 270deg); background-size: 20px 20px; }
 /* midnight（最初の100日の設計図など）: 右上に金の円弧 + 右下に大きな数字透かし */
 .cover--midnight { background: linear-gradient(155deg, #1b2440, #0c1226 70%); }
 .cover--midnight .c-title { color: var(--gold-bright); }
@@ -301,31 +284,37 @@ a { color: inherit; text-decoration: none; }
 .cover .c-sub { font-size: 10.5px; font-weight: 600; line-height: 1.5; margin-top: 10px; color: rgba(255,255,255,.92); }
 .cover .c-rule { display: none; }
 .cover .c-author { margin-top: auto; padding-top: 9px; border-top: none; font-family: var(--font-display); font-size: 10.5px; color: rgba(255,255,255,.9); }
-/* 旧バリアントの透かし/装飾（::before）を全消し */
-.cover--b1::before,.cover--b2::before,.cover--b3::before,.cover--b4::before,.cover--b5::before,.cover--b6::before,.cover--b7::before,.cover--b8::before,.cover--b9::before,.cover--b10::before,.cover--midnight::before,.cover--wine::before,.cover--sand::before,.cover--slate::before,.cover--rust::before,.cover--ink::before,.cover--forest::before { content: none; }
-/* 上端の極太アクセント帯（::after を流用）＝Kindle調の差し色 */
-.cover--b1::after,.cover--b2::after,.cover--b3::after,.cover--b4::after,.cover--b5::after,.cover--b6::after,.cover--b7::after,.cover--b8::after,.cover--b9::after,.cover--b10::after,.cover--midnight::after,.cover--wine::after,.cover--sand::after,.cover--slate::after,.cover--rust::after,.cover--ink::after,.cover--forest::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; z-index: 1; }
-/* 明るいソリッド色 ＋ 帯色（白文字グループ） */
-.cover--b1 { background: #1d4ed8; }  .cover--b1::after { background: #fbbf24; }
-.cover--b2 { background: #15803d; }  .cover--b2::after { background: #fde047; }
-.cover--b3 { background: #dc2626; }  .cover--b3::after { background: #fff; }
-.cover--b4 { background: #14224d; }  .cover--b4::after { background: #38bdf8; }
-.cover--b5 { background: #ea580c; }  .cover--b5::after { background: #1f2937; }
-.cover--b6 { background: #0f766e; }  .cover--b6::after { background: #fbbf24; }
-.cover--b7 { background: #9d174d; }  .cover--b7::after { background: #fbcfe8; }
-.cover--b8 { background: #1f2937; }  .cover--b8::after { background: #fbbf24; }  .cover--b8 .c-title { color: #fbbf24; }
-.cover--b10 { background: #3730a3; } .cover--b10::after { background: #a5b4fc; }
-.cover--midnight { background: #14224d; } .cover--midnight::after { background: #fbbf24; } .cover--midnight .c-title { color: #fde68a; }
-.cover--wine { background: #9d174d; } .cover--wine::after { background: #fbcfe8; } .cover--wine .c-title { color: #fff; }
-.cover--slate { background: #334155; } .cover--slate::after { background: #38bdf8; }
-.cover--rust { background: #b45309; } .cover--rust::after { background: #fde68a; } .cover--rust .c-title { color: #fff; }
-.cover--ink { background: #111827; } .cover--ink::after { background: #fbbf24; } .cover--ink .c-title { color: #fde68a; }
-.cover--forest { background: #166534; } .cover--forest::after { background: #fde047; } .cover--forest .c-title { color: #fff; }
-/* 明るい地に濃い文字（高コントラスト）グループ */
-.cover--b9 { background: #f59e0b; }  .cover--b9::after { background: #1f2937; }
-.cover--b9 .c-title, .cover--b9 .c-sub, .cover--b9 .c-author { color: #2a1c06; }
-.cover--sand { background: #fde68a; } .cover--sand::after { background: #b45309; }
-.cover--sand .c-title, .cover--sand .c-sub, .cover--sand .c-author { color: #3a2606; }
+/* 上端の極太アクセント帯（::after を流用）＝伝統色パレット対応 */
+.cover--b1::after { background: #C9A35F; }   /* 本命帯色：金 */
+.cover--b2::after { background: #C9A35F; }
+.cover--b3::after { background: #C9A35F; }
+.cover--b4::after { background: #C9A35F; }
+.cover--b5::after { background: #C9A35F; }
+.cover--b6::after { background: #D4AF37; }   /* 薄紫帯：黄金 */
+.cover--b7::after { background: #C9A35F; }
+.cover--b8::after { background: #C9A35F; }
+.cover--b9::after { background: #C9A35F; }
+.cover--b10::after { background: #D4AF37; }
+
+.cover--b11::after { background: #E8844B; }  /* 出会い帯色：赤系 */
+.cover--b12::after { background: #E8844B; }
+.cover--b13::after { background: #E8844B; }
+.cover--b14::after { background: #FFB6D9; }  /* 桜色帯 */
+.cover--b15::after { background: #D4AF37; }  /* 錆色帯：金 */
+.cover--b16::after { background: #8B6F47; }  /* 黄檗帯：茶 */
+.cover--b17::after { background: #8B6F47; }  /* 黄金帯：茶 */
+.cover--b18::after { background: #D4AF37; }  /* 焦茶帯：金 */
+.cover--b19::after { background: #E8844B; }  /* 煤竹帯 */
+.cover--b20::after { background: #C9A35F; }  /* 鉄紺帯：金 */
+
+/* 全cover要素の上部帯スタイル */
+.cover--b1::after, .cover--b2::after, .cover--b3::after, .cover--b4::after, .cover--b5::after,
+.cover--b6::after, .cover--b7::after, .cover--b8::after, .cover--b9::after, .cover--b10::after,
+.cover--b11::after, .cover--b12::after, .cover--b13::after, .cover--b14::after, .cover--b15::after,
+.cover--b16::after, .cover--b17::after, .cover--b18::after, .cover--b19::after, .cover--b20::after,
+.cover--midnight::after, .cover--wine::after, .cover--sand::after, .cover--slate::after, .cover--rust::after, .cover--ink::after, .cover--forest::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; z-index: 1;
+}
 
 /* 簡易フォールバック装丁（NEXT_PUBLIC_SIMPLE_COVER=1・C5.1 表紙保険）。
    サイドバー「最近読んだ本」の質感に合わせ、シックな黒の発光グラデ＋タイトル左上（中央寄せにしない）。
