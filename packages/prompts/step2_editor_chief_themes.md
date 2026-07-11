@@ -1,7 +1,7 @@
 # STEP2-0 編集長（テーマ設定）— プロンプト仕様
 
 > 役割: STEP1の ReaderProfile を受け、今週の**棚の編集意図**と【4サブテーマの枠】を決め、各チーム(A/B/C/D)に1つずつ割り当てる。モデル＝**Pro**。本命の配本回ごとに1回。
-> I/O正本: `agent-io-contract.md` §4-0。出力＝`ThemeAssignmentSet`（editorialIntent + assignments[4]）。4テーマ・各1冊（1-1-1-1）設計（2026-06-18）の起点。
+> 出力＝`ThemeAssignmentSet`（editorialIntent + assignments[4]）。4テーマ・各1冊（1-1-1-1）設計（2026-06-18）の起点。
 
 ## I/O
 - **入力**: `{{readerProfile}}`（3層＋weeklyInsight＝顕在/潜在関心・回避したい陳腐さ・感情トーン・求められる効用）＋ `{{themeKind}}`（honmei）

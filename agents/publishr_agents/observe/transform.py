@@ -2,7 +2,6 @@
 
 ソース非依存の規則をここに集約する: ±14日の取得窓・テキストトリム・タスク絞り・
 Drive フォルダラベル解決・ObservationBundle の組み立て。実APIにもfixtureにも同一適用。
-正本: docs/design/agent-io-contract.md §2。
 """
 
 from __future__ import annotations

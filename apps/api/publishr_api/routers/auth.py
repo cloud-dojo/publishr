@@ -1,4 +1,4 @@
-"""Google OAuth 連携 + Drive Picker フォルダ書込（api-contract.md §4）。
+"""Google OAuth 連携 + Drive Picker フォルダ書込。
 
 - GET  /api/auth/google/start    : Firebase uid → 署名 state 付き同意URL（{authUrl}）。
 - GET  /api/auth/google/callback : state 検証 → code 交換 → token 保存 → connectedSources 更新。

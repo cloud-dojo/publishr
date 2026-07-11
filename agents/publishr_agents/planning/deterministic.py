@@ -3,7 +3,7 @@
 ReaderProfile から仮テーマを立て、3観点の調査サブ（canned）→企画担当者（PlanProposal 8項目）
 →企画リーダー（スコア差し戻しループ）を決定的に回し、reject→再提出→approve の証跡を残す。
 本格的な grounding・採点は実Vertex（vertex_agent）が担う。返り値は miniloop と同形の dict。
-正本: docs/design/agent-io-contract.md §4 / packages/prompts/step2_*.md。
+正本: packages/prompts/step2_*.md。
 """
 
 from __future__ import annotations

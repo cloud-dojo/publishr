@@ -2,7 +2,7 @@
 
 ReaderProfile → 調査サブ×3 → 企画担当者 → 企画リーダー（スコア差し戻し→escalate）の
 決定的経路を実LLMなしで検証する。基準1（reject→再提出→approve の証跡）が核。
-正本: docs/design/agent-io-contract.md §4 / packages/prompts/step2_*.md。
+正本: packages/prompts/step2_*.md。
 """
 
 from __future__ import annotations

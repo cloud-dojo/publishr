@@ -1,7 +1,7 @@
 """C5.9 エラー/リトライ/冪等/タイムアウト方針の決定的テスト。
 
 実LLM経路のレジリエンス（transient分類・指数バックオフ・最大試行・タイムアウト）を、
-実際の sleep / LLM を呼ばず（sleep を注入）に決定的に検証する。正本: docs/planning/wbs.md C5.9。
+実際の sleep / LLM を呼ばず（sleep を注入）に決定的に検証する。
 """
 
 from __future__ import annotations

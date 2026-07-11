@@ -1,7 +1,7 @@
 """STEP3 キャスティング（C1.4）の決定的オフラインテスト。
 
 承認企画(PlanProposal) → 架空著者5人（voiceStyle×format の2軸で分散）の決定的生成を
-実LLMなしで検証する。正本: docs/design/agent-io-contract.md §5-3a / packages/prompts/step3_casting_editor.md。
+実LLMなしで検証する。正本: packages/prompts/step3_casting_editor.md。
 """
 
 from __future__ import annotations

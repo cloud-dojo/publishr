@@ -2,7 +2,6 @@
 
 純粋ヘルパ（窓/トリム/タスク絞り/ラベル解決/組み立て）と FixtureObservationSource
 経由の collect_observation を、fixtures を使って実APIを叩かずに検証する。
-正本: docs/design/agent-io-contract.md §2。
 """
 
 from __future__ import annotations

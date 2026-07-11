@@ -1,8 +1,7 @@
 """LLM モデル割当の単一情報源（Pro/Flash ハイブリッド）。
 
 role → Gemini モデルid を一元管理する。**mock経路では未使用＝P0bの実装シーム**。
-判断が重い工程＝Pro／観測・調査寄り＝Flash（正本: docs/design/adk-control-flow.md §5・
-agent-io-contract.md §9）。実モデルidは env（PUBLISHR_MODEL_PRO / _FLASH）で上書き可。
+判断が重い工程＝Pro／観測・調査寄り＝Flash。実モデルidは env（PUBLISHR_MODEL_PRO / _FLASH）で上書き可。
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 # STEP2c-3 古典・本質リサーチャー（普遍・不変軸）— プロンプト仕様
 
 > 役割: 割り当てられたテーマの**古典・原理原則・歴史的に繰り返されてきた本質**を調べ、章立ての背骨になる knowledge を返す。トレンド（流行り）ではなく不変軸を担う。モデル＝**Flash**（Google検索grounding＋内部知）。各チーム内の調査3人の1人。
-> I/O正本: `agent-io-contract.md` §4-2c。出力＝`SubThemeInsight`（普遍軸の三角測量の一角。今＝`subTrend`／市場＝`subMarket` と対）。
+> 出力＝`SubThemeInsight`（普遍軸の三角測量の一角。今＝`subTrend`／市場＝`subMarket` と対）。
 
 ## I/O
 - **入力**: `{{theme}}`（割り当てサブテーマ）

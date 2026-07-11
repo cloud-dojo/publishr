@@ -1,7 +1,7 @@
 # STEP3 キャスティング（著者候補生成→選抜）— プロンプト仕様
 
 > 役割: 承認された1企画に対し、別組織の著者プールから**架空著者の候補を複数生成し、最も合う1人を選抜**する（選抜理由を証跡として残す）。チームリーダー（担当編集）が担う。モデル＝**Pro**（1企画＝1コール）。
-> I/O正本: `agent-io-contract.md` §5-3a。出力＝`AuthorCasting`（candidates[]＋chosen＋selectionReason）。
+> 出力＝`AuthorCasting`（candidates[]＋chosen＋selectionReason）。
 
 ## I/O
 - **入力**: `{{approvedPlan}}`（企画書・bookRole/emotionalTone/recommendedAuthorTypes）＋ `{{readerProfile}}`（stylePreference）＋ `{{favoriteAuthors}}`（任意・混入候補）＋ `{{personaInspiration}}`（任意・著者ペルソナ集.md要約）

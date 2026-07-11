@@ -1,5 +1,4 @@
 // ユーザー入力の直書き（Firestore直 or mockのlocalStorageフォールバック）。
-// 正本: docs/design/api-contract.md §2-a（initialProfile）/ §3-a（favoriteAuthors）。
 // Firebase設定済み時は Firestore 直書き、未設定（mock）時は localStorage に保存して
 // 画面遷移を確認できるようにする（フェーズ3の単独実装用フォールバック）。
 "use client";

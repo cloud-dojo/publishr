@@ -1,4 +1,4 @@
-"""Google OAuth 連携サービス（api-contract.md §4）。
+"""Google OAuth 連携サービス。
 
 start でFirebaseユーザー uid を HMAC 署名 state 付き同意URLへ、callback で code をトークン交換。
 純粋ロジック（state 署名/検証・URL 組立）と I/O（code 交換・ネットワーク）を分離し、前者は

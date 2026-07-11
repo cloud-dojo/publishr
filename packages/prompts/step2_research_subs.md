@@ -1,7 +1,7 @@
 # STEP2c 調査サブ×3 — プロンプト仕様
 
 > 役割: 企画書フレーム8項目（§4-2b）を埋めるための**3観点の調査**。モデル＝**Flash**（B・CはGoogle検索grounding）。担当者の配下。初回ラウンドのみ起動。
-> I/O正本: `エージェントIO契約.md` §4-2c。出力＝`subReaderContext` / `subMarket` / `subThemeInsight`。
+> 出力＝`subReaderContext` / `subMarket` / `subThemeInsight`。
 
 | サブ | 役割 | grounding | 埋めるフレーム |
 |---|---|---|---|

@@ -1,7 +1,7 @@
 # STEP2c-2 競合書籍リサーチャー（市場・競合軸）— プロンプト仕様
 
 > 役割: 割り当てられたテーマの**売れ筋・既刊・手薄な隙間（marketGap）**を調べ、チームリーダーが「市販本が構造的に出せない差分」を作る材料を返す。モデル＝**Flash**（Google検索grounding）。各チーム内の調査3人の1人。
-> I/O正本: `agent-io-contract.md` §4-2c。出力＝`SubMarket`（市場軸の三角測量の一角。今＝`subTrend`／普遍＝`subThemeInsight` と対）。
+> 出力＝`SubMarket`（市場軸の三角測量の一角。今＝`subTrend`／普遍＝`subThemeInsight` と対）。
 
 ## I/O
 - **入力**: `{{theme}}`（割り当てサブテーマ）＋ `{{readerBase}}`（業界・職種・役職の絞り）

@@ -1,7 +1,7 @@
 """STEP3 キャスティングの決定的オフライン実装（PUBLISHR_LLM=mock・既定）。
 
 承認企画から架空著者5人を voiceStyle×format の2軸で分散生成する（canned）。本格的な
-人格生成は実Vertex（vertex_agent）が担う。正本: docs/design/agent-io-contract.md §5-3a。
+人格生成は実Vertex（vertex_agent）が担う。
 """
 
 from __future__ import annotations

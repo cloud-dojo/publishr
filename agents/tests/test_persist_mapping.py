@@ -1,7 +1,7 @@
 """C4結線: モードA v2出力 → shared-schema Book/Persona マッピングのテスト（決定的）。
 
 run_mode_a の (plan, shelved, personas) を、書店UIが読む Book(arrivals/draft)＋Persona に
-変換する純粋マッパーを検証する。正本: docs/design/api-contract.md / agent-io-contract.md §5-2a。
+変換する純粋マッパーを検証する。
 """
 
 from __future__ import annotations

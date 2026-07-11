@@ -2,7 +2,6 @@
 
 mock judge は決定的＝σ=0・CV=0・band 安定度1.0 を期待値とする（再現性の床）。
 実 judge のブレ測定は --backend vertex（gated・課金）で、ここではオフライン構造のみ検証。
-正本: docs/planning/wbs.md C5.4 / I-21。
 """
 
 from __future__ import annotations

@@ -10,7 +10,7 @@
 
 `vertex_agent.py`（単一テーマ）は不変。再利用部品（plan_owner）は import のみ。
 オフライン土台は `deterministic.run_planning_set_deterministic`。**実LLM・課金あり**。
-正本: docs/design/agent-io-contract.md §4 / packages/prompts/step2_*.md。
+正本: packages/prompts/step2_*.md。
 """
 
 from __future__ import annotations

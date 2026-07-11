@@ -2,7 +2,6 @@
 AuthorCasting のID固定（reconcile_author_favorite_id）の決定的テスト。
 
 確率はオーケストレーション層（mode_a）が握る純関数。実LLMなし・全mock・決定的。
-正本: docs/design/agent-io-contract.md §5-3a / mvp-scope.md §9。
 """
 
 from __future__ import annotations

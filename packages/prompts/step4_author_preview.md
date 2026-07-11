@@ -1,7 +1,7 @@
 # STEP4 著者（プレビュー執筆）— プロンプト仕様
 
 > 役割: 人格を着て、棚カード＝書籍詳細の**7フィールド**(`BookDraft`)＋章アウトラインを執筆（本文執筆の土台になる）。担当編集から差し戻されたら1度だけ改稿。モデル＝**Pro**。
-> I/O正本: `エージェントIO契約.md` §5-2a。出力＝`BookDraft`（7フィールド・モックアップ準拠）。agenda は後段の本文執筆（`modeB_author_body`）の章アウトラインになる。
+> 出力＝`BookDraft`（7フィールド・モックアップ準拠）。agenda は後段の本文執筆（`modeB_author_body`）の章アウトラインになる。
 
 ## I/O
 - **入力**: `{{approvedPlan}}`（8項目）＋ `{{persona}}`（voiceStyle/format/persona）＋ `{{readerProfile}}`（currentWork）＋ `{{chapter_count}}`（章数の目安・既定6）＋ `{{editorFeedback}}`（差し戻し時のみ）

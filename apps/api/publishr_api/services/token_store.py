@@ -1,4 +1,4 @@
-"""OAuth refresh token の per-uid 保存（api-contract.md §4-2・G1-5）。
+"""OAuth refresh token の per-uid 保存。
 
 既定 = FileTokenStore（observe と共有する `.secrets/oauth_tokens/{uid}.json`・gitignore 済・
 ローカル/dev）。本番 = SecretManagerTokenStore（PUBLISHR_OAUTH_TOKEN_STORE=secret_manager・

@@ -1,4 +1,4 @@
-"""OAuth 連携 + Drive フォルダ書込エンドポイント（api-contract.md §4）のテスト。
+"""OAuth 連携 + Drive フォルダ書込エンドポイントのテスト。
 
 実Google（code 交換）は exchange_code をモックして隔離。Firebase IDトークン検証も
 _verify_uid をモックして決定的に回す（ネットワーク非依存）。

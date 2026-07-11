@@ -2,7 +2,7 @@
 
 モードA/Bの各STEPが LLM に返させる構造化出力の型。**mock経路では未使用＝P0bの実装シーム**。
 JSON は camelCase（to_camel エイリアス）で授受し、Python 側は snake_case で扱う。
-正本: docs/design/agent-io-contract.md ／ packages/prompts/*.md ／ eval/eval_set.yaml。
+正本: packages/prompts/*.md ／ eval/eval_set.yaml。
 """
 
 from __future__ import annotations

@@ -1,7 +1,5 @@
 // zod スキーマ: データ境界（プロバイダ）で実行時バリデーションに使う。
 // types.ts と対応。
-//
-// 正本: docs/design/agent-io-contract.md / api-contract.md
 
 import { z } from "zod";
 
@@ -85,7 +83,6 @@ export const personaSchema = z.object({
   }),
   expertise: z.array(z.string()),
   pastBooks: z.array(pastBookSchema),
-  // agent-io-contract.md §5-3a
   voiceStyle: z.string().default(""),
   format: z.string().default(""),
   fromFavorite: z.boolean().default(false),
@@ -100,7 +97,6 @@ export const planSchema = z.object({
   differentiator: z.string(),
   agendaOutline: z.array(z.string()),
   recommendedAuthorTypes: z.array(z.string()),
-  // agent-io-contract.md §4-2b
   proposalId: z.string().default(""),
   themeKind: z.string().default(""),
   round: z.number().default(0),
@@ -147,7 +143,7 @@ export const readerProfileSchema = z.object({
   interests: z.array(z.string()),
   signals: z.array(z.string()),
   serendipityTolerance: z.string(),
-  // agent-io-contract.md §3: 3 層構造
+  // 3 層構造
   base: readerProfileBaseSchema.nullable().optional(),
   currentWork: readerProfileCurrentWorkSchema.nullable().optional(),
   readingBehavior: readerProfileReadingBehaviorSchema.nullable().optional(),
@@ -205,7 +201,6 @@ export const bookSchema = z.object({
   annotations: z.array(readingAnnotationSchema).default([]),
   feedback: feedbackSchema,
   createdAt: z.string().optional(),
-  // agent-io-contract.md §5-2a
   ownerUid: z.string().default(""),
   kind: z.string().default(""),
   deliveryReason: z.string().default(""),
@@ -235,7 +230,7 @@ export const pipelineResultSchema = z.object({
 });
 
 // ===========================================================================
-// 以下: agent-io-contract.md 由来の新規スキーマ（エージェント I/O 専用）
+// 以下: エージェント I/O 専用の新規スキーマ
 // ===========================================================================
 
 // STEP0: ObservationBundle（§2）

@@ -3,7 +3,7 @@
 > ⚠️ **【未結線・2026-06-24】このプロンプトは `registry.py`/`provider.py` に登録済みだが、現行ランタイムからは呼ばれていない（dead）。** v3「4テーマ・セット配本」移行で、live の日曜セレンディピティは `step2_editor_chief_themes.md` の `themeKind=serendipity` 分岐が担う。本ファイルを結線するか撤去するかはバック担当と intent 確認のうえ機能凍結後に整理（plan-audit）。**本ファイル単体の改修は live に影響しない**（規律の参照仕様としては有効）。
 >
 > 役割: STEP1の ReaderProfile（特に weeklyInsight）を受け、**セレンディピティ＝別ロジック**で、読者の関心の「隣接／反対視点／異業種・異時代への飛躍／ニッチな問い」から**4テーマ（各1冊・1-1-1-1）**を選ぶ。本命のような課題直撃はしない＝教養越境体験そのものが価値。モデル＝**Pro**。日曜の配本回ごとに1回。
-> I/O正本: `agent-io-contract.md`（セレンディピティ別ロジック節）。出力＝`SerendipitySet`（themes[4]＋reason）。STEP3以降（著者→プレビュー→装丁→本文）は本命と同じ＝本文まで作り切る。
+> 出力＝`SerendipitySet`（themes[4]＋reason）。STEP3以降（著者→プレビュー→装丁→本文）は本命と同じ＝本文まで作り切る。
 
 ## I/O
 - **入力**: `{{readerProfile}}`（3層＋weeklyInsight＝顕在/潜在関心・回避したい陳腐さ・感情トーン・求められる効用、readingBehavior.serendipityTolerance）＋ `{{themeKind}}`（serendipity）

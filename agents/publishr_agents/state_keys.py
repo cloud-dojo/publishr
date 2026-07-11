@@ -10,7 +10,7 @@ APPROVED_PLAN_IDS = "approved_plan_ids"
 BOOKS = "books"
 
 # ── v2（vertex）パイプライン state キー（P0bシーム・mock経路では未使用）──
-# 値は camelCase。プロンプトの {{var}} 名・docs/design/adk-control-flow.md §4 と一致させる。
+# 値は camelCase。プロンプトの {{var}} 名と一致させる。
 THEME_KIND = "themeKind"
 ROUND = "round"
 SUB_READER_CONTEXT = "subReaderContext"

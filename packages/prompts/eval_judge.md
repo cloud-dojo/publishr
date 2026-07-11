@@ -1,7 +1,7 @@
 # Eval judge — プロンプト仕様（CI品質ゲート・L4）
 
 > 役割: 企画を LLM-as-judge で採点し、CIのデプロイゲートにする。**企画リーダーと同一の4観点ルーブリック**を共通利用。モデル＝**Pro**。
-> I/O正本: `エージェントIO契約.md` §8／`MVPスコープ.md` §9。実データ＝`eval/eval_set.yaml`（8件＋境界2件）。fixtures＝`packages/shared-schema/fixtures/`。
+> 実データ＝`eval/eval_set.yaml`（8件＋境界2件）。fixtures＝`packages/shared-schema/fixtures/`。
 
 ## I/O
 - **入力**: Eval Set 1件＝`{ id, readerProfile, plan, expectedBand, kind }`（expectedBand: high≥70 / low≤40 / serendipity≥70※①読み替え）

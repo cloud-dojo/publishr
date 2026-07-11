@@ -2,7 +2,6 @@
 
 run_mode_a の (plan, shelved, personas) を、書店UIが読む Book（shelf=arrivals・status=draft・
 ownerUid付き）＋ Persona（生成著者）へ変換する。永続化（upsert）は呼び出し側（seed/BFF）が担う。
-正本: docs/design/api-contract.md / agent-io-contract.md §5-2a。
 """
 
 from __future__ import annotations

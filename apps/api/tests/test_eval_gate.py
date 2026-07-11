@@ -3,7 +3,7 @@
 mock judge が eval_set.yaml の cases を expectedBand 通りに採点（高関連≥70/ずれ≤40/
 セレンディピティ≥70※①を嗜好整合に読み替え・2026-06-12に旧中レンジ30-60を廃止）し、
 8件中7件規則でゲート通過/停止を判定すること、borderline は診断専用でゲート計算外で
-あることを検証する。正本: docs/planning/wbs.md C5.3 / I-21。
+あることを検証する。
 """
 
 from __future__ import annotations

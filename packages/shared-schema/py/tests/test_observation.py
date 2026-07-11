@@ -1,6 +1,6 @@
 """STEP0 観測スキーマ（ObservationBundle・ConnectedSources）の妥当性テスト。
 
-契約 docs/design/agent-io-contract.md §2 の camelCase JSON が型付きで読め、
+契約仕様の camelCase JSON が型付きで読め、
 snake_case でアクセスでき、round-trip で §2 の camelCase 形状に戻ることを確認する。
 """
 

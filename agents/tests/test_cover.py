@@ -1,7 +1,7 @@
 """STEP5 装丁（C1.6）の決定的オフラインテスト。
 
 プレビュー5冊に装丁（coverVariant=CSS / coverPrompt=Imagen用英語 / coverUrl）を付与。
-dev（ENABLE_IMAGEN off）は CSS variant のみ・coverUrl=None。正本: agent-io-contract.md §6 / step5_cover.md。
+dev（ENABLE_IMAGEN off）は CSS variant のみ・coverUrl=None。正本: step5_cover.md。
 """
 
 from __future__ import annotations

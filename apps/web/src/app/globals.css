@@ -1,6 +1,6 @@
 /* ============================================================
    Publishr — あなた専属の、AI出版社。
-   docs/mockup/assets/publishr.css を忠実移植（夜の高級書店テーマ）
+   夜の高級書店テーマを忠実移植
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 @import "tailwindcss";

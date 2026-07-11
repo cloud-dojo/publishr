@@ -2,7 +2,6 @@
 
 honmeiMin（本命合格ライン）を振って、高関連企画の通過数と境界ケース(eval_b1/b2)の
 判定がどう動くかを示す運用調整の土台。mock judge 決定的なので結果は再現的。
-正本: docs/planning/wbs.md C5.5 / I-1 / I-18。
 """
 
 from __future__ import annotations

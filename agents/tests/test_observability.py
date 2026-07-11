@@ -3,7 +3,6 @@
 Langfuse 実SDK/キーに依存せず、record する fake client を注入して、
 ①企画リーダー差し戻しループ ②編集長の本文ループ ③grounding URL が
 1トレースのスパン構造として送られることを検証する。キー未設定なら no-op。
-正本: docs/planning/wbs.md C5.6。
 """
 
 from __future__ import annotations

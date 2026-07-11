@@ -20,7 +20,7 @@ runConfig:
 
 env:
   # --- 無認証公開ショーケース（PR-A / 2026-06-30）: BFF 経由で佐倉(demo_uid)の
-  #     published 本を無ログインで表示。詳細 docs/planning/hackathon-demo-strategy.md。---
+  #     published 本を無ログインで表示。---
   - variable: NEXT_PUBLIC_DATA_SOURCE
     value: bff
     availability: [BUILD, RUNTIME]
