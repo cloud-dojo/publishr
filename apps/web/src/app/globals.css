@@ -217,29 +217,29 @@ a { color: inherit; text-decoration: none; }
 /* 伝統色パレット 20色（本命系 b1-b10 青系 + 出会い系 b11-b20 赤系）+ 幾何学パターン */
 .cover--b1,.cover--b2,.cover--b3,.cover--b4,.cover--b5,.cover--b6,.cover--b7,.cover--b8,.cover--b9,.cover--b10,.cover--b11,.cover--b12,.cover--b13,.cover--b14,.cover--b15,.cover--b16,.cover--b17,.cover--b18,.cover--b19,.cover--b20 { position: relative; isolation: isolate; }
 
-/* 本命系（b1-b10）青・紫・緑系 */
-.cover--b1 { background: #2E4053; background-image: linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 16px 16px; }
-.cover--b2 { background: #3D5A80; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.08) 10px, rgba(255,255,255,.08) 12px); }
-.cover--b3 { background: #4B5A7C; background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent); background-size: 20px 20px; }
-.cover--b4 { background: #4A7C7E; background-image: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,.08) 10px, rgba(255,255,255,.08) 12px); }
-.cover--b5 { background: #4D3E7B; background-image: radial-gradient(circle, rgba(255,255,255,.08) 2px, transparent 2px); background-size: 14px 14px; }
-.cover--b6 { background: #9E8BA5; background-image: linear-gradient(135deg, transparent 48%, rgba(255,255,255,.06) 50%, transparent 52%); background-size: 16px 16px; }
-.cover--b7 { background: #7D5BA6; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0px, rgba(255,255,255,.08) 2px, transparent 2px, transparent 8px); }
-.cover--b8 { background: #674172; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,.08) 1.5px, transparent 1.5px); background-size: 8px 8px; }
-.cover--b9 { background: #5B6C4B; background-image: linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)), linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)); background-size: 12px 12px; background-position: 0 0, 6px 6px; }
-.cover--b10 { background: #7AC74F; background-image: conic-gradient(rgba(255,255,255,.08) 0deg 90deg, transparent 90deg 180deg, rgba(255,255,255,.08) 180deg 270deg, transparent 270deg); background-size: 20px 20px; }
+/* 本命系（b1-b10）青・紫・緑系 - パターン強調版 */
+.cover--b1 { background: #2E4053; background-image: linear-gradient(90deg, rgba(255,255,255,.20) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.20) 1px, transparent 1px); background-size: 16px 16px; }
+.cover--b2 { background: #3D5A80; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.20) 10px, rgba(255,255,255,.20) 12px); }
+.cover--b3 { background: #4B5A7C; background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.18) 25%, rgba(255,255,255,.18) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.18) 25%, rgba(255,255,255,.18) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18) 76%, transparent 77%, transparent); background-size: 20px 20px; }
+.cover--b4 { background: #4A7C7E; background-image: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,.22) 10px, rgba(255,255,255,.22) 12px); }
+.cover--b5 { background: #4D3E7B; background-image: radial-gradient(circle, rgba(255,255,255,.20) 2px, transparent 2px); background-size: 14px 14px; }
+.cover--b6 { background: #9E8BA5; background-image: linear-gradient(135deg, transparent 48%, rgba(0,0,0,.20) 50%, transparent 52%); background-size: 16px 16px; }
+.cover--b7 { background: #7D5BA6; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.22) 0px, rgba(255,255,255,.22) 2px, transparent 2px, transparent 8px); }
+.cover--b8 { background: #674172; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,.20) 1.5px, transparent 1.5px); background-size: 8px 8px; }
+.cover--b9 { background: #5B6C4B; background-image: linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18)), linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18)); background-size: 12px 12px; background-position: 0 0, 6px 6px; }
+.cover--b10 { background: #7AC74F; background-image: conic-gradient(rgba(0,0,0,.15) 0deg 90deg, transparent 90deg 180deg, rgba(0,0,0,.15) 180deg 270deg, transparent 270deg); background-size: 20px 20px; }
 
-/* 出会い系（b11-b20）赤・オレンジ・黄系 */
-.cover--b11 { background: #924E4E; background-image: linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 16px 16px; }
-.cover--b12 { background: #A23B48; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.08) 10px, rgba(255,255,255,.08) 12px); }
-.cover--b13 { background: #B85C75; background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent); background-size: 20px 20px; }
-.cover--b14 { background: #E8B4D4; background-image: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,.08) 10px, rgba(0,0,0,.08) 12px); }
-.cover--b15 { background: #8B6F47; background-image: radial-gradient(circle, rgba(255,255,255,.08) 2px, transparent 2px); background-size: 14px 14px; }
-.cover--b16 { background: #F4D03F; background-image: linear-gradient(135deg, transparent 48%, rgba(0,0,0,.06) 50%, transparent 52%); background-size: 16px 16px; color: #2a1c06; }
-.cover--b17 { background: #D4AF37; background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0px, rgba(0,0,0,.08) 2px, transparent 2px, transparent 8px); color: #2a1c06; }
-.cover--b18 { background: #5C4033; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,.08) 1.5px, transparent 1.5px); background-size: 8px 8px; }
-.cover--b19 { background: #4A4A4A; background-image: linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)), linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.06) 75%, rgba(255,255,255,.06)); background-size: 12px 12px; background-position: 0 0, 6px 6px; }
-.cover--b20 { background: #1C1C35; background-image: conic-gradient(rgba(255,255,255,.08) 0deg 90deg, transparent 90deg 180deg, rgba(255,255,255,.08) 180deg 270deg, transparent 270deg); background-size: 20px 20px; }
+/* 出会い系（b11-b20）赤・オレンジ・黄系 - パターン強調版 */
+.cover--b11 { background: #924E4E; background-image: linear-gradient(90deg, rgba(255,255,255,.20) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.20) 1px, transparent 1px); background-size: 16px 16px; }
+.cover--b12 { background: #A23B48; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.20) 10px, rgba(255,255,255,.20) 12px); }
+.cover--b13 { background: #B85C75; background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.18) 25%, rgba(255,255,255,.18) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.18) 25%, rgba(255,255,255,.18) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18) 76%, transparent 77%, transparent); background-size: 20px 20px; }
+.cover--b14 { background: #E8B4D4; background-image: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,.18) 10px, rgba(0,0,0,.18) 12px); }
+.cover--b15 { background: #8B6F47; background-image: radial-gradient(circle, rgba(255,255,255,.20) 2px, transparent 2px); background-size: 14px 14px; }
+.cover--b16 { background: #F4D03F; background-image: linear-gradient(135deg, transparent 48%, rgba(0,0,0,.20) 50%, transparent 52%); background-size: 16px 16px; color: #2a1c06; }
+.cover--b17 { background: #D4AF37; background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0px, rgba(0,0,0,.18) 2px, transparent 2px, transparent 8px); color: #2a1c06; }
+.cover--b18 { background: #5C4033; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,.20) 1.5px, transparent 1.5px); background-size: 8px 8px; }
+.cover--b19 { background: #4A4A4A; background-image: linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18)), linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.18) 75%, rgba(255,255,255,.18)); background-size: 12px 12px; background-position: 0 0, 6px 6px; }
+.cover--b20 { background: #1C1C35; background-image: conic-gradient(rgba(255,255,255,.18) 0deg 90deg, transparent 90deg 180deg, rgba(255,255,255,.18) 180deg 270deg, transparent 270deg); background-size: 20px 20px; }
 /* midnight（最初の100日の設計図など）: 右上に金の円弧 + 右下に大きな数字透かし */
 .cover--midnight { background: linear-gradient(155deg, #1b2440, #0c1226 70%); }
 .cover--midnight .c-title { color: var(--gold-bright); }
