@@ -46,10 +46,10 @@ def test_assigns_cover_to_every_book():
 
 
 def test_cover_variant_is_supported_css():
-    """coverVariant は globals.css の cover--b1..b20 に対応する値（伝統色パレット）。"""
-    for i in range(30):
+    """coverVariant は globals.css の cover--b1..b200 に対応する値（色20×パターン10）。"""
+    for i in range(250):
         v = cover_variant_for(i)
-        assert v in {f"b{n}" for n in range(1, 21)}
+        assert v in {f"b{n}" for n in range(1, 201)}
 
 
 def test_cover_prompt_excludes_text_burn_in():
