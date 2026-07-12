@@ -1,7 +1,9 @@
 """表紙の決定的オフライン装丁（PUBLISHR_LLM=mock・既定）。
 
 現行メインパイプラインの表紙処理は `assign_cover_variants`＝coverVariant（globals.css の
-cover--b1..b10）を決定的に付与するだけ（coverUrl=None・オフライン・ゼロコスト・画像生成なし）。
+cover--b1..b40）を決定的に付与するだけ（coverUrl=None・オフライン・ゼロコスト・画像生成なし）。
+
+色は 40 色（寒色20 + 暖色20）でシンプルに決定的割当（パターンなし）。
 
 ⚠️ 画像生成（Imagen 用 coverPrompt 生成・実画像）は今回スコープ外で park（将来実装予定）。
    下部 PARKED セクション（_VOICE_VISUAL / _cover_prompt / design_covers_deterministic）は
@@ -15,10 +17,25 @@ from typing import Any, Optional
 
 from publishr_schema import GeneratedPersona
 
+# 40色パレット（寒色20 + 暖色20）
+_COOL_COLORS = [
+    "#2E4053", "#3D5A80", "#4B5A7C", "#4A7C7E", "#4D3E7B",  # row 1
+    "#3B6A8F", "#42677C", "#3F5F70", "#456B7A", "#384D6B",  # row 2
+    "#5B7F8C", "#4A6A7A", "#516D7F", "#4C7B8D", "#5A6B7E",  # row 3
+    "#3A5C7F", "#445A72", "#506F8A", "#527B8C", "#3D5A75",  # row 4
+]
+_WARM_COLORS = [
+    "#9E8BA5", "#B8896E", "#C9845A", "#D97F4A", "#E5704A",  # row 1 (purple → warm)
+    "#A67B7D", "#BA8560", "#C89050", "#D99847", "#E59052",  # row 2
+    "#9B7A82", "#B87564", "#C68552", "#D9934A", "#E5874F",  # row 3
+    "#A7855F", "#BA8B6E", "#C89565", "#D9A35C", "#E5A855",  # row 4
+]
+_PALETTE = _COOL_COLORS + _WARM_COLORS
+
 
 def cover_variant_for(index: int) -> str:
-    """globals.css の cover--b1..b80 に対応する決定的 variant 割当。色20×パターン4。"""
-    return f"b{(index % 80) + 1}"
+    """globals.css の cover--b1..b40 に対応する決定的 variant 割当。色40（パターンなし）。"""
+    return f"b{(index % 40) + 1}"
 
 
 def assign_cover_variants(
